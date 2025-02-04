@@ -1,0 +1,1034 @@
+
+IsatData Pro Network Overview
+N200, Version 11 Aug 2019
+� ORBCOMM�
+LEGAL NOTICE
+This documentation is owned by ORBCOMM� and protected by applicable copyright laws and international treaty provisions. Other copyrighted names used are the property of their respective owners. Therefore, you must treat this documentation like any other copyrighted material. This publication, or any part thereof, may not be reproduced or transmitted in any form or by any means, electronic or mechanical, including photocopying, recording, storage in an information retrieval system, or otherwise, without prior written permission by ORBCOMM, Inc. 395 W Passaic Street, Suite 325, Rochelle Park, NJ 07662 USA Phone 703-433-6325. The information in this document is for information purposes only and contains technical information and descriptions of the ORBCOMM product(s) and is subject to change without notice. No warranty or representation, express or implied, is made with respect to its contents.
+
+TRADEMARK NOTICE
+The ORBCOMM name and the ORBCOMM logo are registered trademarks of ORBCOMM.
+INMARSAT, the Inmarsat logo and IsatData Pro are trademarks of Inmarsat used under license by SkyWave (an ORBCOMM company). Inmarsat is not responsible for the operation and regulatory compliance of the products and services referred to in this document that connect to the Inmarsat system.
+
+EXPORT CONTROL STATEMENT
+The contents of this document, in whole or in part, shall not be exported from the United States, which export shall include, but not be limited to, transmittal to any non-U.S. citizen wherever said person is located, except in accordance with all United States laws and regulations relating to exports and to all administrative acts of the U.S. Government pursuant to such laws and regulations. Diversion, re-export or transshipment of the contents of this document, in whole or in part, contrary to U.S. law is also strictly prohibited.
+
+
+
+CONTACT INFORMATION
+Visit ORBCOMM Online
+www.ORBCOMM.com
+
+Contact Customer Support
+support@skywave.com
+
++1.613.836.2222
+Headquarters
+395 W Passaic Street, Suite 325 Rochelle Park, NJ 07662 USA Tel: +1-703-433-6300 Fax: 1-703-433-6400 Email: sales@orbcomm.com
+
+
+
+
+
+TABLE OF CONTENTS
+Legal
+Notice
+
+2
+Trademark
+Notice
+
+2
+Export
+Control
+Statement
+
+2
+Contact
+Information
+
+3
+
+Contact
+Customer
+Support
+3
+TABLE
+OF
+CONTENTS
+4
+List
+of
+Figures
+6
+List
+of
+Tables
+6
+Preface
+7
+
+Purpose
+7
+Notation
+7
+Reference
+7
+
+1
+Overview
+8
+
+1.1
+Network
+Topology
+Options
+8
+
+1.1.1
+IsatData
+Pro
+Gateway
+Web
+Service
+Interface
+2
+(IGWS2)
+9
+
+1.1.2
+Integrated
+Internet
+Gateway
+(IIG)
+9
+
+1.1.3
+Solution
+Provider
+Application
+10
+
+1.2
+Protocol
+Options
+10
+1.2.1
+MTWS
+11
+1.2.2
+MTBP
+11
+1.3
+Administration
+11
+1.4
+Devices
+11
+
+
+
+1.5
+Service
+Features
+12
+
+2
+Service
+Operation
+13
+
+2.1
+Satellite
+Service
+13
+
+2.1.1
+Channels
+14
+
+2.1.1.1
+Bulletin
+Board
+(BB)
+15
+
+2.1.1.2
+To-Mobile
+Traffic
+Channel
+16
+
+2.1.1.3
+From-Mobile
+Traffic
+Channel
+16
+
+
+
+
+2.2
+Cellular
+Service
+
+17
+
+2.2.1
+From-Mobile
+Data
+(Return
+Messages)
+
+18
+
+
+2.2.2
+To-Mobile
+Data
+(Forward
+Messages)
+
+18
+
+
+2.2.3
+Acknowledgments
+
+18
+
+
+
+2.3
+Numbering
+Plan
+
+18
+
+2.3.1
+Mobile
+ID
+
+18
+
+2.3.1.1
+Network
+ID
+
+18
+
+
+
+
+
+2.3.2
+Broadcast
+ID
+
+18
+
+
+
+2.4
+Device
+Operation
+
+19
+
+2.4.1
+Startup
+
+19
+
+
+2.4.2
+Roaming
+
+19
+
+
+2.4.3
+Device
+Registration
+
+19
+
+
+2.4.4
+Blockage
+Behavior
+
+20
+
+
+
+2.5
+Satellite
+Messaging
+20
+2.5.1
+Fragmentation
+20
+2.5.2
+Latency
+20
+
+2.5.2.1
+To-Mobile
+Latency
+21
+
+2.5.2.2
+From-Mobile
+Latency
+21
+
+2.5.3
+Message
+Order
+22
+
+2.5.4
+Message
+Retention
+22
+
+2.5.5
+Payload
+Format
+22
+
+2.5.5.1
+Service
+Identification
+Number
+22
+
+2.5.6
+Synchronized
+Transmissions
+23
+
+
+
+2.6
+Cellular
+Messaging
+23
+
+2.6.1
+Cellular
+Protocol
+Overview
+23
+
+2.6.2
+Cellular
+Latency
+24
+
+2.6.3
+Cellular
+Third
+Party
+IP
+Network
+Services
+24
+
+2.6.4
+SIM
+�
+Subscriber
+Identification
+Module
+24
+
+2.6.5
+APN
+�
+Access
+Point
+Name
+24
+
+
+
+2.7
+Low
+Power
+(LP)
+Mode
+25
+
+3
+Gateway
+27
+
+3.1
+Functionality
+27
+
+3.2
+Network
+Access
+27
+
+3.3
+IsatData
+Pro
+Gateway
+Web
+Service
+2
+27
+
+3.4
+Gateway
+Account
+28
+
+4
+Devices
+29
+
+4.1
+Pass-Through
+Mode
+29
+
+4.2
+Software
+Service
+29
+
+5
+Application
+Developer
+Tools
+
+30
+
+
+
+LIST OF FIGURES
+Figure
+1:
+OROBCOMM�S
+IsatData
+Pro
+Network
+8
+Figure
+2:
+Integrated
+Internet
+Gateway
+(option
+1)
+
+9
+Figure
+3:
+Solution
+Provider
+Application
+(option
+2)
+
+10
+Figure
+4:
+IsatData
+Pro
+Global
+Coverage
+
+14
+Figure
+5:
+IsatData
+Pro
+Satellite
+Channels
+15
+Figure
+6:
+Message
+Latency
+Measurement
+21
+Figure
+7:
+Access
+Point
+Name
+25
+Figure
+8:
+Network
+Activity
+in
+Low
+Power
+Mode
+26
+Figure
+9:
+IsatData
+Pro
+Gateway
+27
+Figure
+10:
+IsatData
+Pro
+Gateway
+Network
+Access
+28
+
+LIST OF TABLES
+Table
+1:
+Network
+Topology
+Options
+9
+Table
+2:
+Cellular
+Protocol
+Options
+10
+Table
+3:
+Service
+Summary
+12
+Table
+4:
+Inmarsat
+IsatData
+Pro
+Satellites
+13
+Table
+5:
+Channel
+Types
+14
+Table
+6:
+To-Mobile
+Traffic
+Channel
+Parameters
+16
+Table
+7:
+To-mobile
+Traffic
+Channel
+Information
+and
+Transmission
+Interval
+16
+Table
+8:
+From-Mobile
+Message
+Modulation
+17
+Table
+9:
+Device
+Acknowledgment
+Modulation
+17
+Table
+10:
+Message
+Segment
+Retry
+Parameters
+20
+Table
+11:
+To-Mobile
+Payload
+and
+Latency
+21
+Table
+12:
+From-Mobile
+Payload
+and
+Latency
+22
+Table
+13:
+Message
+Payload
+Format
+22
+Table
+14:
+SIN
+Ranges
+23
+Table
+15:
+Development
+Tools
+and
+User
+Activity
+31
+Table
+16:
+Tool
+and
+File
+Relationship
+
+32
+
+
+
+PREFACE
+Purpose
+This document provides an overview of ORBCOMM�s IsatData Pro network services; including satellite radio protocol, cellular network features, terminal management, and development tools.
+Notation
+Note: A note indicates information with no potential hazard. A note indicates points of interest or provides supplementary information about a feature or task.
+Numbered lists indicate a series of steps required to complete a task or function.
+Bulleted lists highlight information where order or sequence is not crucial.
+Reference
+Additional documents are available from ORBCOMM or from the ORBCOMM Developer Toolkit, which is also available from ORBCOMM.
+Please refer to the embedded help file in the software tools for additional information. These tools are available from the ORBCOMM Developer Toolkit.
+
+
+1 OVERVIEW
+IsatData Pro is an Inmarsat service provided by ORBCOMM. IsatData Pro provides bidirectional messaging services from a gateway to devices via Inmarsat satellite (IsatData Pro) and cellular terrestrial data services (Figure
+1).
+Figure 1: OROBCOMM�S IsatData Pro Network
+
+IsatData Pro satellite service is a two-way fully acknowledged communications protocol offering a relatively low data rate and near-real time data transfer. From-mobile and to-mobile messages are of variable size.
+IsatData Pro messaging capabilities make it an ideal service for applications requiring remote updates, form transfers, and text messaging combined with asset tracking. Typical applications include vessel and fleet management and security, remote surveillance, telematics, and SCADA.
+ORBCOMM�s satellite-cellular devices provide satellite-cellular data communications using both satellite and cellular networks. A satellite-cellular device can be configured to select the optimal available network for messages generated by the mobile, based on factors such as least-cost routing and redundancy. An application server (Solution Provider (SP) or SP application) can do similar network selection for messages destined for the device.
+1.1 Network Topology Options
+ORBCOMM's satellite-cellular devices (terminals and modems) provide satellite-cellular data communications using both satellite (IsatData Pro) and cellular networks. A satellite-cellular device can be configured to select the optimal available network for messages generated by the device, based on factors such as least-cost routing and redundancy. Solution Providers have two network configuration options for handling cellular traffic integration.
+�
+The ORBCOMM Integrated Internet Gateway (IIG) can merge satellite and cellular traffic and present a common
+traffic access point through the IsatData Pro Gateway Web Service 2 (IGWS2).
+� A Solution Provider�s application server can merge satellite and cellular traffic using IGWS2 to collect satellite traffic and one of ORBCOMM�s device cellular protocols to send and receive cellular traffic.
+Both topology options have trade-offs and are discussed later in this document.
+Device cellular protocols supported in the SP application integration option are described in section 1.2.
+Due to technological and historical differences between satellite and cellular networks, there are important differences in how applications communicate using these networks. Satellite communications can typically be initiated by either the device or ground segment, whereas cellular data communications are most often initiated by the device.
+
+
+Satellite nomenclature refers to from-mobile data as return and to-mobile data as forward. The cellular mobile terminal web service (MTWS) protocol and mobile terminal bit-efficient (MTBP) protocols use return and forward nomenclature in their operations.
+Table 1: Network Topology Options
+
+1.1.1 IsatData Pro Gateway Web Service Interface 2 (IGWS2)
+To support satellite traffic from ORBCOMM�s satellite-cellular devices, an SP must develop a web services client conforming to specifications in [N210 IGWS 2 User Guide].
+The satellite gateway acts as a web server (almost like a proxy) for communications via IsatData Pro.
+On the satellite interface, from-mobile data is polled from the gateway by the SP's web client using IGWS2 get_ return_messages method [N210 IGWS 2 User Guide].
+To-mobile satellite data is submitted to IGWS using the submit_messages method [N210 IGWS 2 User Guide], and its status/progression updated using the get_forward_statuses method.
+1.1.2 Integrated Internet Gateway (IIG)
+ORBCOMM�s IIG combines IsatData Pro satellite traffic and cellular originated traffic and gives SPs a common web service interface (IGWS2) and access point for all their device or fixed asset data.
+Figure 2: Integrated Internet Gateway (option 1)
+
+
+
+To-mobile message routing is determined by the IIG depending on the message options and the transports� availability when the data is queued.
+1.1.3 Solution Provider Application
+Under the control of the SP, an application integrating satellite traffic from the IsatData Pro Gateway and cellular traffic directly from the device population requires that the application handle both client and server type connections.
+Figure 3: Solution Provider Application (option 2)
+
+Satellite data transits the IsatData Pro Gateway between the device and the SP application using an IsatData Pro Gateway Web Services 2 (IGWS2) interface defined by ORBCOMM and documented in [N210 IGWS 2 User Guide].
+To support cellular data, the SP�s application must support the MTWS protocol [N206 MTWS Cellular Protocol]
+1.2 Protocol Options
+Solution Providers have the choice of device protocol implementations. A trade-off matrix can be summarized as follows:
+Table 2: Cellular Protocol Options
+
+
+
+1.2.1 MTWS
+To support cellular traffic from ORBCOMM�s satellite-cellular devices, an SP may implement a Web Services Server supporting the MTWS protocol as described in [N206 MTWS Cellular Protocol].
+The device acts as a client when communicating via cellular. The MTWS data format used by SP applications in exchanging messages directly with devices is a web services interface using a JSON encoding and REST architectural style.
+MTWS from-mobile data is pushed to the SP's web server using the SubmitReturn method.
+Most cellular networks restrict data communications to mobile initiated; the SP application can never initiate communications. To accommodate this restriction, satellite-cellular devices using MTWS poll for to-mobile data.
+All to-mobile data to be sent via cellular must be queued in the SP application and may be delivered when polled by the device using the GetFoward method. This implies that the device must be configured to poll for data periodically (managed by properties of the cell core/Lua service).
+1.2.2 MTBP
+As with MTWS, an MTBP enabled device acts as a client when communicating via cellular. The MTBP data format used by the IIG in exchanging messages directly with devices supports the satellite binary encoding, but over a streamlined TCP binary framing protocol.
+MTBP from-mobile data is transmitted to the IIG using a payload packet over TCP.
+Most cellular networks restrict data to only mobile initiated communications; the IIG can never initiate communications. To accommodate this restriction, MTBP devices may be configured to behave as follows:
+�
+Maintain sessions using keepalive, as long as in coverage
+�
+Poll for forward messages periodically
+�
+Poll for forward messages only when sending return messages
+This can be managed by properties of the cell core/Lua service.
+To-mobile data to be sent, via cellular, must be queued in the IsatData Pro Gateway using an IsatData Pro Gateway Web Services 2 (IGWS2) interface defined by ORBCOMM and documented in [N210 IGWS 2 User Guide]. If the transport is specified as cellular only when the data queued, it is delivered when a MTBP session is created, or delivered immediately if a session already exists. If no specific transport is indicated when the data is queued, it is delivered over cellular immediately if a MTBP session is active, otherwise it will fallback to satellite.
+1.3 Administration
+ORBCOMM provides customer support services through support.ORBCOMM.com to allow configuration and administration of accounts and devices.
+Service administration and billing information associated with the IsatData Pro gateway is accessible over the web, using the Customer
+Support
+website.
+1.4 Devices
+ORBCOMM offers a range of device configurations leveraging IsatData Pro satellite and cellular network services. For convenience of terminology, this document refers to these products as satellite devices or satellite-cellular devices.
+
+
+A modem hardware platform allows for integration of the IsatData Pro protocol with existing or new applications. Device packaging allows for various antenna, connector and mounting configurations. A rich, standards-based command set controls the modem that supports IsatData Pro and an advanced application development platform is available to deploy intelligent scripts and customized message definitions on devices.
+1.5 Service Features
+Table
+3
+summarizes the IsatData Pro and cellular service.
+Table 3: Service Summary
+
+
+
+2 SERVICE OPERATION
+2.1 Satellite Service
+IsatData Pro is a satellite-based messaging service offering global coverage through the Inmarsat satellite network, operating over multiple geosynchronous satellites:
+Table 4: Inmarsat IsatData Pro Satellites
+
+The AMER, EMEA and APAC satellites provide global coverage. AORWSC and IOR NE provide overlapping coverage with higher elevation angle coverage (Figure
+4).
+
+
+Figure 4: IsatData Pro Global Coverage
+
+2.1.1 Channels
+Three basic types of satellite channels (Table
+5) are used in IsatData Pro: a bulletin board channel, a to-mobile traffic channel and a from-mobile traffic channel.
+Table 5: Channel Types
+
+On power on, devices tune directly to their assigned to-mobile traffic channel and listen for any system configuration updates or incoming messages. The from-mobile traffic channel is used by a device to send messages. The IsatData Pro transmit/receive protocol ensures an incoming message is not sent when a device is transmitting.
+
+
+In most cases, a device gets all its system configuration updates, including the from-mobile traffic channel configuration, and pending changes to the to-mobile traffic channel on the to-mobile traffic channel. However, a device may miss critical system updates if it has been powered off for extended periods. In this case, the device must tune to the fixed frequency bulletin board (BB) to obtain the latest system configuration information. Once the system information is obtained the device tunes to the to-mobile traffic channel.
+Figure 5: IsatData Pro Satellite Channels
+
+2.1.1.1 Bulletin Board (BB)
+To-mobile traffic channels are dynamic and can be moved or added based upon traffic needs. The BB, however, is a fixed frequency channel. There is one BB channel on each satellite (except IOR) providing global coverage.
+In normal operation, the device never tunes to the BB channel. Instead, it tunes directly to the to-mobile traffic channel. The device tunes to the BB in the following conditions:
+�
+It is in blockage for a long time and cannot find the to-mobile traffic channel
+�
+It has been powered off for a long time and the system information and to-mobile traffic channel information are stale
+The BB continuously transmits the following information:
+�
+To-mobile traffic channel assignments
+�
+From-mobile traffic channel assignments
+�
+Beam coverage area contours Once the device has read the BB information, it tunes to the to-mobile traffic channel and resumes normal operation.
+
+
+2.1.1.2 To-Mobile Traffic Channel
+The to-mobile traffic channel delivers message segments and system information to the device. Table
+6
+defines the to-mobile traffic channel parameters.
+Table 6: To-Mobile Traffic Channel Parameters
+
+The to-mobile traffic channel uses a five second frame. The five second frame is divided up into ten half second subframes. Devices receive messages in a single predetermined receive subframe. Once a device has decoded messages in its assigned subframe, it can either go into idle mode or transmit from-mobile messages. Devices never transmit on the predetermined subframe to avoid the possibility of transmitting while receiving.
+Table
+7
+lists the information provided on the to-mobile traffic channel and the transmission interval for each device.
+Table 7: To-mobile Traffic Channel Information and Transmission Interval
+
+The device saves all system information including its version number in non-volatile memory. If a device detects that the system information has changed, it knows that is must wait and get the system messages containing new system configuration data. The system information includes the from-mobile traffic channels assigned to the device.
+2.1.1.2.1 Acknowledgments
+All packets for from-mobile messages are acknowledged with a device specific acknowledgment message. The acknowledgment message to the device includes the unique mobile ID (serial number). As a result, if a message/packet collision occurs between two devices, and only one message it transmitted, the IsatData Pro gateway sends an acknowledgment addressed to one specific device. The other device does not receive an acknowledgment and it retransmits its message packet.
+2.1.1.3 From-Mobile Traffic Channel
+From-mobile messages and to-mobile message acknowledgments are transmitted on the from-mobile traffic channel. From-mobile traffic channel frames are 5 seconds long and are synchronized with the 5 second to-mobile traffic channel frame.
+
+
+2.1.1.3.1 From-Mobile Messages
+Table
+8
+outlines the from-mobile traffic channel modulation used for from-mobile messages.
+Table 8: From-Mobile Message Modulation
+
+From-mobile messages are transmitted in either half second or one second slots with varying code rates. Slots of the same duration are selected from an Aloha channel. The device selects the coding rates based on its estimation of the quality of the signal path back to the land earth station (LES). As the slot duration and coding rates can vary, the device's transmission duration can vary depending on the device's geographic location.
+The device never selects a slot that overlaps in time with an incoming to-mobile traffic channel time slot. Acknowledgments are on the to-mobile traffic channel as per section 2.1.1.3.2.
+2.1.1.3.2 Acknowledgments
+After a device receives a to-mobile segment, it sends an acknowledgment to the from-mobile traffic channel.
+Table
+9
+outlines the from-mobile traffic channel modulation used for acknowledgments.
+Table 9: Device Acknowledgment Modulation
+
+The acknowledgment slot is assigned to the device by the protocol based on the order of to-mobile segments in the associated to-mobile traffic channel receive subframe. Only one device, transmits in any given acknowledgment slot. The gateway never assigns acknowledgment slots that overlap in time with the device's to-mobile traffic channel receive subframe.
+2.2 Cellular Service
+To support satellite-cellular devices, you must develop a HTTP client for satellite data, as well as a HTTP server for cellular data.
+The device acts as a HTTP client when communicating via cellular. The satellite gateway acts as a HTTP server for communications via IsatData Pro.
+
+
+If you choose ORBCOMM's Integrated Internet Gateway (IIG), you only require an HTTP client. The gateway acts as an HTTP server for communication via IsatData Pro.
+Refer to [N206 MTWS Cellular Protocol] for more details on the MTWS cellular protocol.
+2.2.1 From-Mobile Data (Return Messages)
+On the cellular interface, from-mobile data is pushed to the SP's (or IsatData Pro MTWS) Web Service server using the SubmitReturn method.
+2.2.2 To-Mobile Data (Forward Messages)
+Most cellular networks restrict data communications to be initiated by the device; the customer application can never initiate communications. To accommodate this restriction, satellite-cellular devices poll for to-mobile data.
+All to-mobile data to be sent via cellular must be queued in the IIG gateway (option 1), or SP application server (option 2), and may be delivered when polled by the device using the GetFoward method. This implies that the device must be configured to poll for data periodically (managed by properties of the cellular core/Lua service).
+2.2.3 Acknowledgments
+With MTWS, devices poll messages. If a device has not been active in MTWS for a period of time (timeout), to-mobile messages to this device may be switched to the satellite network for delivery.
+2.3 Numbering Plan
+2.3.1 Mobile ID
+A device is identified by a unique mobile ID. This number is located on the device and can be read electronically. This number is used by an SP's application server connecting to the gateway to send or receive messages.
+The format of this identification is:
+NNNNNNNNMMMXXXX
+Where
+�
+N is a digit (0-9)
+�
+NNNNNNNN is a number assigned by ORBCOMM
+�
+MMM is an alpha character designating the device manufacturer. For example, SKY indicates ORBCOMM.
+�
+X is a hexadecimal digit (0 to F)
+2.3.1.1 Network ID
+The network ID is the first eight digits of the mobile ID. The network ID is a unique key that IsatData Pro uses for routing messages to specific devices. It is also used to calculate the subframe and low power wake-up offsets for each device to provide an even distribution of message traffic.
+2.3.2 Broadcast ID
+A broadcast message allows more efficient messaging to all satellite only devices programmed with the same broadcast ID. A broadcast ID is globally unique and follows a numbering scheme similar to that of the IsatData Pro device.
+
+
+NNNNNNNNGRPXXXX
+Where
+�
+N is a digit (0-9)
+�
+NNNNNNNN is a number assigned by ORBCOMM
+�
+The GRP characters are fixed to differentiate the number from the mobile ID
+�
+X is a hexadecimal digit (0 to F)
+When a broadcast message is sent (by setting the destination ID of the message to one of the broadcast IDs), the IsatData Pro Gateway Web Service 2 (IGWS2) sends the message to all three ground segments. This is because the devices belonging to the broadcast group could exist on each of the three ground segments. It creates three messages and returns three message IDs rather than just one and the device receives three status message updates (acknowledgments or errors). These acknowledgments are not device acknowledgments, but acknowledgments coming from the ground segment.
+2.4 Device Operation
+2.4.1 Startup
+On every power on the device must first acquire a GPS fix. Once a GPS fix is obtained the device calculates its operating satellite beam. If the device had previously acquired the selected satellite beam, or an adjacent satellite beam, the device should have the to-mobile traffic channel information stored in its non-volatile memory. Once the modem has the to-mobile traffic channel information, it can attempt to acquire the to-mobile traffic channel and listen for incoming messages.
+On power on, the device transmits a modem registration message to notify the gateway that it is active. Modem registration messages are visible to customers on the gateway interface. In addition to reporting that a device is active, the modem registration contains the modem firmware version.
+As modem registration messages are sent on every power on, it is strongly recommended that customers use sleep modes for low power applications. Refer to section 2.4.4
+for details on low power mode.
+2.4.2 Roaming
+Roaming occurs when a device moves from one satellite beam to another.
+The device detects beam switches by monitoring signal quality and comparing the quality with nearby beams. The beams that are compared are based on GPS location which is updated periodically (at least every 8 hours). The device forces a GPS fix, even if the user application has turned off the GPS.
+The device switches to the new beam once the average signal strength of the new overlapping beam exceeds the current signal strength by a margin of at least 1 dB, After the device switches beams, it sends a message to the gateway. The message lets the gateway know which beam to use when sending a to-mobile message. These messages are IsatData Pro system messages and they are not customer billable.
+2.4.3 Device Registration
+All devices transmit a modem registration message when powered on. In addition to the modem registration, the ORBCOMM IsatData Pro device also transmits a terminal registration message. The device registration contains the device's firmware version number and its configuration information. The terminal registration is not sent by the modem.
+The terminal registration message is delivered to the customer and the customer is invoiced for this message.
+
+
+2.4.4 Blockage Behavior
+If a device is blocked so that it cannot receive the satellite signal it attempts to reacquire the signal by proceeding through several stages of recovery. The device makes several attempts to reacquire the current traffic channel and then begins searching for alternate traffic channels and eventually the global beam bulletin board channel.
+If the device is configured for battery operation the recovery algorithm must ensure that excessive power is not consumed in the recovery process. Depending on the configuration, a battery powered device sleeps for intervals that may, after many days, become as large as 24 hours between search attempts.
+After the device comes out of blockage on the next search attempt it will reacquire a channel and resume normal operation. If a more responsive recovery is required, consider triggering the search process using an external trigger.
+2.5 Satellite Messaging
+ORBCOMM�s IsatData Pro satellite communications network uses Inmarsat satellite services providing highly reliable messaging with global coverage for applications on land or sea.
+ORBCOMM satellite service is a two-way, half-duplex, communications system with global coverage. It offers a relatively low data rate, near-real time data transfer and low messaging cost. Satellite devices, like ORBCOMM�s IsatData Pro devices, have omni-directional antennas, are small and have low power consumption. This makes ORBCOMM�s satellite data service ideal for asset tracking and security, fleet management, remote surveillance, telematics, marine and SCADA monitoring and control applications.
+2.5.1 Fragmentation
+Over satellite, both to-mobile and from-mobile messages are split into segments before transmission. Upon reception, all segments are individually acknowledged. If an acknowledgment is not received, the device or gateway retransmits the segment. Message segment retry parameters are specified in Table
+10.
+
+Message segmentation is transparent to the customer. From-mobile message segments are reassembled into messages by the IsatData Pro gateway. Similarly, the device reassembles all message segments from the gateway before delivery to the device application. If a segment cannot be delivered, the message is not delivered, and the customer is not invoiced.
+2.5.2 Latency
+Message latency in the ORBCOMM network is defined between the device and the IsatData Pro gateway (Figure
+6). Delivery times between the IsatData Pro gateway and the SP's application depend on the SP server configuration and Internet performance, with less than 5 seconds being a typical value.
+
+
+Figure 6: Message Latency Measurement
+
+2.5.2.1 To-Mobile Latency
+To-mobile message latencies are determined by several factors: a buffer period during which message segments are assembled into a frame for transmission, the number of other message segments submitted for delivery over the same to-mobile traffic channel, and the size of the message. Larger messages require more segmentation and therefore incur greater delay.
+ORBCOMM has established the following typical latencies for to-mobile messages:
+
+ORBCOMM carefully manages to-mobile satellite capacity to ensure that to-mobile latency service level objectives are met.
+2.5.2.2 From-Mobile Latency
+From-mobile message latency depends on the number of messages in the transmit queue which precede it, the readiness of the device to transmit, and the size of the message and the packet size and encoding rate that is used on the channel. Other factors influence from-mobile latency, but they are beyond the scope of this document.
+ORBCOMM has established the following typical expected latencies for from-mobile messages:
+1Additional time must be added for delivery notification requests.
+
+
+
+2.5.3 Message Order
+IsatData Pro supports the delivery of multiple to-mobile and from-mobile messages to a single device. This feature allows IsatData Pro to increase its overall message throughput. As each to-mobile or from-mobile message can have different sizes and require varying acknowledgment retries, if multiple messages are transmitted simultaneously, IsatData Pro cannot guarantee that messages are delivered in the order they were sent.
+Note: The IsatData Pro gateway may return an error message if more than ten messages are in the queue for a single device.
+If message order is critical to the application, for each device, wait for an acknowledgment notification prior to submitting the next message or add the sequence number into data application content.
+2.5.4 Message Retention
+IsatData Pro allows the retrieval of from-mobile messages for up to five days. Any customer application requiring access to messages older than five days must retrieve the messages when available and store them locally for later retrieval.
+2.5.5 Payload Format
+All messages consist of a length and message payload. Customers are invoiced for all data included in the message payload. Message payload for both to-mobile and from-mobile are shown in Table
+13.
+Table 13: Message Payload Format
+SIN Service identification number is used to differentiate between various types of messages (1 byte) originating or terminating on various pre-defined or user services on the device.
+MIN The message identification number identifies which message within the service the following (1 byte) data represents.
+DATA
+Variable length user data, with format and content defined by the combination of SIN and MIN.
+2.5.5.1 Service Identification Number
+As per Table
+14, the service identification number (SIN) has certain values defined for built-in services provided by the device. ORBCOMM reserves the modem SIN for system defined messages to and from the modem. The modem reserved SIN values cannot be used by ORBCOMM customers. For applications developed on ORBCOMM devices, ORBCOMM reserves the device core and terminal app SINs. The SIN is one byte long, giving a possible 256 numbers (0 to 255).
+1Additional time must be added for delivery notification requests.
+
+
+
+Core services and terminal apps are not available to modem customers.
+2.5.6 Synchronized Transmissions
+It is important to design the IsatData Pro application to avoid synchronizing transmissions to or from multiple devices, as this may result in excessive message segment loss and retransmission due to collisions in the from-mobile traffic channel or excessive queuing delays in the to-mobile traffic channel. For example, devices should not be configured so that they all transmit at the start of an hour. If the application requires synchronized transmissions, please contact ORBCOMM Customer Support to discuss a solution.
+2.6 Cellular Messaging
+ORBCOMM supports connectivity over the cellular network using the cellular protocol [N206 MTWS Cellular Protocol].
+Cellular is a connectivity solution based on Internet Protocol that supports a wide range of applications.
+Cellular coverage typically focuses on populated areas such as cities and major roadways and has the benefit of working indoors. A regional or national cellular service provider generally provides airtime services based on a SIM (Subscriber Identity Module) installed in the device. Solution Providers using satellite-cellular devices need to purchase a SIM card and cellular airtime from a third-party cellular service provider. ORBCOMM provides cellular airtime services, contact your Account Manger for details.
+The MTWS protocol is designed specifically for the exchange of short messages through the Internet over cellular between the IIG gateway (option 1) or SP Back-office server (option 2) and an SP's devices. The following services are offered through the interface:
+�
+To-and from-mobile messages compatible with cellular
+�
+Administrative operations necessary for a device to initiate and maintain a connection with the IsatData Pro
+gateway over the cellular IP connection
+Cellular administrative operations are configurable to suit a variety of SP application needs, and involve interactions between two components:
+�
+The MTWS Protocol
+�
+The underlying 3rd party cellular /IP network and associated protocol(s)
+2.6.1 Cellular Protocol Overview
+Cellular features include:
+Access Control � The device authenticates itself to the IsatData Pro gateway to provide access control. This reduces the likelihood of two or more device being inadvertently mistaken for the same device.
+Low Latency � The protocol is message oriented, with minimal session overhead to present minimal latency to traffic, especially exception-based messages.
+
+
+2.6.2 Cellular Latency
+Latency is the time taken for data packets to pass through the cellular barrier, normally measured as a round-trip time for acknowledged packets/messages.
+When a device first powers-up in, or comes into cellular network coverage, it must establish its credentials with the network and acquire network resources (called a PDP context), which is maintained as it moves from radio tower to radio tower. This can take several seconds but is a one-time delay.
+Following this, there are several factors contributing to the overall latency. These include:
+�
+As a device moves between radio towers, new temporary radio resources must be acquired.
+�
+Low cellular signal quality increases re-transmissions.
+�
+Under high traffic load conditions due to increased voice or data use, delay through the cellular operator
+network may increase.
+�
+Size of the IP packet being sent. Smaller IP packets (e.g., 10-byte poll messages compatible with satellite
+service) incur less delay.
+2.6.3 Cellular Third Party IP Network Services
+ORBCOMM does not directly provide cellular airtime service. ORBCOMM offers a value-add device messaging and management infrastructure with a common interface for communicating with devices using both ORBCOMM satellite service and cellular. This allows for simpler, error free integration of messaging. ORBCOMM�s satellite-cellular devices and IsatData Pro gateway are compatible with Internet-connected cellular networks provided by 3rd party cellular network operators. The 3rd party cellular networks are typically regional, based on country, and interconnect to various other cellular networks worldwide based on roaming agreements.
+Note: Network availability, quality and network roaming charges can very significantly from location to location.
+Effective cellular data throughput varies depending upon the specific local cellular network a device is connected to at the time of transmission. Typically, the 3rd party operator allocates time-slots for cellular data services, with each timeslot providing approximately 12 kbps data rate. Most cellular devices today are designed to use 3 to 5 time-slots simultaneously, generating a data throughput of approximately 36 to 60 kbps. Cellular operators typically allocate timeslots in each base station solely for data use with the remaining timeslots allocated as voice and/or data use on a first come first serve basis, so available data throughput may vary depending on voice usage in a particular area.
+2.6.4 SIM � Subscriber Identification Module
+Each device accessing the cellular network must be equipped with a SIM card, supplied by the third-party cellular network operator. The SIM is the entity associated with billing for cellular airtime.
+Third party cellular providers activate SIM cards and configure them to communicate with servers on the Internet.
+Third party cellular providers may also configure SIM cards to allow or prevent roaming onto other cellular networks.
+Note: Roaming charges may have significant additional cost in some regions. Contact your cellular provider for more details.
+2.6.5 APN � Access Point Name
+Each device requires an Access Point Name (APN), a network resource from which it requests an IP address when registering with the network. The IP address assigned to each device routes IP packets to and from the IsatData Pro gateway. The APN information is provided by the 3rd party cellular network operator that supplies the SIM and may also require a user name and password to be configured on the device.
+
+
+Figure 7: Access Point Name
+
+Each APN enables access to different external data networks depending on the IP address range within the APN routing configurations. There are generally three possible types of external network connection types:
+Private IP Internet Access � The most common access method provided by cellular network operators. This APN dynamically assigns the device a private IP address that is not externally routable. This means an application server cannot initiate a connection to a device to send messages; the device must initiate all communications. These addresses are routed to the Internet via a NAT (Network Address Translation) server. This option has good security but cannot be used to connect with most VPNs (Virtual Private Network). ORBCOMM�s cellular protocol optionally maintains a session between the device and IsatData Pro gateway, enabling the application server to send messages to the device.
+Public IP Internet Access � The APN dynamically assigns the device an externally routable (public) IP address usable during the duration of the cellular connection. While this type of connection allows an application server or the device to initiate communications, it typically involves an added surcharge from the cellular network operator. This option is compatible with VPNs but has poor security if used without a VPN. VPN access is not currently supported by ORBCOMM.
+Dedicated Access � The APN assigns the device a private IP address that is routed over a dedicated connection to a private network. This type of connectivity does not access the Internet and allows the application server or device to initiate communications, but generally requires many devices and involves significant monthly charges. Dedicated access is not currently supported by ORBCOMM.
+2.7 Low Power (LP) Mode
+An IsatData Pro device running firmware and software version 3.0 or higher can be configured to operate in low power (LP) mode to minimize power consumption. In this mode the device spends most of the time in a sleep state and awakens as needed to check for to-mobile messages, to send scheduled from-mobile reports or in response to status changes on its various inputs.
+Low Power (LP) mode was introduced with IsatData Pro software version 3.0. It is recommended that customers requiring low power consumption on their device with modem hardware version 3.0 or higher upgrade to software version 3.0 or higher to take advantage of the LP benefits.
+Note: Devices with modem hardware versions lower than version 3.0 must continue to use low-power mode to reduce power consumption if required.
+
+
+To minimize power consumption LP mode must be enabled and the device's wake-up period must be set. Both can either be done on the device itself or over-the-air. The device can be configured to operate with wake-up periods as long as 1 hour or as short as 30 seconds. The wake-up period should be set to match requirements for to-mobile message latency and power conservation.
+Figure
+8
+shows the behavior of the network and device in LP mode. Upon wake-up the device receives any waiting to-mobile messages and remains awake until the processing of these messages is complete.
+Figure 8: Network Activity in Low Power Mode
+
+message is transmitted. If the network is congested, packets queued for devices which wake-up to receive to-mobile messages in that subframe may not all fit in a single subframe. This causes an overflow flag to be set notifying the devices that there may be packets for them transmitted 15 seconds later.
+If the device receives a packet in the wake-up subframe it remains awake until it has successfully received and acknowledged all packets of all messages or times-out if reception is interrupted.
+If the device does not receive a packet in the wake-up subframe and there is no overflow flag set, the device immediately returns to sleep until the start of the next wake-up period or earlier if responding to status changes or sending a from-mobile report. The scheduling of from-mobile reports is not affected by LP.
+The LP wake-up period can be configured locally either by an application within the device or a connected device or remotely by a customer application that sends a Set Wake-up Interval message to the IsatData Pro gateway.To change the wake-up interval or to disable LP mode the mobile must be able to communicate with the gateway regardless of which end triggers the wake-up change. The wake-up interval cannot be changed while the mobile is in blockage.
+
+
+3 GATEWAY
+The IsatData Pro gateway is located between the Solution Provider's (SP) servers and the satellite network. It is responsible for converting and relaying message traffic to appropriate destinations based on device and gateway account relationships established through the ORBCOMM operations administrative interfaces.
+A gateway account is a logical connection from an SP�s server. Each gateway account has identification and authentication information, similar in many ways to an email account.
+3.1 Functionality
+The IsatData Pro gateway provides message handling features that:
+�
+Deliver and distribute messages to-and from-mobile on the satellite network and optionally on a cellular network
+�
+Enable internet-connected SP servers to communicate with their devices through their gateway accounts
+�
+Manage device populations and control communications with them, including the ability to divide devices into groups for control and billing convenience
+�
+Enforce policies for access to and use of the network, simultaneous connection limits and traffic volume limits
+3.2 Network Access
+ORBCOMM�s network is connected to the Internet by diverse paths to ensure that at least one gateway address will be available in the event of Internet or router faults (Figure
+9).
+Figure 9: IsatData Pro Gateway
+
+ORBCOMM recommends customers configure gateway accounts to occasionally refresh their IP address through DNS to ensure the address remains valid.
+3.3 IsatData Pro Gateway Web Service 2
+IsatData Pro Gateway Web Service 2 (IGWS2) leverages the web service protocols and XML to abstract IsatData Pro messaging.
+The IsatData Pro gateway and the IGWS2 are described in [N210 IGWS 2 User Guide].
+
+
+
+Most firewalls allow HTTP access to external addresses for purposes of accessing websites. IGWS2 can transfer multiple messages and notifications within a single transaction.
+IGWS2 is specified in a standard WSDL file, available directly from the IsatData Pro gateway or through the Customer Support website.
+3.4 Gateway Account
+A gateway account is a logical mailbox with an account ID and password associated with an SP for sending and retrieving messages to-and from-mobiles. Gateway account IDs are fixed, automatically generated by ORBCOMM. Gateway passwords are automatically generated and sent to the user.
+Gateway accounts hold from-mobile messages for retrieval by the SP server application, and to-mobile messages for transmission through the LES facilities over the satellite.
+
+
+4 DEVICES
+An ORBCOMM device is identified by its mobile ID of the physical device operating on the ORBCOMM network. Each device may be associated with one and only one IsatData Pro gateway account [N210 IGWS 2 User Guide].
+Contact your Account Manager or refer to the ORBCOMM product catalog for a complete list of all IsatData Pro supported devices.
+Device hardware guides are generally available for each product.
+4.1 Pass-Through Mode
+Some devices can be configured for pass-through mode. In pass-through mode, the modem's AT command interface connects to the device's RS-232 port. Pass-through mode allows the user to control the device with AT commands. The advantage of pass-through mode, versus using a modem, is that you do not need to design a power supply or an environmental package. It also simplifies the device certification process.
+4.2 Software Service
+Customers may define their own services using ORBCOMM
+Developer
+Studio
+to create messages containing whatever data suits their application.
+IsatData Pro devices support many predefined messages for configuration, status, and reporting purposes.
+
+
+5 APPLICATION DEVELOPER TOOLS
+ORBCOMM's IsatData Pro infrastructure for application development gives the Solution Provider (SP) unprecedented control of ORBCOMM device behavior and messaging through standard programming languages and interfaces, both in the device and on the network.
+Included in the ORBCOMM Developer Toolkit are several useful applications designed to help SP�s develop and prototype their applications� interface to the ORBCOMM network and devices.
+Console
+Console interfaces with the device over a serial link and provides a command line interface for configuration and troubleshooting purposes. One of Console�s primary uses is to upload the target files for user services created using Developer Studio.
+Developer Studio
+Developer Studio allows the creation and modification of user services: their behavior, properties, and message definitions.
+Geofence Designer
+Geofence Designer allows the creation and modification of geographical boundaries for purposes of route adherence or position-based event messaging
+Log Viewer
+Log Viewer allows you to view log files retrieved over a serial connection with Console or retrieved over-the-air with Messenger.
+Message Editor
+Message Editor is useful for prototyping messages to be sent or received. It generates sample JSON or XML text that is sent to or received from the IsatData Pro gateway.
+Messenger
+Messenger interfaces with the IsatData Pro gateway to allow the user to send and receive messages.
+Modem Simulator
+Modem Simulator interfaces with the Desktop Terminal over a serial connection. It provides an emulation of the modem that allows test message to be sent and received and GPS information to be simulated. Modem Simulator also emulates the IsatData Pro gateway to allow back-end applications to be developed. Modem Simulator also emulates the device to allow operation without a desktop terminal.
+Scope
+Scope interfaces with the modem over a serial link for troubleshooting purposes. You can retrieve the modem's GPS and status information, view to-mobile and send from-mobile messages.
+Solution Studio
+Solution Studio combines multiple packages into a single package that contains everything needed to fully configure a device when deploying to production. A merged message definition file can also be exported.
+Terminal Installer
+Terminal Installer provides a simple way to configure or upgrade devices using the serial port. Terminal Installer is intended for use by field personnel who do not have an extensive knowledge of device or network services.
+Terminal Simulator
+
+
+Terminal Simulator provides a way to run terminal packages without the need for any hardware. Used with Modem Simulator, it allows users to jump start their application development by simulating an entire solution using software only.
+
+The tool relationships are best described by the types of files they produce and use.
+
+
+
+Tool Project Package Message Definition
+Console -Input .Developer Studio Input Output Output Geofence Designer -Output .Log Viewer --Input Message Editor --Input Messenger --Input Modem Simulator --Input Scope --.Solution Studio -Input and Output Output Terminal Installer -Input .Terminal Simulator
+-Input .

@@ -1,0 +1,2114 @@
+PIN Name Description Type Storage Default Value Class
+1 sim1PIN The Personal Identification Number String Config �� (PIN) to authenticate the first SIM. Must Maximum � 8 be a 4 to 8 character alphanumeric value. This property is ignored if no PIN is required.
+2 sim1APN The Access Point Name (APN) used to String Config �orbcomm� connect to an IP network using the first Maximum � 100 SIM.
+
+3 sim1Username The username required to connect to String Config �� an IP network using the first SIM (if Maximum � 32 any).
+
+4 sim1Password The password required to connect to an String Config "" IP network using the first SIM (if any). Maximum � 32 5 sim1DNS1 The first DNS address used on the first String
+
+
+
+Config
+"" SIM. Leaving this string empty uses the
+Maximum � 15 dynamically assigned IP address, if any.
+
+
+
+1sim1PIN (PIN 1), sim2PIN (PIN 8), and sim3PIN (PIN 51) are used to unlock the SIM on startup and on each subsequent SIM switch, they are used only once, without retries.
+
+
+
+
+
+
+
+
+PIN Name Description Type Storage Default Value Class
+51 ��
+52 ��
+53 ��
+54 ��
+55 ��
+56 ��
+57 1
+
+60
+targetMode This property controls whether the Enum Config
+4 module operates on 2G, 3G and /or LTE.
+0� 2G 1 � Both 1 2� 3G 3 � LTE 4 � 2G_3G_LTE 5 � 2G_LTE 6 � 3G_LTE
+1Both implies 2G and 3G.
+
+
+
+
+
+
+PIN Name Description Type Storage Default Value Class
+61 currentMode Indicates the mode the module is Volatile None currently operating in. Only valid for 3G modules.
+62 tcpRetryTimeout This property controls how long (in Config 3 seconds) the TCP stack waits for an acknowledgment before retransmitting a packet.
+63 dbgLevel Controls the generation of extra Unsigned Config 0
+
+debugging information. 0 � Extra debugging off All other values extra debugging on
+
+
+64 sim1Present Reports whether a SIM card is currently Boolean Volatile false present in slot 1.
+
+
+
+
+65 sim2Present Reports whether a SIM card is currently Boolean Volatile false present in slot 2.
+
+
+
+
+66 sim3Present Reports whether a SIM card is currently Boolean Volatile false present in slot 3 (external).
+
+
+
+
+67-82
+Reserved ----Unsigned Minimum � 1 Maximum � 60
+
+5.15.1.1 SIM Selection
+The ST 9100 has three SIMs available; two internal (eSIM) and one external that uses the microSIM format.
+The cellular service provides two mechanisms to allow user services to control which SIM card should be used at any given point in time. The first is the simSwitch() function. When given an argument (1 or 2 or 3), this function switches to the specified SIM; otherwise it simply switches to the currently inactive SIM. The second mechanism is via the activeSim property (SIM 29, PIN 14). Writing to this property causes the indicated SIM card to be used. Reading this property also allows the currently active SIM to be checked. Saving the property value allows a user to see the default SIM that comes up as active after a framework restart.
+The terminal SIM hardware allows you to physically detect the presence of SIM cards in the slots. The simXPresent properties contain the information and can be consulted prior to attempting a switch.
+Finally, the NETWORK_STATUS
+event allows a user service to receive instant notification when the network status changes, so that it can switch SIM cards in a timely manner if needed.
+
+
+5.15.1.2 Network Lists
+The terminal can maintain up to four lists to help determine which networks it can and cannot use; two for each SIM. The first type is the white list, which explicitly specifies all the approved networks. The second type is the black list, which specifies networks on which roaming must not be allowed.
+The files are stored in /data/svc/cell/, and are named SIM1WhiteList.lua, SIM1BlackList.lua, SIM2WhiteList.lua, SIM2BlackList.lua, SIM3WhiteList.lua, and SIM3BlackList.lua. They contain Lua code, with one entry per line, where each entry has the format shown below.
+ListEntry(mcc, mnc)
+Anytime a change of network is detected by the module, the following checks take place:
+�
+If a white list is present, the network is allowed only if it is present in the list
+�
+If a white list is not present, but a black list is, the network is allowed only if it is not present in the list
+�
+If neither list if present, then the network is allowed
+If the network is not allowed, then no transmit of receive operations are performed, until the module switches to another network.
+5.15.1.3 RSSI
+To convert from the rssi property value to dBm, the formula is dBm = -113 + 2 * value. For example, an rssi property value of 15 translates to -113 + 2 * 15 = -83 dBm.
+
+5.15.2 To-Mobile Messages
+The following messages allow fairly low level access to the modem. Refer to [T404] for additional details.
+
+
+
+5.15.2.1 listOperation (SIN 29, MIN 1) -Deprecated
+Use listOperation2.
+
+Comments
+Selects which list to modify.
+Select the operation to perform.
+The Mobile Country Code of the entry to add/delete.
+The Mobile Network Code of the entry to add/delete. A value of 0 means it matches all MNCs for the specified MCC.
+5.15.2.2 getLists (SIN 29, MIN 2)
+This message does not contain any fields.
+5.15.2.3 listOperation2 (SIN 29, MIN 5)
+
+Name Type Optional Size Comments
+sim Enum The SIM to which the operation applies. 0 � SIM1 1 � SIM2 2 � SIM3 3 � Reserved
+list Enum Selects which list to modify. 0 � WhiteList 1 � BlackList
+operation Enum Select the operation to perform. 0 � Add 1 � Delete
+mcc Unsigned The Mobile Country Code of the entry to add/delete. mnc Unsigned No 10 bits
+The Mobile Network Code of the entry to add/delete. A value of 0 means it matches all MNCs for the specified MCC.
+5.15.3 From-Mobile Messages 5.15.3.1 operationResult (SIN 29, MIN 1)
+
+
+
+Name Type
+
+Comments list Selects which list to modify
+Select the operation to perform
+mcc The Mobile Country Code of the entry to add/delete mnc The Mobile Network Code of the entry to add/delete success Boolean No n/a
+Whether the operation was successful or not
+
+
+
+
+5.15.3.2 lists (SIN 29, MIN 2)
+
+5.15.3.3 operationResult2 (SIN 29, MIN 5) 5.15.4 Constants
+
+
+
+
+The cell service defines the following constants.
+5.15.4.1 DataFormat
+Description
+This table contains a mapping of the SMS data format values to their numerical value:
+Ascii  0
+AsciiHex  1
+Syntax
+
+svc.cell.DataFormat
+5.15.4.2 DataFormatStr
+Description
+This table contains a mapping of the SMS data format values to their string representation:
+0 Ascii 1 AsciiHex
+Syntax
+svc.cell.DataFormatStr
+5.15.4.3 LinkStability
+Description
+This table contains a mapping of the Link Stability values to their numerical value:
+Normal 0 EarlyWarning 1 Interference 2 Jamming 3
+Syntax
+svc.cell.LinkStability
+
+
+5.15.4.4 LinkStabilityStr
+Description
+This table contains a mapping of the Link Stability numerical values to their string representation:
+0  Normal
+1  EarlyWarning
+2  Interference
+3  Jamming
+Syntax
+
+svc.cell.LinkStabilityStr
+5.15.4.5 ListOp
+Description
+This table maps list operations to their numerical values. It has the following fields:
+Add 0 Delete 1
+Syntax
+svc.cell.ListOp
+5.15.4.6 ListOpStr
+Description
+This table does the reverse of ListOp. It maps numerical values to the string value. It has the following fields:
+0 Add 1 Delete
+Syntax
+svc.cell.ListOpStr
+5.15.4.7 ListType
+Description
+This table maps list types to their numerical values. It has the following fields:
+WhiteList 0 BlackList 1
+Syntax
+svc.cell.ListType
+
+
+5.15.4.8 ListTypeStr
+Description
+This table does the reverse of ListType. It maps numerical values to the string value. It has the following fields:
+0  WhiteList
+1  BlackList
+Syntax
+
+svc.cell.ListTypeStr
+5.15.4.9 NetDescription
+This table contains a mapping of the Link Stability numerical values to their string representation:
+0 Normal 1 EarlyWarning 2 Interference 3 Jamming
+Syntax
+svc.cell.LinkStabilityStr
+5.15.4.10 Status
+Description
+This table contains a mapping of the NetStatus values to their numerical value:
+Unknown 0 NotRegistered 1 RegistrationDenied 2 Home 3 Roaming 4
+Syntax
+svc.cell.NetStatus
+5.15.4.11 NetStatusStr
+Description
+This table contains a mapping of the NetStatus numerical values to their string representation:
+0
+Unknown
+1
+NotRegistered
+2
+RegistrationDenied
+
+
+3  Home
+4  Roaming
+Syntax
+
+svc.cell.NetStatusStr
+5.15.4.12 SimStatus
+Description
+This table contains a mapping of the SimStatus values to their numerical value:
+Unknown 0 Missing 1 Error 2 Inserted 3
+Syntax
+svc.cell.SimStatus
+5.15.4.13 SimStatusStr
+Description
+This table contains a mapping of the SimStatus numerical values to their string representation:
+0 Unknown 1 Missing 2 Error 3 Inserted
+Syntax
+svc.cell.SimStatusStr
+5.15.4.14 WhichList
+Description
+This table contains a mapping of the whichList values to their numerical value:
+None 0 WhiteList 1 BlackList 2
+Syntax
+svc.cell.WhichList
+
+
+5.15.4.15 WhichListStr
+Description
+This table contains a mapping of the whichList numerical values to their string representation:
+0  None
+1  WhiteList
+2  BlackList
+Syntax
+
+svc.cell.WhichListStr
+5.15.5 Functions
+5.15.5.1 Get White/Black List
+Description
+Retrieves the contents of the white or black list for a particular SIM.
+Syntax
+svc.cell.getList(sim, type)
+Parameters
+sim The SIM number (1, 2, or 3) type A number or string indicating the type of list (see ListType
+and ListTypeStr)
+Blocking
+No
+Returns
+table An array of list entries, with each entry a table that contains two fields, or nil in the case of error. mcc -The Mobile Country Code mnc -The Mobile Network Code
+string An error message or nil
+5.15.5.2 simSwitch()
+Description
+Switches the currently active SIM to the specified on.
+Syntax
+svc.cell.simSwitch(which)
+
+
+Parameters which  The SIM card to switch to 1 2, or 3 selects that SIM, and nil switches to the currently inactive one
+Blocking No
+Returns boolean  false if which is not 1, 2, 3, or nil; true otherwise
+
+5.15.5.3 Send SMS Message
+Description
+Send an SMS message.
+Syntax
+svc.cell.sendSmsMsg(destAddr, data, dataFormat)
+Parameters
+destAddr A string containing the destination address (typically a telephone number) data A string containing the data dataFormat (optional) A number indicating the data format (section 5.15.4.1). DataFormat, ASCII is assumed if
+absent.
+Blocking
+No
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+5.15.5.4 White/Black List Operation
+Description
+Adds or removes a network from the white or black list for a particular SIM.
+Syntax
+svc.cell.listOp(sim, type, op, mcc, mnc)
+Parameters
+sim The SIM number (1, 2, or 3) type A number or string indicating the type of list (see ListType
+and ListTypeStr)
+
+
+op A number or string indicating the operation (see ListOp
+and ) mcc The Mobile Country Code. mnc The Mobile Network Code. A value of 0 means it matches all MNC�s for the specified MCC.
+Blocking
+No
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+5.15.6 Posted Events
+5.15.6.1 Antenna Cut
+Description
+This event applies to cellular terminals.
+Source
+svc.cell (cell service table)
+Event
+�ANTENNA_CUT� (string)
+Arguments
+boolean Indicates whether or not an antenna cut has been detected
+5.15.6.2 APN Connected
+Description
+Posted when the APNConnected property (PIN 18) value changes.
+Source
+svc.cell (cell service table)
+Event
+�APN_CONNECTED� (string)
+Arguments
+boolean Whether the module is currently connected to the APN
+
+
+5.15.6.3 IP Ready
+Description
+This event is posted when the IP readiness of the module changed. It is able to carry out IP operations when the argument value is true.
+Source
+svc.cell (cell service table)
+Event
+�IP_READY� (string)
+Arguments
+boolean Whether or not the module is able to carry out IP operations
+5.15.6.4 Link Status
+Description
+Posted when the current link status changes.
+Source
+svc.cell (cell service table)
+Event
+�LINK_STATUS� (string)
+Arguments
+table  A table containing the following fields:
+status  The
+current
+link
+status,
+as
+defined
+by
+linkStability
+(SIN
+29,
+PIN
+33)
+
+mode  2G (GPRS) if jamming as detected on 2G channels, 3G (HSPA) if jamming was detected on 3G channels, or nil if jamming is no longer present
+
+5.15.6.5 Network Status
+Description
+Posted when the current network status changes.
+Source
+svc.cell (cell service table)
+Event
+�NETWORK_STATUS� (string)
+
+
+Arguments
+table The message, which is a table containing the following fields: activeSim The currently active SIM (1, 2, or 3) oldStatus The previous network status, which is one of:
+svc.cell.NetStatus.Unknown(0) svc.cell.NetStatus.NotRegistered(1) svc.cell.NetStatus.RegistrationDenied(2) svc.cell.NetStatus.Home(3) svc.cell.NetStatus.Roaming(4)
+newStatus The current network status oldMcc The previous Mobile Country Code newMcc The current Mobile Country Code oldMnc The previous Mobile Network Code newMnc The current Mobile Network Code networkAllowed A Boolean to indicate whether the current is allowed or not APNConnected A Boolean to indicate whether the terminal is connected to the APN or not whichList Indicates which list caused the network to be allowed or disallowed, which
+is one of: svc.cell.WhichList.None (0) svc.cell.WhichList.WhiteList (1) svc.cell.WhichList.BlackList (2)
+5.15.6.6 Power Status
+Description
+Posted when the power to the module is turned on or off. When the power is off, the simStatus and networkStatus properties are reset to Unknown (0).
+Source
+svc.cell (cell service table)
+Event
+�POWER_STATUS� (string)
+Arguments
+boolean Indicates whether or not the power is on
+5.15.6.7 SIM Presence
+Description
+One of these events is posted when the sim1Present, sim2Present, or sim3Present property changes value.
+
+
+Source
+svc.cell (cell service table)
+Event
+�SIM1_PRESENT� Or  (string)
+�SIM2_PRESENT� Or  (string)
+�SIM3_PRESENT�  (string)
+Arguments
+
+boolean Indicates whether the corresponding SIM is currently present
+5.15.6.8 SIM Status
+Description
+Posted when the SIM card status changes.
+Source
+svc.cell (cell service table)
+Event
+�SIM_STATUS� (string)
+Arguments
+number The current SIM status, which is one of: svc.cell.SimStatus.Unknown(0) svc.cell.SimStatus.Missing(1) svc.cell.SimStatus.Error(2) svc.cell.SimStatus.Inserted(3)
+5.15.6.9 SMS Message Received
+Description
+This event is posted when an SMS message is received.
+A concatenated SMS message received by the terminal is presented as multiple individual received SMS messages.
+Source
+svc.cell (cell service table)
+
+
+Event
+�SMS_MESSAGE_RXD� (string)
+Arguments
+table A table containing the following fields: origAddr A string containing the originator address (telephone number) smscAddr A string containing the SMSC address dcs A number representing the data coding scheme reported by the cellular
+modem, as defined by 3G TS 23.038: 0 -3 � �Default alphabet� (7 bit) 4 � �8 bit data� 8 � �UCS2� (16 bit)
+acsiiData An ASCII string representation of the received message data acsiiHexData An ASCII-Hex representation of the received message data rawHexData A Hex representation of the received message data corresponding to dcs scTs A string containing the SMSC timestamp
+When dcs indicates 16 bit data, the MS bytes (with value 0x00) will be removed from acsiiHexData and asciiData, and characters with MS bytes with value other than 0x00 will be converted to �?�. For example,. if rawHexData = �00480069263A00310032�, then acsiiHexData will be �48693F3132� acsiiData will be �Hi?12�.
+5.16 Reserved (SIN 30)
+5.17 Reserved (SIN 31)
+5.18 Campaign (SIN 32)
+The campaign service is a mandatory service that must be running to support software over-the-air updates. The Software Over-the-Air (SOTA) feature uses the campaign service to receive and apply software or firmware updates. For more information on SOTA and campaigns see [N207], which explains terms such as activate, commit, and revert.
+Note: When updating a user service, the svclist.lua file is updated in its entirety. This means that you cannot update a single user service. The update package includes all user services.
+Note: This service can only be enabled and disabled. All associated properties are reserved for ORBCOMM use only.
+5.18.1 Terminal Campaign States
+Individual terminals progress through a series of states.
+
+
+Figure 2: Terminal Campaign States
+
+
+
+Table
+7
+summarizes the different sates that a campaign can be in at any given moment, as well as the supported state transitions and their triggers.
+Table 7: Terminal Campaign States Description
+
+From State To State Trigger
+N/A Receive a start message or an event to start a campaign for a previously nonexistent campaign.
+Starting The current protocol revision is sufficient to carry out the request, and file system space is successfully reserved.
+Starting The current protocol revision is not sufficient to carry out the request, or file system space is not
+successfully reserved, or upon receiving a stop message or command.
+Loading All fragments received, and file passes integrity validation.
+Loading All fragments received, and file does not pass integrity validation, or upon receiving a stop
+message or command.
+Loading A pause operation message is received.
+Paused A resume operation message is received.
+Paused An FTP/HTTP transfer that was active prior to being paused completes, and the file passes validation.
+Validated Immediately after file is completed if the activate flag in the request was set to true, or upon receiving an activation message or command, and the activation process completes successfully.
+Validated Immediately after file is completed if the activate flag in the request was set to true, or upon receiving an activation message or command, and the activation process does not complete
+successfully
+Activated Upon receiving a revert message or command.
+Activated
+Committed
+Upon receiving a commit message or command
+
+
+5.18.2 Properties
+
+5.18.3 To-Mobile Messages
+There are no to-mobile messages defined for this service.
+5.18.4 From-Mobile Messages
+There are no from-mobile messages defined for this service.
+
+
+5.18.5 Functions
+This service does not export any functions.
+5.18.6 Posted Events
+This service does not generate any events.
+5.19 Internet Protocol (ip) (SIN 33)
+The ip service allows terminals to take advantage of protocols and their associated features available on the internet for the development of IP enabled Lua applications. This service is mandatory on cellular services and cannot be disabled.
+The protocols for this service include FTP, TCP, HTTP and UDP. Internet protocol support is available over both satellite IsatData Pro transport and Cellular/GSM. Basic SMTP support over satellite is also available.
+MTWS protocol is a web service interface using a JSON encoding and REST architectural style. The MTWS protocol is defined in [N206].
+5.19.1 Supported Functionality
+The ip service supports various functionalities with some requirements as specified in this section.
+5.19.1.1 FTP
+The ip service supports FTP functionality with the following requirements:
+�
+A remote URL indicating the server
+�
+A path
+�
+A file name
+�
+A successfully allocated channel to store and receive FTP files
+The terminal acts as an FTP client supporting PUT, GET, DIR, and DEL operations to send and receive files to-and from a target server. Over the IsatData Pro network FTP data is sequenced through the channel infrastructure subsequently. A successfully allocated channel is required to execute FTP service commands.
+The GPRS terminals do not support 0-byte FTP data. Any attempt to send an empty file is ignored.
+5.19.1.2 HTTP
+Available on satellite-cellular terminals.
+The ip service supports HTTP functionality with the following requirements:
+�
+A remote URL indicating the server
+�
+A path
+�
+A port
+�
+A successfully allocated channel
+The terminal acts as an HTTP client supporting standard operations to send and receive data to-and from a target server.
+
+
+5.19.1.3 SMTP
+The ip service provides properties, functions and events to connect to SMTP servers or send and receive SMTP gateway email. In the case of M2M SMTP, each terminal has its own email address and does not require any authentication because each message originates from a terminal unique email address, or from an optional local email within the terminal.
+Two types of native email channels are available:
+�
+M2M email allows the user to allocate header information for multiple email messages without having to resend that information with each email message.
+�
+An SMTP channel replicates true SMTP server functionality (from address, to address and body). Additionally, any SMTP compliant header information can be supplied in the header portion of the message. All message formatting is accomplished within the terminal for from-mobile messages and is passed on from the gateway for to-mobile messages.
+A successfully allocated channel is required to send and receive email messages via the SMTP channel. M2M and SMTP client functionality is used to send from-mobile messages using a terminal API. SMTP server functionality supported at the gateway is used to receive to-mobile traffic and forward it to the terminal. SMTP messages are limited to a single to-mobile message (about 10 KB). From-mobile messages are split into multiple messages if the data size exceeds 6.4 KB.
+5.19.1.4 TCP
+TCP streams functionality is supported by the ip service however it requires a remote IP address, port and a successfully allocated channel. The terminal acts as a TCP client to send and receive from-and to-mobile data with a designated connection end point. Over the IsatData Pro network TCP packets are sequenced through the channel infrastructure subsequently.
+5.19.1.5 UDP
+The ip service supports UDP packet send-and-receive functionality however, it requires a remote IP address, port and successfully allocated channel. The terminal acts as a UDP client to send from-mobile packets and as a UDP listener to receive to-mobile packets. UDP packets are limited to the size supported by the IP infrastructure, typically 548 bytes.
+5.19.2 Cellular Modules
+Available on cellular or satellite-cellular terminals.
+When routing channels over cellular, there are limits on the number of allocated channels for each channel type.
+Table 8: Cellular Channel Limits
+
+Each variant of the terminal supports different functionality. The table below includes what is available on each. The GPRS terminals do not support 0 byte FTP data. Any attempt to send an empty file is ignored.
+
+
+
+5.19.3 Channel Modes of Operation
+Two channel modes of operation are available: session and transaction.
+
+5.19.3.1 Session
+When TCP and UDP channels have the timeout parameter value set to 0, they operate in session mode. In this mode, the channel remains open until explicitly closed. In the intervening time, data can be sent over the channel at any time and is sent immediately.
+5.19.3.2 Transaction
+For TCP and UDP channels that have the timeout parameter value set to something other than 0, and for all other channel types, the channel operates in transaction mode. The channel is automatically closed when the specified amount of time has elapsed without any data being sent or received (TCP and UDP channels), or the operation has completed (all other channel types). An event is posted to the handle when this final close occurs.
+As a short-cut for read-only operations (FTP GET and HTTP GET) the transaction begins as soon as the open() method is called. Calling the close() method is not necessary.
+5.19.4 Secure Connections
+The ip service supports secure connections via SSL or TLS, within the constraints listed in section 1.1.1.2. Self-signed certificates on any of the servers are usable; however, in order for them to work, the certificate must contain the host name or IP address of the server in either the Common Name (CN) field, or the Subject Alternative Name (SAN) extended field.
+5.19.5 Gateway Synchronization
+The ip service must synchronize with the IsatData Pro gateway when the LSF starts up. This causes both a from-mobile and a to-mobile message to be sent. The ip service can be disabled to avoid these messages.
+1Explicit -The ORBCOMM server uses the same port number and the client explicitly needs to request a secure channel.
+
+
+5.19.6 Compression
+The terminal indicates its ability to support compression to the gateway, and optionally uses compressed data messages if resources are available. The gateway uses compression if supported by the terminal.
+An allocated channel supports both compressed and uncompressed messages if the terminal supports compression. A terminal that does not support compression does not see the compressed message types.
+If compression is supported, a terminal only sends a compressed message if the size of the compressed data is less than the uncompressed size and if the compression ratio meets the minimum configured parameter. Only the data field in a satellite message is compressed. In the event that data submitted exceeds 6,000 bytes, it is split into multiple satellite messages and each message data field is then compressed.
+5.19.7 Constants
+5.19.7.1 TRANSPORT_IP
+Description
+This is the transport number used in the message service to have messages go over IP transports (either MTWS or MTBP). It has the value 2.
+Syntax
+svc.ip.TRANSPORT_IP
+5.19.7.2 Channel
+Description
+This table maps channel types to their numerical value. It has the following fields:
+TCP  0
+UDP  1
+HTTP  2
+FTP  3
+NSMTP  4
+SMTP  5
+Syntax
+
+svc.ip.Channel
+5.19.7.3 ChannelStr
+Description
+This table does the reverse of Channel. It maps numerical values to channel types. It has the following indices:
+0 TCP 1 UDP
+
+
+2 3 4 5  HTTP FTP NSMTP SMTP
+Syntax
+
+svc.ip.ChannelStr
+5.19.7.4 FtpOp
+Description
+This table maps FTP operation types to their numerical values. It has the following fields:
+GET 0 PUT 1 DIR 2 DEL 3
+Syntax
+svc.ip.FtpOp
+5.19.7.5 FtpOpStr
+Description
+This table does the reverse of FtpOp. It maps numerical values to FTP operation types. It has the following indices:
+0 GET 1 PUT 2 DIR 3 DEL
+Syntax
+svc.ip.FtpOpStr
+5.19.7.6 HttpOp
+Description
+Available on satellite-cellular terminals. This table maps HTTP operation types to their numerical values. It has the following fields:
+GET 0 POST 1
+Syntax
+svc.ip.HttpOp
+
+
+5.19.7.7 HttpOpStr
+Description
+Available on satellite-cellular terminals. This table does the reverse of HttpOp. It maps numerical values to HTTP operation types. It has the following indices:
+0  GET
+1  POST
+Syntax
+
+svc.ip.HttpOpStr
+5.19.7.8 Routing
+Description
+Some values are only available on cellular or satellite-cellular terminals.
+This table maps routing types to their numerical values. It has the following fields:
+CELL_ONLY 0 CELL_SAT 1 SAT_ONLY 2
+The CELL_ONLY and SAT_ONLY value indicates that data is only exchanged using the specified communication channel. When the CELL_SAT value is used, the service determines that communication channel to use at the time the channel connection is actually established: when the open() method is called for session mode TCP or UDP channels (timeout = 0), and when the close() method is called for all other channel types. Cellular coverage is used whenever possible. Note that when the selection has been made, no retry or automatic switchover occurs. When the decision has been made to establish a connection over satellite, each message sent has its options set to only use the satellite transport.
+Note: If an application needs more specific control over how things are performed, two channels can always be allocated: one with CELL_ONLY, the other with SAT_ONLY. Then the decision over which one to use is completely under its control, as are any recovery/switchover actions in case of a failure.
+Note: Any calls to this function with routing set to 0 or 1 results in an error code.
+Syntax
+svc.ip.Routing
+5.19.7.9 RoutingStr
+Description
+This table does the reverse of Routing. It maps numerical values to routing types. It has the following indices:
+0
+CELL_ONLY
+1
+CELL_SAT
+
+
+2
+SAT_ONLY
+Syntax
+svc.ip.RoutingStr
+5.19.8 Properties
+This service defines the properties dependent on the mode in which the terminal is acting.
+5.19.8.1 M2M SMTP
+These informational properties apply to the IsatData Pro satellite native symmetrical M2M SMTP channel.
+
+5.19.8.2 Satellite Properties
+These configuration parameters apply when enabling IP service features over the IsatData Pro satellite network.
+
+5.19.8.3 Messaging Properties
+Not available on all terminals. The following table summarizes when a change to any of these properties takes effect.
+
+1�� signifies an empty string.
+
+
+
+PIN Name Description Type Storage Default Value Class
+5 Volatile false 6 Volatile false 46 Volatile false
+47 Config true
+49 Config false
+50 Config ""
+51 Config 8080 52 server2 The name, or IP address, of an alternate server to String Config
+
+"" connect to for sending/retrieving messages.
+Max. � 64 Ignored if PIN 49 is set to true.
+
+
+
+5.19.9 To-Mobile Messages
+There are no to-mobile messages defined for this service.
+
+
+5.19.10 From-Mobile Messages
+There are no from-mobile messages defined for this service.
+5.19.11 Functions
+The ip service functions hide the complexity of dealing with the cell/GSM modem and IsatData Pro satellite messaging that supports IP connectivity and traffic.
+5.19.11.1 channelAllocate()
+Description
+Associates the requested type and parameters with a newly allocated channel number. The following subsections describe the parameters associated with each value of the type parameter.
+There can only be up to eight channels allocated at any one time. The dispose() method must be called on the returned handle for it to be freed properly; simply setting it to nil does not free the channel object.
+If the routing value is not provided, the following default values are assumed:
+�
+Routing.SAT_ONLY if the type is Channel.NSMTP, or the terminal does not have a cellular module
+�
+Routing.CELL_ONLY in all other cases
+Note: Any calls to this function with routing set to Routing.0 or 1 results in an error.
+Note: Any calls to this function with routing set to Routing.CELL_ONLY or Routing.CELL_SAT for an NSMTP channel result in an error.
+Note: Any calls to this function with routing set to Routing.SAT_ONLY or Routing.CELL_SAT for an HTTP channel result in an error.
+Syntax
+svc.ip.channelAllocate(type, <table of type-related parameters>, routing)
+Parameters
+type The channel type as defined by Channel
+parameters The parameters related to the channel type routing The routing type as defined by Routing
+
+Blocking
+No
+Returns
+channel A handle for the channel, or nil if the channel cannot be allocated string An error description in the failure case
+
+
+5.19.11.1.1 FTP
+Description
+This function allocates FTP parameters with a channel context. This channel is used to send or receive a file to or from the specified remote host and path.
+Syntax
+svc.ip.channelAllocate (svc.ip.Channel.FTP, fileSpec, routing)
+Parameters
+type fileSpec routing  The
+channel
+type
+as
+defined
+by
+Channel(svc.ip.Channel.FTP)
+A
+table
+containing
+the
+information
+about
+the
+FTP
+source/destination:
+operation
+FtpOp
+host
+Destination
+host
+name
+or
+IP
+address
+(string)
+port
+Destination
+port
+number
+(unsigned;
+optional)
+login
+Account
+login
+(string;
+optional)
+password
+Account
+password
+(string;
+optional)
+useSSL
+Whether
+to
+use
+encrypted
+communication
+(Boolean)
+remotePath
+The
+file/directory
+path
+on
+the
+server
+The
+routing
+type,
+as
+defined
+by
+Routing
+
+Blocking
+No
+Returns
+channel  A handle to use for sending or receiving a file to or from the given host, or nil if the channel cannot be allocated
+string  An error description of the failure case
+
+5.19.11.1.2 HTTP
+Description
+Allocates HTTP parameters with a channel context. This channel is used to perform a GET or POST operation on a web server.
+Note: HTTP channels can only be used over cellular. Calling this function with routing set to Routing.SAT_ONLY or Routing.CELL_SAT causes an error.
+Syntax
+svc.ip.channelAllocate(svc.ip.Channel.HTTP, remote, routing)
+
+
+Parameters
+type remote routing  The
+channel
+type
+as
+defined
+by
+Channel
+(svc.ip.Channel.HTTP)
+Table
+containing
+information
+about
+the
+HTTP
+operation:
+operation
+One
+of
+HttpOp.GET
+or
+HttpOp.POST
+url
+The
+web
+server
+URL
+(starting
+with
+http
+or
+https)
+(string)
+content
+The
+value
+for
+the
+Content-Type
+header
+field;
+only
+used
+for
+POST
+requests
+(string;
+optional)
+The
+routing
+type,
+as
+defined
+by
+Routing
+
+Blocking
+No
+Returns
+channel  A handle for sending or receiving a file to-or-from the given host, or nil if the channel cannot be allocated
+string  An error description in the failure case
+
+5.19.11.1.3 M2M SMTP Email
+Description
+This function allocates an M2M SMTP channel in the ip service for sending email. The channel returned by this function allows the user to send email via the gateway without having to repeatedly pass on the destination, subject, or other header information. When allocating, the function does not check the validity of the destination addresses. If invalid, the service posts a failure event only after a message send fails.
+To and subject fields missing from the info table are filled with the corresponding default property value (PIN 1-2).
+Syntax
+svc.ip.channelAllocate(svc.ip.Channel.NSMTP, info, routing)
+Parameters
+type The channel type as defined by Channel
+(svc.ip.Channel.NSMTP)
+info Table containing the information specifying the originator and destination addresses as well as the
+subject:
+to �to� email addresses (comma-separated string; optional)
+cc �cc� email addresses (comma-separated string; optional)
+bcc �bcc� email addresses (comma-separated string; optional)
+subject Email subject (string; optional)
+headers String containing additional header parameter, CRLF separated (string, optional)
+from Local sender username (string; optional). If not present, the terminal address is used. routing The routing type, as defined by Routing
+
+
+Returns
+channel A handle to use for sending an email via the gateway, or nil if the channel cannot be allocated string An error description in the failure case
+5.19.11.1.4 SMTP Email
+Description
+This function allocates a SMTP channel in the ip service for sending email.
+The channel returned by this function allows the user to send email via the gateway. When allocating, the function does not check the validity of the destination addresses. If invalid, the service posts a failure event only after a message send fails.
+Only the last allocated SMTP channel receives to-mobile messages from the gateway. Any previous SMTP channel is only available for from-mobile messages.
+Syntax
+svc.ip.channelAllocate(svc.ip.Channel.SMTP, {}, routing)
+Parameters
+type  The
+channel
+type
+as
+defined
+by
+Channel
+(svc.ip.Channel.SMTP)
+
+routing  The routing type, as defined by Routing
+Returns
+channel  A handle to use for sending an email via the gateway, or nil if the channel cannot be allocated
+string  An error description of the failure case
+
+5.19.11.1.5 TCP
+Description
+This function allocates TCP parameters within a channel context. This channel is used to send and receive packets/stream data to and from the specified remote host.
+Syntax
+svc.ip.channelAllocate(svc.ip.Channel.TCP, remote, routing, compress)
+Parameters
+type The channel type as defined by Channel
+(svc.ip.Channel.TCP)
+remote Table containing the information about the TCP destination: host Destination host name or IP address (string) port Destination TCP port number (unsigned)
+
+
+timeout  The inactivity timeout. The amount of time, in seconds, to wait for incoming packets; 0 means wait forever and try to keep the socket alive (unsigned; optional � range is 0 .120, default is 60). The timeout window is reset every time a new packet is received.
+useSSL  Whether to use encrypted communication (Boolean; optional � default is false)
+keepalive  Whether to use native TCP keepalive packets on modules that support them (Boolean; optional � default is false)
+idletime  If native TCP keepalive packets are enabled, specifies the amount of time (in minutes) that the connection must be idle before a keepalive packet is sent (unsigned; optional � default is 7200 or 2 hours)
+routing  The routing type, as defined by Routing
+compress  Boolean indicating whether to use compression or not, optional with default as false. Only used for satellite data -has no meaning for cellular transport. If compression is not supported, allocate fails.
+Blocking
+No
+Returns
+channel string  A handle to use for sending and receiving TCP, or nil if the channel cannot be allocated An error description in the case of a failure
+
+5.19.11.1.6 UDP
+Description
+This function allocates UDP parameters within a channel context. This channel is used to send and receive datagrams to and from the specified remote host.
+Syntax
+svc.ip.channelAllocate(svc.ip.Channel.UDP, remote, routing)
+Parameters
+type The channel type as defined by Channel
+(svc.ip.Channel.UDP)
+remote Table containing the information about the UDP destination: host Destination host name or IP address (string) port Destination UDP port number (unsigned) timeout The inactivity timeout. The amount of time, in seconds, to wait for incoming
+datagrams; 0 means wait forever (unsigned; optional � range is 0 -120, default is 60). The timeout window is reset every time a new datagram is received. routing The routing type, as defined by Routing
+Blocking
+No
+
+
+Returns
+channel  A handle to use for sending and receiving UDP datagrams, or nil if the channel cannot be
+allocated
+string  An error description in the failure case
+
+5.19.11.2 ftp()
+Description
+This function transfers a file via FTP. Note that this function blocks until the transfer is complete. Both the src and dest parameters can be a file path or a URL; there must be one of each. If src is a file path and dest is a URL, then the file is transferred from the terminal to the server; otherwise the file is transferred from the server to the terminal. A URL is specified using the following syntax: ftps://[<login>[:<password]@]<host> [:<port>]/remotePath.
+Syntax
+svc.ip.ftp(src, dest, routing)
+Parameters
+src The source URL or file dest The destination URL or file routing The routing type, as defined by Routing
+Blocking
+Yes
+Returns
+string An error description in the failure case
+5.19.11.3 httpGet()
+Description
+This function transfers a file to the terminal via HTTP. Note that this function blocks until the transfer is complete. A URL is specified using the following syntax: http[s]://<host>[:<port>]/remotePath.
+Syntax
+svc.ip.httpGet(src, dest, routing)
+Parameters
+src The source URL or file dest The destination URL or file routing The routing type, as defined by Routing
+
+
+Blocking
+Yes
+Returns
+string An error description in the failure case
+5.19.11.4 pollNow()
+Description
+This function triggers a connection attempt to the server to check for to-mobile messages. If configured for MTWS, an HTTP GET request is performed. For MTBP, this function has no effect.
+Syntax
+svc.ip.pollNow()
+Parameters
+None
+Blocking
+No
+Returns
+None
+5.19.12 Channel Methods
+The allocate function returns a handle that support the functions documented in this section.
+5.19.12.1 close()
+Description
+This function indicates that no further writes will be performed on a previously-opened channel. When the channel is operating in transaction mode, it is not fully closed until a SOCKET_CLOSED, UDP_COMPLETE, FTP_ COMPLETE, HTTP_COMPLETE , EMAIL_STATUS, or SMTP_STATUS event is posted to the handle indicating it is closed and cannot be reopened until that time.
+Syntax
+<handle>:close()
+Parameters
+None
+
+
+Returns
+boolean Indicates success or failure string An error description in the failure case
+5.19.12.2 dispose()
+Description
+This function deallocates the channel. The channel is no longer useable subsequent to this call, all locally and gateway cached parameters should be considered cleared.
+When an unrecoverable error occurs during processing of a channel, it is also automatically disposed. In that case a DISPOSE
+event is posted to the handle.
+Syntax
+<handle>:dispose()
+Parameters
+None
+Blocking
+No
+Returns
+boolean Indicates success or failure string An error description in the failure case
+5.19.12.3 info()
+Description
+This function returns a table containing statistics for the channel. The statistics include: totalmsgs � The total number of messages sent since the channel was allocated totalbytes � The total number of bytes (data payload only) sent since the channel was allocated queuedmsgs � The total number of messages sending or waiting to be sent queuedbytes � The total number of bytes sending or waiting to be sent
+Syntax
+<handle>:info()
+Parameters
+None
+Blocking
+No
+
+
+Returns
+table A table containing a summary of information about the channel
+5.19.12.4 open()
+Description
+This function opens a channel for subsequent communication.
+Syntax
+<handle>:open()
+Parameters
+None
+Blocking
+No
+Returns
+boolean Indicates success or failure string An error description in the failure case
+5.19.12.5 send()
+Description
+This function sends data over an established channel.
+Syntax
+<handle>:send(data)
+Parameters
+data  Data to be sent over the channel. This is ignored for read-only connections (HttpOp.GET,
+FtpOp.GET). This is limited to a maximum of 548 bytes for UDP channels.
+Blocking
+No
+Returns
+boolean  Indicates success or failure
+string  An error description in the failure case
+
+
+
+5.19.12.6 usingCell()
+Description
+Available on cellular or satellite-cellular terminals (ST 9100). This function returns whether or not a currently open channel is using cellular.
+Syntax
+<handle>:usingCell()
+Parameters
+None
+Blocking
+No
+Returns
+boolean true if the channel is using cellular; false otherwise
+5.19.13 Posted Events
+5.19.13.1 Cellular Ready
+Description
+This event is sent whenever there is a change in the availability of cellular communication for the ip service.
+Source
+svc.ip(ip service table)
+Event
+�CELL_READY� (string)
+Arguments
+boolean The new value of the cellReady property
+5.19.13.2 Channel Disposed
+Description
+This event is posted when a channel is automatically disposed due to error.
+Source
+<channel>(the handle returned by channelAllocate())
+
+
+Event
+�DISPOSE� (string)
+Arguments
+status A table with the following field: error An error description in the failure case
+5.19.13.3 Data Received
+Description
+This event is posted when data is received on a channel (TCP, UDP, HTTP, and FTP).
+Source
+<channel>(the handle returned by channelAllocate())
+Event
+�DATA� (string)
+Arguments
+data The received data (string)
+5.19.13.4 Email Status
+Description
+This event is posted whenever an M2M email send completes, whether it succeeds or fails.
+Source
+<channel>(the handle returned by channelAllocate())
+Event
+�EMAIL_STATUS� (string)
+Arguments
+status  The completion status, which is one of: svc.message.MsgStatus.Cancelled svc.message.MsgStatus.Success svc.message.MsgStatus.Failure  2 3 4
+
+5.19.13.5 FTP Complete
+Description
+This event is posted when an FTP operation completes.
+
+
+Source
+<channel>(the handle returned by channelAllocate())
+Event
+�FTP_COMPLETE� (string)
+Arguments
+fileSpec  A table containing the information about the FTP source/destination
+operation  FtpOp
+host  Destination host name or IP address (string)
+port  Destination port number (unsigned; optional)
+login  Account login (string; optional)
+password  Account password (string; optional)
+useSSL  Whether to use encrypted communication (Boolean)
+remotePath  The file/directory path on the server (string)
+success  Indicates success or failure (Boolean)
+error  An error description in the case of failure (string)
+
+5.19.13.6 HTTP Complete
+Description
+Available on satellite-cellular terminals.
+Posted when an HTTP operation completes.
+Source
+<channel>(the handle returned by channelAllocate())
+Event
+�HTTP_COMPLETE� (string)
+Arguments
+remote A table with the following fields:containing the information about the HTTP channel operation One of HttpOp.GET or HttpOp.POST url The web server URL (starting with http or https) (string) content The value for the content-type header field; only used for POST requests (string;
+optional) success Indicates success or failure (Boolean) error An error description in the case of failure (string)
+5.19.13.7 M2M Email Received
+Description
+This event is posted when one or more new (gateway) emails are received by the terminal.
+
+
+Source
+svc.ip (ip service table)
+Event
+�EMAIL� (string)
+Arguments
+email The received email, which is a table containing the following fields: from Sender's email address to Destination addresses cc Cc destination addresses (optional) subject Message subject body Message body
+5.19.13.8 Satellite Ready
+Description
+This event is sent whenever there is a change in the availability of satellite communication for the ip service.
+Source
+svc.ip(ip service table)
+Event
+�SAT_READY� (string)
+Arguments
+boolean The new value of the satReady property
+5.19.13.9 SMTP Email Received
+Description
+This event is posted when a new gateway email is received by the terminal.
+Source
+<handle> (the handle returned by channelAllocate())
+Event
+�SMTP� (string)
+Arguments
+from Sender's email address rcpt Recipient addresses (optional) body Message body
+
+
+5.19.13.10 SMTP Status
+Description
+This event is posted whenever an SMTP email send completes, whether it succeeds or fails.
+Source
+<handle>(the handle returned by channelAllocate())
+Event
+�SMTP_STATUS�  (string)
+Arguments
+status  The completion status, which is one of:
+svc.message.MsgStatus.Cancelled  2
+svc.message.MsgStatus.Success  3
+svc.message.MsgStatus.Failure  4
+
+5.19.13.11 Server Connected
+Description
+Posted when the serverConnected ip service property changes value.
+Source
+svc.ip (ip service table)
+Event
+�SERVER_CONNECTED� (string)
+Arguments
+boolean Indicates whether connection to the server was successfully established or not
+5.19.13.12 Socket Closed
+Description
+This event is posted when a TCP channel is closed. In one-shot mode, this is useful because the channel is now available for use again.
+Source
+<channel>(the handle returned by channelAllocate())
+Event
+�SOCKET_CLOSED� (string)
+
+
+Arguments
+status A table with the following fields:
+success Indicates success or failure (Boolean)
+error An error description in the case of failure (string)
+5.19.13.13 UDP Complete
+Description
+This event is posted when a UDP transfer is complete (i.e., the timeout has elapsed after the datagram was
+sent or after the last datagram was received).
+Source
+<channel>(the handle returned by channelAllocate())
+Event
+�UDP_COMPLETE� (string)
+Arguments
+status A table with the following fields:
+success Indicates success or failure (boolean)
+error An error description in the case of failure (string)
+5.19.13.14 Application Examples
+Refer to APPENDIX
+D
+for application examples.
+5.20 Accelerometer (SIN 34)
+The accelerometer service (SIN 34) defines the global configuration of the accelerometer API. The accelerometer provides the following features/benefits:
+�
+Filtered motion detection generating start/stop events
+�
+Multiple thresholds and durations that are independent of the hardware
+�
+Accelerometer sample collection and retrieval
+�
+Simplified offset compensation
+�
+Standardized axes definitions to simplify software development
+5.20.1 Global Parameters
+Note: Changing global parameters permanently requires a restart of the LSF.
+The accelerometer defines a number of global parameters that are shared by all services using the accelerometer service (Table
+9). Global configuration information is stored in configuration properties of the accelerometer service. The values are only applied when the LSF starts.
+
+
+Table 9: Global Configuration
+
+5.20.1.1 Gravity Range
+Table
+10
+shows the gravity ranges for the accelerometer. All acceleration values are reported as 16-bit signed values.
+Note: Some API settings do not directly match what the current hardware supports. Use the getConfig()
+function to see the configuration actually used by the hardware.
+
+5.20.1.2 Accelerometer Power Modes
+The accelerometer hardware can be in one of three possible modes. The API switches between these modes without any explicit control by the user.
+Table 11: Accelerometer Power Modes
+
+
+Operating Mode Description
+Suspended Mode Suspended mode is the default mode when the accelerometer hardware has nothing to do and no data acquisition is taking place. All event detection is disabled, and it consumes the least amount of current. Suspended mode is automatically entered when no event detectors are enabled, and no sample capturing is taking place.
+
+
+DetectorDescriptionMOTIONGeneratesfilteredSTART/STOPmotionevents.Canmonitoroneormoreaxes.
+
+Operating Mode Description
+Low Power Mode In low power mode, the accelerometer is periodically switching between a sleep phase and a wake-up
+phase to conserve power. The sleep phase is controlled by the sleepDuration property (PIN 3) To enable low power mode, the sleep duration must be set to a nonzero value. The accelerometer API uses low-power mode unless sample capture is enabled.
+Note: Low power mode adds up to sleepDuration milliseconds to event detection timing and sample acquisition.
+Note: When sleepDuration is nonzero, the greater the sleepDuration, the higher the probability that a short duration shock may not be detected by a shock detector.
+
+Active Mode
+In active mode (normal mode), the accelerometer hardware is fully powered up and performing
+continuous data acquisition at the configured sample rate. Active mode is entered when sample capturing is active, or detectors are enabled and the sleepDuration (PIN 3) is zero.
+5.20.1.3 Gravity Compensation
+The accelerometer supports the following gravity compensation modes:
+�
+None
+In this mode (the default) there is no compensation with respect to gravity performed by the API. The Z-
+axis of this orientation always contains the gravity component. When hardware offset compensation is
+performed, the gravity component of the Z-axis is preserved. There is no effect on tilt calculations because
+gravity is present in the samples.
+�
+Fixed Axis
+In this mode, the gravity component of the standard Z-axis is zeroed if hardware offset compensation is
+performed. Tilt computations automatically add back the gravity vector of the Z-axis before computing the
+tilt solution.
+5.20.1.4 Offset Compensation
+An application using the accelerometer needs to be aware of the mapping between each accelerometer axis and the actual direction in the real world. The accelerometer service provides methods to compensate the offsets of each axis to account for hardware variation, and end-of-line trimming with respect to the configured orientation. Both manual and automatic hardware based offset compensation are supported. The offset compensation is limited to �1000 mg and �500 mg for ST 9100.
+5.20.2 Event Detection
+The API uses an instance of a detector to manage the detection and posting of acceleration events. A function is used to create an event detector specified by a string identifier. The API currently supports the event detectors shown in Table 12. The returned object handle is then used to control the event detection and generation. The event is generated when the threshold conditions are met on any of the configured axes for the specified minimum time.
+Table 12: Event Detectors
+
+
+
+5.20.2.1 Parameter Guidelines
+MOTION
+The default threshold value of 100 milli-g is sufficient for most applications.
+The start/stop check intervals default to low power operation configuration, which respond slowly (5 minutes) to motion. For
+a
+faster
+response
+at
+the
+expense
+of
+power
+consumption,
+reduce
+the
+startCheckInterval
+(Table
+6). If false starts are acceptable, then the startDebouceCount property can also be reduced.
+SHOCK
+Shock threshold can vary greatly depending on the application. Table 13 shows some typical values for detecting various driving exceptions. These are preliminary values that should be verified per application .
+
+5.20.2.2 Motion Detector States
+The motion detector uses slope (absolute value of acceleration differences) events to determine motion. These are independent of terminal orientation.
+The motion detector filters slope events to allow for the generation of de-bounced motion start and motion stop events.
+The detector has two main active states: MOVING and STATIONARY. The MOVING state is defined as the presence of a motion event during a set of consecutive time intervals. The STATIONARY state is defined as an absence of slope events during a set of consecutive time intervals.
+The
+startCheckInterval/startDebounceCount
+parameters
+(refer
+to
+section
+1.1.2.3
+for
+further
+details)
+are
+used
+to
+define
+the
+STATIONARY
+check
+time
+intervals
+and
+number
+of
+slope
+events
+required
+before
+switching
+to
+the
+MOVING
+state.
+The
+stopCheckInterval/stopDebounceCount
+parameters
+are
+used
+to
+define
+the
+MOVING
+check
+time
+intervals
+and
+the
+number
+of
+absent
+slope
+events
+required
+before
+switching
+to
+the
+STATIONARY
+state.
+5.20.2.3 Detector Parameters
+Below are the parameters available for each detector for use with the setConfig()/getConfig()
+methods.
+
+
+MOTION
+The MOTION detector configuration parameters are defined in Table
+14. The motion detector filters slope (absolute value of acceleration differences) events to allow for the generation of de-bounced motion start and motion stop events.
+The maximum number of active MOTION detectors is 4.
+Table 14: MOTION Detector Configuration Parameters
+Parameter Description Type Default Value
+axisList xy threshold 100
+startCheckInterval 60
+
+5
+stopCheckInterval 60 stopDebounceCount
+Number of check intervals with no motion events while in Unsigned
+5 MOVING state before determining that motion has stopped
+Minimum � 1 Max. � 10000
+SHOCK
+The SHOCK detector configuration parameters are defined in Table
+15. The shock detector is used to detect absolute acceleration values on any of the specified axes that exceed the configured threshold for more than a specified number of milliseconds.
+The SHOCK detector generates a SHOCK_START event when absolute acceleration on any of the monitored axes exceeds the acceleration threshold in milli-g for a minimum of minTime milliseconds. After the event, the detector is rearmed after reArmDelay milliseconds.
+If the maxTime parameter is greater than zero, then the detector also generates SHOCK_STOP events when either the acceleration value goes below the threshold on all monitored axes or the maxTime timeout is reached. A timeout of .1 indicates an infinite timeout.
+The maximum number of active SHOCK detectors is 8.
+
+
+
+FieldTypeDescriptionactiveBooleantrueifthedetectorisenabledmovingBooleantrueifthedetectorisintheMovingstateTable
+17:
+SHOCK
+State
+Fields
+
+
+Parameter Description Type Default Value
+threshold Absolute acceleration threshold in milli-g Unsigned 400 Minimum � 0 Max. � variable
+minTime Minimum duration in milliseconds that the threshold must be exceeded Unsigned 1000 before generating a SHOCK_START event Minimum � 0 Maximum � 5000
+
+maxTime Maximum duration in milliseconds of a SHOCK event. If nonzero, a Signed 0 SHOCK_STOP event is generated when the event condition ends or a Minimum � -1 maxTime is reached. Nonzero positive values must be � minTime. A Max. � 30000 value of -1 indicates an infinite timeout. A value of 0 prevents SHOCK_ STOP events.
+reArmDelay Delay in milliseconds before reenabling the detector for the next event Unsigned
+150 Minimum � 1 Maximum � 5000
+5.20.2.4 Detector State Fields
+The following state fields can be queried with the getState() method.
+MOTION
+Table 16: MOTION State Fields
+SHOCK
+
+5.20.3 Sample Capture
+To support advanced post processing, the accelerometer API supports the capture of real-time accelerometer data into sample capture buffers. The captured samples are processed according to the configured gravity compensation mode.
+During sample capture, sleep duration (low power mode) is automatically disabled.
+Sample Entries
+The sample entries consist of the following components:
+�
+X axis acceleration in signed milli-g
+�
+Y axis acceleration in signed milli-g
+�
+Z axis acceleration in signed milli-g Each axis is stored as a signed 16 bit signed integer in big-endian format so a sample entry uses 6 bytes of memory.
+
+
+Memory Segments
+The API allows for the creation of a sample buffer that internally contains one or more memory segments allocated from the Lua heap, which are used to collect acceleration samples. The size of each segment is determined by the desired sample capture duration specified in seconds. Segments are indexed starting from 1, so the 2nd segment would have index 2. When the end of a segment is reached, sampling switches to the next segment if available.
+The API also supports the optional generation of a SEGMENT_FULL event when the end of a segment is reached.
+Wrap Mode
+The wrap mode determines the behavior of the sample buffer when the end of the last segment is reached. If wrap mode is enabled, then sampling switches back to the beginning of the first segment and continues filling from there. If only one segment is defined, then wrap mode behaves like having a single ring buffer.
+If wrap mode is disabled, then sampling stops at the end of the last segment and a CAPTURE_STOPPED event is generated.
+Limits
+The maximum number of capture buffer handles is 2. The limit on the parameters used to create capture buffers is a maximum of 8 segments with each having a maximum size of 32 KB.
+5.20.4 Sample Retrieval
+A small number of acceleration samples can be obtained at a low rate for orientation confirmation or investigative purposes.
+Sample retrieval can be performed via the accel getsamples shell command, or over-the-air via the to-mobile getSamples (MIN 2) and from-mobile samples (MIN 2) messages. Only a single sample retrieval session can exist at one time. The accel getsamples shell command can be used to display sample information initiated over-the-air or via the shell.
+Sample retrieval can not be performed if auto-orientation is in progress.
+Sample information is available via the shell for 10 minutes after the last sample is obtained, or until auto-orientation is started.
+Note that if the sleepDuration (PIN 3) property value exceeds the sampling rate corresponding to the specified samplesPerSec value, the sampling rate will correspond to the sleepDuration when an enabled shock or motion detector exists.
+
+
+5.20.5 Accelerometer Orientation
+Standard Orientation
+The figures below show the standard orientation.
+Figure 3: ST 6000 Accelerometer Axis � Standard Orientation
+FRONT
+
+BACK
+Note: Z axis is vertically off the board, towards the sky, on the antenna side. Figure 4: ST 61xx Accelerometer Axis � Standard Orientation
+FRONT
+
+BACK
+
+
+Figure 5: ST 9100 Accelerometer Axis � Standard Orientation
+FRONT
+
+BACK
+The Z-axis is oriented up and down and experiences a constant positive acceleration of 1g upward (normal force). The connector location is considered the back of the terminal. The positive Z-axis points up.
+Nonstandard Orientation
+To allow for installations in nonstandard orientations, the accelerometer service supports properties to indicate which axis (and direction) represents forward motion and which axis (and direction) represents upward motion.
+Two properties, forwardDirection and upwardDirection, are used to specify the configuration. These properties are enumerated ranges with the following values: XPos, XNeg, YPos, YNeg, ZPos, ZNeg.
+For the standard configuration (see figures above), forward acceleration results in positive values along the Y axis, so the default value for forwardDirection is YPos. Similarly, the default for upwardDirection is ZPos.
+Table
+18
+shows some example installation orientations and the corresponding configuration settings.
+
+
+
+Refer to APPENDIX
+E
+for visual details of the various installation orientations and their associated PIN values.
+When the configured orientation (forwardDirection and upwardDirection) match the actual orientation of the terminal (and the X, Y, and Z offsets are set correctly), the three axes report acceleration values as follows:
+�
+X: right (+) and left (-)
+�
+Y: forward (+) and backward (-)
+�
+Z: up (+) and down (-) Note that acceleration due to gravity is factored in when gravityCompensation=None.
+5.20.5.1 Automatic Orientation Detection
+Automatic orientation detection mode can be entered to attempt to determine a terminal�s orientation automatically. Auto-orientation can be initiated (or aborted) via the aoActivate (PIN 70) property , the accel autoorient shell command, or the autoOrientation (MIN 1) to-mobile message. PINs 40 to 74 are specific to the automatic orientation detection feature.
+The auto-orientation status is available via the aoStatus (PIN 71) property.
+A series of successive states occur during auto-orientation. In order, they are: DetermineUpwardDir, AwaitStationary, PerformCompensation, AwaitMoving, DetermineFwdDir. The current state (when aoStatus is Started), or the last state (when aoStatus is not Started) is available via the aoState (PIN 72) volatile property.
+The auto-orientation status and state can also be obtained via the accel autoorient shell command, or the autoOrientationStatus from-mobile message. The autoOrientationStatus from-mobile message is sent upon an aoStatus change, or in response to an autoOrientation to-mobile message with operation = GetStatus.
+Upon successful completion of auto-orientation the following properties are determined and saved: xOffset (PIN 10), yOffset (PIN 11), zOffset (PIN 12), forwardDirection (PIN 20), and upwardDirection (PIN 21). Any other properties with PIN < 40 with pending changes are also saved.
+While auto-orientation is in progress (aoStatus is Started), any enabled shock and/or motion detectors are temporarily disabled, and their enable() method return an error if called. Any running sample captures are temporarily stopped (immediately), and their start() method return an error if called. Execution of other detector and sample capture methods can be performed while auto-orientation is in progress.
+You should not change accelerometer properties (other than aoActivate) while auto-orientation is in progress, and accelerometer service function calls may fail, have no effect, or return unexpected values when auto-orientation is in progress.
+Auto-orientation detection may not be possible (or thresholds may have to be adjusted) on slow moving vehicles that can not decelerate a fast as highway vehicles. For example, slow moving heavy equipment.
+Auto-orientation fails (aoStatus becomes Failed, and aoActivate becomes NotStarted) if completion of all the states is not successful within aoTimeLimit (60) minutes. The default of 60 minutes should be sufficient to successfully complete auto-orientation under typical conditions.
+Auto-orientation can be adjusted via PINs 40-69 to meet the requirements of different types of vehicles and power consumption.
+Auto-orientation can not be started if sample retrieval is in progress.
+5.20.5.2 Guidelines for Successful Auto-Orientation
+Mount the terminal as close to orthogonal as possible (with respect to up/down and forward/backward directions) prior to starting auto-orientation.
+
+
+The AwaitStationary state requires valid GPS fixes. This requires that the terminal's satellite antenna has a clear line-of.sight to multiple GPS satellites. Obtaining GPS fixes requires continuous GPS to be enabled, which occurs when the position service�s continuous property (SIN 20, PIN 15) is nonzero. Continuous GPS is enabled upon entering the AwaitStationary state as the continuous property is temporarily set to aoAwaitStnChkIntvl (2) seconds during this state. Obtaining GPS fixes is delayed (typically under 1 minute) if continuous GPS is not enabled prior to auto-orientation starting.
+When the terminal first becomes stationary after auto-orientation is started (as determined by the AwaitStationary state) it should be located on a level surface (for example, not parked on a hill).
+Encountering consecutive minor road bumps is required to detect motion while in the AwaitMoving state. This may not occur on recently paved roads and/or at low speeds.
+The vehicle on which the terminal is mounted should be subjected to typical city driving on fairly straight roads, with frequent stops and/or reasonably firm decelerations, which are not immediately preceded or followed by a sharp turn. Determining the forward direction may not be possible if the terminal is not near-orthogonally mounted (with respect to the forward/backward direction).
+Auto-orientation progress can be monitored via the auto-orientation related volatile properties.
+Auto-orientation related configuration properties can be adjusted to optimize auto-orientation to accommodate vehicle type, driver and road characteristics, and traffic density.
+5.20.5.3 Power Considerations
+If the amount of power consumption during auto-orientation is important, the key properties to consider adjusting are:
+aoAwaitStnChkIntvl, aoAwaitStnSecTime, aoAwaitStnSecChkIntvl, aoAwaitMovChkIntvl, and aoTimeLimit.
+There may be trade-offs between, power consumption, time to complete auto-orientation, successful completion of auto-orientation, and/or true/false detection of the to-mobile direction.
+5.20.5.4 Low Power Mode
+The sleep phase durations are shown in Table
+19.
+Table 19: Sleep Phase Durations
+
+
+
+Sleep Phase Duration Average Current Comsumption Sleep Phase Duration Average Current Comsumption (ms) (�A) (ms) (�A) ST 6000 and ST 6100
+ST 9100
+None 129 None 180 1 78.8 2.5 172 2 55.0 5 111 4 34.5 10 57 6 25.2 20 30
+
+
+
+
+
+
+
+
+10 16.4 40 17 25 7.4 80 10 50 4.0 160 6 100
+
+
+
+
+
+
+2.3
+320
+5
+
+
+
+The sleepDuration property (PIN 3) values are converted to the following sleep durations:
+sleepDuration Configured Hardware Sleep Phase Duration sleepDuration Configured Hardware Sleep Phase Duration (PIN 3) (ms) (PIN 3) (ms) ST 6000 and ST 6100
+ST 9100
+0 None 1 2.5 25
+�3 and�5 10 �6 and�8 20 �9 and �17 40 �18 and �38 80 �39 and �75 160
+�76 and �300 320 �301 and �750 640 �751
+1000
+�961
+1280
+
+
+
+
+5.20.6 Properties
+Note: The accelerometer service properties with PIN <40 only take effect when the LSF starts; so a restart of the LSF is required after making any changes.
+To assist in diagnostics, a configPending (PIN 1) property is available to indicate pending changes to the API configuration.
+The forwardDirection and upwardDirection properties are used for installation orientation configuration. These values must not be set to the same axis. If they are, an error is logged and these two properties are ignored (default configuration is used).
+When any manual change in forwardDirection,, upwardDirection, and /or gravityCompensation has taken effect, hardware compensation should be performed, and the xOffset, yOffset, and zOffset properties should be manually updated.
+Note: Property names prefixed with �ao� relate to the auto-orientation feature.
+
+
+PIN Name Description Type Storage Default Class
+
+Value
+1
+false
+24
+30
+4 63
+5 None
+10 Config 0
+11 Config 0 12 zOffset Z-axis offset compensation in Config
+0 milli-g.
+
+
+
+
+
+
+
+47 aoAwaitStnDebounce The number of consecutive valid GPS fixes required to declare the terminal stationary (when PIN 45 threshold is met).
+Type Storage Default Class
+
+Value Enum YPos 0 � XPos 1 � XNeg 2 � YPos 3 � YNeg 4 � ZPos 5 � ZNeg ZPos
+Unsigned 800 Min. � 700 Max. � 1000
+Unsigned 300 Min. � 50 Max. � 699
+Unsigned 300 Min. � 30 Max. � 600
+30
+Unsigned 20 Min. � 0 Max. � 50
+Unsigned 2 Min. � 1 Max. � 30
+Config
+Unsigned
+5 Min. � 2 Max. � 300
+
+
+
+
+
+
+
+PIN Name Description Type Storage Default Class
+Value
+66 aoFwdDirEventFilterTime Event filter time in seconds. Config 5 forwardDirection events are ignored if events also occur on the other nonupward axis or the maximum heading variance is exceeded this number of seconds before or after an event.
+67 aoFwdDirDebounce Number of consecutive times the Config 3 forwardDirection axis and polarity must be determined to be the same before declaring the forwardDirection as being determined.
+
+69 aoTimeLimit Time limit in minutes to perform Config 60 auto-orientation before aoStatus becomes Failed.
+
+
+
+
+70 aoActivate Start or abort auto-orientation. Enum Config NotStarted Setting to NotStarted is ignored. 0 � NotStarted Set to NotStarted and saved when 1 � Start aoStatus becomes Complete, 2 � Abort Aborted, or Failed.
+
+
+71 aoStatus Automatic orientation status. Enum Volatile n/a 0 � NotStarted 1 � Started 2 � Aborted 3 � Failed 4 � Complete
+
+
+72 aoState Automatic orientation state. Volatile n/a
+
+73 aoStateFwdDirDebounceCount Number of consecutive times the Volatile n/a forwardDirection axis and polarity has been determined to be the same. 74 aoStateFwdDirRetryCount
+
+
+
+
+Number of retries in attempt to Unsigned Volatile
+n/a determine the same
+Min. � 0 forwardDirection
+Max. � 65535 aoFwdDirDebounce consecutive times.
+
+Unsigned Min. � 2 Max. � 10
+
+
+5.20.6.1 Sample Rates
+The tables below specify the sample rates supported by the accelerometer hardware and the sampleRate property (PIN 3) mapping.
+Note: Caution must be taken when using sampling rates above 125 Hz.
+
+
+Note: When sleepDuration > 0, the sample rate corresponds to a sample interval equal to the configured hardware sleep phase duration (for example, on ST 6xxx terminals, when sleepDuration = 40 ms, the sample interval is 40 ms, and the sample rate is 1000/40 ms = 25 Hz (regardless of the configured sampleRate)).
+
+Table 22: ST 6000 and ST 6100 sampleRate Property Mapping
+
+
+
+
+
+
+5.20.6.1.1 Sample Resolution
+The ST 6xxx terminals support 10-bit signed acceleration data and the ST 9100 supports 16-bit signed acceleration data. The API reports all acceleration values as 16-bit signed values.
+Offset Compensation
+The accelerometer service provides methods to compensate the offsets of each axis to account for hardware variation, aging, and end-of-line trimming with respect to the configured orientation.
+The offset range is -1000mg�1000mg on ST 6xxx and -500mg�500mg on ST 9100.
+An error is returned when an offset property is attempted to be set outside the range of -500..500 on ST 9000 terminals.
+Gravity Compensation
+The FixedAxis gravity compensation mode is not supported on ST 9000 terminals.
+An error is returned when the gravityCompensation property is attempted to be set to FixedAxis on ST 9000 terminals.
+5.20.7 To-Mobile Messages
+
+5.20.7.1 autoOrientation (SIN 34, MIN 1) 5.20.7.2 getSamples (SIN 34, MIN 2)
+
+
+
+
+5.20.8 From-Mobile Messages
+
+5.20.8.1 autoOrientationStatus (SIN 34, MIN 1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Name Type Optional Size Comments
+status Enum No 3 bits Current value of aoStatus property (PIN 71). See aoStatus (PIN 71)
+state Enum Yes 1 + 3 bits Current value of aoState property (PIN 72). See aoStatus Indicates auto-orientation progress when (PIN 71) status=Started, or state when status became Complete, Aborted, or Failed. Absent when status=NotStarted.
+stateFwdDirDebounceCount Unsigned Yes 1 + 4 bits Current value of aoStateFwdDirDebounceCount property (PIN 73). Absent when status=NotStarted.
+stateFwdDirRetryCount Unsigned Yes 1 + 16 bits Current value of aoStateFwdDirRetryCount property (PIN 74). Absent when status=NotStarted.
+forwardDirection Enum No 3 bits Current value of forwardDirection property (PIN see
+20).
+forwardDirection
+property (PIN 20)
+
+
+
+5.20.8.2 samples (SIN 34, MIN 2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Name Type Optional Size Comments
+zMinimum Signed Yes 15 bits Minimum value of z-axis acceleration samples in milli-g. zMaximum Signed Yes 15 bits Maximum value of z-axis acceleration samples in milli-g. sampleVals Array Yes �128 A list of acceleration samples. elements x Signed Yes 15 bits x-axis acceleration value in mili-g y Signed Yes 15 bits y-axis acceleration value in mili-g z
+Signed
+Yes
+15 bits
+z-axis acceleration value in mili-g
+
+
+
+
+
+5.20.9 Functions
+5.20.9.1 computeTilt()
+Description
+This function computes a 3-axes tilt solution given a raw X, Y and Z acceleration vector provided as milli-g.
+Syntax
+svc.accelerometer.computeTilt(x, y, z)
+Parameters
+x  Integer acceleration in milli-g along the X-axis
+y  Integer acceleration in milli-g along the Y-axis
+z  Integer acceleration in milli-g along the Z-axis
+
+Blocking
+No
+Returns
+number The angle of the X-axis in degrees relative to the ground number The angle of the Y-axis in degrees relative to the ground number The angle of the Z-axis in degrees relative to the gravity vector
+5.20.9.2 getConfig()
+Description
+This global query function returns a table indicating the accelerometer configuration. These values may be different from the current property values because either the property values have been set but the LSF has not been restarted, or a property value specified does not exactly match what the hardware supports.
+The accelerometer API is designed to accommodate hardware changes. The getConfig() function is used to view the actual hardware configuration.
+
+
+Syntax
+svc.accelerometer.getConfig()
+Parameters
+None
+Blocking
+No
+Returns
+table  A table populated with the following fields:
+device  Accelerometer terminal name string
+gRange  Gravity range setting (gRange (PIN 2))
+sleepDuration  Sleep duration setting (sleepDuration (PIN 3))
+sampleRate  Sample rate setting (sampleRate (PIN 4))
+sampleInterval  Interval in milliseconds between samples, not including sleep duration
+gravityCompensation  Gravity compensation mode(gravityCompensation (PIN 5))
+
+5.20.9.3 getSample()
+Description
+This function requests and waits for the next available acceleration sample by calling requestSample()
+and waiting for the SAMPLE event. This function may block for over a second if the maximum sleep duration is configured.
+Syntax
+svc.accelerometer.getSample(timeout)
+Parameters
+timeout The optional amount of time to wait for the sample to become available in 1/10 of a second. A default of 50 (5 seconds) is used if the timeout is not provided.
+Blocking
+Yes
+Returns
+boolean false indicating operation failed string A description of the error in the case of a failure OR boolean true indicating operation was successful integer The acceleration in milli-g along the X-axis integer The acceleration in milli-g along the Y-axis.
+
+
+integer The acceleration in milli-g along the Z-axis. integer Timestamp of the sample (terminal uptime in seconds)
+5.20.9.4 getStatus()
+Description
+This global query function returns the current global dynamic status of the accelerometer service. Refer to section 1.1.1.2 for a description of the power modes.
+Syntax
+svc.accelerometer.getStatus()
+Parameters
+None
+Blocking
+
+No
+Returns
+table  A table populated with the following fields:
+powerMode  String describing the current power mode of the accelerometer hardware.
+Possible values include:
+�Suspended�  Lowest power nonoperational standby state
+�Low Power�  Operating with the currently configured sleep duration
+�Active�  Always on
+activeSampleBuffers  Number of active sample buffers
+activeDetectors  Number of active (enabled) detectors
+currentSleepDuration  Current sleep duration in effect
+
+5.20.9.5 getTilt()
+Description
+This function requests and waits for the next available acceleration sample (using getSample()) and then uses the result to compute a 3 axis tilt solution, adjusting for gravity compensation as required. Just like getSample (), this function may block for over a second if the maximum sleep duration is configured.
+Note: This function may return unexpected values when automatic orientation is in progress.
+Syntax
+svc.accelerometer.getTilt(timeout)
+Parameters
+timeout The optional amount of time to wait for the sample to become available in 1/10 of a second. A default of 50 (5 seconds) is used if the timeout is not provided.
+
+
+Blocking
+Yes
+Returns
+boolean false indicating the operation failed string A description of the error in the case of a failure OR boolean true indicating the operation was successful number The angle of the X-axis in degrees relative to the ground number The angle of the Y-axis in degrees relative to the ground number The angle of the Z-axis in degrees relative to the gravity vector
+Example
+Display the tilt relative to the gravity vector every second.
+--Display the current tilt every second
+while true do local success,_,_,tilt = svc.accelerometer.getTilt() if success then
+printf("Tilt= %.1f\n", tilt) end sched.delay(10)
+end
+5.20.9.6 offset.clear()
+Description
+This compensation method clears any offset compensation, resulting in the accelerometer returning uncompensated values.
+Note: The xOffset, yOffset, and zOffset properties are not affected by clear(). The offsets to use are obtained from these properties during the next LSF restart.
+Syntax
+svc.accelerometer.offset.clear()
+Parameters
+None
+Blocking
+No
+Returns
+None
+
+
+5.20.9.7 offset.doHWCompensation()
+Description
+This compensation method requests that automatic hardware based offset compensation by calling requestHWCompensation()
+and waits for the HW_COMPENSATION_DONE event. The accelerometer hardware must be idle for this function to work. All detectors sample captures must be disabled.
+Syntax
+svc.accelerometer.offset.doHWCompensation(timeout)
+Parameters
+timeout  The (optional) amount of time to wait for the compensation to complete in 1/10 of a second. A
+default of 50 (5 seconds) is used if the timeout is not provided
+Blocking
+Yes
+Returns
+boolean  Indicates success or failure
+string  A description of the error in the case of a failure
+
+5.20.9.8 offset.get()
+Description
+This compensation method returns the current offset compensation values.
+Note: This function may return unexpected values when automatic orientation is in progress.
+Syntax
+svc.accelerometer.offset.get()
+Parameters
+None
+Blocking
+No
+Returns
+number The current X-axis signed offset in milli-g number The current Y-axis signed offset in milli-g number The current Z-axis signed offset in milli-g
+
+
+5.20.9.9 offset.requestHWCompensation()
+Description
+This compensation method requests that automatic hardware based offset compensation of all three axes be performed. This function starts the compensation and then returns immediately. A HW_COMPENSATION_ DONE event is generated when the compensation is complete. The hardware compensation uses 16 samples for each axis resulting in a total of 48 samples. At the slowest sample rate, this takes approximately 3 seconds.
+Hardware compensation is intended for end-of-line trimming, and should only be performed when the vehicle on which the terminal is mounted (if applicable) is stationary and located on a level surface (for example, not parked on a hill), and the terminal's orientation is close to that specified by forwardDirection , upwardDirection and when configPending=false.
+The offsets determined by this process are available via offset.get() and should be set and saved in xOffset, yOffset, and zOffset in order for these offsets to be applied on an LSF restart.
+Note: The accelerometer hardware must be idle for this function to work. All detectors and sample captures must be disabled. This function fails when automatic orientation is in progress.
+Syntax
+svc.accelerometer.offset.requestHWCompensation()
+Parameters
+None
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure
+
+5.20.9.10 offset.set()
+Description
+This compensation method allows for manually specifying or loading previously calculated compensation offsets.
+Note: This function has no effect when automatic orientation is in progress.
+Syntax
+svc.accelerometer.offset.set(xOff, yOff, zOff)
+Parameters
+xOff  The X-axis signed offset in milli-g
+yOff  The Y-axis signed offset in milli-g
+zOff  The Z-axis signed offset in milli-g
+
+
+
+Blocking
+No
+Returns
+None
+5.20.9.11 requestSample()
+Description
+This function requests an accelerometer sample. When the sample is available, the SAMPLE event is posted asynchronously. Requests are not queued, so multiple calls before the sample is ready result in one SAMPLE event.
+Note: This function may return unexpected values when automatic orientation is in progress.
+Syntax
+svc.accelerometer.requestSample()
+Parameters
+None
+Blocking
+No
+Returns
+None
+5.20.10 Posted Events
+5.20.10.0.1 Auto Orientation Status
+Description
+This event is posted when automatic orientation detection is completed, aborted, or failed.
+Source
+"_ACCEL" (string)
+Event
+"AUTO_ORIENTATION_STATUS" (string)
+
+
+Arguments
+table A table containing the following fields:
+status The automatic orientation detection status 1 � Complete 2 � Aborted 3 � Failed
+state The autoOrientState when automatic orientation detection ended. 1 � DetermineUpwardDir 2 � AwaitStationary 3 � PerformCompensation 4 � AwaitMoving 5 � DetermineFwdDir
+5.20.10.1 H/W Compensation Done
+Description
+This event is posted when the hardware offset compensation has been completed.
+Source
+�_ACCEL� (string)
+Event
+�HW_COMPENSATION_DONE� (string)
+Arguments
+None
+5.20.10.2 Sample
+Description
+This event is posted when accelerometer sample is available following a call to the requestSample()
+function.
+Source
+�_ACCEL� (string)
+Event
+�SAMPLE� (string)
+Arguments
+x
+X-axis acceleration value in milli-g (integer) y Y-axis acceleration value in milli-g (integer) z Z-axis acceleration value in milli-g (integer) ts The timestamp when the sample was captured (integer)
+
+
+5.20.11 Accelerometer Event Detection
+5.20.11.1 createDetector()
+Description
+This function is used to create a detector instance.
+Syntax
+svc.accelerometer.createDetector (name)
+Parameters
+name  String specif�MOTION� �SHOCK�  ying the name of the detector to create. The supported detectors include: Start/Stop Shock acceleration detector
+
+Blocking
+No
+Returns
+handle A handle to the detector, or nil if an error occurred string In the case of a failure, a description of the error
+Example
+--Create a shock detector local h,err = svc.accelerometer.createDetector("SHOCK")
+if h then
+... else error() end
+5.20.11.2 Detector Methods
+5.20.11.2.1 destroy()
+Description
+This method destroys the detector, rendering the handle unusable. Destroying a detector (calling the destroy() method or removing all references to the handle and garbage collecting) stops the detector and releases all resources used by the detector.
+Syntax
+<handle>:destroy()
+
+
+Parameters
+None
+Blocking
+No
+Returns
+None
+5.20.11.2.2 disable()
+Description
+This method disables event generation.
+Syntax
+<handle>:disable()
+Parameters
+None
+Blocking
+No
+Returns
+None
+5.20.11.2.3 enable()
+Description
+This method enables event detection/generation. Due to resource and hardware limitations, a limited number of any given type of detector can be enabled at the same time. This method may fail due to these restrictions.
+Note: This function fails when automatic orientation is in progress.
+Syntax
+<handle>:enable()
+Parameters
+None
+Blocking
+No
+
+
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure
+5.20.11.2.4 getConfig()
+Description
+This method is used to query the current detector parameters.
+Syntax
+<handle>:getConfig()
+Parameters
+None
+Blocking
+No
+Returns
+table A table populated with the detector specific fields from section 1.1.2.3.
+Example
+--Display the configured threshold local cfg = h:getConfig() printf("Threshold is %d milli-g\n", cfg.threshold)
+5.20.11.2.5 getState()
+Description
+This method is used to query the dynamic state of the detector.
+Syntax
+<handle>:getState()
+Parameters
+None
+Blocking
+No
+Returns
+table A table populated with the detector specific fields from section 1.1.2.4
+
+
+Example
+--Display the 'moving' state of a motion detector. local state = mh:getState() print("Motion state: ", state.moving and "MOVING" or "STATIONARY")
+5.20.11.2.6 setConfig()
+Description
+This method is used to configure the parameters of a detector. The configuration is specified by providing a table populated with fields from section 1.1.2.3. If a field is not provided, the default or last setting is used.
+Syntax
+<handle>:setConfig(config)
+Parameters
+config A table with one or more detector parameter fields as defined in section 1.1.2.3.
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure
+Example
+Create and configure a SHOCK detector.
+--Create a shock detector local h,errMsg = svc.accelerometer.createDetector("SHOCK") if h then
+--Configure for harsh cornering. local success success, errMsg = h:setConfig({axisList='x',
+threshold=450, minTime=2000})
+if success then --All setup, so now enable. h:enable()
+else error(errMsg) end else
+
+
+error(errMsg) end
+5.20.11.3 Posted Events
+5.20.11.3.1 Motion Start
+Description
+This event is posted by the MOTION detector when the start of motion is detected.
+Source
+"_ACCEL" (string)
+Event
+"MOTION_START" (string)
+Arguments
+handle Detector handle that posted the event
+5.20.11.3.2 Motion Stop
+Description
+This event is posted by the MOTION detector when motion is no longer detected.
+Source
+"_ACCEL" (string)
+Event
+"MOTION_STOP" (string)
+Arguments
+handle Detector handle that posted the event
+5.20.11.3.3 Shock Start
+Description
+This event is posted by the SHOCK detector when the absolute acceleration along the configured axes exceeds the threshold parameter for the minimum time specified by the minTime parameter.
+Source
+"_ACCEL" (string)
+Event
+"SHOCK_START" (string)
+
+
+Arguments
+handle  Detector handle that posted the event.
+integer  X-axis acceleration value in milli-g
+integer  Y-axis acceleration value in milli-g
+integer  Z-axis acceleration value in milli-g
+integer  The timestamp when the shock started
+
+5.20.11.3.4 Shock Stop
+Description
+This event is posted by the SHOCK detector after a SHOCK_STOP Event if the maxTime parameter is nonzero
+and either the acceleration along the axis is no longer above the threshold parameter or the timeout has
+occurred.
+Source
+"_ACCEL" (string)
+Event
+"SHOCK_STOP" (string)
+Arguments
+handle Detector handle that posted the event integer Duration of the event in samples integer The timestamp when the shock event stopped
+5.20.12 Sample Capture Buffer
+Sample capture buffers can be used to collect accelerometer samples. Each buffer consists of one or more memory segments.
+The first entry in each segment is time-stamped with the terminal uptime in seconds, which can then be queried later to determine when the segment started filling.
+Starting a sample capture disables low power operation (sleepDuration (PIN 3) is ignored) until the sample buffer stops.
+5.20.12.1 createSampleBuffer()
+Description
+This function is used to create a sample buffer consisting of one or more memory segments whose size
+determined by the desired capture time. The memory used for the segments is allocated from the Lua heap.
+Note: The maximum size of a single segment is limited to 32 KB.
+Syntax
+svc.accelerometer.createSampleBuffer(segCount, captureTime)
+
+
+Parameters
+segCount  Number of memory segments to allocate (1 to 8)
+captureTime  Desired capture time in seconds used to determine the size of each segment.
+
+Blocking
+No
+Returns
+handle A buffer handle, or nil if an error occurred string A description of the error in the case of failure
+Default Configuration
+wrap Disabled segmentFullEvent Disabled for all segments
+Example
+Create a sample capture buffer consisting of two segments that are each 30 seconds long (at the current sample rate).
+--Create a capture buffer with 2 30 second segments.
+local h,err = svc.accelerometer.createSampleBuffer(2, 30)
+if h then
+h:start() ... else error() end
+5.20.12.2 Sample Buffer Handle Methods
+The sample buffer handle methods are used to control the sample capture. Some methods operate on all or specific memory segments. Memory segments are numbered starting from one. A segment of zero specifies the entire buffer.
+5.20.12.2.1 clear()
+Description
+This method clears the memory segments and resets the sampling to the first segment.
+Syntax
+<handle>:clear()
+
+
+Parameters
+None
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure
+5.20.12.2.2 count()
+Description
+This method returns the current number of sample entries for all segments or for a specified segment.
+Syntax
+<handle>:count(index)
+Parameters
+index  Optional segment index. Zero or no index counts the contents of all segments.
+Blocking
+No
+Returns
+integer  Number of sample entries, or nil on failure
+string  A description of the error in the case of failure

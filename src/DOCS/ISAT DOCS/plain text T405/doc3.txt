@@ -1,0 +1,2923 @@
+Description Type Storage Default Class Value
+30 false
+31 false
+32 0
+33 0
+35 300
+36 1
+37 Config -1
+39 Config 400 40 accHarshBrakeMinTime Minimum duration in seconds that Config
+
+1 accHarshBrakeThreshold must be reached before generating a HARSH_BRAKE_START event.
+
+
+
+
+
+Description
+
+41 accHarshBrakeMaxTime
+43
+
+44 accHarshCornerMinTime
+45
+
+
+47 accAccidentThreshold
+48
+accAccidentMinTime
+
+Type Storage Default Class Value
+Signed -1 Min. � -1 Max. � 30
+Unsigned Config 450 Min. � 0 Max. � 16000 Config 3
+Signed -1 Min. � -1 Max. � 30
+Unsigned Config 5000 Min. � 0 Max. � 16000 Config
+
+0
+
+
+
+
+Description Type Storage Default Class Value
+49 0
+51 true 52 false 53 true 54
+
+accStopLog Whether or not accelStop messages are Boolean Config
+false enabled.
+5.6.2 To-Mobile Messages
+
+5.6.2.1 getPosition (SIN 20, MIN 1)
+
+Name Type Optional Size Comments
+fixType The desired fix type
+timeout The timeout value. This is the maximum amount of time, in seconds, to wait for a fix before giving up and returning the previous position data. Valid range is from 1-180; values outside the range are replaced with the appropriate value (1 or 180).
+age Unsigned Yes 16 bits The maximum age of the fix, in seconds, that is acceptable. If the current position data is older than this, a new fix is requested. Any value greater than 600 is automatically replaced with 600, as that is the largest maximum age value the modem supports.
+5.6.2.2 getLastPos (SIN 20, MIN 2)
+This message does not contain any fields.
+
+
+5.6.2.3 getSources (SIN 20, MIN 3)
+This message does not contain any fields.
+5.6.3 From-Mobile Messages
+
+5.6.3.1 position (SIN 20, MIN 1)
+This message reports position information. If the fixValid field is set to false, it means that the fix request failed, and the rest of the data represents the previous position information. In the case where no position information is available at all, all fields are set as follows:
+fixType  2D
+latitude  5400000
+longitude  10800000
+altitude  200000
+speed  10000
+heading  3599
+timestamp  0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Name Type Optional Size Comments
+fixValid Boolean No 1 bit Whether the fix data is valid. If true, the fix position data is current; otherwise the data is from a previous fix.
+fixType Enum No 1 bit The fix type
+0 � 2D
+1 � 3D latitude Signed No 24 bits The latitude in milliminutes longitude Signed No 25 bits The longitude in milliminutes altitude Signed No 18 bits The altitude in tenths of meters speed Unsigned No 16 bits The speed in tenths of knots heading Unsigned No 14 bits The heading in tenths of degrees timestamp
+Signed No 32 bits
+The time the last position was obtained, expressed as the number of seconds since the epoch
+
+
+5.6.3.2 sources (SIN 20, MIN 2)
+Name  Type  Optional  Size  Comments
+mask  Unsigned  No  8 bits  A bitmap of supported sources. Bit 0 � IDPmodem Bit 1 � OnBoardGNSS Bit 2 � CellLocate All other bits are reserved.
+
+5.6.3.3 accelStart (SIN 20, MIN 3)
+This message reports the start of acceleration as determined using position fixes, and in accordance with PINs 30-52.
+Acceleration is considered to have started when any of the (non-zero) harsh acceleration, harsh braking, harsh cornering, or accident thresholds have been reached.
+Name  Type  Optional  Size  Comments
+accelDetected  Indicates if harsh acceleration was detected
+brakeDetected  Indicates if harsh braking was detected
+cornerDetected  Indicates if harsh cornering was detected
+Indicates if an accident related acceleration was
+detected
+accForward  Forward direction acceleration in milli-g. Corresponds to
+harsh acceleration or harsh braking.
+accLateral  Lateral acceleration in milli-g. Corresponds to harsh
+cornering.
+speed  The speed in km/h
+latitude  The latitude in milliminutes
+longitude  The longitude in milliminutes
+heading  The heading in degrees
+timestamp  Signed  No  32 bits  The timestamp of the oldest position fix of the pair of
+position fixes that first resulted in the presence of an
+acceleration condition, expressed as the number of
+seconds since the epoch
+
+
+5.6.3.4 accelStop (SIN 20, MIN 4)
+This message reports the stop of acceleration as determined using position fixes, and in accordance with PINs 30-49 and 53-54.
+Acceleration is considered to have stopped when all of the (non-zero) harsh acceleration, harsh braking, harsh cornering, or accident thresholds are no longer reached.
+The detected and min./max. fields indicate values that have occurred between (and including) accelStart and accelStop.
+
+
+
+
+5.6.4 Constants
+The position service defines the following constants.
+5.6.4.1 FixTypes
+Description
+This table contains a mapping of the GPS fix types to their numerical value:
+2D  0
+3D  1
+Syntax
+
+svc.position. FixTypes
+
+
+5.6.4.2 FixTypeStr
+Description
+This table contains a mapping of the GPS fix type numerical values to their string representation:
+0  2D
+1  3D
+Syntax
+
+svc.position. FixTypeStr
+5.6.4.3 GpsSource
+Description
+This table contains a mapping of the GPS sources to their numerical value:
+IDPModem 0 OnBoardGNSS 1 CellLocate 2 None 3
+Syntax
+svc.position. GpsSource
+5.6.4.4 GpsSourceStr
+Description
+This table contains a mapping of the GPS source numerical values to their string representation:
+0 IDPModem 1 OnBoardGNSS 2 CellLocate 3 None
+Syntax
+svc.position. GpsSourceStr
+5.6.4.5 HarshDrvStopReason
+Description
+This table contains a mapping of the harsh driving (acceleration, braking, cornering) stop reasons to their numerical values:
+
+
+BelowThreshold MaxTimeReached NoValidFix  0 1 2
+Syntax
+
+svc.positon. HarshDrvStopReason
+5.6.4.6 HarshDrvStopReasonStr
+Description
+This table contains a mapping of the harsh driving stop reason numerical values to their string representation:
+0 BelowThreshold 1 MaxTimeReached 2 NoValidFix
+Syntax
+svc.positon. HarshDrvStopReasonStr
+5.6.5 Functions
+5.6.5.1 requestFix()
+Description
+Request a fix, and optionally to provide a callback function that is called when the fix is ready.
+Syntax
+svc. position . requestFix(fixType, maxAge, timeout, func, �)
+Parameters
+fixType Indicates the desired fix type (2D or 3D).
+maxAge Indicates how old of a fix the caller is willing to accept, in seconds. The minimum value is 1 and any value greater than 600 is automatically replaced with 600, as that is the largest maximum age value the modem supports.
+timeout Indicates how long the caller is willing to wait, in seconds. Valid range is from 1-180, values outside the range are replaced with the appropriate value (1 or 180)
+func An optional callback function, which is called with a table containing all volatile properties (PINs 2-13, 16-18, 21) and any optional user data provided in the requestFix() call; this function must not block. If the fixValid field is false, it means that the request timed out. This parameter is called only once. If multiple fixes are required, requestFix must be called multiple times.
+� Optional user data; this data is passed as-is to the call to func, after the fix properties table.
+Blocking
+Yes
+
+
+Returns
+boolean A flag to indicate whether all parameters were valid
+5.6.6 Posted Events
+5.6.6.1 Accident Start
+Description
+This event is posted when an accident related acceleration is determined using position fixes, and in accordance with PINs 30 and 47-49.
+Source
+svc. position (position service table)
+Event
+�ACCIDENT_START� (string)
+Arguments
+table  A table containing the following fields:
+integer  accForward, signed forward direction acceleration/deceleration in milli-g
+integer  accLateral, signed lateral acceleration/deceleration in milli-g
+integer  latitude, latitude in milliminutes
+integer  longitude, longitude in milliminutes
+integer  metricSpeed, speed in tenths of km/h
+integer  heading, heading in tenths of degrees
+integer  timestamp, timestamp of the oldest of the pair of position fixes used to calculate the
+accelerations/decelerations, expressed as the number of seconds since the epoch
+
+5.6.6.2 Accident Stop
+Description
+This event is posted when an accident related acceleration is no longer determined using position fixes, and in accordance with PINs 30 and 47-49.
+Source
+svc. position (position service table)
+Event
+�ACCIDENT_STOP� (string)
+
+
+Arguments
+table A table containing the following fields:
+integer accForward, signed forward direction acceleration in milli-g integer accLateral, signed lateral acceleration/deceleration in milli-g integer latitude, latitude in milliminutes integer longitude, longitude in milliminutes integer metricSpeed, speed in tenths of km/h integer heading, heading in tenths of degrees integer timestamp, timestamp of the newest of the pair of position fixes used to calculate the
+accelerations/decelerations (when stopReason ~= NoValidFix) or timestamp of the last valid GNSS fix obtained (when stopReason == NoValidFix), expressed as the number of seconds since the epoch
+integer stopReason, the reason for the stop event, one of: svc.position.HarshStopReason.BelowThreshold (0) svc.position.HarshStopReason.MaxTimeReached (1) svc.position.HarshStopReason.NoValidFix (2)
+table A table of minimum or maximum acceleration information containing the following fields: integer accForward, forward acceleration/deceleration in milli-g (minimum or maximum acceleration when magnitude exceeds magnitude of accLateral, or forward acceleration at time of accLateral otherwise) integer accLateral, signed lateral acceleration/deceleration in milli-g (minimum or maximum acceleration when magnitude exceeds magnitude of accForward, or lateral acceleration at time of accForward
+otherwise) integer latitude, latitude of minimum or maximum acceleration occurrence in milliminutes integer longitude, longitude of minimum or maximum acceleration occurrence in milliminutes integer metricSpeed, speed at time of minimum or maximum acceleration occurrence in tenths of km/h integer heading, heading at time of minimum or maximum acceleration occurrence in tenths of degrees integer timestamp, timestamp of the newest of the pair of position fixes at time of minimum or maximum
+acceleration occurrence, expressed as the number of seconds since the epoch
+5.6.6.3 Antenna Cut
+Description
+This event is posted when the antenna cut status changes on satellite-cellular terminals. This event is identical to the event generated by the idp service. Both services generate events for terminals with satellite service, but only the position service generates an event for cellular-only terminals.
+Source
+svc. position (position service table)
+Event
+�ANTENNA_CUT� (string)
+
+
+Arguments
+boolean Indicates whether an antenna cut is currently detected or not
+5.6.6.4 GPS Jamming
+Description
+This event is posted when the GPS jamming status changes. This event is identical to the event generated by the idp service. Both services generate events for terminals with satellite service, but only the position service generates an event for cellular-only terminals.
+Source
+svc. position (position service table)
+Event
+�JAMMING_UPDATE� (string)
+Arguments
+table An array with the following values number The jamming status:
+0 � Unknown 1 � OK (no significant jamming) 2 � Warning (interference visible, but fix OK) 3 � Critical (interference visible and no fix)
+boolean Indicates whether jamming is detected or not
+number The raw jamming indicator value for the hardware
+5.6.6.5 Harsh Acceleration Start
+Description
+This event is posted when harsh acceleration is determined using position fixes, and in accordance with PINs 30 and 35-37.
+Source
+svc. position (position service table)
+Event
+�HARSH_ACCEL_START� (string)
+Arguments
+table A table containing the following fields: integer accForward, signed forward direction acceleration in milli-g integer accLateral, signed lateral acceleration/deceleration in milli-g
+
+
+integer  latitude, latitude in milliminutes
+integer  longitude, longitude in milliminutes
+integer  metricSpeed, speed in tenths of km/h
+integer  heading, heading in tenths of degrees
+integer  timestamp, timestamp of the oldest of the pair of position fixes used to calculate the
+accelerations/decelerations, expressed as the number of seconds since the epoch
+
+5.6.6.6 Harsh Acceleration Stop
+Description
+This event is posted when harsh acceleration is no longer determined using position fixes, and in accordance with PINs 30 and 35-37.
+Source
+svc. position (position service table)
+Event
+�HARSH_ACCEL_STOP� (string)
+Arguments
+table A table of harsh acceleration stop information containing the following fields:
+integer accForward, signed forward direction acceleration in milli-g
+integer accLateral, signed lateral acceleration/deceleration in milli-g
+integer latitude, latitude in milliminutes
+integer longitude, longitude in milliminutes
+integer metricSpeed, speed in tenths of km/h
+integer heading, heading in tenths of degrees
+integer timestamp, fix time of the newest of the pair of position fixes used to calculate the
+acceleration/deceleration (when stopReason ~= NoValidFix) or timestamp of the last valid
+GNSS fix obtained (when stopReason == NoValidFix), expressed as the number of seconds
+since the epoch
+integer stopReason, the reason for the stop event, one of: svc.position.HarshStopReason.BelowThreshold (0) svc.position.HarshStopReason.MaxTimeReached (1) svc.position.HarshStopReason.NoValidFix (2)
+table A table of maximum forward acceleration information containing the following fields:
+integer accForward, signed maximum forward direction acceleration in milli-g
+integer accLateral, signed lateral acceleration at the time of maximum forward acceleration in milli.
+g
+integer latitude, latitude of maximum forward acceleration in milliminutes
+integer longitude, longitude of maximum forward acceleration in milliminutes
+integer metricSpeed, speed at time of maximum forward acceleration in tenths of km/h
+integer heading, heading at time of maximum forward acceleration in tenths of degrees
+integer timestamp, timestamp of the newest of the pair of position fixes at time of maximum forward
+acceleration, expressed as the number of seconds since the epoch
+
+
+5.6.6.7 Harsh Braking Start
+Description
+This event is posted when harsh braking is determined using position fixes, and in accordance with PINs 30 and 39-41.
+Source
+svc. position (position service table)
+Event
+�HARSH_BRAKE_START� (string)
+Arguments
+table A table containing harsh braking stop with the following fields: integer accForward, signed forward direction acceleration in milli-g integer accLateral, signed lateral acceleration in milli-g integer latitude, latitude in milliminutes integer longitude, longitude in milliminutes integer metricSpeed, speed in tenths of km/h integer heading, heading in tenths of degrees integer timestamp, timestamp of the oldest of the pair of position fixes used to calculate the
+accelerations/decelerations, expressed as the number of seconds since the epoch
+5.6.6.8 Harsh Braking Stop
+Description
+This event is posted when harsh braking is no longer determined using position fixes, and in accordance with PINs 30 and 39-41.
+Source
+svc. position (position service table)
+Event
+�HARSH_BRAKE_STOP� (string)
+Arguments
+table A table containing the following fields:
+integer accForward, signed forward direction acceleration/deceleration in milli-g integer accLateral, signed lateral acceleration/deceleration in milli-g integer latitude, latitude in milliminutes integer longitude, longitude in milliminutes integer metricSpeed, speed in tenths of km/h
+
+
+integer heading, heading in tenths of degrees
+integer timestamp, timestamp of the newest of the pair of position fixes used to calculate the accelerations/decelerations (when stopReason ~= NoValidFix) or timestamp of the last valid GNSS fix obtained (when stopReason == NoValidFix), expressed as the number of seconds since the epoch
+integer stopReason, the reason for the stop event, one of: svc.position.HarshStopReason.BelowThreshold (0) svc.position.HarshStopReason.MaxTimeReached (1) svc.position.HarshStopReason.NoValidFix (2)
+table A table of minimum forward acceleration information containing the following fields:
+integer accForward, signed minimum forward direction acceleration in milli-g integer accLateral, signed lateral acceleration at the time of minimum forward acceleration in milli-g integer latitude, latitude of minimum forward acceleration in milliminutes integer longitude, longitude of minimum forward acceleration in milliminutes integer metricSpeed, speed at time of minimum forward acceleration in tenths of km/h integer heading, heading at time of minimum forward acceleration in tenths of degrees integer timestamp, timestamp of the newest of the pair of position fixes at time of minimum forward
+acceleration, expressed as the number of seconds since the epoch
+5.6.6.9 Harsh Cornering Start
+Description
+This event is posted when harsh cornering is determined using position fixes, and in accordance with PINs 30 and 43-45.
+Source
+svc. position (position service table)
+Event
+�HARSH_CORNER_START� (string)
+Arguments
+table A table containing the following fields: integer accForward, signed forward direction acceleration/deceleration in milli-g integer accLateral, signed lateral acceleration/deceleration in milli-g integer latitude, latitude in milliminutes integer longitude, longitude in milliminutes integer metricSpeed, speed in tenths of km/h integer heading, heading in tenths of degrees integer timestamp, timestamp of the oldest of the pair of position fixes used to calculate the
+accelerations/decelerations, expressed as the number of seconds since the epoch
+
+
+5.6.6.10 Harsh Cornering Stop
+Description
+This event is posted when an accident related acceleration is no longer determined using position fixes, and in accordance with PINs 30 and 47-49.
+Source
+svc. position (position service table)
+Event
+�HARSH_CORNER_STOP� (string)
+Arguments
+table A table containing the following fields:
+integer accForward, signed forward direction acceleration/deceleration in milli-g integer accLateral, signed lateral acceleration/deceleration in milli-g integer latitude, latitude in milliminutes integer longitude, longitude in milliminutes integer metricSpeed, speed in tenths of km/h integer heading, heading in tenths of degrees integer timestamp, timestamp of the newest of the pair of position fixes used to calculate the
+accelerations/decelerations (when stopReason ~= NoValidFix) or timestamp of the last valid GNSS fix obtained (when stopReason == NoValidFix), expressed as the number of seconds since the epoch
+integer stopReason, the reason for the stop event, one of: svc.position.HarshStopReason.BelowThreshold (0) svc.position.HarshStopReason.MaxTimeReached (1) svc.position.HarshStopReason.NoValidFix (2)
+table A table of minimum or maximum lateral acceleration information containing the following fields:
+integer accForward, signed forward acceleration at time of minimum or maximum lateral acceleration in milli-g
+integer accLateral, signed minimum or maximum lateral acceleration (the minimum negative or maximum positive value � the one with the largest magnitude) in milli-g
+integer latitude, latitude of minimum or maximum lateral acceleration occurrence in milliminutes
+integer longitude, longitude of minimum or maximum lateral acceleration occurrence in milliminutes
+integer metricSpeed, speed at time of minimum or maximum lateral acceleration occurrence in tenths of km/h
+integer heading, heading at time of minimum or maximum lateral acceleration occurrence in tenths of degrees
+integer timestamp, timestamp of the newest of the pair of position fixes at time of minimum or maximum lateral acceleration occurrence, expressed as the number of seconds since the epoch
+
+
+5.6.6.11 Position Data Updated
+Description
+This event is posted whenever a new GNSS fix is obtained following a call to
+the requestFix() function. It allows all other services to take advantage of a service's request.
+Source
+svc. position (position service table)
+Event
+�POS_UPDATED� (string)
+Arguments
+table A table containing all volatile properties
+5.7 Geofence (SIN 21)
+The geofence service has provisions for up to 128 boundaries (fences), each of which can be a circle, a polygon, or a rectangle. At any given point in time, the geofence service makes available whether the current terminal position is inside or outside of each individual boundary.
+Note that the calculations involved in trying to determine whether a position is within a fence are quite complex. Therefore, the higher the number of fences defined, the longer the check lasts; the interval property should therefore be set accordingly.
+Geofence Tags
+Geofence tags store user metadata for geofences. Four different sets of tags are supported for each fence. A tag index with the range 0...3 is associated with each set of tags, and each tag has a maximum length of 40 bytes.
+Geofence tags are stored on terminals in an LSF data file (in /data/svc/geofence). When a Geofence Designer package is exported a file named tags-fences.dat containing the geofence names using tagIndex=0 is included in the generated .idppkg file (in addition to fences.dat, which contains the corresponding fence definitions in binary format). Older LSF versions do not support geofence tags, but still function without them.
+The filename property (with default value of fences.dat) is used to switch between pairs of geofence definition and geofence tags files. For example, when set to fences2.dat the fence definition file to use is fences2.dat, and the fence tags file to use is tags-fences2.dat. When renaming a geofence definition file, you must also rename the geofence tags file accordingly.
+Geofence tags can be added or modified (as well as requested and reported) via over-the-air messages.
+Although Geofence Designer initially uses tagIndex=0 for fence names, you can choose to use tagIndex=0 for other information.
+
+
+5.7.1 Properties
+
+
+
+
+
+PIN Name Description Type Storage Class Default Value
+1
+enabled Controls whether the geofence Boolean Config false functionality is enabled.
+2
+interval The time interval, in seconds, between two consecutive geofence checks. The maximum value represents one week. The value is capped at the maximum value supported by the hardware platform.
+3 hysteresis The time hysteresis for fence crossings, in seconds. The fence status is rechecked once after this time has elapsed before officially declaring a fence crossing. The time hysteresis applies after any distance hysteresis condition is met. The value is capped at the maximum value supported by the hardware platform.
+4 sendAlarm Controls whether alarm messages Boolean Config true should be sent over-the-air.
+
+
+
+
+5 logAlarm Controls whether alarm messages Boolean Config true should be logged.
+
+
+
+
+6 fileName Specifies the name of the fence String Config fences.dat database file to use.
+
+
+
+
+16 entryHysteresis The distance hysteresis for fence entry, in meters. A fence crossing is not declared until the position is this many meters inside the fence. The time hysteresis value is not checked until this condition is met. A value of 0 disables the hysteresis check. This only applies to circle or rectangle fences.
+17 exitHysteresis The distance hysteresis for fence exit, in meters. A fence crossing is not declared until the position is this many meters outside the fence. The time hysteresis value is not checked until this condition is met. A value of 0 disables the hysteresis check. This only applies to circle or rectangle fences.
+
+
+
+
+
+
+Unsigned Min. � 0 Max. � 604800
+
+Config 60
+
+
+
+
+
+
+
+PIN  Name  Description  Type  Storage Class  Default Value
+31  fenceCheckSuccessFixTime The fixTime at the time the last successful fence check was performed on enabled fences, expressed as the number of seconds since the epoch.  Signed Minimum � -2147483648 Maximum � 2147483647  Volatile  0
+
+5.7.2 To-Mobile Messages
+Description
+MINName1
+setCircle
+Configures a new simple (circular) fence. 2 setPolygon Configures a new complex (polygonal) fence. 3 enableFence Updates the enabled property of a fence. 4 updateAlarmCond Updates the alarmCondition property of a fence. 5 getStatus Retrieves the current status of a single fence. A fenceStatus
+message is generated in response. 6 getAllStatus Retrieves the current status of all fences. An allFencesStatus
+message is generated in response. 7 setRectangle Configures a new rectangular fence. 8 removeTags Removes any existing tags of the specified fences and tag indices. 9 setTags Configures any subset of tags, for a specific tag index. 10 getTags Retrieves the tags of any subset of fences. A tags
+message is generated in response. 11 getFenceDef
+
+Retrieves the definitions of any subset of fences. A fenceDef
+message is generated in response.
+
+
+5.7.2.1 setCircle (SIN 21, MIN 1)
+This message defines a circle fence in the current fence database file.
+
+Name Type Optional Size Comments
+number Unsigned No 7 bits The fence number to configure enabled Boolean No 1 bit Whether this fence is enabled or not alarmCondition Enum No 2 bits Controls when alarms should be generated
+0 � None 1 � Entry 2 � Exit 3 � Both
+centreLatitude Signed No 24 bits The latitude of the center point, in milliminutes centreLongitude Signed No 25 bits The longitude of the center point, in milliminutes radius Unsigned No
+20 bits
+The radius of the fence, in meters
+
+
+
+
+5.7.2.2 setPolygon (SIN 21, MIN 2)
+This message defines a polygon fence in the current fence database file.
+
+
+
+
+5.7.2.3 enableFence (SIN 21, MIN 3)
+
+5.7.2.4 updateAlarmCond (SIN 21, MIN 4)
+
+Field Name Type Optional Size Comments
+number 7 bits The fence number to update alarmCondition Enum No 2 bits
+Controls when alarms should be generated 0 � None 1 � Entry 2 � Exit 3 � Both
+5.7.2.5 getStatus (SIN 21, MIN 5)
+
+5.7.2.6 getAllStatus (SIN 21, MIN 6)
+This message does not contain any fields.
+5.7.2.7 setRectangle (SIN 21, MIN 7)
+This message defines a rectangle fence in the current fence database file.
+
+Name Type Optional Size Comments
+number The fence number to configure enabled Whether this fence is enabled or not alarmCondition
+Enum No
+2 bits
+Controls when alarms should be generated 0 � None 1 � Entry 2 � Exit 3 � Both
+
+
+
+5.7.2.8 removeTags (SIN 21, MIN 8)
+This message removes any existing geofence tags of the specified fences and tag indices. If the list field is not populated, the tags of all fences are removed.
+
+Name Type Optional Size Comments
+list Array No �128 elements A list of fence numbers.
+number Unsigned No 7 bits The fence number.
+removeTagsIndex0 Boolean No 1 bit False: Keep all existing tagIndex0 tags True: Remove tageIndex0 tags of the specified fences
+removeTagsIndex1 Boolean No 1 bit False: Keep all existing tagIndex1 tags True: Remove tageIndex1 tags of the specified fences
+removeTagsIndex2 Boolean No 1 bit False: Keep all existing tagIndex2 tags True: Remove tageIndex2 tags of the specified fences removeTagsIndex3 Boolean No 1 bit
+False: Keep all existing tagIndex3 tags True: Remove tageIndex3 tags of the specified fences
+5.7.2.9 setTags (SIN 21, MIN 9)
+This message configures any subset of geofence tags.
+If desired, the removeTags message can be used to remove all existing tags for specified tag indices before setting tags using the setTags message (or multiple setTags messages).
+It is possible that the size of this message could exceed the maximum to-mobile message size. This can be avoided by using multiple setTags messages.
+
+Name Type Optional Size Comments
+list Array No �128 elements A list of fence numbers and their tags number Unsigned No 7 bits The fence number. tag0 String Yes �40 bytes The tagIndex0 string. An empty string deletes the tag. tag1 String Yes �40 bytes The tagIndex1 string. An empty string deletes the tag. tag2 String Yes �40 bytes The tagIndex2 string. An empty string deletes the tag.
+
+tag3 String
+Yes
+�40 bytes
+The tagIndex3 string. An empty string deletes the tag.
+
+
+5.7.2.10 getTags (SIN 21, MIN 10)
+This message retrieves the tags for any subset of geofences. A tags message is generated in response. If the fenceList field is not populated, the tags are reported for all fences. If the tagList field is not populated, the tags are reported for all tag indices. It is possible that the size of the tags message generated in response could exceed the maximum from-mobile
+message size (and therefore would not be sent). This can be avoided by using multiple getTags
+messages, each
+requesting the tags for a smaller subset of tag indices and/or fences.
+
+5.7.2.11 getFenceDef (SIN 21, MIN 11)
+This message retrieves the definitions of any subset of fences. A fenceDef message is generated in response. If the list field is not populated, all fence definitions are reported.
+
+5.7.3 From-Mobile Messages
+
+5.7.3.1 alarm (SIN 21, MIN 1)
+
+
+
+
+Comments
+The latitude at the time the crossing was detected (prior to any hysteresis checks), in milliminutes
+The longitude at the time the crossing was detected (prior to any hysteresis checks), in milliminutes
+The speed at the time the crossing was detected (prior to any hysteresis checks), in tenths of knots
+The heading at the time the crossing was detected (prior to any hysteresis checks), in tenths of degrees
+The fixTime at the time the crossing was detected (prior to any hysteresis checks), in seconds since the epoch
+5.7.3.2 fenceStatus (SIN 21, MIN 2)
+
+Name Type Optional Size Comments
+number 7 bits The fence number
+defined 1 bit Whether this fence is currently configured
+enabled 1 bit Whether this fence is currently enabled
+status 2 bits Whether position was inside or outside the fence at the last check time
+fenceCheckStatus 3 bits The status of the last fence check or time hysteresis check.
+fenceCheckSuccessFixTime Signed No
+32 bits
+The fixTime at the time the last successful fence check was performed on enabled fences, expressed as the number of seconds since the epoch.
+5.7.3.3 allFencesStatus (SIN 21, MIN 3) 5.7.3.4 alarms (SIN 21, MIN 4)
+
+
+
+
+Name Type
+
+Comments
+list The array of fence crossing data The fence number to which the alarm applies Whether the alarm is for a fence entry or exit
+The latitude at the time the crossing was detected (prior to any hysteresis checks), in milliminutes longitude
+Signed No 25 bits The longitude at the time the crossing was detected (prior to any hysteresis checks), in milliminutes
+5.7.3.5 alarms2 (SIN 21, MIN 5)
+Name  Type  Comments
+list1
+ The array of fence crossing data
+The latitude at the time the crossing was detected (prior
+to any hysteresis checks), in milliminutes
+The longitude at the time the crossing was detected
+(prior to any hysteresis checks), in milliminutes
+The speed at the time the crossing was detected (prior to
+any hysteresis checks), in tenths of knots
+The heading at the time the crossing was detected (prior
+to any hysteresis checks), in tenths of degrees
+The fixTime at the time the crossing was detected (prior
+to any hysteresis checks), in seconds since the epoch
+
+
+ The array of fence crossing data
+
+ The fence number to which the alarm applies
+status  Enum  No  2 bits  Whether the alarm is for a fence entry or exit
+0 � Inside
+1 � Outside
+
+
+
+
+5.7.3.6 tags (SIN 21, MIN 6)
+Name Type
+
+Comments
+list The array of fence numbers and tags. Fences without any corresponding tags are omitted from the list. The fence number The tagIndex0 string The tagIndex1 string The tagIndex2 string tag3
+Signed
+Yes
+�40 bits
+The tagIndex3 string
+
+
+
+
+
+5.7.3.7 fenceDef (SIN 21, MIN 7)
+
+
+
+Name Type
+
+Comments Whether this fence is enabled Controls when alarms should be generated
+The array of the polygon's points
+The latitude of the point, in milliminutes
+longitude Signed No
+25 bits
+The longitude of the point, in milliminutes
+5.7.3.8 fenceCheckStatus (SIN 21, MIN 8)
+
+Comments
+The status of the last fence check or time hysteresis check.
+The fixTime at the time the last successful fence check was performed on enabled fences, expressed as the number of seconds since the epoch.
+The latitude at the last successful fence check, in milliminutes
+The longitude at the last successful fence check, in milliminutes
+The speed at the last successful fence check, in tenths of knots
+The heading at the last successful fence check in tenths of degrees
+The age of the GNSS fix at the last successful fence check in seconds.
+5.7.4 Constants
+The geofence service defines the following constants.
+5.7.4.1 AlarmCondition
+Description
+This table contains a mapping of the alarm conditions to their numerical value:
+None  0
+Entry  1
+Exit  2
+Both  3
+
+
+
+Syntax
+svc.geofence.AlarmCondition
+5.7.4.2 AlarmConditionStr
+Description
+This table contains a mapping of the alarm condition numerical values to their string representation:
+0 1 2 3  None Entry Exit Both
+Syntax
+
+svc.geofence.AlarmConditionStr
+5.7.4.3 FenceCheckStatus
+Description
+This table contains a mapping of the fence check status to their numerical value:
+Unknown 0 NotPerformed 1 Success 2 Failure 3
+Syntax
+svc.geofence.FenceCheckStatus
+5.7.4.4 FenceCheckStatusStr
+Description
+This table contains a mapping of the fence type numerical values to their string representation:
+0 Unknown 1 NotPerformed 2 Success 3 Failure
+Syntax
+svc.geofence.FenceCheckStatusStr
+
+
+5.7.4.5 Status
+Description
+This table contains a mapping of the fence status to their numerical value:
+Inside  0
+Outside  1
+Undefined  2
+Syntax
+
+svc.geofence.Status
+5.7.4.6 StatusStr
+Description
+This table contains a mapping of the fence status numerical values to their string representation:
+0 Inside 1 Outside 2 Undefined
+Syntax
+svc.geofence.StatusStr
+5.7.4.7 Type
+Description
+This table contains a mapping of the fence types to their numerical value:
+Circle 0 Polygon 1 Rectangle 2
+Syntax
+svc.geofence.Type
+5.7.4.8 TypeStr
+Description
+This table contains a mapping of the fence type numerical values to their string representation:
+0
+Circle
+1
+Polygon
+2
+Rectangle
+
+
+Syntax
+svc.geofence.TypeStr
+5.7.5 Functions
+5.7.5.1 enableFence()
+Description
+Enables or disables a specific fence.
+Syntax
+svc.geofence.enableFence(fenceNum, enable)
+Parameters
+fenceNum enable  The fence number to enable or disable (0 � 127). boolean indicating whether to enable (ture) or disable (false) the fence.
+Blocking No
+Returns
+
+nil|string Nil if successful, or an error description otherwise.
+Example
+shell> lua =svc.geofence.enableFence(0, true) shell>
+5.7.5.2 getFenceDef()
+Description
+Get the definition of one or more fences.
+Syntax
+svc.geofence.getFenceDef(�)
+Parameters
+� The fences can be specified as either multiple fence number arguments or a single table argument consisting of the desired fence numbers. If no arguments are specified, the definitions of all fences are returned.
+Blocking
+No
+
+
+Returns
+table An array of fence definition entries, each containing the following common fields: number The fence number enabled A Boolean indicating whether the fence is enabled type Fence type (svc.geofence.Type) condition Fence alarm condition (svc.geofence.AlarmCondition) tags A table of defined tags (undefined tags are omitted), containing the following
+fields:
+[0] tagIndex0 tag string
+[1] tagIndex1 tag string
+[2] tagIndex2 tag string
+[3] tagIndex3 tag string Fences of type Circle (type = svc.geofence.Type.Circle) include the following extra fields:
+centre A table defining the center of the circle, containing the following fields: lat Latitude in milliminutes of the center point. long Longitude in milliminutes of the center point.
+radius The radius of the circle in meters. Fences of type Rectangle (type = svc.geofence.Type.Rectangle) include the following extra fields:
+centre A table defining the center of the rectangle, containing the following fields: lat Latitude in milliminutes of the center point. long Longitude in milliminutes of the center point.
+latitudeDistance The distance the rectangle extends to the north and south from the center in meters. longitudeDistance The distance the rectangle extends to the east and west from the center in meters. Fences of type Polygon (type = svc.geofence.Type.Polygon) include the following extra fields:
+latPoints  Table of the latitude in milliminutes for each point making up the polygon.
+longPoints  Table of the longitude in milliminutes for each point making up the polygon.
+Example
+
+shell> lua dumpvar(svc.geofence.getFenceDef(6)) ["table: 642561e8"] = { --table: 642561e8 (count= 1)
+[1] = { --table: 64242360 (count= 0) number = 6 type = 2 centre = { --table: 642432f0 (count= 0)
+long = -6332820
+lat = 2340000 } latitudeDistance = 302308 longitudeDistance = 222588 tags = { --table: 642d6668 (count= 3)
+
+
+[0] = "Colorado"
+[1] = "USA"
+[2] = "Interstate speed limit: 70 mph"
+[3] = "Mountain time" } condition = 3 enabled = true
+} } shell>
+5.7.5.3 getStatus()
+Description
+Retrieve the status of one or more fences.
+Syntax
+svc.geofence.getStatus(�)
+Parameters
+� The fences can be specified as either multiple fence number arguments or a single table argument consisting of the desired fence numbers. If no arguments are specified, the status of all fences is returned.
+Blocking No
+Returns
+table  An array of number defined enabled status  fence status entries, each containing the following fields: The fence number A Boolean indicating whether the fence is defined A Boolean indicating whether the fence is enabled 0 � Inside, 1 � Outside, 2 � Undefined
+Example
+
+shell> lua dumpvar(svc.geofence.getStatus(6)) ["table: 642a7a68"] = { --table: 642a7a68 (count= 1)
+[1] = { --table: 642a7aa8 (count= 0) number = 6 status = 1 enabled = true defined = true
+
+
+} } shell>
+5.7.5.4 getTags()
+Description
+Retrieve the tags of one or more fences.
+Syntax
+svc.geofence.getTags(fenceNums, tagIndices)
+Parameters
+fenceNums The fences can be specified as either a single fence number argument or a single table
+argument consisting of the desired fence numbers. If no arguments are specified, the tags of
+all fences are returned.
+tagIndices The tag indices can be specified as either a single tag index argument or a single table
+argument consisting of the desired tag indices. If no arguments are specified, the tags of all
+tag indices are returned.
+Blocking
+No
+Returns
+table  An array of entries, each containing the following fields:
+number  The fence number
+tags  A table of defined tags (undefined tags are omitted), containing the following fields:
+[0]  tagIndex0 tag string
+[1]  tagIndex1 tag string
+[2]  tagIndex2 tag string
+[3]  tagIndex3 tag string
+Example
+
+shell> lua dumpvar(svc.geofence.getTags(6)) ["table: 642496c8"] = { --table: 642496c8 (count= 1)
+[1] = { --table: 64249838 (count= 0) number = 6 tags = { --table: 64249808 (count= 3)
+[0] = "Colorado"
+[1] = "USA"
+[2] = "Interstate speed limit: 70 mph"
+[3] = "Mountain time" }
+
+
+} } shell>
+5.7.5.5 removeTags()
+Description
+Remove the tags of one or more fences, and one or more tag indices.
+Syntax
+svc.geofence.removeTags(fenceNumArray, removeTag0, removeTag1, removeTag2, removeTag3)
+Parameters
+fenceNumArray Array table of the desired fence numbers (or an empty table for all fences), or nil for all fences
+removeTag0  Remove tag0 tags if true
+removeTag1  Remove tag1 tags if true
+removeTag2  Remove tag2 tags if true
+removeTag3  Remove tag3 tags if true
+Blocking
+No
+Returns
+
+nil nil if no error encountered, error string otherwise
+Example
+shell> lua svc.geofence.removeTags({6}, false, false, true, false) shell> lua dumpvar(svc.geofence.getTags(6)) ["table: 6428ad70"] = { --table: 6428ad70 (count= 1)
+[1] = { --table: 6428ada0 (count= 0) number = 6 tags = { --table: 6428acd0 (count= 1)
+[0] = "Colorado"
+[1] = "USA"
+[3] = "Mountain time" }
+} } shell>
+
+
+5.7.5.6 setTags()
+Description
+Set the tags of one or more fences.
+Syntax
+svc.geofence.setTags(newTags)
+Parameters
+newTags  An array of number tags  tag information, each entry containing the following fields: The fence number A table of tag strings where any subset of tags 0...3 may exist. An empty string removes the tag. [0] tagIndex0 tag string [1] tagIndex1 tag string [2] tagIndex2 tag string [3] tagIndex3 tag string
+Blocking No
+Returns
+nil  nil if no erro r encountered, error string otherwise
+Example
+
+shell> lua dumpvar(svc.geofence.getTags(6)) ["table: 642a05f8"] = { --table: 642a05f8 (count= 0) } shell> lua svc.geofence.setTags({ {number=6,tags={[0]="Colorado",[1]="USA", [2]="Interstate speed limit: 70 mph",[3]="Mountain time"} } }) shell> lua dumpvar(svc.geofence.getTags(6)) ["table: 6428d0a0"] = { --table: 6428d0a0 (count= 1)
+[1] = { --table: 642d3a58 (count= 0) number = 6 tags = { --table: 642564d8 (count= 3)
+[0] = "Colorado"
+[1] = "USA"
+[2] = "Interstate speed limit: 70 mph"
+[3] = "Mountain time"
+} }
+
+
+}
+shell>
+5.7.6 Posted Events
+5.7.6.1 Fence Check Done
+Description
+This event is posted when the fence check completes and the checkDoneEvents (PIN 23) property is true.
+Source
+svc.geofence (geofence service table)
+Event
+�FENCE_CHECK_DONE� (string)
+Arguments
+number The fence check status 1 � Success, 2 � Failure
+5.7.6.2 Fence Crossing Alarm
+Description
+This event is posted when a fence entry or exit is detected, or when a fence status changes from undefined to inside/outside, regardless of the fence's alarm condition setting, and regardless of the sendAlarm and logAlarm property values.
+Source
+svc.geofence (geofence service table)
+Event
+�ALARM�  (string)
+Arguments
+table  A
+table
+with
+the
+following
+fields
+(see
+the
+alarm
+message):
+number
+The
+fence
+number
+
+status  0 � Inside, 1 � Outside
+prevStatus latitude longitude speed  The previous status: 0 � Inside, 1 � Outside, 2 � Undefined The latitude at the time the crossing was detected, (prior to any hysteresis checks), in milliminutes The longitude at the time the crossing was detected, (prior to any hysteresis checks), in milliminutes The speed at the time the crossing was detected (prior to any hysteresis checks), in tenths of knots
+
+
+
+heading  The heading at the time the crossing was detected (prior to any hysteresis
+checks), in tenths of degrees
+fixTime  The fixTime at the time the crossing was detected (prior to any hysteresis
+checks), in seconds since the epoch
+
+5.7.6.3 Fence Crossing Alarm (multiple)
+Description
+This event is posted when one or more fence entry or exit events are detected, or when a fence status changes from undefined to inside/outside, regardless of the fence's alarm condition setting, and regardless of the sendAlarm and logAlarm property values.
+Source
+svc.geofence (geofence service table)
+Event
+�ALARMS� (string)
+Arguments
+table An array of alarms, where each entry is a table with the following fields (see the alarms
+message): number The fence number status 0 � Inside, 1 � Outside prevStatus The previous status: 0 � Inside, 1 � Outside, 2 � Undefined latitude The latitude at the time the crossing was detected, (prior to any hysteresis checks), in milliminutes longitude The longitude at the time the crossing was detected, (prior to any hysteresis checks), in milliminutes speed The speed at the time the crossing was detected (prior to any hysteresis checks), in tenths of knots heading The heading at the time the crossing was detected (prior to any hysteresis checks), in tenths of degrees fixTime The fixTime at the time the crossing was detected (prior to any hysteresis checks), in seconds since the epoch
+5.7.6.4 Hysteresis Check Done
+Description
+This event is posted when hysteresis check completes and the checkDoneEvents (PIN 23) property is true.
+Source
+svc.geofence (geofence service table)
+Event
+�HYST_CHECK_DONE� (string)
+
+
+Arguments
+number The fence check status 1 � Success, 2 � Failure
+5.8 Serial (SIN 22)
+The serial service manages communication through the terminal's various serial ports (RS-232 and RS-485), including their configuration and status.
+Table 2: Property to Physical Port Connector Mapping
+
+5.8.1 ST 6000
+The ST 6000 does not have any integral RS-232 or RS-485 transceivers, so the rs232mainTcvrMode and rs232auxTcvrMode properties have no effect.
+If the �Console Valid� and �AUX Valid� lines are not connected/used, then DTE connection detection functionality and related features (�auto� shutdown mode) are not supported.
+The ST 6000 supports full serial power management features as long as the corresponding �VALID� line is connected and asserted when an external connection is present.
+5.8.2 Properties
+
+1The rs232mainEnabled property is provided for compatibility with the old enabled property of the rs232 service, and has no effect. The rs232 port is enabled whenever connect() is called and disabled whenever disconnect() is called.
+
+
+
+1Only with 8 data bits 1Only with 8 data bits.
+
+
+
+
+
+
+The rs232mainTcvrMode property controls when the transceiver turns itself on or off. The autoShutdown value should be used in most cases, and it allows the transceiver to automatically turn itself off when there is no DTE connected; otherwise it is turned on. The forceOn value is useful when connected to a DTE which also uses automatic shutdown; one of them must be forced on, or they both remain off. Finally, the forceOff value is useful when connected to a DTE which is not in use; forcing the transceiver off can help prevent unnecessary leakage.
+
+
+The rs232mainShutdownMode property controls what to do with the UART when going into low power mode. When the property is set to Auto, the action taken depends on whether a DTE is connected or not. If a DTE is connected, then the UART is not shut down and the terminal remains in normal operating mode; if no DTE is connected, then the UART is shut down and the low power mode is entered. Setting the property to Always ensures that the UART is always shut down, and allows low power mode to be entered; setting it to Never has the opposite effect.
+5.8.2.1 External DTE Connect/Disconnect
+The rs232main port supports full DTE connect/disconnect event notification via the built-in transceiver. When the INVALID line of the transceiver changes state, a DTE connect/disconnect event is generated. The transceiver determines if a terminal is connected by the voltage state of the Rx line coming into the terminal.
+The rs232mainDTEEdgeDetect property controls which transition of this signal should generate events and the rs232mainDTEEdgeSampleCount and rs232mainDTEEdgeSampleError properties control the filtering on this line.
+The rs232mainDTEIsConnected volatile property can be used to query the current state of this line to determine if an external terminal is connected.
+Table 3: RS-232 Port Differences
+ST 6100 ST 9100 and ST Desktop Main Main Debug Transceiver Present YES YES YES Transceiver FON/FOFF control YES YES NO DTE Connection state YES YES NO DTE Alarming/Logging YES YES NO DTE Edge Transition Config YES YES NO DTE Edge Filter Config YES YES NO UART Break Detection YES YES YES UART Break Alarming/Logging YES YES YES Configurable Power Management
+YES
+YES
+NO
+
+5.8.2.2 Power Management
+The rs232mainShutdownMode property controls when the terminal can enter power save mode and the UART can be turned off to save power.
+When the property is set to Auto, the action taken depends on whether a DTE is connected to the port or not. If a DTE is connected, the terminal is blocked from entering power save mode and the UART stays fully powered to allow for normal communication. If no DTE is connected, the terminal is able to enter power save mode.
+Setting the property to Always allows the terminal to enter power save mode (and therefore powering down the UART) at any time, even if communication is in progress on the port.
+Setting the property to Never prevents the terminal from entering power save mode and keeps the UART fully operational at all times, even when nothing is connected.
+The ST 6000 supports full serial power management features as long as the corresponding �VALID� line is connected and asserted when an external connection is present.
+
+
+5.8.3 To-Mobile Messages
+This service does not currently define any to-mobile messages.
+5.8.4 From-Mobile Messages
+
+5.8.4.1 DTEAlarm (SIN 22, MIN 1)
+This message is never sent.
+
+Name Type Optional Size Comments
+DTEConnected Boolean No 1 bit Whether the alarm is for the DTE being connected or disconnected. port String No �16 bytes
+'rs232main', 'rs232aux' other values are reserved
+* rs232aux not available on all models.
+5.8.4.2 breakAlarm (SIN 22, MIN 2)
+
+5.8.5 Functions
+5.8.5.1 connect()
+Description
+Open a connection to the RS-232 port. The port is opened in exclusive mode, so only one caller at a time can have it open.
+A call to connect returns a handle which is used to call all other functions exported by this service. Any given function xxx can be called in one of two ways:
+�
+handle.xxx(handle, ...)
+�
+handle:xxx(...)
+Syntax
+svc.serial.connect(port)
+Parameters
+port The port to connect to can be either 'rs232main', 'rs232aux' or 'rs485' (default to 'rs232main' if nil or no argument is provided). rs232aux not available on all models.
+
+
+Blocking
+No
+Returns
+handle  A handle allowing subsequent access to all port functions, or nil if the port has already been
+opened
+string  An error message when the port has already been opened, or nil
+
+Example
+local handle, err = svc.serial.connect()
+if handle then handle.writestr(handle, "This is a test.") handle:writestr("This is another test.") svc.serial.disconnect(handle)
+else
+printf("Error opening rs232 connection (%s)\n", err) end handle, err = svc.serial.connect('rs485') if handle then
+handle.writestr(handle, "This is a test.") handle:writestr("This is another test.") svc.serial.disconnect(handle)
+else printf("Error opening rs485 connection (%s)\n", err) end
+5.8.5.2 disconnect()
+Description
+Close a previously-opened connection.
+Syntax
+svc.serial.disconnect(handle)
+Parameters
+handle The handle that was returned by the call to connect().
+Blocking
+No
+
+
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure; nil otherwise
+5.8.6 Common Handle Methods
+The following methods are available on the handle for any port connection.
+5.8.6.1 cancelEvent()
+Description
+Cancels any pending eventOnByte(), eventOnLine(), and eventOnFrame().
+Syntax
+<handle>:cancelEvent()
+Parameters
+None
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure; nil otherwise
+5.8.6.2 disconnect()
+Description
+Closes the serial channel associated with the handle. This is equivalent to calling the disconnect() method with the <handle> as the argument.
+Syntax
+<handle>:disconnect()
+Parameters
+None
+Blocking
+No
+Returns
+None
+
+
+5.8.6.3 eventOnByte()
+Description
+Causes the BYTE event to be posted when the next byte is received by the serial port.
+Syntax
+<handle>:eventOnByte(timeout)
+Parameters
+timeout  Timeout in milliseconds. A negative timeout means wait forever, and a timeout of zero means no
+timeout and to poll the interface.
+Blocking
+No
+Returns
+boolean  Indicates success or failure
+string  A description of the error in the case of a failure; nil otherwise
+
+5.8.6.4 eventOnFrame()
+Description
+This function enables the FRAME event to be posted when the next time a stream of data matching the frame configuration is received.
+Syntax
+<handle>:eventOnFrame(len, timeout)
+Parameters
+len The number of bytes to read. A value of zero means the configured maximum.
+timeout Timeout in milliseconds. A negative timeout means wait forever, and a timeout of zero means no timeout and to poll the interface.
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure; nil otherwise
+Example
+This example transparently receives frames based on a timeout and a maximum length.
+local SimpleFrameConfig =
+
+
+{ maxRxSize=4096, maxTxSize=4096
+}
+handle:setFrameConfig(SimpleFrameConfig)
+.
+.
+.
+--Generate a frame event after 2000 received bytes or 5000ms timeout, whichever is
+first.
+handle:eventOnFrame(2000, 5000)
+5.8.6.5 eventOnLine()
+Description
+Causes the line event to be posted after the configured delimiter sequence had been received.
+Syntax
+<handle>:eventOnLine(timeout)
+Parameters
+timeout  Timeout in milliseconds. A negative timeout means wait forever, and a timeout of zero means no
+timeout and to poll the interface.
+
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure; nil otherwise
+5.8.6.6 flush()
+Description
+Flushes out any pending data from the serial port buffers. Flushing a serial handle cancels any pending event condition.
+Syntax
+<handle>:flush(mode)
+
+
+Parameters
+mode  A strin'*r' '*t' '*b'  g describing the desired mode Flush (empty) the received buffer Flush the transmit buffer (wait until it is empty) Flush both buffers
+
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure; nil otherwise
+
+5.8.6.7 getByte()
+Description
+Get a byte from the serial port with a timeout. Internally eventOnByte() is called and then a temporary message queue is created to collect the BYTE event and wait() is called to wait until the event occurs.
+Syntax
+<handle>:getByte(timeout)
+Parameters
+timeout Timeout in milliseconds. A negative timeout means wait forever, and a timeout of zero means no timeout and to poll the interface.
+Blocking
+Yes
+Returns
+byte Integer value of the byte received, or -1 if a error occurred err String error message when the returned byte is -1
+5.8.6.8 getFrame()
+Description
+Get a frame of data from the serial port with a timeout. Internally eventOnFrame() is called and then a temporary message queue is created to collect the frame event and wait() is called to wait until the event occurs.
+Syntax
+<handle>:getFrame(len, timeout)
+
+
+Parameters
+len  The number of bytes to read. Zero uses the maximum configured size
+timeout  Timeout in milliseconds. A negative timeout means wait forever, and a timeout of zero means no
+timeout and to poll the interface.
+Blocking
+Yes
+Returns
+success  Boolean indicating true if the frame was received successfully or if a timeout occurred, and
+false otherwise
+frame  String containing the received data if success, otherwise a string indicating the error. If a timeout
+occurs, success is true but the frame string is empty
+
+5.8.6.9 getFrameConfig()
+Description
+Query the configuration of the serial port frame processor.
+Syntax
+<handle>:getFrameConfig()
+Parameters
+None
+Blocking
+No
+Returns
+boolean Indicates success or failure table A table with the same configuration fields passed to setFrameConfig().
+5.8.6.10 getLine()
+Description
+Retrieves a delimited line from the serial port with a timeout. Internally eventOnLine() is called and then a temporary message queue is created to collect the line event and wait() is called to wait until the event occurs.
+Syntax
+<handle>:getLine(timeout)
+Parameters
+timeout Timeout in milliseconds. A negative timeout means wait forever, and a timeout of zero means no timeout and to poll the interface.
+
+
+Blocking
+Yes
+Returns
+string  Contains the received line, or whatever is in the buffer if a timeout occurred, or nil if an error
+occurred
+errMsg  A string description of the error if string is nil
+
+5.8.6.11 getLineConfig()
+Definition
+Query the configuration of the RS-232 line processor
+Syntax
+<handle>:getLineConfig()
+Parameters
+None
+Blocking
+No
+Returns
+boolean Indicates success or failure table A table with the same configuration fields passed to setLineConfig()
+5.8.6.12 sendBreak()
+Description
+Sends a break.
+Syntax
+<handle>:sendBreak()
+Parameters
+None
+Blocking
+No
+Returns
+boolean Indicates success or failure string An error message if a failure occurs or nil otherwise
+
+
+5.8.6.13 setBaud()
+Description
+Change the baud rate of the serial interface.
+Syntax
+<handle>:setBaud(baud)
+Parameters
+baud  The integer baud rate to use (1200, 2400, and so on.)
+Blocking
+No
+Returns
+boolean  Indicates success or failure
+string  An error message if a failure occurs or nil otherwise
+
+5.8.6.14 setFrameConfig()
+Description
+Specifies the configuration of the serial port frame processor. The frame processor can be used to automatically delimit, escape, and checksum frames of binary data. Configuration parameters are optional and use default values if not present. A frameEnd value is mandatory only if a frameStart value is provided.
+FRAME is better suited for operations on raw buffers of data using no delimiter.
+Syntax
+<handle>:setFrameConfig(config)
+Parameters
+config A table with any of the following fields:
+maxRxSize Maximum receive frame size (integer). If present, includes the errorDetection size. For example, if the maximum payload you can receive is 20 bytes, and you have no errorDetection, then the maxRxSize=20 (22 if 16-bit errorDetection is used).
+maxTxSize Maximum transmit frame size (integer). Accommodates fully escaped frame (including errorDetection). For example, if the maximum payload you can transmit is 20 bytes, then you need a maxTxSize greater than 20 to accommodate possible escape sequences.
+minFrameSize Minimum size of the frame (integer). This is used to generate an error if the unescaped data portion of the frame is less than this value. For example, if you always expect a minimum of msgType byte and length byte, then set minFrameSize to 2.
+
+
+frameStart frameEnd
+escapeByte escapeMapping errorDetection
+Start of a frame byte (integer).
+End of a frame byte (integer). This field is mandatory if a frameStart value is provided. Bytes to escape (string) Strings to map each escapeByte to (table of strings)
+Error detection mechanism (string) can be one of: "" none "*cs16" 16-bit checksum "*crc16" 16-bit CCITT CRC
+Blocking
+No
+Returns
+boolean  Indicates success or failure
+string  A description of the error in the case of a failure; nil otherwise
+Default Configuration
+maxRxSize  1024
+maxTxSize  1024
+minFrameSize  0
+escapeBytes  "" (no escaping)
+
+escapeMapping {} errorDetection "" (none)
+5.8.6.15 setLineConfig()
+Description
+Specifies the configuration of the serial port line processor.
+Syntax
+<handle>:setLineConfig(config)
+Parameters:
+config A table with any of the following fields:
+maxLineSize  Maximum size of a line (number)
+echo  indicate if characters are echoed as input (Boolean)
+onlyPrintable  If true, ignore nonprintable characters (Boolean)
+backspace  If true, perform a destructive backspace (Boolean)
+controlBytes  List bytes that are passed immediately (string)
+delimiterSeq  Sequence of characters to delimit a line (string)
+
+
+
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure; nil otherwise
+Default Configuration:
+maxLineSize  200
+echo  false
+onlyPrintable  false
+backspace  false
+controlBytes  ""
+delimiterSeq  "\n"
+
+Example
+Set up the line processor to allow for up to 300 character lines, echo input, filter out nonprintable characters, pass <CTRL-C> and <CTRL-D> immediately, and use a carriage return to terminate line processing.
+local res, err = handle:setLineConfig(
+{ maxLineSize = 300, echo = true, onlyPrintable = true, backspace = true, controlBytes = '\003\004', delimiterSeq = '\r'
+} )
+5.8.6.16 source()
+Description
+Returns the event source events generated from this serial interface.
+Syntax
+<handle>:source()
+Parameters
+None
+
+
+Blocking
+No
+Returns
+source Source of events generated from this interface
+5.8.6.17 write()
+Description
+Write an arbitrary number of string, table (array format) or byte arguments to the port.
+Syntax
+<handle>:write(�)
+Parameters
+... A variable number of integer, string or table arguments.
+The integer arguments are treated as bytes (range of 0 to 255), strings are treated as sequences of bytes, and tables are interpreted as arrays (indexed starting at 1) of bytes.
+Blocking
+No
+Returns
+boolean  Indicates success or failure
+string  A description of the error in the case of a failure; nil otherwise
+
+Example
+Output the string �hello world� followed by a carriage return and line feed character.
+handle:write("hello world", 13, 10)
+Output to the port the binary sequence: 01 0C 01 81 03 04 (shown here in hex).
+SOH = 0x01
+EOT = 0x04
+�
+val = 1
+�
+data = { 12, 1, bit32.bor(0x80,val),3 }
+handle:write(SOH, data, EOT)
+
+
+5.8.6.18 writeframe()
+Description
+Write an arbitrary number of string, table (array format) or byte arguments to the port, using the configured framing protocol.
+Syntax
+<handle>:writeframe(�)
+Parameters
+� The integer arguments are treated as bytes (range of 0 to 255), strings are treated as sequences of bytes, and tables are interpreted as arrays (indexed starting at 1) of bytes
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure; nil otherwise
+Example
+Output the binary frame: 01 03 00 10 24 AA BB 10 31 CC FD B6 04 (shown here in hex), which includes the SOT and EOT characters, escaped control characters and the checksum.
+local DMRFrameConfig =
+{ maxRxSize = 2048, maxTxSize = 2048, minFrameSize = 5, --prefix + length + chksum frameStart = SOH, frameEnd = EOT, escapeBytes = string.char(SOH, EOT, DLE, XON, XOFF), escapeMapping = {
+string.char(DLE, SOH+0x20), string.char(DLE, EOT+0x20), string.char(DLE, DLE+0x20), string.char(DLE, XON+0x20), string.char(DLE, XOFF+0x20)
+}, errorDetection = '*cs16' --16-bit checksum mode
+
+
+} handle:setFrameConfig(DMRFrameConfig) data = { 0xAA, 0xBB, 0x11, 0xCC } --data with XON in middle. lenHi = bit32.rshift(#data, 8) lenLow = bit32.band(#data, 0xFF) handle:writeframe({ 3, lenHi, lenLow }, data)
+5.8.6.19 writestr()
+Description
+Write an arbitrary number of string, table (array format) or byte arguments to the port, converting '\n' characters into '\r\n' sequences.
+Syntax
+<handle>:writestr(�)
+Parameters
+... A variable number of integer, string or table arguments.
+The integer arguments are treated as bytes (range of 0 to 255), strings are treated as sequences of bytes, and tables are interpreted as arrays (indexed starting at 1) of bytes.
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure; nil otherwise
+5.8.7 Posted Events
+5.8.7.1 Break Condition
+Description
+Posted that a break condition has been detected on the port. (terminals)
+Source
+<handle>:source() (string)
+Event
+"BREAK" (string)
+Arguments
+None
+
+
+5.8.7.2 Byte Received
+Description
+Event that is posted when a byte has been received by the UART.
+Source
+<handle>:source() (string)
+Event
+"BYTE" (string)
+Arguments
+byte Integer value of the byte received, or -1 if a timeout occurred
+5.8.7.3 DTE Connection
+Description
+Event posted that a DTE terminal has been either connected or disconnected from the RS-232 port.
+Source "_RS232MAIN" (string) "_RS232AUX" (string)
+Event
+"DTECONNECTED" (string)
+Arguments
+connected Boolean that if true indicates that a DTE terminal has been connected, otherwise the terminal has been disconnected.
+5.8.7.4 Frame Received
+Description
+Posted that a protocol frame of binary data has been received by the UART.
+Source:
+<handle>:source() (string)
+Event:
+"FRAME" (string)
+
+
+Arguments:
+success Boolean indicating true if the frame was received successfully frame String containing the received data, or an error message if success is false
+5.8.7.5 Line Received
+Description
+Event posted that a line has been received by the UART.
+Source
+<handle>:source() (string)
+Event
+"LINE" (string)
+Arguments
+line String containing received line
+5.9 Log (SIN 23)
+The log service provides the ability to store data in nonvolatile storage for history and/or troubleshooting purposes. The data log can store any outgoing message; the debug log stores arbitrary strings. This service also provides auto upload capabilities.
+When responding to a query, or when auto uploading message log entries, the log service does not send entries if the SIN or MIN no longer exist (due to a service being removed from the terminal or modified).
+The log service has two sets of properties. The first set controls which debug log entries are saved to the log files, while the second controls which ones are output on the trace port.
+Each set consists of 14 Data properties, one for each of the debug log levels; levels 0 and 1 (CRITICAL, ERROR) cannot be suppressed. Each property is a list of SINs that are suppressed for that level.
+CAUTION: Observe caution when enabling extra debug logging because most serial tracking output is now generated as an INFO level debug log.
+For example, setting Bit 3 of the debugLogLevelMask writes all modem command/responses to the debug files. This can be controlled by using the suppression features (PINs 16 to 43) to filter out logs from services that are not required.
+
+
+5.9.1 Properties
+
+
+
+
+
+
+
+5.9.2 To-Mobile Messages
+
+
+
+Description
+8
+Sets a filter for the auto uploading of data log records. An uploadDataLogFilter
+message is generated in response.
+9
+Sets a filter for the auto uploading of debug log records. An uploadDebugLogFilter
+message is generated in response.
+10
+Requests the approximate number of records remaining to be auto uploaded based on the upload data log filter. An uploadDataLogCount
+message is generated in response.
+11
+Requests the approximate number of records remaining to be auto uploaded based on the upload debug log filter. An uploadDebugLogCount
+message is generated in response.
+
+12 Sets a filter for subsequent retrieval of debug log records. A debugLogFilter2
+message is generated in response. This message must be used instead of setDebugLogFilter when the SIN is to be used as a filtering criterion.
+13 Requests a block of records matching the data log filter. A debugLogEntries2
+message is generated in response. This message must be used instead of getDebugLogEntries when the response must include the SIN.
+14 setUploadDebugLogFilter2
+Sets a filter for the auto uploading of data log records. An uploadDebugLogFilter2
+message is generated in response. This message must be used instead of setUploadDebugLogFilter when the SIN is to be used as a filtering criterion.
+5.9.2.1 setDataLogFilter (SIN 23, MIN 1)
+
+Comments
+The start of the range of sequence numbers to include The end of the range of sequence numbers to include The start of the range of timestamps to include The end of the range of timestamps to include Whether to return the records in reverse order An optional list of SIN/MIN pairs to include. If not specified, or the
+size is 0, include all SINs. The SIN to include A list of MINs to include for the SIN. If not specified, or the size is 0,
+include all MINs.
+5.9.2.2 setDebugLogFilter (SIN 23, MIN 2)
+
+Field Name Field Type Optional Field Field Size Comments
+seqStart The start of the range of sequence numbers to include seqEnd The end of the range of sequence numbers to include timeStart The start of the range of timestamps to include timeEnd The end of the range of timestamps to include reverse Whether to return the records in reverse order levels Unsigned Yes 16 bits
+An optional bitmap of debug levels to include
+
+
+
+
+5.9.2.3 getDataLogCount (SIN 23, MIN 3)
+This message does not contain any fields.
+
+
+5.9.2.4 getDebugLogCount (SIN 23, MIN 4)
+This message does not contain any fields.
+5.9.2.5 getDataLogEntries (SIN 23, MIN 5)
+
+5.9.2.6 getDebugLogEntries (SIN 23, MIN 6)
+
+5.9.2.7 clearLogs (SIN 23, MIN 7)
+Name  Type  Optional  Size  Comments
+logType  Enum 0 � Data 1 � Debug 2 � Both  No  2 bits  Set of log files to remove
+
+5.9.2.8 setUploadDataLogFilter (SIN 23, MIN 8)
+Sets a filter for the auto uploading of data log records and stores it in data/svc/log/msgUpld.dat to ensure these settings are nonvolatile.
+Upon reset, if no such file exists, the default filter is as follows:
+�
+maxSize: 6400 bytes
+�
+maxEntries: as many records as can fit in the maxSize
+�
+ageLimit: 604800s (7 days)
+�
+reverse: false (oldest records sent first)
+�
+all SINs and MINs included
+Name  Type  Optional  Size  Comments
+maxSize  Unsigned  Yes  16 bits  The
+maximum
+size
+of
+individual
+uploadDataLogEntries
+return
+messages.
+At
+least
+1
+record
+is
+returned,
+even
+if
+it
+causes
+the
+return
+message
+to
+exceed
+this
+value.
+If
+not
+specified,
+the
+maximum
+size
+of
+messages
+supported
+by
+the
+terminal
+is
+used.
+
+
+
+
+
+Comments
+The maximum number of records to return in individual uploadDataLogEntries
+return messages. If not specified, return as many records as can fit in the maximum size.
+Age limit (with respect to ever-changing system time), in seconds, which can be used to restrict (by age) the number of records to be auto uploaded. Only records within the age limit are auto uploaded. Any age limit < 60 is set to 60. If not specified, include all records.
+Whether to return the records in reverse order.
+An optional list of SIN/MIN pairs to include. If not specified, or the size is 0, include all SINs.
+SIN to include
+A list of MINs to include for the SIN. If not specified, or the size is 0, include all MINs
+5.9.2.9 setUploadDebugLogFilter (SIN 23, MIN 9)
+Sets a filter for the auto uploading of debug log records, and stores it in data/svc/log/dbgUpld.dat to ensure these settings are nonvolatile.
+Upon reset, if no such file exists, the default filter is as follows:
+�
+maxSize: 6400 bytes
+�
+maxEntries: as many records as can fit in the maxSize
+�
+ageLimit: 604800s (7 days)
+�
+reverse: false (oldest records sent first)
+�
+levels: 65535 (all levels included)
+
+Name Type Optional Size Comments
+maxSize The maximum size of individual uploadDebugLogEntries
+return messages. At least 1 record is returned, even if it causes the return message to exceed this value. If not specified, the maximum size of messages supported by the terminal is used.
+maxEntries The maximum number of records to return in individual uploadDebugLogEntries
+return messages. If not specified, return as many records as can fit in the maximum size.
+ageLimit Age limit (with respect to ever-changing system time), in seconds, which can be used to restrict (by age) the number of records to be auto uploaded. Only records within the age limit are auto uploaded. Any age limit < 60 is set to 60. If not specified, include all records.
+reverse Whether to return the records in reverse order
+levels Unsigned Yes 16 bits An optional bitmap of debug levels to include
+
+
+
+
+5.9.2.10 getUploadDataLogCount (SIN 23, MIN 10)
+This message does not contain any fields.
+
+
+5.9.2.11 getUploadDebugLogCount (SIN 23, MIN 11)
+This message does not contain any fields.
+5.9.2.12 setDebugLogFilter2 (SIN 23, MIN 12)
+Sets a filter for subsequent retrieval of debug log records. A debugLogFilter2 message is generated in response. This message must be used instead of setDebugLogFilter when the SIN is to be used as a filtering criterion.
+
+Comments
+The start of the range of sequence numbers to include The end of the range of sequence numbers to include The start of the range of timestamps to include The end of the range of timestamps to include Whether to return the records in reverse order An optional bitmap of debug levels to include An optional list of SINs to include. If not specified, or the size is 0,
+include all SINs.
+5.9.2.13 getDebugLogEntries2 (SIN 23, MIN 13)
+Requests a block of records matching the data log filter. A debugLogEntries2 message is generated in response. This message must be used instead of getDebugLogEntries when the response must include the SIN.
+
+5.9.2.14 setUploadDebugLogFilter2 (SIN 23, MIN 14)
+Sets a filter for the auto uploading of data log records. An uploadDebugLogFilter2 message is generated in response. This message must be used instead of setUploadDebugLogFilter when the SIN is to be used as a filtering criterion.
+
+
+
+
+5.9.3 From-Mobile Messages
+Description
+1 Confirmation that a data log filter was set 2 Confirmation that a debug log filter was set 3 The number of data log records that match the current filter 4 The number of debug log records that match the current filter 5 A block of data log records matching the data log filter 6 A block of debug log records matching the debug log filter 7 Confirmation that an upload data log filter was set 8 Confirmation that an upload debug log filter was set 9 The approximate number of data log records remaining to be auto uploaded based on the
+upload data log filter. 10 The approximate number of debug log records remaining to be auto uploaded based on the
+upload debug log filter
+11 A block of data log records matching the upload data log filter
+12 A block of debug log records matching the upload debug log filter
+13 Confirmation that a debug log filter was set
+14 A block of debug log records matching the debug log filter
+15 Confirmation that an upload debug log filter was set
+16 uploadDebugLogEntries2
+A block of debug log records matching the upload debug log filter
+
+
+
+5.9.3.1 dataLogFilter (SIN 23, MIN 1)
+
+Name Type Optional Size Comments
+seqStart The start of the range of sequence numbers to include seqEnd The end of the range of sequence numbers to include timeStart The start of the range of timestamps to include timeEnd The end of the range of timestamps to include reverse Whether to return the records in reverse order list Array Yes �255 elements
+An optional list of SIN/MIN pairs to include. If not specified, or the size is 0, include all SINs.
+
+
+
+5.9.3.2 debugLogFilter (SIN 23, MIN 2)
+
+Name Type Optional Size Comments
+seqStart Unsigned Yes 31 bits The start of the range of sequence numbers to include seqEnd Unsigned Yes 31 bits The end of the range of sequence numbers to include timeStart Signed Yes 32 bits The start of the range of timestamps to include timeEnd Signed Yes 32 bits The end of the range of timestamps to include reverse Boolean No 1 bit Whether to return the records in reverse order levels Unsigned Yes 16 bits
+An optional bitmap of debug levels to include.
+
+
+
+
+5.9.3.3 dataLogCount (SIN 23, MIN 3)
+
+Name Type Optional Size Comments
+matchingEntries Unsigned No 31 bits The number of matching records firstEntrySeq Unsigned No 31 bits The sequence number of the first matching record firstEntryTime Signed No 32 bits The time stamp of the first matching record lastEntrySeq Unsigned No 31 bits The sequence number of the last matching record lastEntryTime Signed No 32 bits The time stamp of the last matching record firstEntryUploaded Boolean No 1 bit Indication that the first matching record has been auto uploaded lastEntryUploaded Boolean No 1 bit
+Indication that the last matching record has been auto uploaded
+
+
+
+
+5.9.3.4 debugLogCount (SIN 23, MIN 4)
+
+Name Type
+Comments
+matchingEntries Unsigned No 31 bits The number of matching records firstEntrySeq Unsigned No 31 bits The sequence number of the first matching record firstEntryTime Signed No 32 bits The time stamp of the first matching record lastEntrySeq Unsigned No 31 bits The sequence number of the last matching record lastEntryTime Signed No 32 bits The time stamp of the last matching record firstEntryUploaded Boolean No 1 bit Indication that the first matching record has been auto uploaded lastEntryUploaded Boolean No 1 bit
+Indication that the last matching record has been auto uploaded
+
+
+
+
+5.9.3.5 dataLogEntries (SIN 23, MIN 5) 5.9.3.6 debugLogEntries (SIN 23, MIN 6)
+
+
+
+
+
+Name Type Optional Size Comments
+entryList A list of debug log records
+uploaded Indication that the record has been auto uploaded
+sequence The record's sequence number
+timestamp The record's time stamp
+level The record's log level
+log
+String
+No
+�128 bytes
+The record
+5.9.3.7 uploadDataLogFilter (SIN 23, MIN 7)
+
+Comments
+The maximum size of individual uploadDataLogEntries
+return messages. At least 1 record is returned, even if it causes the return message to exceed this value. If not specified, the maximum size of messages supported by the terminal is used.
+The maximum number of records to return in individual uploadDataLogEntries
+return messages. If not specified, return as many records as can fit in the maximum size.
+Age limit (with respect to ever-changing system time), in seconds, which can be used to restrict (by age) the number of records to be auto uploaded. Only records within the age limit are auto uploaded. Any age limit < 60 is set to 60. If not specified, include all records.
+Whether to return the records in reverse order.
+An optional list of SIN/MIN pairs to include. If not specified, or the size is 0, include all SINs.
+The SIN to include
+A list of MINs to include for the SIN. If not specified, or the size is 0, include all MINs
+5.9.3.8 uploadDebugLogFilter (SIN 23, MIN 8) 5.9.3.9 uploadDataLogCount (SIN 23, MIN 9)
+Name  Type  Optional  Size  Comments
+maxSize  Unsigned  Yes  16 bits  The
+maximum
+size
+of
+individual
+uploadDataLogEntries
+return
+messages.
+At
+least
+1
+record
+is
+returned,
+even
+if
+it
+causes
+the
+return
+message
+to
+exceed
+this
+value.
+If
+not
+specified,
+the
+maximum
+size
+of
+messages
+supported
+by
+the
+terminals
+used.
+
+
+
+
+
+
+5.9.3.10 uploadDebugLogCount (SIN 23, MIN 10)
+
+5.9.3.11 uploadDataLogEntries (SIN 23, MIN 11)
+
+
+
+
+
+Name Type Optional Size Comments
+searchStatus Enum No 3 bits searchStatus 0 � MatchingRecordsFound 1 � LastMatchingRecordFound All other values are reserved
+entryList Array No �255 elements A list of data log records sequence Unsigned No 31 bits The record's sequence number timestamp Unsigned No 31 bits The record's timestamp log
+
+
+
+
+
+
+
+
+Submessage No
+n/a
+The record
+
+
+5.9.3.12 uploadDebugLogEntries (SIN 23, MIN 12)
+Name Type Optional Size Comments
+searchStatus searchStatus 0 � MatchingRecordsFound 1 � LastMatchingRecordFound All other values are reserved
+entryList A list of data log records sequence The record's sequence number
+
+The record's time stamp level The record's log level log
+String No
+�128 bytes
+The record
+5.9.3.13 debugLogFilter2 (SIN 23, MIN 13)
+
+Comments
+The start of the range of sequence numbers to include The end of the range of sequence numbers to include The start of the range of timestamps to include The end of the range of timestamps to include Whether to return the records in reverse order An optional bitmap of debug levels to include An optional list of SINs to include. If not specified, or the size is
+0, include all SINs.
+5.9.3.14 debugLogEntries2 (SIN 23, MIN 14)
+
+
+
+
+
+Name Type Optional Size Comments
+entryList Array No �255 elements A list of debug log records
+
+uploaded Boolean No 1 bit Indication that the record has been auto-uploaded
+
+
+
+
+sequence Unsigned No 30 bits The record's sequence number
+
+
+
+
+timestamp Unsigned No 31 bits The record's time stamp
+
+
+
+
+level Unsigned No 4 bits The record's log level
+
+
+
+
+sin Unsigned No 8 bits The record's SIN
+
+
+
+
+log
+String
+No
+�128 bytes
+The record
+
+
+5.9.3.15 uploadDebugLogFilter2 (SIN 23, MIN 15)
+
+Comments
+The maximum size of individual uploadDebugLogEntries2 return messages. At least 1 record is returned, even if it causes the return message to exceed this value. If not specified, the maximum size of messages supported by the terminal is used.
+The maximum number of records to return in individual uploadDebugLogEntrie2s return messages. If not specified, return as many records as can fit in the maximum size.
+Age limit (with respect to ever-changing system time), in seconds, which can be used to restrict (by age) the number of records to be auto uploaded. Only records within the age limit are auto uploaded. Any age limit < 60 is set to 60. If not specified, include all records.
+Whether to return the records in reverse order
+An optional bitmap of debug levels to include
+An optional list of SINs to include. If not specified, or the size is 0, include all SINs.
+5.9.3.16 uploadDebugLogEntries2 (SIN 23, MIN 16)
+Name Type Optional Size Comments
+searchStatus searchStatus 0 � MatchingRecordsFound 1 � LastMatchingRecordFound All other values are reserved
+entryList A list of data log records sequence The record's sequence number timestamp The record's time stamp level The record's log level log
+String No
+�128 bytes
+
+The record
+5.9.4 Constants
+The log service defines the following constants.
+5.9.4.1 CRITICAL
+This constant has a value of 0, and is the level used in debug logs to represent critical errors.
+5.9.4.2 ERROR
+This constant has a value of 1, and is the level used in debug logs to represent errors.
+5.9.4.3 WARNING
+This constant has a value of 2, and is the level used in debug logs to represent warnings.
+
+
+5.9.4.4 INFO
+This constant has a value of 3, and is the level used in debug logs to represent informational logs.
+5.9.4.5 Levels
+Description
+This table contains a mapping of the predefined debug log levels to their numerical value:
+CRITICAL 0 ERROR 1 WARNING 2 INFO 3
+Syntax
+svc.log.Levels
+5.9.4.6 LevelsStr
+Description
+This table contains a mapping of the predefined debug log level numerical values to their string representation:
+0 'CRITICAL' 1 'ERROR' 2 'WARNING' 3 'INFO'
+Syntax
+svc.log.LevelsStr
+5.9.5 Functions
+5.9.5.1 addDebug()
+Description
+This function adds a new entry to the debug log, if the specified level is enabled in the debugLogLevelsMask property and is not disabled in the appropriate logSuppressX property. In addition, the log is output to the trace port if not suppressed in the appropriate traceSuppressX property. Adding a level 0 log (critical error) resets the terminal.
+Syntax
+svc.log.addDebug(sin, level, dbgStr)
+
+
+Parameters
+sin level dbgStr  The SIN of the service adding the log (16-255) The debug log level (0-15) The string to log; the string is truncated at 128 characters
+Blocking No
+Returns None
+
+5.9.5.2 addDebugf()
+Description
+This function adds a new entry to the debug log, if the specified level is enabled in the debugLogLevelsMask property and is not disabled in the appropriate logSuppressX property. In addition, the log is output to the trace port if not suppressed in the appropriate traceSuppressX property. Adding a level 0 log (critical error) resets the terminal.
+The format uses the same specifiers as the standard Lua string.format().
+Syntax
+svc.log.addDebugf(sin, level, format, ...)
+Parameters
+sin The SIN of the service adding the log (16-255) level The debug log level (0-15) format String optionally containing format specifiers.The resulting string is truncated at 128 characters ... Zero or more arguments matching the format specifiers contained in the format argument.
+Blocking
+No
+Returns
+None
+5.9.5.3 clearLogs()
+Description
+This function deletes all log files associated with the given log type.
+Syntax
+svc.log.clearLogs(logType)
+
+
+Parameters
+logType  The log type to clear:
+0  Data
+1  Debug
+2  Both
+
+Blocking
+No
+Returns
+None
+5.9.5.4 createFilter()
+Description
+This function creates a filter to be used for retrieving log entries. A maximum of 10 filters can be active at the same time.
+Syntax
+svc.log.createFilter(logType, config)
+Parameters
+logType The type of log for which to create a filter: 0 Data 1 Debug
+config A table containing the filter configuration; it supports the same fields as the setDataLogFilter or setDebugLogFilter2 messages, depending on the logType value
+Blocking
+No
+Returns
+handle A handle for invoking further log retrieval functions string A description of the error if handle is nil
+Example
+Create a filter for retrieving data log entries in forward order.
+local filter, err = svc.log.createFilter(0, {reverse = false})
+if filter then � filter:close()
+
+
+else trace("Error creating filter: ", err) end
+Create a filter for retrieving CRITICAL and ERROR debug log entries with SIN 16 in reverse order, from sequence 10 to the end.
+local filter, err = svc.log.createFilter(1, {reverse = true, seqStart = 10, levels = 0x03})
+5.9.5.5 getUploadLogCount()
+Description
+This function returns the approximate number of log records remaining to be auto uploaded based on the current upload log filter specified by the logType value.
+Syntax
+svc.log.getUploadLogCount(logType)
+Parameters
+logType  The log type to count:
+0  Data
+1  Debug
+
+Blocking
+Yes
+Returns
+table Information about the matching entries, similar to the uploadDataLogCount
+or uploadDebugLogCount
+message fields, or nil upon error
+string A description of the error if the table is nil
+Example
+local result, err = svc.log.getUploadLogCount(0) if result then if result.matchingEntries >= 50 then � end else trace("Error obtaining count: ", err) end
+
+
+5.9.5.6 setUploadFilter()
+Description
+This function sets an upload filter to be used for auto uploading of log entries. The filters, which can be set by this function, are the same filters that can be set by the setUploadDataLogFilter
+and the setUploadDebugLogFilter
+messages. The filter is saved to a file to ensure it is nonvolatile.
+Syntax
+svc.log.setUploadFilter(logType, config)
+Parameters
+logType  The log type to create a filter for: 0 Data
+config  1
+Debug
+A
+table
+containing
+the
+filter
+configuration;
+it
+supports
+the
+same
+fields
+as
+the
+setUploadDataLogFilter
+or
+setUploadDebugLogFilter
+messages,
+depending
+on
+the
+logType
+value
+
+
+Blocking
+No
+Returns
+boolean true if filter is set successfully, false otherwise string A description of the error if previous return parameter is false
+Example
+Update the filter for uploading data log entries in forward order, for specific MIN and MIN/SIN combinations, with an age limit of 24 hours.
+local success, err = svc.log.setUploadFilter(0, {reverse = false, list = {{sin=16}, {sin=21,minList=string.char(1,2,4)}, {sin=30,minList=string.char(3)}}, ageLimit=86400}) if not success then
+trace("Error updating filter: ", err) end
+Update the filter for uploading debug log entries in reverse order, for CRITICAL, ERROR, WARNING, and INFO entries in reverse order, with a maximum message size of 1000 bytes.
+local success, err = svc.log.setUploadFilter(1, {levels = 0xF, reverse = true, maxSize = 1000}) if not success then
+trace("Error updating filter: ", err) end
+
+
+5.9.6 Handle Methods
+5.9.6.1 close()
+Description
+This function closes the handle, freeing the associated resources.
+Syntax
+<handle>:close()
+Parameters
+None
+Blocking
+No
+Returns
+None
+5.9.6.2 getCount()
+Description
+This function returns the number of remaining log entries that match the filter.
+Syntax
+<handle>:getCount()
+Parameters
+None
+Blocking Yes
+Returns
+table  Information about the mmatchingEntries firstEntrySeq firstEntryTime lastEntrySeq lastEntryTime firstEntryUploaded lastEntryUploaded  atching
+entries,
+similar
+to
+the
+dataLogCount
+message
+fields:
+The
+number
+of
+matching
+log
+records
+The
+sequence
+number
+of
+the
+first
+record
+The
+timestamp
+of
+the
+first
+record
+The
+sequence
+number
+of
+the
+last
+record
+The
+timestamp
+of
+the
+last
+record
+Indication
+that
+the
+first
+matching
+record
+has
+been
+auto
+uploaded
+Indication
+that
+the
+last
+matching
+record
+has
+been
+auto
+uploaded
+
+
+
+
+5.9.6.3 getNext()
+Description
+This function returns the next log entry that matches the filter. Data log entries are returned in binary encoded format, so they need to subsequently be decoded.
+Syntax
+<handle>:getNext()
+Parameters
+None
+Blocking
+Yes
+Returns
+boolean true if at least one entry was found, false if none was found or the filter has been closed
+If the first return value is true, the remaining return values depend on the log type. For data logs: number The entry's sequence number number The entry's timestamp number The number of bits in the encoded binary message string The binary encoded message
+For debug logs:
+number  The entry's sequence number
+number  The entry's timestamp
+number  The log level
+number  The log SIN
+string  The debug log text
+
+Example
+Process data log entries with a sequence number between 2 and 5.
+local filter, err = svc.log.createFilter(0, {reverse = false, seqStart = 2, seqEnd = 5}) if filter then
+repeat local res, seq, ts, bits, data = filter:getNext() if res then
+local err, msg, bits2 = svcmgr.decodeMsg(msgs.Direction.RETURN, data) --Process logged message here �
+end
+
+
+until not res
+filter:close()
+else
+trace("Error creating filter: ", err)
+end
+5.9.7 Posted Events
+This service does not currently generate any events.
+5.10 File System (SIN 24)
+The filesystem service provides an interface to the file system on the terminal.
+5.10.1 Properties
+This service does not currently define any properties.
+5.10.2 To-Mobile Messages
+
+5.10.2.1 write (SIN 24, MIN 1)
+
+
+
+
+
+
+
+
+
+Name Type Optional Size Comments
+path String No �255 bytes The full path name of the file to write
+offset Signed No 24 bits The offset within the file to write the data. A negative value can be used to append to the end of the file. If the offset is greater than the current file size, zeroes are added to fill the gap.
+flags Enum No 8 bits Describes how to carry out the operation. 0 � Normal Normal (if offset is not at the end of the file, the 1 � Overwrite operation is refused) 2 � Truncate Overwrite (if the offset is not at the end of the file, the
+operation proceeds) Truncate (if the offset is not at the end of the file, the content of the file after the offset is discarded and then the data is written)
+
+data Data No
+�9700 bytes
+The file content to write
+
+
+
+
+
+
+5.10.2.2 read (SIN 24, MIN 2)
+
+5.10.2.3 dir (SIN 24, MIN 3)
+
+5.10.2.4 stat (SIN 24, MIN 5)
+
+5.10.3 From-Mobile Messages
+
+5.10.3.1 writeResult (SIN 24, MIN 1)
+Name Type Optional Size Comments
+path The full path name of the file that was written to offset The actual offset in the file where the data was written flags The flags value specified in the request
+
+result Enum No 8 bits
+The result of the operation 0� OK 1 � InvalidPath 2 � CannotOverwrite
+5.10.3.2 readResult (SIN 24, MIN 2) 5.10.3.3 dirResult (SIN 24, MIN 3)
+
+
+
+
+Name Type Optional Size Comments
+path The requested path
+entries If the path does not exist, this is an empty array. If the path point to a file, the array has one entry for the file itself. If the path points to a directory, the first entry in the array is for �.�, the directory itself.
+type Type of file object
+name The file or subdirectory name. size The file size (0 for directories). creationTime Signed No 32 bits
+
+The creation time of the file or directory, expressed as the number of seconds since the epoch.
+5.10.3.4 statResult (SIN 24, MIN 4)
+Name Type Optional Size Comments
+path The requested path
+attributes A bitmap of the file attributes
+
+Bit 0 � Read-only Bit 1 � Hidden
+Bit 2 � System
+Bit 3 � Reserved
+Bit 4 � Directory
+Bit 5 � Archive
+size The file size (0 for directories).
+creationTime The creation time of the file or directory, expressed as the number of seconds since the epoch. MD5Hash Data No �16 bytes
+The MD5 hash of the file (or 16 zeroes for directories).
+
+
+
+
+5.10.4 Functions
+This service does not currently export any functions. The Lua I/O library can be used to access files.
+5.10.5 Posted Events
+This service does not currently generate any events.
+
+
+5.11 External Input/Output (EIO) (SIN 25)
+The eio (external input/output) service provides a mechanism to configure and interface with the terminal's I/O ports. The service provides functionality to:
+�
+Read digital inputs and analog voltages or current
+�
+Write single or pulsed values to digital outputs
+�
+Generate events/alarms/messages on analog inputs that go out/in a configured range
+�
+Generate events on rising/falling edges using the sample-based edge detector
+�
+Count high speed digital pulses
+Standard Terminals
+The following table shows the supported external I/O hardware features:
+Table 4: External I/O Hardware Features
+
+OEM Terminals
+These devices are integrated at the board level so they do not have all the hardware features of a full terminal. Some of these differences are:
+� No hardware input protection because they are connected directly to the terminal�s processor. �
+Only support 0 � 3.3V inputs
+�
+Only support push-pull outputs Refer to the appropriate product hardware guide for details. The following table shows supported external I/O hardware features for OEM terminals:
+
+
+Table 5: External I/O Hardware Features (OEM Terminals)
+
+Port Analog Analog Digital Digital Push-pull Digital Open-drain Current Limited Extra Supported Input Current Input Output Output Open-drain Load Hardware
+1
+
+ST 6000 2
+ST 6000 3
+ST 6000 4
+ST 6000 5 ST 6000 6
+X
+X
+X
+X
+X
+X
+ST 6000
+�
+
+
+
+
+
+
+
+Port Configuration
+The following table provides details on the different possible configurations.
+Table 6: Port Configuration Details
+
+
+
+
+
+
+Configuration Description
+Disabled Port is disabled and the hardware pin is configured as high impedance.
+Analog Port configured for analog voltage measurements in the range of 0 to 3300 milli-volts. This configuration uses the �port<N>AnalogXXX� properties.
+InputWeakPullDown Port configured as a digital input with a weak pull-down These modes support the use
+NOTE: In this configuration, the processor will latch the port to the last input
+of the edge
+value. For example, if a HIGH is present externally and is then disconnected, the
+detector
+pin will stay HIGH. This behavior is different than IDP terminals.
+InputPullUp Port configured as a digital input with a pull-up InputPullDown Port configured as a digital input with a pull-down OpenDrainOutputLow Port configured as open-drain output with an initial state of LOW (closed/grounded) OpenDrainOutputHigh Port configured as open-drain output with an initial state of HIGH (open) PushPullOutputLow Port configured as a push-pull output with an initial state of LOW (0 V) PushPullOutputHigh Port configured as a push-pull output with an initial state of HIGH (3.3 V) InputWeakPullDownPulse Same as �InputWeakPullDown�, with pulse counting enabled In pulse
+
+
+
+
+
+
+
+
+
+
+counting mode,
+NOTE: In this configuration, the processor will latch the port to the last input
+the edge
+value. For example, if a HIGH is present externally and is then disconnected, the
+detector is not
+pin will stay HIGH. This behavior is different than IDP terminals.
+
+used. InputPullUpPulse Same as �InputPullUp�, with pulse counting enabled InputPullDownPulse Same as �InputPullDown�, with pulse counting enabled AnalogCurrent
+
+Port configured to measure 4-20 mA current. The value is returned as milli-amperes X 10 so the range is 40 to 200.
+
+
+5.11.1 Properties
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PIN
+Name
+Description
+Type
+Storage Default Class Value
+
+182
+port10AnalogSampleFilter
+Number of consecutive samples
+Unsigned
+Config 1 needed in a new state before Minimum � 1 declaring an alarm. Maximum � 255
+
+185 port10Value The current port 10 value, whether Unsigned Config 0 analog or digital.
+Minimum � 0 Maximum � 5000
+5.11.2 To-Mobile Messages
+
+5.11.2.1 readPort (SIN 25, MIN 1)
+Note: The ST 6000 has two additional ports; ports 5 and 6.
+Name  Type  Optional  Size  Comments
+port  Unsigned  No  5 bits  The port number.
+1 � General-purpose I/O port 1
+2 � General-purpose I/O port 2
+3 � General-purpose I/O port 3
+4 � General-purpose I/O port 4
+5 � Output only I/O port 5 (ST 6000 OEM and ST 9100)
+6 � Output only I/O port 6 (ST 6000 OEM and ST 9100)
+7 � Input/Current port 7 (ST 9100)
+8 � Input/Current port 8 (ST 9100)
+9 � Input port 9 (ST 9100)
+10 � Input port 10 (ST 9100)
+30 � Temperature analog input
+31 � Input power analog input
+All other values are reserved
+
+5.11.2.2 writePort (SIN 25, MIN 2) 5.11.2.3 pulsePort (SIN 25, MIN 3)
+
+
+
+NameTypeOptionalSizeCommentsportUnsignedNo5bitsTheportnumber.Seesection1.1.2.1forpossiblevaluesdurationUnsignedNo16bitsThenumberofmillisecondstokeeptheoutputportinverted,beforechangingitbacktoitsoriginalstate5.11.3
+From-Mobile
+Messages
+MINNameDescription1portValueThecurrentvalueofaport2portAlarmAnalarmforaportstatechange5.11.3.1 portValue (SIN 25, MIN 1)
+
+5.11.3.2 portAlarm (SIN 25, MIN 2)
+Name  Type  Optional  Size  Comments
+port  Unsigned  No  5 bits  The port number. See section 1.1.2.1 for possible values
+value  Signed  No  16 bits  The current port value
+type  Enum  Yes  2 bits  The alarm type, only for analog alarms:
+0 � BelowRange  BelowRange (below the low threshold)
+1 � InRange  InRange (between the high and low thresholds)
+2 � AboveRange  AboveRange (above the high threshold)
+
+5.11.4 Functions
+5.11.4.1 getPulseCount
+Description
+This command queries the current pulse count for the specified port. It also clears the pulse counter if the boolean parameter is enabled. This function guaranties atomicity of the clear operation in order to report every pulse. To clear the current pulse count, set the clear parameter to true.
+Syntax
+svc.eio.getPulseCount(port, clear)
+Parameters
+port The port number. clear The clear flag.
+
+
+Blocking
+No
+Returns
+pulseCnt  Current pulse count; nil in the case of a failure/overflow
+msClear  Milliseconds since last counter clear operation; nil in the case of a failure
+errStr  In the case of a failure, a description of the error
+
+Example
+--Getting the pulse count local pulseCnt, msClear, errMsg = svc.eio.getPulseCount(1, true) if (pulseCnt) then --success print(�Pulse count: �..pulseCnt..� period(ms): �..msClear..�\n�) else --failed print(errMsg) end
+5.11.4.2 pulsePort()
+Description
+Temporarily change the state of an output port.
+Syntax
+svc.eio.pulsePort(port, duration)
+Parameters
+port The port number to read from; see section 1.1.2.1 for possible values
+duration The number of milliseconds to keep the output port inverted, before changing it back to its original state
+Blocking
+No
+Returns
+string A description of the error in the case of a failure; nil otherwise
+5.11.4.3 readPort()
+Description
+Returns the current value of the given port.
+
+
+Syntax
+svc.eio.readPort(port)
+Parameters
+port The port number to read from; see section 1.1.2.1 for possible values
+Blocking
+No (except for temperature)
+Returns
+number The current port value or nil on error string An error message if the previous value is nil
+5.11.4.4 writePort()
+Description
+Sets a new output value for an appropriately-configured port.
+Syntax
+svc.eio.writePort(port, val)
+Parameters
+port val  The port number to read from; see section 1.1.2.1 for possible values The new output value (0 or 1)
+Blocking No
+Returns
+string  Nil is success, or an error message if the command failed.
+
+5.11.5 Posted Events
+5.11.5.1 Analog Alarm
+Description
+This event is posted every time an analog alarm is triggered.
+Source
+svc.eio (eio service table)
+
+Event
+�ANALOG_ALARM� (string)
+
+
+Arguments
+table The alarm message, which is a table containing the following fields:
+port  The port that caused the alarm
+value  The current port value
+type  The alarm type:
+0  Below range (below the low threshold)
+1  In range (between the high and low thresholds)
+2  Above range (above the high threshold)
+5.11.5.2 Digital Alarm
+Description
+
+This event is posted every time a digital alarm is triggered.
+Source
+svc.eio (eio service table)
+Event
+�DIGITAL_ALARM� (string)
+Arguments
+table The alarm message which is a table containing the following fields:
+port The port that caused the alarm
+value The current port value
+5.11.5.3 Pulse Counter Report
+Description
+This event sends to the user application a list containing the last pulse counter sampling values with the exact sampling interval in milliseconds. The number of samples is defined by the report multiplier property. The frequency of the report is defined by the sampling interval multiplied by the report multiplier.
+Source
+Event sent by �_EIOPULSE� from the terminal�s EIO Lua external API.
+Event
+�FULL_REPORT� (string)
+Arguments
+table A table containing the following fields: port The I/O port number timestamp System uptime with millisecond accuracy samples Table containing the pulse counter samples
+
+
+[multiplier] number Number of the sample pulseCount Number of pulses counted msInterval Milliseconds since last counter reset state BelowRange, InRange, or AboveRange
+5.11.5.4 Pulse Counter Threshold
+Description
+This event notifies the application that the sampling interval crossed a user specified threshold. This report is identical to the FULL_REPORT event but only contains a single sample, responsible for the threshold crossing.
+Source
+Event sent by �_EIOPULSE�, from the terminal�s EIO Lua external API.
+Event
+�THRESHOLD_CROSSING� (string)
+Arguments
+table A table containing the following fields:
+port  The I/O port number
+timestamp  System uptime with millisecond accuracy
+samples[1]  Table containing the pulse counter samples
+number  Correspond to the sample index of the pulse counter report event
+pulseCount  Number of pulses counted
+msInterval  Milliseconds since the last counter reset
+state  BelowRange, InRange or AboveRange
+
+5.12 Shell (SIN 26)
+The shell service provides a command-line interface (CLI) over the RS-232 port. It also provides the ability to execute the same commands over-the-air. An execution timeout limits how long noninteractive shell commands can execute.
+For details on system provided shell commands and their usage, see T404.
+5.12.1 Properties
+
+
+
+
+5.12.2 To-Mobile Messages
+
+5.12.2.1 executeCmd (SIN 26, MIN 1)
+This message fails if the over-the-air access level is below the individual shell command's level (the command's options level parameter) and a password exists for the shell command's level [T404].
+
+5.12.2.2 executeLua (SIN 26, MIN 2)
+This message fails if the over-the-air access level is 0 and a level 1 password exists [T204].
+
+5.12.2.3 executePrivilegedCmd (SIN 26, MIN 3)
+This message generates an error if the specified level is greater than MAX_OTA_LEVEL.
+
+
+
+5.12.2.4 executePrivilegedLua (SIN 26, MIN 4)
+This message generates an error if the specified level is greater than MAX_OTA_LEVEL.
+
+5.12.2.5 getAccessInfo (SIN 26, MIN 5)
+This message does not contain any fields. An accessInfo message is generated in response.
+5.12.2.6 setAccessLevel (SIN 26, MIN 6)
+This message generates an error if the specified level is greater than MAX_OTA_LEVEL.
+
+5.12.2.7 changeAccessPassword (SIN 26, MIN 7)
+This message generates an error for all levels other than 1.
+
+5.12.3 From-Mobile Messages
+
+5.12.3.1 cmdResult (SIN 26, MIN 1)
+Sent in response to to-mobile messages 1 to 4.
+
+
+
+5.12.3.2 accessInfo (SIN 26, MIN 2)
+
+5.12.3.3 accessSetChangeResult (SIN 26, MIN 3)
+
+5.12.4 Functions
+5.12.4.1 attach()
+Description
+Attach the shell CLI to the RS-232 interface. Does nothing if the shell CLI is already attached.
+Syntax
+svc.shell.attach()
+Parameters
+None
+Blocking
+No
+Returns
+None
+5.12.4.2 detach()
+Description
+Detaches the shell CLI and releases the connection to the RS-232 interface.
+Syntax
+svc.shell.detach()
+
+
+Parameters
+None
+Blocking
+No
+Returns
+None
+5.12.4.3 executeCmd()
+Description
+Executes a shell command, and returns its output.
+Syntax
+svc.shell.executeCmd(cmd)
+Parameters
+cmd The shell command to run
+Blocking
+Yes
+Returns
+boolean Indicates success or failure string The command output
+5.12.4.4 register()
+Description
+Register a command with the shell. If the command already exists, register() fails.
+Syntax
+svc.shell.register (name, handler, description, options)
+Parameters
+name The name of the command
+handler A handler function to invoke
+description A description of the command
+options Optional table that might contain any of the following options:
+hidden Boolean flag to not display the command in the help
+
+
+level  The access required to execute the command if the corresponding password has been defined (integer 0 to 3)
+locked  Boolean to indicate that the command cannot be changed or unregistered from the shell
+interactive  The command requires interactive serial input, so cannot be used as an over-the-air command (Boolean)
+
+Blocking
+No
+Returns
+boolean true if the operation was successful, false otherwise
+Note: Once the command is executed, the handler functions will be passed two parameters. The first is a table containing an array of the command�s arguments, and the second is a number containing the current access level.
+Note: Registration of shell commands do not survive an LSF restart. Any registered shell commands will not persist across a stop start, stop reset, power cycle. Typically, shell commands associated with a (core or user) service are registered by the service each time the service starts.
+5.12.4.5 unregister()
+Description
+Unregister a command from the shell, returning the handler, descriptions and options for later reregistering of the command.
+Syntax
+svc.shell.unregister (name)
+Parameters
+name The name of the command
+Blocking
+No
+Returns
+function The handler function of the unregistered command or nil if the command was not found description A description of the command table A table containing the command options, if any. Refer to options parameter of register() for further
+details.
+5.12.5 Posted Events
+This service does not currently generate any events.
+
+
+5.13 IDP (SIN 27)
+The idp service provides access to some of the functionality offered by the IsatData Pro modem.
+5.13.1 Properties
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Description Type Storage Class Default Value
+1
+model Model string from the String Volatile �unknown� modem.
+2 firmwareRevision Firmware revision of the String Volatile �unknown� modem
+3 mobileID Terminal serial number String Volatile �unknown� identification
+4 networkID Unique network identification Unsigned Volatile 0 number Min. � 0 Max. � 2147483647
+5 hardwareRevision Hardware revision of the String Volatile �unknown� modem
+6 protocolVersion The protocol version of the Unsigned Volatile 0 AT interface Min. � 0 Max. � 2147483647
+9 reserved --.
+10 powerMode The modem's main power Enum Config MobilePowered
+operating mode 0 � MobilePowered 1 � FixedPowered 2 � MobileBattery 3 � FixedBattery 4 � MobileMinBattery 5 � MobileParked All other values are reserved 11 wakeUpInterval1
+The interval between modem Enum Volatile2
+5_seconds wake ups for receiving
+0 � 5_seconds messages. Valid values
+1 � 30_seconds differ depending on the
+2 � 1_minute firmware release. Values not
+3 � 3_minutes supported are rejected.
+4 � 10_minutes 5 � 30_minutes 6 � 60_minutes 7 � 2_minutes 8 � 5_minutes 9 � 15_minutes 10 � 20_minutes
+1The valid values for this property depend on the modem firmware version. Firmware versions prior to 3.0.x only support options 0, 3, 4, 5 and 6. All other values are rejected.
+2New values are saved to the modem's nonvolatile memory.
+
+
+
+
+
+5.13.2 To-Mobile Messages
+The following messages allow fairly low-level access to the modem. Refer to [T403] for additional details.
+
+5.13.2.1 getSReg (SIN 27, MIN 1)
+
+5.13.2.2 setSreg (SIN 27, MIN 2)
+
+5.13.2.3 getMetrics (SIN 27, MIN 3)
+
+5.13.2.4 getMetrics2 (SIN 27, MIN 4)
+
+5.13.3 From-Mobile Messages
+The following messages return fairly low-level data from the modem.
+
+
+
+5.13.3.1 getSRegResult (SIN 27, MIN 1)
+
+5.13.3.2 setSRegResult (SIN 27, MIN 2)
+
+5.13.3.3 metricsResult (SIN 27, MIN 3)
+
+Name Type Optional Size Comments
+Network ID Unsigned No 28 bits Refer to [T404] for details timestamp Unsigned No 18 bits class Unsigned No 3 bits subclass Unsigned No 5 bits priority Unsigned No 2 bits metrics Array No �32 elements An array of all metrics for the block value Signed No
+32 bits
+An individual metric value
+
+
+
+
+
+5.13.3.4 metricsResult2 (SIN 27, MIN 4)
+
+Name Type Optional Size Comments
+Network ID Unsigned No 28 bits Refer to [T404] for details timestamp Unsigned No 31 bits class Unsigned No 3 bits subclass Unsigned No 5 bits priority Unsigned No 2 bits metrics Array No �32 elements An array of all metrics for the block value Signed No
+32 bits
+An individual metric value
+
+
+
+
+
+5.13.4 Constants
+The idp service defines the following constants.
+
+
+5.13.4.1 TRANSPORT_ID
+Description
+This is the transport number used in the message service to have messages go over the satellite transport. It has the value 1.
+Syntax
+svc.idp.TRANSPORT_ID
+5.13.5 Functions
+5.13.5.1 eventDeregister()
+Description
+This function deregisters an application from receiving event updates.
+Syntax
+svc.idp.eventDeregister(handle)
+Parameters
+handle The handle returned by the call to eventRegister()
+Blocking
+No
+Returns
+None
+5.13.5.2 eventRegister()
+Description
+This function registers an application to receive notifications when any number of events is updated. An event is sent immediately after registration with current data at the time of registration; this is to give the application a set of baseline data, not to notify that an event has been updated.
+Syntax
+svc.idp.eventRegister(list)
+Parameters
+list An array of {class, subclass} pairs
+Blocking
+No
+
+
+Returns
+handle A handle used to deregister, and in the generated events
+Example
+Register to receive updates for class 3, subclass 1, and class 4, subclass 1
+local handle = svc.idp.eventRegister({{3, 1}, {4, 1}})
+5.13.5.3 getMetrics()
+Description
+Returns a block of modem metrics.
+Syntax
+svc.idp.getMetrics(class, subclass)
+Parameters
+class The class of the desired metrics block subclass The subclass of the desired metrics block
+Blocking
+Yes
+Returns
+table A table with the following fields, or nil when the metrics are not available for the class/subclass: MTID The forward link ID of the modem, in the range 1 -16777215 timestamp The event timestamp assigned by the modem dateTime The date and time as a string (YYY-MM-DD HH:MM:SS); this is only available in firmware version 4.1 and higher class The event class subclass The event subclass priority The event priority:
+1 � Critical 2 � Major 3 � Minor 4 � Information
+metrics An array of tables, each containing the following fields:
+value The individual metric value (refer to [T404] for details)
+5.13.5.4 getNetworkId()
+Description
+Returns the modem's network ID.
+
+
+Syntax
+svc.idp.getNetworkId()
+Parameters
+None
+Blocking
+No
+Returns
+number The modem's network ID
+5.13.5.5 getProtocolRevision()
+Description
+Returns the modem�s protocol revision number.
+Syntax
+svc.idp.getProtocolRevision()
+Parameters
+None
+Blocking
+No
+Returns
+number The modem�s protocol revision number
+5.13.5.6 getSRegVal()
+Description
+Returns an S register value. Some S registers are not accessible, and always returns nil (0, 3-8, 10, 39-41, 50-51, 55-57, 60-64, 80-81, 85, 88-123).
+Syntax
+svc.idp.getSRegVal(reg)
+Parameters
+reg The S register number (0-255)
+Blocking
+Yes
+
+
+Returns
+number The S register value, or nil for inaccessible S registers.
+5.13.5.7 getTemp()
+Description
+Returns the modem's temperature.
+Syntax
+svc.idp.getTemp()
+Parameters
+None
+Blocking
+Yes
+Returns
+number The modem's temperature
+5.13.5.8 gps()
+Description
+Requests the GPS fix from the modem.
+Syntax
+svc.idp.gps(fixType, keys, age, timeout, callback,�)
+Parameters
+fixType The desired fix type 2D or 3D keys An array of the desired NMEA keys (GGA, RMC, GSA and GSV are supported) age Indicates how old of a fix the caller is willing to accept, in seconds (no minimum or maximum) timeout Indicates how long the caller is willing to wait, in seconds (no minimum or maximum) callback The callback function; it is called with an array of NMEA sentences (strings) and any extra
+arguments; this function must not block � Any extra arguments to be passed to the call to callback
+Blocking
+Yes
+Returns
+None
+
+
+5.13.5.9 reset()
+Description
+This function resets the modem.
+Syntax
+svc.idp.reset(flush, now)
+Parameters
+flush Optional Boolean to flush the internal request queue now Optional Boolean to force an immediate hard reset
+This option has the possibility of corrupting flash on the modem.
+Blocking
+Yes
+Returns
+None
+5.13.5.10 setSRegVal()
+Description
+Sets an S register value. Some S registers are not accessible (0, 3-8, 10, 39-41, 50-51, 55-57, 60-64, 80-81, 85, 88-123).
+Syntax
+svc.idp.setSRegVal(reg, val)
+Parameters
+reg  The S register number (0-255)
+val  The S register value
+
+Blocking
+Yes
+Returns
+None
+
+
+5.13.5.11 strFlags()
+Description
+This function returns a table of strings, with each entry containing the description of a set bit in the given flag mask.
+Syntax
+svc.idp.strFlags()(mask)
+Parameters
+mask The satellite flags bitmask
+Blocking
+No
+Returns
+table A list of set flag bit descriptions
+Example
+Print the description of all currently set bits in the setFlags property, one per line.
+local temp = svc.idp.strFlags(svc.idp.properties.satFlags) for i = 1, #temp do print (temp [i]) end
+5.13.6 Posted Events
+5.13.6.1 Event Update
+Description
+This event is posted whenever a registered event is updated. This event can return multiple records.
+Source
+<handle> (then handle returned by the call to eventRegister)
+Event
+�EVENT_UPDATE� (string)
+
+
+Arguments
+table An array of event update records. table Each record is an array of the event-specific fields, plus the following named common fields: dateTime The date and time as a string (YYY-MM-DD HH:MM:SS); this is only available in
+firmware version 4.1 and higher MTID The forward link ID of the modem, in the range 1 -16777215 subclass The event subclass timestamp The event timestamp assigned by the modem. priority The event priority:
+1 � Critical 2 � Major 3 � Minor 4 � Information
+class The event class
+metrics An array of tables, each containing the following fields:
+value The individual metric value (refer to [T404] for details)
+5.13.6.2 GPS Jamming
+Description
+This event is posted when the GPS jamming status changes.
+Source
+svc.idp (idp service table)
+Event
+�JAMMING_UPDATE� (string)
+Arguments
+table An array with the following fields
+number  The jamming status:
+0 � Unknown
+1 � OK (no significant jamming)
+2 � Warning (interference visible, but fix OK)
+3 � Critical (interference visible and no fix)
+boolean  Indicates whether or not jamming is detected
+number  The raw jamming indicator value for the hardware
+5.13.6.3 Modem Comms
+Reserved
+5.13.6.4 Modem Registered
+Reserved
+
+
+
+5.13.6.5 Modem Reset
+Description
+This event is posted when a reset indication is received from the modem.
+Source
+svc.idp (idp service table)
+Event
+�MODEM_EVENT_RESET� (string)
+Arguments
+None
+5.13.6.6 Satellite Status Change
+Description
+Available on satellite-cellular terminals. This event is posted when the value of either the satState or satFlags property changes.
+Source
+svc.idp (idp service table)
+Event
+�SAT_STATUS� (string)
+Arguments
+args A table containing the following fields satState The value of the satState property satStateNum The numeriv value of the satState property satFlags The value of the satFlags property
+5.13.6.7 Wake Up Interval Change
+Description
+This event is posted when the modem�s wake-up interval changes. On changing the property value, the new setting takes a while to take effect; this event is sent after the new value is fully applied.
+Source
+svc.idp (idp service table)
+Event
+�MODEM_EVENT_INTERVAL_CHANGE� (string)
+
+
+Arguments
+table An array with the following fields:
+wakeUpInterval The new string wakeUpInterval value
+wakeUpIntervalNum The new numerical wakeUpInterval value
+0 � 5_seconds
+1 � 30_seconds
+2 � 1_minute
+3 � 3_minutes
+4 � 10_minutes
+5 � 30_minutes
+6 � 60_minutes
+7 � 2_minutes
+8 � 5_minutes
+9 � 15_minutes
+10 � 20_minutes
+5.14 Reserved (SIN 28)
+5.15 Cell (SIN 29)
+This service is only available on satellite-cellular terminals and some of these terminals do not support all the PINs shown in the properties table.
+The cell service provides support for JSON encoding of messages, allows configuration and monitoring of the module; and also provides a plugin to the message service allowing it to send/receive messages over cellular.

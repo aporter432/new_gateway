@@ -1,0 +1,2360 @@
+5.20.12.2.3 currentSeg()
+Description
+This method returns the current segment. This is the segment being filled if sampling is enabled or the segment where it stopped if sampling is disabled.
+Syntax
+<handle>:currentSeg()
+Parameters
+None
+Blocking
+No
+
+
+Returns
+integer Segment index
+5.20.12.2.4 destroy()
+Description
+This method stops sampling and releases all memory segments, rendering the handle unusable. Destroying a sample buffer (calling the destroy() method or removing all references to the handle and garbage collecting) stops the sample buffer and releases all resources used by the sample buffer.
+Syntax
+<handle>:destroy()
+Parameters
+None
+Blocking
+No
+Returns
+None
+5.20.12.2.5 getString()
+Description
+This method returns the contents of the specified segment as a Lua string. If the specified segment is actively being filled, an error is returned indicating the segment is busy. If no index or an index value of zero is provided, the entire capture is returned as a concatenation of all memory segments. In order to retrieve the entire buffer, the sample capture must be stopped. If the segment or segments are empty, an empty string is returned.
+Syntax
+<handle>:getString(index)
+Parameters
+index  Optional segment index. Zero or no index extracts the contents of all segments if sampling is
+disabled.
+Blocking
+No
+Returns
+boolean  Indicates success or failure
+string  A string containing the samples or an error message
+
+
+
+Example
+Take a capture buffer and print the acceleration samples as comma separated values.
+--Print sample values in capture buffer �cb� local success, s = cb:getString() if success then
+local function signExt(x) return bit32.band(x, 0x8000) ~= 0 and bit32.bor(x, 0xFFFF0000) or x end
+local sampleCount = cb:count() local offset = 1 for i = 1,sampleCount do
+local x = signExt((s:byte(offset + 0) * 256) + s:byte(offset + 1)) local y = signExt((s:byte(offset + 2) * 256) + s:byte(offset + 3)) local z = signExt((s:byte(offset + 4) * 256) + s:byte(offset + 5))
+printf("%d,%d,%d\n",x,y,z) if (i % 100) == 0 then
+sched.delay(5) --Be friendly to the system end offset = offset + 6
+end end end
+5.20.12.2.6 running()
+Description
+This method returns if the sample capture is running or not. If a stop() request has been issued but the sample capture is still running, this method returns true.
+Syntax
+<handle>:running()
+Parameters
+None
+Blocking
+No
+
+
+Returns
+boolean true if sample capture running, false otherwise.
+5.20.12.2.7 segFullEvent()
+Description
+This method controls the generation of SEGMENT_FULL events when a segment is filled. If a segment identifier is not provided, then the command applies to all segments.
+Syntax
+<handle>:segFullEvent(enable, index)
+Parameters
+enable  Boolean that enables/disables the generation of SEGMENT_FULL events.
+index  Optional segment index (1, 2, 3, and so on). Zero or no index implies all segments.
+Blocking
+No
+Returns
+boolean  Indicates success or failure
+string  A description of the error in the case of a failure
+
+5.20.12.2.8 start()
+Description
+This method starts the sample capture at the beginning of the current segment.
+Note: This function fails when automatic orientation is in progress.
+Syntax
+<handle>:start()
+Parameters
+None
+Blocking
+No
+Returns
+boolean Indicates success or failure string A description of the error in the case of a failure
+
+
+5.20.12.2.9 stop()
+Description
+This method stops the sample collection. There are two options: Stop at the end of the current segment, or immediately.
+Syntax
+<handle>:stop(now)
+Parameters
+now  Boolean that if true stops the sample capture immediately, otherwise it stops at the end of the
+current segment.
+
+Blocking
+No
+Returns
+None
+5.20.12.2.10 timeStamp()
+Description
+This method returns the timestamp of the first entry in the specified memory segment.
+Syntax
+<handle>:timeStamp(index)
+Parameters
+index Segment index or zero for the current segment
+Blocking
+No
+Returns
+integer Timestamp in seconds of the first sample of the segment, or nil if an error string A description of the error in the case of failure
+5.20.12.2.11 wrap()
+Description
+This method controls what happens when the end of the last segment is reached. If true, then the sampling continues with the beginning of the first segment, otherwise the sampling stops and a CAPTURE_STOPPED event is generated.
+
+
+Syntax
+<handle>:wrap(enable)
+Parameters
+enable Boolean that enables wrap mode if true, otherwise disables it.
+Blocking
+No
+Returns
+None
+5.20.12.3 Posted Events
+5.20.12.3.1 Capture Stopped
+Description
+This event is posted when the last segment is full and wrap mode has not been enabled or if the sample capture is stopped asynchronously at the end of the current segment.
+Source
+"_ACCEL" (string)
+Event
+"CAPTURE_STOPPED" (string)
+Arguments
+handle Sample buffer handle that posted the event integer The timestamp when the capture stopped
+5.20.12.3.2 Segment Full
+Description
+This event is posted when a segment is full and the segment full event has been enabled for the segment.
+Source
+"_ACCEL" (string)
+Event
+"SEGMENT_FULL" (string)
+
+
+Arguments
+handle  Sample buffer handle that posted the event
+integer  Index of the segment that is full
+integer  The timestamp of the first sample in the segment
+
+5.21 Bluetooth (SIN 35)
+This service is only available on terminals (for example, ST 9100) that support Bluetooth hardware. The Bluetooth service provides global management and control over the Bluetooth operations. For a list of common Bluetooth terms, refer to section 5.21.18.
+5.21.1 Properties
+
+
+
+
+
+
+
+5.21.2 To-Mobile Messages
+There are no to-mobile messages for this service.
+5.21.3 From-Mobile Messages
+
+5.21.3.1 centralConnectAlarm (SIN 35, MIN 1)
+
+5.21.3.2 serialConnectAlarm (SIN 35, MIN 2)
+
+5.21.4 Global Constants
+5.21.4.1 addrType
+Description
+This table maps Bluetooth address type to their numerical values. It has the following fields:
+Public  0
+RandomStatic  1
+PrivateResolvable  2
+
+PrivateNonResolveable 3
+Syntax
+svc.bluetooth.addrType
+
+
+5.21.4.2 addrTypeStr
+Description
+This table does the reverse of addrType. It maps numerical values back to the string value. It has the following fields:
+0 1 2 3  �Public� �RandomStatic� �PrivateResolvable� �PrivateNonResolveable�
+Syntax
+
+svc.bluetooth.addrTypeStr
+5.21.5 Server Constants
+5.21.5.1 MAX_SHORT_MSG_SIZE
+This defines the maximum short message size.
+5.21.6 GAP Client Constants
+5.21.6.1 MAX_ADV_FILTERS
+Defines the maximum number of total advertising filters allowed at the same time.
+5.21.6.2 MAX_ADV_FILTERS_PER_SCANNER
+Defines the maximum number of advertising filters per scanner.
+5.21.7 GATT Client Constants
+5.21.7.1 MAX_PERIPHERAL_CONNECTIONS
+This defines the maximum number of peripheral connections that are allowed at the same time.
+5.21.7.2 MAX_SERVICES_PER_CONNECTION
+This defines the maximum number of services that is cached from a connection discovery.
+5.21.7.3 MAX_CHARACTERISTICS_PER_SERVICE
+This defines the maximum number of characteristics that cached for each service.
+5.21.7.4 propertyBits
+Supported property characteristic bit values that are used in bit masks:
+
+
+
+5.21.8 Server Functions (Peripheral Role)
+These functions are used for the peripheral role of the terminal.
+5.21.8.1 getDeviceLabel()
+Description
+Gets the Bluetooth asset ID / label of the device. This string could be different than the activeLabel (PIN 13) property, depending on whether or not an SP label has been configured.
+Syntax
+svc.bluetooth.getDeviceLabel()
+Parameters
+None
+Returns
+label The device label string
+5.21.8.2 setDeviceLabel()
+Description
+Sets the label of the device. The label is advertised as part of the scan response and it is also available as one of the fields of the device descriptor service. If the label is NOT set, then scan responses are not generated. Changes to the label take effect the next time advertising is enabled.
+Note: An error is returned if the SP label has been set via the shell �setcfg btlabel� command, as it has priority.
+Syntax
+svc.bluetooth.setDeviceLabel(label)
+Parameters
+label  The device label string (maximum of 25 characters)
+Returns
+true  OR  If successful
+
+
+
+false If unsuccessful errMsg String description of the error
+5.21.8.3 getBondedCentralDevices()
+Description
+Query the addresses of the central devices that are currently bonded with the terminal.
+Syntax
+svc.bluetooth.getBondedCentralDevices()
+Parameters
+None
+Returns
+bondList Array of zero or more tables with the following fields:
+addr table with the following fields: addrType svc.bluetooth.addrType
+address String of 6 hexadecimal octets the form AA:BB:CC:DD:EE:FF
+Example
+Display the bonded central devices
+local bd = svc.bluetooth.getBondedCentralDevices() if #bd > 0 then
+for i=1,#bd do local addr = bd[i].addr printf("#%d -type: %d addr: %s\n", i, addr.addrType, addr.address)
+end else
+print("No bonded central devices") end --RESULT: #1 -type: 0 addr: 5C:F3:70:88:EE:1D
+5.21.8.4 deleteBondedCentralDevice()
+Description
+Deletes the bonding information for the specified device address.
+Syntax
+svc.bluetooth.deleteBondedCentralDevice(addr)
+
+
+Parameters
+addr table with the following fields: addrType svc.bluetooth.addrType
+address String of 6 hexadecimal octets the form AA:BB:CC:DD:EE:FF
+Returns
+true If successful
+OR false If unsuccessful errMsg String description of the error
+Example
+Delete a bonded central device
+local addr = { addrType = svc.bluetooth.addrType.Public, address = "5C:F3:70:88:EE:1D"
+} local success, err = svc.bluetooth.deleteBondedCentralDevice(addr) if success then
+print("Device deleted") else print("*** error: Unable to delete device: ", err) end
+Delete all bonded central devices
+local bd = svc.bluetooth.getBondedCentralDevices()
+for i=1,#bd do local addr = bd[i].addr local success, err = svc.bluetooth.deleteBondedCentralDevice(addr) if not success then
+printf("*** error: Unable to delete device '%s', err=%s\n", addr.address, err) end end
+5.21.8.5 startFastAdvertising()
+Description
+Starts fast advertising for the specified time duration. This command will fail if a central device is already connected or advertising or Bluetooth is disabled.
+Syntax
+svc.bluetooth.startFastAdvertising(duration)
+
+
+Parameters
+duration  Fast advertising duration in seconds (optional, default is 30 seconds, maximum 300 seconds)
+Returns
+true false errMsg  OR  If successful If unsuccessful String description of the error
+
+5.21.9 Short Message Functions (Peripheral Role)
+The terminal supports a general-purpose short message service, which allows a connected central to exchange short messages with the terminal.
+5.21.9.1 createShortMessageHandle()
+Description
+Creates a handle for sending and receiving short messages from the connected central device.
+Syntax
+svc.bluetooth.createShortMessageHandle(_SIN)
+Parameters
+_SIN Service Identification Number of the service being registered
+Returns
+handle A short message handle
+OR nil Indicates an error occurred errMsg String description of the error
+5.21.9.2 Message Handle Methods
+5.21.9.2.1 send()
+Description
+Send a binary short message to the connected central.
+Syntax
+<handle>:send(msg)
+Parameters
+msg Binary data string of up to MAX_SHORT_MSG_SIZE
+bytes
+
+
+Returns
+true  If successful
+OR
+false  If unsuccessful
+errMsg  String description of the error
+
+Example
+--Create the short message handle local handle, err = svc.bluetooth.createShortMessageHandle(_SIN) if handle then --Send the message
+local success
+success, err = handle:send("Hello world")
+if success then
+print("Bluetooth short message sent") else print("Unable to send short message, err= ", err) end else print("Unable to create short message handle, err= ", err) end
+5.21.10 GAP Client Functions (Central Role)
+GAP Client functions are using to scan and discover peripheral devices.
+5.21.10.1 Filtering Advertisement Reports
+The interface provides an API to scan for Bluetooth advertisements from nearby devices. Due to the potential of a high rate of advertising traffic, the interface uses a combination of filtering and queuing to capture the advertising reports.
+Advertising reports are composed of filterable and non-filterable components.
+
+Advertising report filtering consists of three components: signal strength filter, advertising content filters, and message rate filter.
+
+
+
+Global Signal Strength Filter is controlled by the scannerRSSIFilter property
+
+Per Scanner Content Filter (Global total of 16)
+Global Message Rate Filter is controlled by the scannerRateFilter property
+
+Each scanner instance can optionally specify one or more content filter configurations. Each configuration can filter on one or more of the following:
+�
+Device address type
+�
+Device address
+�
+Advertising type
+�
+Advertising data
+The report is compared against all the components and only passes if all conditions match. For example, a filter configuration that specifies both a device address type of �1� (RandomStatic) and an advertising data type of �9� (�Complete Local Name�) will only match �RandomStatic� addresses with complete local names.
+Each scanner can have up to MAX_ADV_FILTERS_PER_SCANNER
+content filters. A report is accepted if it matches any of the content filters. For example, to capture reports with both a �Complete Local Name� and �Shortened Local Name� would require at least two content filters.
+Note: Filtering does not apply to scan responses, as they are merged with the primary advertising packet.
+
+
+5.21.10.2 createScanner()
+Description
+Creates a scanner handle that provides methods to scan for a list of peripheral devices with optional filtering. The handle is also the source for all events coming from the scanner.
+Syntax
+svc.bluetooth.createScanner(config)
+Parameters
+config  optional table with the any of the following fields:
+name  Optional string which names the scanner for debug/logging support.
+qSize  Optional integer which specifies the size of the advertising report match queue (Default: 32)
+qTrigger  Optional integer which specifies the number of entries that must be in the advertising report
+queue before triggering an event (Default: 1)
+event  Optional
+boolean
+that
+if
+true,
+generates
+the
+TRIGGER
+event
+when
+the
+�qTrigger�
+threshold
+is
+
+reached. (Default: false)
+
+Returns
+handle A scanner handle
+OR nil Indicates an error occurred errMsg String description of the error
+Example
+--Create a new peripheral scanner with a 50 entry match queue which generates events local scanH,err = svc.bluetooth.createScanner({name="sensors" qSize = 50, event=true}) if scanH then
+--Do something with scanner else print(err) end
+5.21.10.3 Scanner Handle Methods
+5.21.10.3.1 name()
+Description
+Returns the name of the scanner that was specified when createScanner()
+was called.
+Syntax
+<handle>:name()
+
+
+Parameters
+None
+Returns
+name string name of the scanner
+5.21.10.3.2 active()
+Description
+Returns a Boolean that indicates if the scanner is active or not.
+Syntax
+<handle>:active()
+Parameters
+None
+Returns
+active Boolean that is true if active, false otherwise
+5.21.10.3.3 setFilters()
+Description
+Sets zero, 1 or more filters to limit the number of advertising reports received by the scanner. If the provided filter table is empty, the filters are cleared.
+A scanner can have a maximum of MAX_ADV_FILTERS_PER_SCANNER
+filters and there can be a maximum of MAX_ADV_FILTERS
+in the entire system.
+All advertising reports must first pass the global signal strength (RSSI) and message rate filters defined by the �scannerRSSIFilter� and �scannerRateFilter� properties
+respectively.
+The scan filters allow collecting of specific addresses, advertising types and advertising type data. Each advertising report is compared with each of the specified filters and if any filter matches, the advertising report will be captured in the match queue.
+Advertising reports that match are placed in the match queue in a first in, first out order. If the queue is full, the oldest reports are replaced.
+If no filter is provided, the default is to capture all advertising reports.
+Note: ORBCOMM recommends that filters be setup before starting the scanner.
+figures here
+Syntax
+<handle>:setFilters(filters)
+
+
+Parameters
+filters Array of tables that defines zero or more filter tables containing:
+addr table with the following fields: addrType If present, filter on the address type address If present, filter on the Bluetooth 48-bit address. The format is a 6 octet
+hexadecimal string of the form AA:BB:CC:DD:EE:FF advertisingType If present, filter on the 8-bit advertising type advertisingData If advertisingType is defined, filter on the first n bytes of the advertising type data
+Returns
+true  If successful
+OR
+false  If unsuccessful
+errMsg  String description of the error
+
+Example
+Scan for device ORBCOMM devices for 10 seconds
+local scanH, err = svc.bluetooth.createScanner()
+if scanH then --Only need one filter local filter1 = {
+addr = { addrType = svc.bluetooth.addrType.RandomStatic }, advertisingType = 0xFF, --Manfacturing Specific Data advertisingData = string.char(0x71, 3) --ORBCOMM ID (0x0371) in little endian
+}
+local success, err = scanH:setFilters({filter1}) if success then scanH:start(10) else print("set filter error: ", err) end else print("Scanner creation error: ", err) end
+Scan for two specific device addresses
+--Scan for two specific addresses local scanH, err = svc.bluetooth.createScanner({name = "Device Finder", qSize = 5}) if scanH then
+--Use one filter for each address
+
+
+local filter1 =
+{ addr = {
+addrType = svc.bluetooth.addrType.RandomStatic, address = "E2:49:B3:06:92:D1"
+} } local filter2 = {
+addr =
+{ addrType = svc.bluetooth.addrType.RandomStatic, address = "CA:61:65:D1:AA:F1"
+} } --Set the two filters local success, err = scanH:setFilters({filter1, filter2}) if success then
+scanH:start(10) else print("set filter error: ", err) end else print("Scanner creation error: ", err) end
+5.21.10.3.4 start()
+Description
+Start the advertising scanner using the currently configured filters with an optional duration in seconds.
+Each detected advertising packet and associated scan response, if any, is queued. If events are enabled and the queue trigger level is reached, a TRIGGER
+event is generated.
+When the scanner stops, either manually or when the optional duration expires, a SCAN_STOPPED
+event is generated.
+Syntax
+<handle>:start(duration)
+Parameters
+duration Optional duration in seconds. (Default is �zero�, which means run untilstop()
+is called)
+
+
+Returns
+true  If successful
+OR
+false  If unsuccessful
+errMsg  String description of the error
+
+Example
+--Start the scanner for 30 seconds scanH:start(30)
+Triggered Events
+�TRIGGER� �SCAN_STOPPED�
+5.21.10.3.5 stop()
+Description
+Stops the advertising report scanner and generates a SCAN_STOPPED
+event. The filters are unaffected by this operation.
+Syntax
+<handle>:stop()
+Parameters
+None
+Returns
+true If successful
+OR false If unsuccessful errMsg String description of the error
+Example
+--Stop the scanner scanH:stop()
+Triggered Events
+�SCAN_STOPPED�
+
+
+5.21.10.3.6 dequeue()
+Description
+The reports are removed from the head (oldest first) of the match queue, so if multiple reports are removed, they are in the order of oldest to newest.
+Syntax
+<handle>:dequeue(count)
+Parameters
+count  Optional integer which specifies the maximum number of advertising reports to return. A negative
+value means return all reports in the queue. (default: -1)
+
+Returns
+reports Array of zero or more tables containing report data. Each report consists of a table with the following fields:
+addr Table with the following fields: addrType svc.bluetooth.addrType
+address String of 6 hexadecimal octets the form AA:BB:CC:DD:EE:FF
+rssi Integer signal strength in dBm
+timestamp Table with an uptime based time stamp which was set when the report was queued. It is composed of the with the following fields: sec integer number of seconds (signed 32-bit value) msec integer fraction of a second in milli-seconds
+advertisingData Table of advertising data with the following possible fields: rawData string representing the 31-byte advertising report < Decoded fields defined in Table
+25>
+scanResponseData Table of scan response data with the following possible fields: rawData string representing the 31-byte scan response report < Decoded fields defined in Table
+25>
+The �advertisingData� and �scanResponseData� tables have some of the advertising types decoded into fields as shown in Table
+25. Only advertising types that were found in the �rawData� have corresponding fields decoded.
+If a �Manufacturer Specific Data� type is present, then a �ManufacturerData� table is present inside the �advertisingData�/ �scanResponseData� tables and is decoded according to Table
+26
+
+
+
+
+
+Field Type Type Value Type Name
+UUID Incomplete List of 16-bit Service Class UUIDs Complete List of 16-bit Service Class UUIDs Incomplete List of 32-bit Service Class UUIDs Complete List of 32-bit Service Class UUIDs Incomplete List of 128-bit Service Class UUIDs Complete List of 128-bit Service Class UUIDs
+name Shortened local name
+Complete local name
+txPowerLevel Tx Power Level
+slaveConnectionIntervalMin Slave Connection Minimum Interval
+slaveConnectionIntervalMax Slave Connection Maximum Interval
+ManufacturerData table 0xFF Manufacturer Specific Data (See Table
+26)
+
+
+
+Table 26: Manufacturer Specific Data Fields
+
+Field Type Manufacturer Description
+companyID Integer defining the company identifier as defined here:
+https://www.bluetooth.com/specifications/assigned-numbers/company.
+identifiers/
+
+ORBCOMM is company ID is 881. rawData String representing the raw manufacturer specific data txPowerLevel Tx power level with range of -127 to 127 dBm batteryPercentage Device battery charge as a percentage (0 to 100) deviceCategoryID Defines the category of the device label Customer definable device asset ID or label terminalVariant ST terminal variant modemVariant
+integer ORBCOMM
+ST modem variant
+
+
+
+Example
+Display formatted list of devices sorted by RSSI
+--Dequeue and display all devices ordered by RSSI local ScanReports = scanH:dequeue() table.sort(ScanReports, function(a, b) return a.rssi > b.rssi end) if #ScanReports > 0 then
+for i=1,#ScanReports do local ar = ScanReports[i] local name = ar.advertisingData.name or "" printf("#%02d: %-20s [%d -%s] RSSI= %d\n",
+i, name, ar.addr.addrType, ar.addr.address, ar.rssi) end else
+
+
+print("No devices found") end --Output example: #01: JCAB418150014 [1 -DB:A0:94:D4:14:92] RSSI= -49 #02: 01000024SKY99F5 [1 -DF:E0:D6:92:9A:1F] RSSI= -53 #03: FCAC619070170 [1 -D1:F1:E9:8D:72:87] RSSI= -67 #04: ABCD121000206 [1 -D5:A2:57:8B:A3:35] RSSI= -67 #05: EWAB617300089 [1 -DE:F1:6E:35:22:7C] RSSI= -70 #06: JSAB619300020 [1 -CF:6C:BC:A3:AD:1B] RSSI= -72 #07: FCBC619130100 [1 -E9:C4:85:6F:C7:77] RSSI= -73
+Display raw report data
+--Dequeue and dump 2 reports from the scanner local t = scanH:dequeue(2) dumpvar(t) --Output example: result = { --table: 60171a20 (count= 2)
+[1] = { --table: 601e7058 (count= 0)
+timeStamp = { --table: 601e7188 (count= 0) sec = 120 msec = 260
+}
+advertisingData = { --table: 601e7290 (count= 0) flags = 6 rawData = "\2\1\6\7�q\3\1\4a\1\14\9EWAB619110095" ManufacturerData = { --table: 601e73f0 (count= 0)
+deviceCategoryID = "Wireless Sensor Tag" txPowerLevel = 4 companyID = 881 rawData = "\1\4a\1" batteryPercentage = 97
+}
+name = "EWAB619110095" } rssi = -54 addr = { --table: 601e71f8 (count= 0)
+addrType = 1 address = "CE:05:A2:EE:21:36" }
+[2] = { --table: 601ddf18 (count= 0)
+timeStamp = { --table: 601de048 (count= 0) sec = 121
+}
+
+
+msec = 167 } advertisingData = { --table: 601de150 (count= 0)
+flags = 6 rawData = "\2\1\6\7�q\3\1\4d\0\14\9CCJA617280049" ManufacturerData = { --table: 601de2b0 (count= 0)
+deviceCategoryID = "Mobile Terminal" txPowerLevel = 4 companyID = 881 rawData = "\1\4d\0" batteryPercentage = 100
+}
+name = "CCJA617280049" } scanResponseData = { --table: 601de408 (count= 0)
+rawData = "\21�q\3\2\0GT1100 BLE122345"
+ManufacturerData = { --table: 601de568 (count= 0) deviceCategoryID = "Mobile Terminal" label = "GT1100 BLE122345" companyID = 881 rawData = "\2\0GT1100 BLE122345"
+} } rssi = -58 addr = { --table: 601de0b8 (count= 0)
+addrType = 1 address = "C2:C8:62:02:76:33" } } }
+5.21.10.3.7 flush()
+Description
+Clears out the match queue and all metrics of the scanner and acknowledges posted events.
+Syntax
+<handle>:flush()
+Parameters
+None
+
+
+Returns
+None
+Example
+--Flush the scanner scanH:flush()
+5.21.10.3.8 matchInfo()
+Description
+Returns a table with match information of the scanner.
+Syntax
+<handle>:matchInfo()
+Parameters
+None
+Returns
+Table with the following fields
+matchCount  Integer that indicates the total number of advertising reports that matched the filters.
+qCount  Integer that indicates the number of advertising reports currently in the match queue
+acknowledged  Boolean
+that
+indicates
+if
+the
+last
+GAP
+TRIGGER
+event
+has
+been
+acknowledged
+by
+using
+
+dequeue()
+or
+flush().
+
+
+Example
+local mi = ScanH:matchInfo() printf("qCount: %d\n", mi.qCount) printf("matchCount: %d\n", mi.matchCount) printf("acknowledged: %s\n", mi.acknowledged and "YES" or "NO") --Output example: qCount: 23 matchCount: 76 acknowledged: YES
+5.21.10.3.9 config()
+Description
+Returns a table with the static configuration of the scanner.
+Syntax
+<handle>:config()
+
+
+Parameters
+None
+Returns
+Table with the following fields:
+name  String name of the scanner
+active  Boolean that indicates if the scanner has started if true.
+event  Boolean
+that
+if
+true,
+generates
+a
+TRIGGER
+event
+if
+the
+trigger
+level
+is
+reached.
+
+gSize  Integer which specifies the size of the advertising report match queue
+gTrigger  Integer which specifies the number of entries that must be in the match queue before triggering an
+event if event generation is enabled
+filters  Array of zero or more tables which indicate the current filter configuration. Each table contains some
+of the following optional fields:
+addr  table with some of the following fields:
+addrType  integer
+svc.bluetooth.addrType
+
+address  string address filter
+advertisingType integer advertising type filter
+advertisingData string advertising data
+
+Example
+Dump the configuration of a scanner
+--Display the configuration of a scanner local cfg = scanH:config() dumpvar(cfg, 'cfg') --Output: cfg = { --table: 6022f130 (count= 0)
+active = false qTrigger = 5 name = "Device Scanner" filters = { --table: 6022f360 (count= 3)
+[1] = { --table: 6022f3c0 (count= 0) addr = { --table: 6022f470 (count= 0)
+addrType = 1 } advertisingType = 255 advertisingData = "q\3"
+}
+[2] = { --table: 6022f4e0 (count= 0)
+addr = { --table: 6022f590 (count= 0) addrType = 1 address = "E2:49:B3:06:92:D1"
+}
+
+
+}
+[3] = { --table: 6022f600 (count= 0)
+addr = { --table: 6022f6b0 (count= 0) addrType = 1 address = "CA:61:65:D1:AA:F1"
+}
+} } event = false qSize = 20
+}
+5.21.11 GATT Client Functions (Central Role)
+These functions are used in a Central Role to connect to Bluetooth peripherals (sensors). The API is inherently asynchronous, with GATT
+Client
+Events
+occurring at almost any time. For example, the peripheral device might disconnect (powered off, blocked, etc.) at any time.
+To simplify this, the connection handle methods which require communication with the peripheral device can operate in either a blocking (synchronous) mode or a non-blocking (a-synchronous) mode by using different versions of the same method. Asynchronous (non-blocking) methods are identified with an �Async� suffix.
+Blocking Mode
+� Methods without the �Async� suffix are used
+�
+Most events are consumed by the call and not generated from the handle, so the user does not have to process the events
+� Some event�s like �DISCONNECT� events can occur at any time, even when using blocking mode API calls, since it can occur between API calls
+Non-blocking Mode
+� �xxxAsync()� form of method is used
+�
+The API function returns immediately
+�
+The user must handle events that use the connection handle as the source
+5.21.11.1 allocatePeripheralConnection()
+Description
+Allocates a Bluetooth peripheral (server) connection handle with an optional name. This handle is then used for all subsequent operations with the device. The handle is also the source for all events coming from the sensor.
+Syntax
+svc.bluetooth.allocatePeripheralConnection(name)
+Parameters
+name Optional string name to give the handle
+
+
+Returns
+handle  A peripheral connection handle
+OR
+nil  Indicates an error occurred
+errMsg  String description of the error
+
+Example
+local sensorH, err = svc.bluetooth.allocatePeripheralConnection("SensorTest") if sensorH then --Create queue for sensor events
+BTSensorQ = sched.createEventQ(10, sensorH) BTSensorQ:name('Sensor') ...
+else print(err) end
+5.21.11.2 Connection Handle Methods
+5.21.11.2.1 connect() / connectAsync()
+Description
+Connects the handle to a specified peripheral device. A maximum of MAX_PERIPHERAL_CONNECTIONS
+devices can be connected to at once.
+The call is rejected if an existing connection is in progress.
+If a �passKey� is provided in the argument table, then the connection will automatically respond to �AUTH_KEY_
+REQ� events and call replyAuthKey() with the specified �passKey�. If the �passKey� is not accepted, the a �AUTH_
+FAILED� event will be generated followed by a �DISCONNECT� event.
+Syntax
+<handle>:connect(args) (blocking)
+<handle>:connectAsync(args) (non-blocking)
+Parameters
+args Table with the following fields: addrType svc.bluetooth.addrType
+of the address address String of 6 hexadecimal octets the form AA:BB:CC:DD:EE:FF passKey Optional 6-digit string to be used for automatic authentication reply
+
+
+Returns
+true  If successful
+OR
+false  If unsuccessful
+errMsg  String description of the error
+errCode  Integer
+error
+code
+(see
+APPENDIX
+L)
+
+
+Example
+--Connect to a specific address
+local arg = { addrType = svc.bluetooth.addrType.RandomStatic, address = "E2:49:B3:06:92:D1",
+} --Use a blocking call local success, errMsg, errCode = sensorH:connect(arg) if success then
+print("Connected to sensor") else printf("*** error: Connect error, err=%s, errCode=%d\n", errMsg, errCode) end
+Triggered Events
+(Async)
+�CONNECT�
+�DISCONNECT�
+�AUTH_KEY_REQ�
+5.21.11.2.2 name()
+Description
+Returns the name of the peripheral connection that was specified when allocatePeripheralConnection()
+was called.
+Syntax
+<handle>:name()
+Parameters
+None
+Returns
+name String name of the peripheral connection
+
+
+5.21.11.2.3 connected()
+Description
+Returns true if the handle is currently connected with a peripheral device.
+Syntax
+<handle>:connected()
+Parameters
+None
+Returns
+active Boolean is true if connected, false otherwise
+5.21.11.2.4 state()
+Description
+Returns a string that represents the internal state of the handle. The handle can be in one of the following states:
+�DISCONNECTED� Not connected (initial state) �CONNECTING� Connection and discovery is in progress �CONNECTED� Connected to a peripheral device �DISCONNECTING� Disconnection sequence in progress
+Syntax
+<handle>:state()
+Parameters
+None
+Returns
+state Connection state string
+5.21.11.2.5 lastErrorCode()
+Description
+Returns the error code fo the last operation on the handle
+Syntax
+<handle>:lastErrorCode()
+Parameters
+None
+
+
+Returns
+errorCode Integer error code (see APPENDIX
+L)
+5.21.11.2.6 getDiscoveredServiceAndChar()
+Description
+Retrieve the cached services and characteristics discovered after connection.
+Each connection can have up to MAX_SERVICES_PER_CONNECTIONservices, and each service can have up to MAX_CHARACTERISTICS_PER_SERVICE
+characteristics. Limitations:
+
+Returned UUID hex strings can be 16, 32, or 128 bits in length. Each service includes it�s UUID and number of available characteristics.
+Each characteristic includes the following:
+valueHandle  Used to read/write/notify from/to the server
+property  Bit mask of svc.bluetooth.propertyBits
+cccdHandle  If exists, used to enable/disable characteristic notification or indication.
+
+If services or characteristics are duplicated, the GATT server generates unique handles for each duplicate up to a maximum of 0xFFFF.
+Syntax
+<handle>:getDiscoveredServiceAndChar()
+Parameters
+None
+Returns
+svcList nil if error, or array of tables with the following fields:
+UUID Serivice UUID string
+characteristics Array of tables with the following fields:
+UUID Characteristic UUID string valueHandle Used to read/write/notify/indicate the characteristic
+
+
+OR nil errMsg errCode  property
+CCCDHandle
+Indicates
+an
+error
+occurred
+String
+description
+of
+the
+error
+Integer
+error
+code
+(see
+APPENDIX
+L)
+ Bit
+mask
+of
+svc.bluetooth.propertyBits.
+�nil�
+if
+property
+not
+�PROP_NOTIFY�
+or
+�PROP_INDICATE�
+
+Example List of discovery of services and characteristics
+
+--Get connection services and characteristics local svcList,err = conH:getDiscoveredServiceAndChar() if svcList then for i = 1, #svcList do printf("\nService(%d) UUID: %s\n",i, svcList[i].UUID) for j= 1, #svcList[i].characteristics do local chInfo = svcList[i].characteristics[j] local props = svc.bluetooth.propertyBits printf(" Characteristic(%2d) UUID: %s\n",j,chInfo.UUID) printf(" Value handle: %d\n",chInfo.valueHandle) printf(" Property(0x%02X): ", chInfo.property) if chInfo.property & props.PROP_READ ~= 0 then printf("READ, ") end if chInfo.property & props.PROP_WRITE ~= 0 then printf("WRITE, ") end if chInfo.property & props.PROP_WRITE_WITHOUT_RESP ~= 0 then printf("WRITE WITHOUT RESP, ") end if chInfo.property & props.PROP_NOTIFY ~= 0 then printf("NOTIFY, ") end if chInfo.property & props.PROP_INDICATE ~= 0 then printf("INDICATE") end printf("\n") if chInfo.property & (props.PROP_NOTIFY|props.PROP_INDICATE) ~= 0 then printf(" CCCD handle: %d\n",chInfo.CCCDHandle) end end end else
+
+
+print(err) end --RESULT: Service(1) UUID: 1800 Characteristic( 1) UUID: 2A00 Value handle: 3 Property(0x02): READ, Characteristic( 2) UUID: 2A01 Value handle: 5 Property(0x02): READ, Characteristic( 3) UUID: 2A04 Value handle: 7 Property(0x02): READ, Characteristic( 4) UUID: 2AA6 Value handle: 9 Property(0x02): READ, Service(3) UUID: 180F Characteristic( 1) UUID: 2A19 Value handle: 16 Property(0x12): READ, NOTIFY, CCCD handle: 17 Service(4) UUID: F21200005F0011E68B7786F30CA893D3 Characteristic( 1) UUID: F21200015F0011E68B7786F30CA893D3 Value handle: 20 Property(0x1E): READ, WRITE, WRITE WITHOUT RESP, NOTIFY, CCCD handle: 21 Characteristic( 2) UUID: F21200025F0011E68B7786F30CA893D3 Value handle: 23 Property(0x1E): READ, WRITE, WRITE WITHOUT RESP, NOTIFY,
+5.21.11.2.7 readCharacteristic() / readCharacteristicAsync()
+Description
+Read the characteristic value from the peripheral/server. The characteristic must have the svc.bluetooth.propertyBits.PROP_READ
+bit set.
+This function can also be used to read the CCCD setup value if a CCCD handle is provided as a parameter.
+Syntax
+<handle>:readCharacteristic(valueHandle) (blocking)
+<handle>:readCharacteristicAsync(valueHandle) (non-blocking)
+Parameters
+valueHandle Characteristic value handle or CCCD handle
+
+
+Returns (Blocking)
+value  Binary string value
+OR
+nil  Indicates an error occurred
+errMsg  String description of the error
+errCode  Integer
+error
+code
+(see
+APPENDIX
+L)
+
+
+Returns (Async)
+true If successful OR
+false If unsuccessful
+errMsg String description of the error
+errCode Integer error code (see APPENDIX
+L)
+Example
+Read all the characteristics of the first �Device Descriptor� of an ORBCOMM sensor
+--Allocate our peripheral connection handle local success, rc local sensorH, err = svc.bluetooth.allocatePeripheralConnection() if sensorH then --Connect to the sensor success, err, rc = sensorH:connect({address = "e2:49:b3:06:92:d1"}) if success then --Get the service and characteristic database local discDB discDB, err = sensorH:getDiscoveredServiceAndChar() if discDB then --Look for the "Device Descriptor" entry for i = 1,#discDB do local service = discDB[i] if service.UUID == "298200006BA611E68B7786F30CA893D3" then --Loop over all the characteristics for j=1,#service.characteristics do --Now read the characteristic local ch = service.characteristics[j] local val val, err, rc = sensorH:readCharacteristic(ch.valueHandle) if val then --Quick guess of the format local fmt = 'z' if #val <= 2 then
+
+
+fmt = 'I2' elseif #val <= 4 then fmt = 'I4' end printf("UUID= %35s, Value= '%s'\n", ch.UUID, string.unpack(fmt, val)) end end --Found the service, so break out break end end end --Disconnect, ignoring the event sensorH:disconnectAsync() else printf("*** error: Unable to connect, err=%s, rc=%d\n", err, rc) end sensorH = nil end --Example Output UUID= 2A25, Value= 'EWAB619060014' UUID= 298200016BA611E68B7786F30CA893D3, Value= 'My Sensor' UUID= 298200026BA611E68B7786F30CA893D3, Value= '' UUID= 2A26, Value= 'SENS.002.001.0002' UUID= 298200056BA611E68B7786F30CA893D3, Value= 'S132.6.001.001' UUID= 2A27, Value= 'BA101098-001' UUID= 2A29, Value= 'ORBCOMM' UUID= 2A24, Value= 'DS300' UUID= 298200066BA611E68B7786F30CA893D3, Value= '2'
+Triggered Events
+(Async)
+�READ_RESULT�
+�RW_ERROR�
+�DISCONNECT�
+5.21.11.2.8 writeCharacteristic() / writeCharacteristicAsync()
+Description
+Write the specified characteristic value to the peripheral / server.
+The characteristic must have the svc.bluetooth.propertyBits.PROP_WRITE
+and/or svc.bluetooth.propertyBits.PROP_WRITE_WITHOUT_RESP
+bit set.
+
+
+Syntax
+<handle>:writeCharacteristic(valueHandle, data) (blocking) <handle>:writeCharacteristicAsync(valueHandle, data) (non-blocking)
+Parameters
+valueHandle Characteristic value handle for write data Binary data string
+Returns
+true  If successful
+OR
+false  If unsuccessful
+errMsg  String description of the error
+errCode  Integer
+error
+code
+(see
+APPENDIX
+L)
+
+
+Example
+Flash the LED on the ORBCOMM DS 300 door sensor
+--Allocate our peripheral connection handle local ok, rc local sensorH, err = svc.bluetooth.allocatePeripheralConnection() if sensorH then --Connect to the sensor ok, err, rc = sensorH:connect({address = "e2:49:b3:06:92:d1"}) if ok then --Get the service and characteristic database local discDB discDB, err = sensorH:getDiscoveredServiceAndChar() if discDB then --Look for the "Binary Output" entry for i = 1,#discDB do local service = discDB[i] if service.UUID == "B30200006F0C11E68B7786F30CA893D3" then --Loop over all the characteristics for j=1,#service.characteristics do local ch = service.characteristics[j] --Check for "Activate Binary Output" characteristic if ch.UUID == "B30200056F0C11E68B7786F30CA893D3" then --Write a binary 1 to trigger the LED ok,err,rc = sensorH:writeCharacteristic(ch.valueHandle, string.char(1)) if ok then print("DS300 LED should be flashing")
+
+
+else printf("*** error: Write failed, err=%s, rc=%d\n", err, rc) end end end --Found the service, so break out break end end end --Disconnect, ignoring the event sensorH:disconnectAsync() else printf("*** error: Unable to connect, err=%s, errCode=%d\n", err, rc) end sensorH = nil end
+Triggered Events
+(Async)
+�WRITE_DONE�
+�RW_ERROR�
+�DISCONNECT
+5.21.11.2.9 configCCCD() / configCCCDAsync
+Description
+Enable/disable the specified CCCD. If the CCCD is not enabled, any change of the characteristic value at the server would not notify or indicate to the client (central).
+The characteristic must have the sys.bluetooth.gatt.propertyBits.PROP_NOTIFY
+and/or sys.bluetooth.gatt.propertyBits.PROP_INDICATE
+bit set.
+Syntax
+<handle>:configCCCD(cccdHandle, enable) (blocking)
+<handle>:configCCCDAsync(cccdHandle, enable) (non-blocking)
+Parameters
+cccdHandle CCCD handle of characteristics descriptor enable Boolean that if true, enables the CCCD, otherwise disables it
+
+
+Returns
+true  If successful
+OR
+false  If unsuccessful
+errMsg  String description of the error
+errCode  Integer
+error
+code
+(see
+APPENDIX
+L)
+
+
+Example
+--Allocate our peripheral connection handle local ok, rc local sensorH, err = svc.bluetooth.allocatePeripheralConnection() if sensorH then
+--Connect to the sensor ok, err, rc = sensorH:connect({address = "e2:49:b3:06:92:d1"}) if ok then
+--Get the service and characteristic database local discDB discDB, err = sensorH:getDiscoveredServiceAndChar() if discDB then
+
+--Look for the "Binary Input" entry
+for i = 1,#discDB do local service = discDB[i] if service.UUID == "F21200005F0011E68B7786F30CA893D3" then
+--Loop over all the characteristics
+for j=1,#service.characteristics do local ch = service.characteristics[j] --Check for "Raw Binary Value" characteristic if ch.UUID == "F21200065F0011E68B7786F30CA893D3" then
+--Enable notifications when this characteristic changes ok,err,rc = sensorH:writeCharacteristic(ch.CCCDHandle, true) if ok then
+print("Sensor will now generate magnet NOTIFICATION events") else printf("*** error: CCCD config failed, err=%s, rc=%d\n", err, rc) end
+end end --Found the service, so break out break
+end end
+
+
+end --Disconnect, ignoring the event sensorH:disconnectAsync()
+else
+printf("*** error: Unable to connect, err=%s, errCode=%d\n", err, rc) end sensorH = nil
+end
+Triggered Events
+(Async)
+�WRITE_DONE�
+�RW_ERROR�
+�DISCONNECT�
+5.21.11.2.10 replyAuthKey()
+Description
+Respond to an authentication request with a pass key as part of the paring procedure.
+After the GATT
+Client
+Events
+AUTH_KEY_REQUEST is received, the application must reply with the pass key using this function within 20 seconds otherwise the link will be disconnected.
+If a pass key was provided with the connect() / connectAsync() call, this function will be called automatically in the background when the AUTH_KEY_REQUEST
+event is received. If the pass-key was not accepted, the a GATT Client Events AUTH_FAILED
+event will be generated followed by a DISCONNECT
+event.
+Once the peer device is bonded, no more passkey responses will be required for future connections.
+Syntax
+<handle>:replyAuthKey(passkey)
+Parameters
+passkey String of 6 numeric digits
+Returns
+true If successful
+OR false If unsuccessful errMsg String description of the error errCode Integer error code (see APPENDIX
+L)
+Example
+Flash the LED on the ORBCOMM DS 300 door sensor
+--Received AUTH_KEY_REQUEST from connection --Set passkey, it must be 6 digits
+
+
+local success, err = conH:replyAuthKey("000000") If not success then print(err) end
+Triggered Events
+
+�AUTH_FAILED� �DISCONNECT
+5.21.11.2.11 disconnect() / disconnectAsync()
+Description
+Disconnect from the peripheral.
+In non-blocking mode, a successful disconnect will always result in a �DISCONNECT� event with the �errorCode� set to 790 (�host terminated connection�). In blocking mode, this errorCode is specifically used to indicate a successful disconnect.
+Syntax
+<handle>:disconnect() (blocking) <handle>:disconnectAskync() (non-blocking)
+Parameters
+None
+Returns
+true  If successful
+OR
+false  If unsuccessful
+errMsg  String description of the error
+errCode  Integer
+error
+code
+(see
+APPENDIX
+L)
+
+
+Example
+Blocking disconnect
+--Disconnect from connection local success, errMsg, rc = conH:disconnect() If not success then
+printf("*** error: Disconnect, err=%s, rc=%d\n", errMsg, rc) end
+Triggered Events
+(Async)
+�DISCONNECT"
+
+
+5.21.11.3 getConnectedPeripheralDevices()
+Description
+Query what peripheral devices are connected. Each entry includes address, synchronization interval, latency and re-connect timeout.
+Syntax
+svc.bluetooth.getConnectedPeripheralDevices()
+Parameters
+None
+Returns
+connList  Array of zero or more tables with the following fields:
+addr  Table with the following fields:
+addrType  svc.bluetooth.addrType
+
+address  String of 6 hexadecimal octets the form AA:BB:CC:DD:EE:FF
+interval  Connection synchronization interval in 1.25 ms units
+latency  Count of connection intervals skipped from peripheral
+timeout  Supervision timeout in 10ms units. Shows how many seconds to wait if connection is lost
+OR
+nil  Indicates an error occurred
+errMsg  String description of the error
+
+Example
+Display the connected peripheral devices
+--Get the connected device list local connList, err = svc.bluetooth.getConnectedPeripheralDevices() if connList then --Loop over the connection list for i = 1, #connList do local ci = connList[i] printf("Connection #%d:\n", i) printf(" Addr _type: %ds\n", ci.addr.addrType) printf(" Address: %s\n", ci.addr.address) printf(" Interval(ms): %d\n", ci.interval * 1.25) printf(" Latency: %d\n", ci.latency) printf(" Timeout(ms): %d\n", ci.timeout * 10) end else print(err) end
+
+
+--Output: Connection #1: Addr _type: 1 Address: E2:49:B3:06:92:D1 Interval(ms): 400 Latency: 4 Timeout(ms): 8000
+5.21.11.4 getBondedPeripheralDevices()
+Description
+Query the address of the peripheral devices that are currently bonded with the terminal.
+Syntax
+svc.bluetooth.getBondededPeripheralDevices()
+Parameters
+None
+Returns
+bondList addr  Array
+of
+zero
+or
+more
+tables
+with
+the
+following
+fields:
+Table
+with
+the
+following
+fields:
+addrType
+svc.bluetooth.addrType
+address
+String
+of
+6
+hexadecimal
+octets
+the
+form
+AA:BB:CC:DD:EE:FF
+
+Example
+
+Display the connected peripheral devices
+local bd = svc.bluetooth.getBondedPeripheralDevices() if #bd > 0 then for i=1,#bd do local addr = bd[i].addr printf("#%d -type: %d addr: %s\n", i, addr.addrType, addr.address) end else print("No bonded peripheral devices") end --RESULT: #1 -type: 1 addr: C2:F3:80:88:EE:1D
+5.21.11.5 deleteBondedPeripheralDevice()
+Description
+Deletes the bonding information for the specified device address.
+
+
+Syntax
+svc.bluetooth.deleteBondPeripheralDevice(addr)
+Parameters
+addr  Table
+with
+the
+following
+fields:
+addrType
+svc.bluetooth.addrType
+address
+String
+of
+6
+hexadecimal
+octets
+the
+form
+AA:BB:CC:DD:EE:FF
+
+Returns
+true false errMsg  OR  If successful If unsuccessful String description of the error
+Example
+
+Delete a bonded peripheral device
+local addr = { addrType = svc.bluetooth.addrType.RandomStatic, address = "C2:F3:80:88:EE:1D" } local success, err = svc.bluetooth.deleteBondedPeripheralDevice(addr) if success then print("Device deleted") else print("*** error: Unable to delete device: ", err) end
+Delete all bonded peripheral devices
+--Delete all bonded peripheral devices local bd = svc.bluetooth.getBondedPeripheralDevices() for i=1,#bd do local addr = bd[i].addr local success, err = svc.bluetooth.deleteBondedPeripheralDevice(addr) if not success then printf("*** error: Unable to delete device '%s', err=%s\n", addr, err) end end
+5.21.12 GATT Client Error Codes
+Refer to .APPENDIX
+L
+
+
+
+5.21.13 Posted System Events
+The following system events are generated by the Bluetooth module.
+5.21.13.1 RESET
+Description
+This event is posted when the Bluetooth hardware module resets for any reason. A reset cases all connected centrals and connections to peripheral devices to be disconnected. Any running device scanners will stop.
+Source
+�_BT_SYS� (string)
+Event
+�RESET� (string)
+Arguments
+Table with the following fields:
+reason Bluetooth reset reason that can have one of the following values 0 -power on 1 -soft reset 2 -reset pin 3 -watchdog 4 -wakeup 5 -lockup 6 -other
+5.21.14 Server Global Events
+Description
+Server are events triggered via external devices (Centrals) connecting/disconnecting to the terminal to support peripheral role operation.
+Source
+�_BT_SERVER� (string)
+Events
+
+
+
+
+5.21.15 GAP Client Events
+The following events can be generated when scanning for peripheral devices.
+5.21.15.1 SCAN_STOPPED
+Description
+This event is posted when the GAP device scanner stops
+Source
+Scanner handle returned by createScanner()
+
+Events
+�SCAN_STOPPED� (string)
+Arguments
+None
+5.21.15.2 TRIGGER
+Description
+This event is posted when the scanner trigger level is reached, and events are enabled.
+Source
+Scanner handle returned by createScanner()
+
+Events
+�TRIGGER� (string)
+Arguments
+None
+5.21.16 GATT Client Events
+Description
+GATT events are generated when using GATT client functions to communicate with a peripheral / sensor.
+
+
+Source
+GATT connection handle returned by allocatePeripheralConnection().
+Events
+
+Cause
+Connection to peripheral result. If �errorCode� is zero, the connection is successful
+Disconnection from the peripheral.
+When data is received from the peripheral
+Write to the peripheral has succeeded
+Error occurred either reading or writing to the peripheral
+Peripheral is requesting a passkey
+Peripheral authorization failed, likely due to an errorCode APPENDIX
+L
+
+incorrect passkey
+5.21.17 Short Message Events
+5.21.17.1 RX_MSG
+Description
+This event is posted when a new central message has been received.
+Source
+Short message handle returned by createShortMessageHandle()
+
+Events
+�RX_MST�  (string)
+Arguments
+table  A table containing the following fields:
+rawData  Binary string containing the message
+
+
+
+5.21.18 Common Bluethooth Terminology
+
+5.22 Reserved (SIN 61, SIN 62, and SIN 63)
+
+
+APPENDIX A SIN VALUES
+Terminal
+
+Core Services
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SIN
+Service
+Name
+Description
+16
+System
+Provides
+general
+management
+and
+control
+of
+the
+terminal,
+such
+as
+service
+identification,
+metrics,
+and
+status
+query/response.
+17
+Power
+Provides
+a
+unified
+interface
+to
+terminal
+power
+management
+at
+the
+Lua
+level.
+18
+Message
+This
+service
+is
+responsible
+for
+building
+and
+delivering
+both
+to-and
+from-mobile
+messages
+to
+the
+appropriate
+service.
+19
+Report
+Basic
+event
+or
+status
+reports
+either
+prescheduled
+or
+on
+demand
+(polled).
+20
+Position
+This
+service
+provides
+access
+to
+positioning
+information,
+either
+from
+the
+internal
+GPS
+or
+external
+high
+precision
+GPS.
+21
+Geofence
+The
+geofence
+service
+provides
+the
+ability
+to
+define
+geographical
+regions
+based
+on
+circles
+or
+polygons,
+as
+well
+as
+reporting
+entry
+and
+exit
+from
+these
+regions.
+22
+Serial
+Manages
+communication
+through
+the
+terminal's
+various
+serial
+ports
+(that
+is
+RS-232
+and
+RS-485),
+including
+their
+configuration
+and
+status.
+23
+Log
+Stores
+data
+in
+nonvolatile
+storage.
+The
+data
+can
+be
+application
+data
+that
+can
+be
+retrieved
+at
+later
+date,
+or
+diagnostic
+information
+for
+troubleshooting.
+This
+service
+also
+provides
+auto
+upload
+capabilities.
+24
+File
+System
+Provides
+an
+interface
+for
+the
+file
+system
+that
+is
+in
+the
+application
+firmware.
+25
+External
+Configures
+and
+reports
+the
+status
+of
+the
+terminal's
+general
+purpose
+I/O.
+In
+addition,
+it
+is
+used
+to
+Input/Output
+monitor
+the
+internal
+temperature
+.
+Alarms
+can
+be
+configured
+if
+thresholds
+are
+exceeded.
+26
+Shell
+Provides
+access
+to
+a
+command-line
+interface
+(CLI)
+over
+the
+serial
+port.
+It
+also
+provides
+the
+ability
+to
+execute
+the
+same
+commands
+over-the-air
+and
+allows
+you
+to
+change
+the
+access
+level
+of
+the
+shell.
+27
+IDP
+Provides
+access
+to
+some
+of
+the
+functionality
+offered
+by
+the
+IDP
+modem.
+28
+Reserved
+.
+
+
+
+
+
+
+
+
+
+
+
+
+29 Cell Provides support for JSON encoding of messages, allows configuration and monitoring of the module; and also provides a plugin to the message service allowing it to send/receive messages over cellular (satellite-cellular terminals).
+
+30 Reserved .31 Reserved .32 Campaign A mandatory service that must be running to support software over-the-air updates. 33 Internet Protocol Allows terminals to take advantage of protocols and their associated features for the development of
+
+
+(ip) IP enabled Lua applications. 34
+Accelerometer
+
+
+Defines the global configuration of the accelerometer.
+
+
+
+
+
+APPENDIX B ISATDATA PRO MESSAGE STRUCTURE
+The ST terminal packs messages in a bit-efficient binary format to minimize payload space. The structure is represented by the following Backus-Naur syntax diagram. Each line defines a logical element, represented by a regular rectangle. Actual bits that are carried in the message payload are represented by rounded rectangles. The variable �X� denotes a size that is dictated by the message meta-data.
+
+
+Figure 6: Message Structure Syntax Diagram
+
+
+
+
+
+
+
+* When designing a property or message field with the type Unsigned Int, the Lua restriction is 31 bits. Refer to the Unsigned Integer section in [T404].
+
+
+APPENDIX C POSTED EVENTS SUMMARY
+System (SIN 16)
+Source: svc.system (System Service Table)
+
+Power (SIN 17)
+Source: svc.power (Power Service Table)
+
+Source: _POWER (string)
+
+Message (SIN 18)
+Source: Handle from register()
+
+
+
+Position (SIN 20)
+Source: svc.position (Position Service Table)
+
+Geofence (SIN 21)
+Source: svc.geofence (Geofence Service Table)
+ALARM This event is posted when a fence entry or exit is detected, or when a fence status changes from undefined to inside/outside, regardless of the fence's alarm condition setting, and regardless of the sendAlarm and logAlarm property values.
+ALARMS This event is posted when one or more fence entry or exit events are detected, or when a fence status changes from undefined to inside/outside, regardless of the fence's alarm condition setting, and regardless of the sendAlarm and logAlarm property values.
+FENCE_CHECK_DONE This event is posted when the fence check completes and the checkDoneEvents (PIN 23) property is true.
+HYST_CHECK_DONE This event is posted when the hysteresis check completes and the checkDoneEvents (PIN 23) property is true.
+Serial (SIN 22)
+Source: <handle>:source()
+BREAK  Event posted that a break condition has been detected on the RS-232 port.
+BYTE  Event that is posted when a byte has been received by the RS-232 UART.
+FRAME  Event posted that a protocol frame of binary data has been received by the RS-232
+UART.
+LINE  Event posted that a line has been received by the RS-232 UART.
+
+Source: �_RS232MAIN�
+DTECONNECTED  Event posted that a DTE device has been either connected or disconnected from the RS-232 port.
+
+Source: �_RS232AUX�
+
+
+
+External I/O (SIN 25)
+Source: svc.eio (EIO Service Table)
+ANALOG_ALARM This event is posted every time an analog alarm is triggered. DIGITAL_ALARM This event is posted every time a digital alarm is triggered. FULL_REPORT This event sends a list containing the last pulse counter sampling values with
+the exact sampling interval in milliseconds. THRESHOLD_CROSSING
+This event notifies the application that the sampling interval crossed a user specified threshold.
+IDP (SIN 27)
+Source: svc.idp (IDP Service Table)
+ANTENNA_CUT This event is posted when the antenna cut status changes. EVENT_UPDATE This event is posted whenever a registered event is updated. JAMMING_UPDATE This event is posted when the GPS jamming status changes. MODEM_EVENT_COMMS This event is posted when there is a change in the communications status. MODEM_EVENT_REGISTERED This event is posted when an indication is received that the satellite modem
+has registered with the network. MODEM_EVENT_RESET This event is posted when a reset indication is received from the modem. SAT_STATUS
+This event is posted when the value of either the satStat or satFlags property changes.
+Cellular (SIN 29)
+Source svc.cell (Cellular Service Table)
+
+Internet Protocol (SIN 33)
+Source <channel> handle returned by channelAllocate()
+
+
+
+Source svc.ip (IP Service Table)
+
+Accelerometer (SIN 34)
+Source �_ACCEL� (string)
+
+AUTO_ORIENTATION_STATUS This event is posted when automatic orientation detection is completed, aborted, or failed.
+CAPTURE_STOPPED This event is posted when the last segment is full and wrap mode has not been enabled or if the sample capture is stopped asynchronously at the end of the current segment.
+HW_COMPENSATION_DONE This event is posted when the hardware offset compensation has been completed.
+MOTION_START This event is posted by the MOTION detector when start of motion is detected.
+MOTION_STOP This event is posted by the MOTION detector when motion is no longer detected.
+SAMPLE This event is posted when accelerometer sample is available following a call to the requestSample()
+function.
+SEGMENT_FULL This event is posted when a segment is full and the segment full event has been enabled for the segment.
+SHOCK_START This event is posted by the SHOCK detector when the absolute acceleration along the configured axes exceeds the threshold parameter for the minimum time specified by the minTime parameter. SHOCK_STOP
+This event is posted by the SHOCK detector after a SHOCK_STOP Event if the maxTime parameter is nonzero and either the acceleration along the axis is no longer above the threshold parameter or the timeout has occurred.
+Bluetooth (SIN 35)
+Source �_BT_SYS� (string)
+
+
+
+Source createScanner()
+
+Source creteShortMessageHandle
+
+
+
+APPENDIX D IP SERVICE APPLICATION EXAMPLES
+TCP/UDP (session)
+Use a TCP channel in session mode, with data going over satellite. The same structure can be used with UDP.
+local tcpH, err = svc.ip.channelAllocate(svc.ip.Channel.TCP, {host=�swlab.skywave.com�, port=55555, timeout=0}, svc.ip.Routing.SAT_ONLY) if not tcpH then
+print(�Error creating channel: �, err)
+else local res res, err = tcpH:open() if not res then
+print(�Error opening channel: �, err)
+else local disposed = false local tcpQ = sched.createEventQ(1, tcpH) for i = 1, 3 do
+res, err = tcpH:send(�some data�) if not res then print(�Error sending data: �, err)
+else local q, ev, args = tcpQ:wait(someTimeoutValue) if q == tcpQ then
+if ev == �DATA� then print(�Got data: �, data)
+elseif ev == �DISPOSE� then print(�Channel disposed: �, args.errorCode) disposed = true break
+end
+else print(�No response received�) break
+end
+end end if not disposed then
+
+
+tcpH:dispose() end tcpQ:destroy() end end
+TCP/UDP (Transaction)
+Use a UDP channel in transaction mode, with data going over satellite. The same structure can be used with TCP.
+local udpH, err = svc.ip.channelAllocate(svc.ip.Channel.UDP, {host=�swlab.skywave.com�, port=55555, timeout=15}, svc.ip.Routing.SAT_ONLY) if not udpH then
+print(�Error creating channel: �, err)
+else local res res, err = udpH:open() if not res then
+print(�Error opening channel: �, err)
+else local disposed = false local udpQ = sched.createEventQ(1, udpH) res, err = tcpH:send(�some data�) if not res then
+print(�Error sending data: �, err)
+else udpH:close() while true do
+local q, ev, args = udpQ:wait(someTimeoutValue) if q == udpQ then if ev == �DATA� then print(�Got data: �, data)
+elseif ev == �UDP_COMPLETE� then print(�Transaction complete�) break
+elseif ev == �DISPOSE� then print(�Channel disposed: �, args.errorCode) disposed = true break
+end
+
+
+else print(�No response received�) break
+end
+end end if not disposed then
+udpH:dispose() end udpQ:destroy() end end
+FTP DEL
+To perform an FTP DEL operation, delete the remote file.
+local ftpH, err = svc.ip.channelAllocate(svc.ip.Channel.FTP,local ftpH, err = svc.ip.channelAllocate(svc.ip.Channel.FTP,{host=�ftp.skywave.com�, operation=svc.ip.FtpOp.DEL,login=�bob_b� password=�****�, remotePath=�/test.txt�},svc.ip.Routing.CELL_SAT) if not ftpH then
+print(�Error creating channel: �, err)
+else local res local ftpQ = sched.createEventQ(5, ftpH) res, err = ftpH:open() if not res then
+print(�Error opening channel: �, err)
+else local disposed = false while true do
+local q, ev, args = ftpQ:wait(someTimeoutValue) if q == ftpQ then
+if ev == �FTP_COMPLETE� then print(�Transaction complete�) break
+elseif ev == �DISPOSE� then print(�Channel disposed: �, args.errorCode) disposed = true break
+end
+
+
+else print(�No response received�) break
+end end if not disposed then
+ftpH:dispose() end ftpQ:destroy()
+end end
+FTP DIR
+To perform an FTP DIR operation, retrieve the list of files in the supplied remote path.
+local ftpH, err = svc.ip.channelAllocate(svc.ip.Channel.FTP,{host=�ftp.skywave.com�, operation=svc.ip.FtpOp.DIR,login=�bob_b� password=�****�, remotePath=�/�},svc.ip.Routing.CELL_SAT) if not ftpH then
+print(�Error creating channel: �, err)
+else local res local ftpQ = sched.createEventQ(5, ftpH) local f = io.open(�/test.txt�, �w�) res, err = ftpH:open() if not res then
+print(�Error opening channel: �, err)
+else local disposed = false while true do
+local q, ev, args = ftpQ:wait(someTimeoutValue) if q == ftpQ then if ev == �DATA� then f:write(data)
+elseif ev == �FTP_COMPLETE� then print(�Transaction complete�) break
+elseif ev == �DISPOSE� then print(�Channel disposed: �, args.errorCode) disposed = true break
+
+
+end
+else print(�No response received�) break
+end end if not disposed then
+ftpH:dispose() end ftpQ:destroy()
+end end
+FTP GET
+Perform an FTP GET operation, preferably over cellular with fallback to satellite.
+local ftpH, err = svc.ip.channelAllocate(svc.ip.Channel.FTP, {host=�ftp.skywave.com�, operation=svc.ip.FtpOp.GET, login=�bob_b� password=�****�, remotePath=�test.txt�}, svc.ip.Routing.CELL_SAT) if not ftpH then
+print(�Error creating channel: �, err)
+else local res local ftpQ = sched.createEventQ(5, ftpH) local f = io.open(�/test.txt�, �w�) res, err = ftpH:open() if not res then
+print(�Error opening channel: �, err) else local disposed = false
+while true do local q, ev, args = ftpQ:wait(someTimeoutValue) if q == ftpQ then
+if ev == �DATA� then f:write(data)
+elseif ev == �FTP_COMPLETE� then print(�Transaction complete�) break
+
+
+elseif ev == �DISPOSE� then print(�Channel disposed: �, args.errorCode) disposed = true break
+end
+else print(�No response received�) break
+end end if not disposed then
+ftpH:dispose() end ftpQ:destroy() end end
+FTP PUT
+Perform an FTP PUT operation, with data going over satellite and assumes that the file size is fairly small. Similar code can be used to send email messages, via NSMTP.
+local ftpH, err = svc.ip.channelAllocate(svc.ip.Channel.FTP, {host=�ftp.skywave.com�, operation=svc.ip.FtpOp.PUT, login=�dan_z� password=�****�, remotePath=�test.txt�}, svc.ip.Routing.SAT_ONLY) if not ftpH then
+print(�Error creating channel: �, err)
+else local res local ftpQ = sched.createEventQ(5, ftpH) local f = io.open(�/test.txt�, �r�) res, err = ftpH:open() if not res then
+print(�Error opening channel: �, err)
+else local disposed = false res, err = ftpH:send(f:read(�*all�)) if not res then
+print(�Error sending data: �, err) else
+
+
+ftpH:close()
+while true do local q, ev, args = ftpQ:wait(someTimeoutValue) if q == ftpQ then
+if ev == �FTP_COMPLETE� then print(�Transaction complete�) break
+elseif ev == �DISPOSE� then print(�Channel disposed: �, args.errorCode) disposed = true break
+end
+else print(�No response received�) break
+end end end if not disposed then ftpH:dispose() end ftpQ:destroy() end end
+SMTP Examples
+Basic SMTP message:
+\0somebody@somewhere.com\0\r\n\r\nThis is the message body.
+Headers supplied
+01234567SKY1234\0somebody@somewhere.com\0\r\nTo: somebody@somewhere.com\r\nSubject: Example message\r\n\r\nThis is the message body.
+Note: Headers must comply with the email specification or your message can be rejected by the SMTP server.
+To-mobile messages contain all the headers in a raw format followed by the body.
+Memory Management
+When dealing with large transactions such as FTP, applications must be aware of the memory impact on the ST product. The ip service caches data until it can be sent, so if the rate at which data is queued exceeds the rate at which the service is able to send it, memory usage increases.
+
+
+The following example shows how to control memory consumption by limiting the rate at which the send() method is called and by periodically running garbage collection. By pausing between invocations of send(), the code is system-friendly because other applications are allowed to run more frequently and for longer periods of time.
+local function ftpTransfer(routing, args, file) local ftpH ftpH, ftpErr = channelAllocate(Channel.FTP, args, routing) local ioCount = 0 if ftpH then
+local disposed = false local ftpQ = sched.createEventQ(10, ftpH) local res res, ftpErr = ftpH:open() if res then
+local usingCell = ftpH:usingCell() if args.operation == FtpOp.PUT then
+repeat local data = file:read(6000) if data then
+ftpSize = ftpSize + #data ftpH:send(data) ioCount = ioCount + 1 if ioCount == usingCell and 10 or 1 then
+if usingCell then sched.delay(5) collectgarbage('step') ioCount = 0
+else sched.delay(3000) end end end
+until data == nil end ftpH:close() while true do
+local q, ev, args = ftpQ:wait(36000) if q == ftpQ then if ev == 'DATA' then
+
+
+ftpSize = ftpSize + #args file:write(args) ioCount = ioCount + 1 if usingCell and ioCount == 10 then
+sched.delay(5) collectgarbage('step') ioCount = 0
+end
+elseif ev == 'FTP_COMPLETE' then ftpErr = not args.success and args.error or nil break
+elseif ev == 'DISPOSE' then ftpErr = string.format('Channel disposed: error code %d', args.error) disposed = true break
+end
+else ftpErr = 'Operation timed out' break
+end
+end end if not disposed then ftpH:dispose() end
+end file:close() end
+
+
+APPENDIX E ACCELEROMETER ORIENTATION EXAMPLE
+Table 27: ST Terminal Orientation Mapping Example (SIN 34)
+
+
+
+
+
+Position
+Orientation forwardDirection upwardDirection PIN 20 PIN 21
+top (Z) facing up -.1
+YPos (2) ZPos (4)
+ST 61xx
+
+ST 61xx Bottom Connector
+
+ST 6000
+
+ST 9100 2
+
+
+XPos (0)
+
+ZPos (4) ST 61xx
+
+
+
+ST 61xx Bottom Connector Logo facing Right
+
+ST 6000
+
+ST 9100
+
+
+
+Position Orientation forwardDirection upwardDirection PIN 20 PIN 21
+3
+YNeg (3) ZPos (4)
+ST 61xx
+facing left ST 61xx Bottom Connector
+
+
+
+ST 6000
+
+ST 9100
+4
+
+Main connector
+XNeg (1)
+ZPos (4)
+ST 61xx
+
+ST 61xx Bottom Connector Logo facing left
+
+ST 6000
+
+ST 9100
+
+
+APPENDIX F SUPPORTED 1-WIRE FAMILIES
+This feature is supported on some ST models.
+
+
+
+APPENDIX G 1-WIRE SAMPLE CODE
+--Service: One Wire interface example --Created: 2014-6-25
+-.
+-.-. Copyright (c) 2014 This material is Confidential and sha ll not be disclosed
+-. to a third party without the written  consent.
+
+--In this demo, commands can be used to test most 1-Wire devices. --We also test the following two devices(iButtons) --DS1920 temperature sensor with alarm trips (DS18S20 IC) --DS1972 1024 bit, 1-Wire EEPROM
+module(..., package.seeall)
+--Version information (required)
+_VERSION = "1.0.0"
+--Table of sub-commands within the 'onewire' CLI command local OneWireCmdTable = {}
+--Module Globals local onewire = sys.onewire
+local owHdl
+local overdrive = false
+--Device Commands and defines --DS1972 1024bit EEPROM local DS1972_FAMILY_CODE = 0x2D --DS1972 Commands local DS1972_WRITE_SCRATCHPAD = 0x0F local DS1972_READ_SCRATCHPAD = 0xAA local DS1972_COPY_SCRATCHPAD = 0x55 local DS1972_READ_MEMORY = 0xF0
+--DS1920 Temperature sensor
+
+
+local DS1920_FAMILY_CODE  =  0x10
+local DS1920_SCRATCHPAD_SIZE =  8
+--DS1920 Commands
+
+local DS1920_WRITE_SCRATCHPAD = 0x4E local DS1920_COPY_SCRATCHPAD = 0x48 local DS1920_READ_SCRATCHPAD = 0xBE local DS1920_CONVERT_TEMPERATURE = 0x44
+local err_ds1920 = "Not a DS1920 family temperature sensor\n" local err_ds1972 = "Not a DS1972 1024 bit EEPROM\n"
+--FUNCTION: checkhdl()
+--DESCRIPTION: Check if 1-Wire is connected
+--ARGUMENTS: none
+--RETURNS: 1, valid handle. nil, no handle
+function checkhdl()
+if (owHdl == nil) then print(_NAME, ":Bus is not opened") return nil
+else return 1 end end
+--FUNCTION: devID()
+--DESCRIPTION: Get device ID parameter
+--ARGUMENTS: parm
+--RETURNS: id buffer or nil
+
+
+function devID(idParm)
+if string.len(idParm) < 16 then print("Device ID length error\n") return nil
+end
+local idbuf="" for i=1,16,2 do
+idbuf = idbuf .. string.char(tonumber(idParm:sub(i,i+1),16)) end return idbuf
+end
+--FUNCTION: onTermination()
+--DESCRIPTION: Termination handler that does clean ups
+-.
+-. ARGUMENTS:  none
+-.
+-. RETURNS:  none
+-.
+
+function onTermination() --Disconnect 1-Wire if checkhdl() then
+print(_NAME, ":terminating Service") owHdl:disconnect() owHdl = nil
+end end
+--FUNCTION: OneWireSearchCmd()
+--DESCRIPTION: Search all devices on bus
+--ARGUMENTS: none
+--RETURNS: none
+
+
+local function OneWireSearchCmd(args)
+if checkhdl() then local idTbl,errStr = owHdl:search()
+if (idTbl) then print("Device list:") for _,id in ipairs(idTbl) do
+print(toHex(id)); end end
+if (errStr) then print(errStr) end
+end end
+--FUNCTION: OneWireAlarmCmd()
+--DESCRIPTION: Search Alarmed devices on bus
+-.
+-. ARGUMENTS:  none
+-.
+-. RETURNS:  none
+-.
+
+local function OneWireAlarmCmd(args)
+if checkhdl() then local idTbl,errStr = owHdl:search(true)
+if (idTbl) then
+print("Alarmed Device:")
+for _,id in ipairs(idTbl) do
+print(toHex(id)); end
+
+
+end
+if (errStr) then print(errStr) end
+end end
+--FUNCTION: OneWireReadRomCmd() --DESCRIPTION: Read ROM code from single drop bus
+-.-. ARGUMENTS:  crc error if multidrop bus none
+-.
+-. RETURNS:  none
+-.
+
+local function OneWireReadRomCmd(args)
+if checkhdl() then --Read Device Serial ID from single drop bus. --Reset + Read ROM + 8 bytes Rom code local romCode,errStr = owHdl:readRom() --Print device ID if (romCode) then
+print("Device ID:") print(toHex(romCode)); else print(errStr) end end end
+--FUNCTION: OneWireSkipRomCmd()
+--DESCRIPTION: Send skip search command
+--ARGUMENTS: none
+
+
+--RETURNS: none
+local function OneWireSkipRomCmd(args)
+if checkhdl() then --Reset + Skip ROM print("Skip ROM, adding device command...")
+owHdl:skipRom() end end
+--FUNCTION: OneWiresMatchRomCmd() --DESCRIPTION: send Match Rom command
+-.
+-. ARGUMENTS: ROM code is in ascii
+-.
+-. RETURNS:  none
+-.
+
+local function OneWireMatchRomCmd(args)
+if checkhdl() then
+if #args < 1 then print("Usage: onewire match [device ID]\n") return
+end
+local idbuf = devID(args[1]) if idbuf == nil then return end
+--Reset + Match ROM print("Match ROM:", args[1]," adding device command...") local ok,errStr=owHdl:matchRom(idbuf) if not ok then
+print(errStr)
+
+
+end end end
+--FUNCTION: OneWireWriteByteCmd() --DESCRIPTION: Send a byte to bus
+-.
+-. ARGUMENTS: byte to send
+-.
+-. RETURNS:  none
+-.
+
+local function OneWireWriteByteCmd(args)
+if checkhdl() then --Reset + Skip ROM print("write:",args[1])
+local ok,errStr = owHdl:writeByte(tonumber(args[1])) if not ok then print(errStr) end end end
+--FUNCTION: OneWireWriteBytePowerCmd()
+--DESCRIPTION: Send a byte and pull up bus with strong power
+--ARGUMENTS: byte to send
+--RETURNS: none
+local function OneWireWriteBytePowerCmd(args)
+if checkhdl() then --Reset + Skip ROM
+
+
+print("write and strong power:",args[1])
+local ok,errStr = owHdl:writeBytePower(tonumber(args[1])) if not ok then print(errStr) end end end
+--FUNCTION: OneWireReadByteCmd()
+--DESCRIPTION: Read a byte from bus
+-.
+-. ARGUMENTS:  none
+-.
+-. RETURNS:  none
+-.
+
+local function OneWireReadByteCmd(args)
+if checkhdl() then
+local rbyte,errStr = owHdl:readByte() if (errStr) then print(errStr) else printf("read:%02X\n", rbyte) end end end
+--FUNCTION: OneWireSetDS1920Cmd()
+--DESCRIPTION: Set DS1920 thresholds
+--ARGUMENTS: high threshold, low threshold in degree C
+--RETURNS: none
+
+
+local function OneWireSetDS1920Cmd(args)
+if checkhdl() then
+if #args < 3 then print("Usage: onewire threshold [device ID] [high degree C] [low degree C]\n") return
+end
+local idbuf = devID(args[1]) if idbuf == nil then return end
+local highc = tonumber(args[2]) local lowc = tonumber(args[3])
+if (idbuf:byte(8) ~= DS1920_FAMILY_CODE) then print(err_ds1920) return
+end
+--Reset + Match ROM print("Sensor ID:", args[1]," high:",highc," low:",lowc) local ok,errStr=owHdl:matchRom(idbuf) if not ok then
+print(errStr) return end
+if highc < 0 then
+highc = 256 + highc end if lowc < 0 then
+lowc = 256 + lowc end --Write scratchpad local buf= string.char(DS1920_WRITE_SCRATCHPAD) .. string.char(highc) .. string.char(lowc)
+--Set new thresholds owHdl:writeBlock(buf)
+
+
+--Start a new sequence, save new thresholds to EEPROM. owHdl:matchRom(idbuf) --Send Copy command and enable strong pull-up for 10 ms by spec owHdl:writeBytePower(DS1920_COPY_SCRATCHPAD,10)
+--transaction is done owHdl:reset() end
+end
+--FUNCTION: OneWireTempDS1920Cmd()
+--DESCRIPTION: DS1920 temperature conversion
+-.
+-. ARGUMENTS:  none
+-.
+-. RETURNS:  none
+-.
+
+local function OneWireTempDS1920Cmd(args)
+if checkhdl() then
+if #args < 1 then print("Usage: onewire temperature [device ID] \n") return
+end
+local idbuf = devID(args[1]) if idbuf == nil then return end
+if (idbuf:byte(8) ~= DS1920_FAMILY_CODE) then print(err_ds1920) return
+end
+--Reset + SkipROM, for all DS1920 on the bus local ok,errStr=owHdl:skipRom()
+
+
+if not ok then print(errStr) return
+end
+--Temperature conversion --Strong Pull-up for 750ms defined by spec owHdl:writeBytePower(DS1920_CONVERT_TEMPERATURE,750)
+--Read Scratchpad to check temperature reading
+--Reset + Match ROM local ok,errStr=owHdl:matchRom(idbuf) if not ok then
+print(errStr) return end
+owHdl:writeByte(DS1920_READ_SCRATCHPAD)
+local rbuf = owHdl:readBlock(DS1920_SCRATCHPAD_SIZE) local rcrc8 = owHdl:readByte() owHdl:reset()
+--Check CRC8 local ccrc8 = onewire:crc8(rbuf)
+if (ccrc8 == rcrc8) then --CRC8 calculation matched, get temperature reading local degree = bit32.bor( bit32.lshift(rbuf:byte(2),8), rbuf:byte(1)) print("\n data:",toHex(rbuf)," temperature:", degree * 0.5)
+else print('DS1920 data page crc8 error\n') end
+end end
+--FUNCTION: OneWireWriteDS1972Cmd()
+
+
+--DESCRIPTION: Write a string(8 bytes) to DS1972
+-.
+-. ARGUMENTS:  a  string
+-.
+-. RETURNS:  none
+-.
+
+local function OneWireWriteDS1972Cmd(args)
+if checkhdl() then
+if #args < 3 then print("Usage: onewire store [device ID] [address(0-127)%8] [a 8 string(8 byte long)]\n") return
+end
+local idbuf = devID(args[1]) if idbuf == nil then return end
+address = bit32.band(tonumber(args[2]),0x78)
+local wstr = args[3]
+if wstr:len() ~=8 then print("String length shall be 8\n") return
+end
+if (idbuf:byte(8) ~= DS1972_FAMILY_CODE) then print(err_ds1972) return
+end
+--Scratchpad data size shall be: 8 local wbuf=string.char(DS1972_WRITE_SCRATCHPAD) .. string.char(address).. '\000' wbuf = wbuf .. wstr --Calculate CRC16 local wcrc16 = onewire:crc16(wbuf)
+--Reset + Match ROM print("Device ID:", args[1]," address:",address," string:",toHex(wstr))
+
+
+local ok,errStr=owHdl:matchRom(idbuf,overdrive)
+if not ok then print(errStr) return
+end --Write a string of maximum 8 bytes owHdl:writeBlock(wbuf)
+--Check CRC16, read inverted CRC16 local temp = owHdl:readBlock(2) local rcrc16 = bit32.bor( bit32.lshift(temp:byte(2),8), temp:byte(1)) if (wcrc16 + rcrc16 == 0xffff) then
+--CRC16 calculation matched --Copy scratchpad to EEPROM ok,errStr = owHdl:matchRom(idbuf,overdrive) if not ok then
+print(errStr)
+return end owHdl:writeByte(DS1972_COPY_SCRATCHPAD) --Send Authorization code --End offset:7
+owHdl:writeByte(address) owHdl:writeByte(0) owHdl:writeByte(0x7,10) --delay 10 ms
+--Check AA state. local status = owHdl:readByte() if (status == 0xAA) then
+print('Write EEPROM OK\n') else print('Write EEPROM Failed\n', status, " ", address) end else print('Write CRC16 error\n') end
+end end
+
+
+--FUNCTION: OneWireReadDS1972Cmd() --DESCRIPTION: Dump DS1972 EEPROM memory (128 Bytes, 1024 bit)
+-.
+-. ARGUMENTS:  none
+-.
+-. RETURNS:  none
+-.
+
+local function OneWireReadDS1972Cmd(args)
+if checkhdl() then
+if #args < 1 then print("Usage: onewire dump [device ID]\n") return
+end
+local idbuf = devID(args[1]) if idbuf == nil then return end
+if (idbuf:byte(8) ~= DS1972_FAMILY_CODE) then print(err_ds1972) return
+end
+--Reset + Match ROM local ok,errStr=owHdl:matchRom(idbuf,overdrive) if not ok then
+print(errStr) return end
+--Setup read memory command and address 0 local buf= string.char(DS1972_READ_MEMORY) .. '\000\000'
+--Send command to read memory from address 0 owHdl:writeBlock(buf)
+
+
+--Read 128 bytes local rbuf,errStr = owHdl:readBlock(128) --Transaction Done, owHdl:reset()
+if (rbuf) then print("Memory data:") print(toHex(rbuf)); --print(rbuf);
+else print( errStr) end
+end end
+--FUNCTION: OneWireOdWriteDS1972Cmd()
+--DESCRIPTION: Write a string(8 bytes) to DS1972, overdrive speed with shorter cable
+-.
+-. ARGUMENTS:  a  string
+-.
+-. RETURNS:  none
+-.
+local function OneWireOdWriteDS1972Cmd(args)
+if checkhdl() then
+if #args < 3 then print("Usage: onewire odstore [device ID] [address(0-127)%8] [a 8 byte long string]\n") return
+end overdrive = true OneWireWriteDS1972Cmd(args) overdrive = false
+end end
+
+
+--FUNCTION: OneWireOdReadDS1972Cmd()
+--DESCRIPTION: Dump DS1972 EEPROM memory (128 Bytes, 1024 bit),overdrive speed with shorter cable
+-.
+-. ARGUMENTS:  none
+-.
+-. RETURNS:  none
+-.
+
+local function OneWireOdReadDS1972Cmd(args)
+if checkhdl() then
+if #args < 1 then print("Usage: onewire oddump [device ID]\n") return
+end overdrive = true OneWireReadDS1972Cmd(args) overdrive = false
+end end
+--FUNCTION: OneWireConnectCmd()
+--DESCRIPTION: Turn on 1-Wire bus
+--ARGUMENTS: none
+--RETURNS: none
+local function OneWireConnectCmd(args)
+local errMsg --Power on one wire bus owHdl, errMsg= onewire.connect() if (owHdl) then
+--success
+
+
+print(_NAME,": 1-Wire bus is connected")
+else --opened by others print(_NAME,":",errMsg)
+end end
+--FUNCTION: OneWireDisonnectCmd() --DESCRIPTION: Turn off 1-Wire bus --ARGUMENTS: none --RETURNS: none
+local function OneWireDisconnectCmd(args)
+if checkhdl() then owHdl:disconnect() owHdl = nil print(_NAME,":1-Wire bus is disconnected")
+end
+end
+--FUNCTION: OneWireCmd() --DESCRIPTION: This is the main CLI command, which is used to invoke
+-. sub-commands.
+-.
+-. ARGUMENTS: args  the arguments given on the command line
+-.
+-. RETURNS: none
+-.
+
+local function OneWireCmd(args)
+if #args > 0 then local cmdStr = table.remove(args, 1) local cmd = OneWireCmdTable[cmdStr]
+
+
+if cmd then cmd[1](args) else printf("*** error: Unknown 1-Wire test command '%s'\n", cmdStr) end else print("*** error: Missing command\n") end end
+--FUNCTION: entry()
+--DESCRIPTION: Entry point for the service thread.
+-.
+-. ARGUMENTS:  none
+-.
+-. RETURNS:  none
+-.
+
+function entry()
+local errMsg
+if (onewire) then --Checking if 1-Wire is supported
+print(_NAME, ":service started") end
+sched.delay(-1) end
+--FUNCTION: init()
+--DESCRIPTION: Initialize service resources.
+--ARGUMENTS: none
+--RETURNS: none
+function init() --Register the CLI commands
+
+
+if (onewire) then --Checking if One Wire is supported by HW svc.shell.register("onewire", OneWireCmd, "One wire test command") OneWireCmdTable.connect = {OneWireConnectCmd, "Connect to 1-Wire bus"} OneWireCmdTable.search = {OneWireSearchCmd, "Search devices"} OneWireCmdTable.alarm = {OneWireAlarmCmd, "Search alarmed devices"} OneWireCmdTable.readrom = {OneWireReadRomCmd, "Read single drop device code"} OneWireCmdTable.skiprom = {OneWireSkipRomCmd, "Send skip rom sequence"} OneWireCmdTable.matchrom = {OneWireMatchRomCmd, "Send skip rom sequence"} OneWireCmdTable.writebyte = {OneWireWriteByteCmd, "Write a byte to 1-Wire bus"} OneWireCmdTable.bytepower = {OneWireWriteBytePowerCmd, "Write a byte and strong power"} OneWireCmdTable.readbyte = {OneWireReadByteCmd, "Read a byte from 1-Wire bus"} OneWireCmdTable.threshold = {OneWireSetDS1920Cmd, "Set alarm thresholds to first DS1920"} OneWireCmdTable.temperature = {OneWireTempDS1920Cmd, "Read temperature from first DS1920"} OneWireCmdTable.store = {OneWireWriteDS1972Cmd, "Store a 8 bytes string to DS1972"} OneWireCmdTable.dump = {OneWireReadDS1972Cmd, "Dump DS1972 memory"} OneWireCmdTable.odstore = {OneWireOdWriteDS1972Cmd, "Store(Overdrive) a 8 bytes string to
+DS1972"} OneWireCmdTable.oddump = {OneWireOdReadDS1972Cmd, "Dump(Overdrive) DS1972 memory"} OneWireCmdTable.disconnect = {OneWireDisconnectCmd, "Disconnect 1-Wire bus"} OneWireCmdTable.help = {function() svc.shell.private._dumpHelp
+(OneWireCmdTable) end, "Display this help"} OneWireCmdTable["?"] = OneWireCmdTable.help
+end
+end
+
+
+APPENDIX H 1-WIRE SUPPORTED DEVICES
+These devices are supported on some ST models.
+Supported Alarm Search Devices
+�
+DS1920, DS18S20
+�
+DS28E04
+�
+DS2450
+�
+DS1921G, DS1921H, DS1921Z
+�
+DS1822
+�
+DS18B20
+�
+DS2408
+�
+DS1825
+Supported Overdrive Speed Devices
+�
+DS28E04
+�
+DS2450
+�
+DS1921G, DS1921H, DS1921Z
+�
+DS1973, DS2415
+�
+DS2408
+�
+DS1972, DS2431
+�
+DS1977 (read-only)
+�
+DS2413
+�
+DS1922T, DS1922L, DS1922E, DS1923, DS2422
+�
+DS28EA00
+�
+DS28EC20
+
+
+APPENDIX I 1-WIRE SUPPORTED STRONG PULL-UP DEVICE
+�
+DS18B20
+�
+DS1920,DS18S20
+�
+DS1971
+�
+DS1972,DS2431
+�
+DS1973,DS2433
+�
+DS1977
+�
+DS2450
+�
+DS28EA20
+�
+DS28EC20
+
+
+APPENDIX J J1979 INTRODUCTION
+Available on ST models with CAN bus.
+OBD-II
+Most cars and light trucks on the road today have On-Board Diagnostic (OBD) systems. OBD-II, which was introduced in the mid-1990s, provides almost complete engine control. OBD-II also monitors parts of the chassis, body, and accessory devices, as well as the diagnostic control network of the car.
+OBD was designed primarily to meet the Environmental Protection Agency (EPA) emission standards. The EPA adapted most of their standards from the on-board diagnostic programs and recommendations of the Society of Automotive Engineers (SAE). OBD-II is an expanded set of standards and practices that was developed by the SAE, and adopted by the EPA and the California Air Resources Board (CARB) for implementation by January 1, 1996.
+J1979 and Related Protocols
+SAE J1979 is the same as the ISO 15031-5 standard, which defines the data reporting requirements of the OBD-II regulations. The standard specifies message formats for request and response messages, timing requirements, behavior of both the vehicle and external test equipment if data is not available, and a set of diagnostic services.
+ISO 15765-4 is the protocol for diagnostics on Controller Area Networks (CAN). CAN is the newest protocol added to the OBD-II specification, and it is mandated for all 2008 and newer model years. The protocol supports CAN 500k and 250k baud rates, and 11-bit CAN 2.0A and 29-bit CAN2.0B IDs.
+Terminals with CAN bus can receive and transmit 11-bit and 29-bit CAN IDs.
+ECU Addressing
+Table
+28
+and Table
+29
+show the CAN IDs that are used for request and response messages. The CAN IDs are associated with each communicating ECU on the CAN bus.
+
+The 29-bit CAN ID defines a fixed addressing format.
+
+
+Table 29: 29-bit OBD CAN IDs
+
+Request Response Comments (to ECU) (from ECU)
+Functional Responses from the matched ECU. 33 is the functional address (broadcast) Address Physical ECU 18DAxxF1 18DAF1xx
+Engine Control Module (ECM)/Powertrain Control The physical ECU address XX in Address
+the CAN ID must be unique in each vehicle. 10 � ECM (ECU #1) 18 � TCM (ECU #2) 28 � ABS (ECU #3)
+ECU Address: 10,18,28,...
+Service ID and Parameter ID
+J1979 defines service request IDs to ECUs as shown in Table
+30.
+Each service defines a set of parameter request IDs (PID). Table
+31
+shows an example of some common PIDs. Refer to ISO 15031-5 for SID and PID definitions.
+
+Table 31: Example of Frequently used PIDs
+
+
+
+
+Message Format
+
+Response
+
+Bits 7-4 Bits 3-0 Single Frame 0x0 Data Len (max 4095) First Frame Data Len (max 4095) 6 data bytes Consecutive Frame Seq Number 1 to 7 data bytes Flow Control (to ECU, after the first frame)
+
+0x3 Flow Status Block Size Separation Not used
+0 � CTS 0-255 frame Time
+1 � WT 0-127 ms
+1 � OV
+
+
+
+APPENDIX K J1979 RESPONSE MESSAGE
+Available on ST models with CAN bus. The tables below provide examples of response message formats by data types.
+Table 34: 11 Bit CAN ID Response Message Example (Service 09, PID 02)
+
+Data Byte Value (hex) Description
+#1 Response SID (40 + request SID). Vehicle information. #2 Info type, Get VIN (request PID) #3 Number of data items:01 #4 1st ASCII character of VIN:�1� #5 2st ASCII character of VIN:�G� #6 3st ASCII character of VIN:�1� #7 4st ASCII character of VIN:�J� #8 5st ASCII character of VIN:�C� #9 6st ASCII character of VIN:�5� #10 7st ASCII character of VIN:�4� #11 8st ASCII character of VIN:�4� #12 9st ASCII character of VIN:�4� #13 10st ASCII character of VIN:�R� #14 11st ASCII character of VIN:�7� #15 12st ASCII character of VIN:�2� #16 13st ASCII character of VIN:�5� #17 14st ASCII character of VIN:�2� #18 15st ASCII character of VIN:�3� #19 16st ASCII character of VIN:�6� #20
+37
+17st ASCII character of VIN:�7�
+Response ECU: 7E8. From ECU#1 ECM (7E0 plus 8) Response ECU: 18DAF118. From ECU#2 TCM (requested 18DA18F1)
+
+
+
+
+
+APPENDIX L GATT CLIENT ERROR CODE
+These codes are only for devices that use the Bluetooth service.
+The error codes returned from GATT client functions and the Bluetooth stack come from various layers and overlap other error codes. To address this, error codes have been broken into five categories as shown in Table
+36
+
+
+Table
+37
+describes the most likely / common error codes that might be encountered.

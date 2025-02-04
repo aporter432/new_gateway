@@ -1,0 +1,2983 @@
+
+
+4.1.8.7 Memory Considerations
+Both compression and decompression require some internal buffers to perform their job. The larger the amount of memory, the better and faster the operation will be. The exact number of bytes allocated for compression is calculated as follows:
+(1 << (windowBits+2)) + (1 << (memLevel + 9))
+For the default values of 15 and 8, this results in 262144 bytes, or 256KB, of memory being used. The windowBits and memLevel values can be tweaked to constrain the amount of memory used, at the expense of compression effectiveness and speed.
+The exact number of bytes allocated for decompression is calculated as follows:
+(1 << windowBits) + 11520
+For the default value of 15, this results in 142592 bytes, or 139.25 KB, of memory being used. In this case, there is not as much flexibility in selecting a windowBits value, because it must be greater than or equal to the value used when originally compressing the data.
+The compress() and decompress() functions release this memory as soon as they have completed. However their streaming counterparts, deflate() and inflate(), keep the memory allocated until the close() method is called. Consider this when allocating many streams simultaneously.
+4.1.9 Xymodem library
+The xymodem library is not automatically loaded on startup. It must first be loaded, for example, require ("xymodem").
+4.1.9.1 XYMRC_*
+Description
+Constants defining the possible return codes.
+XYMRC_OK (0) No error occurred. XYMRC_TIMEOUT (1) Download/Packet timeout occurred. XYMRC_CANCEL (2) Cancelled by user. XYMRC_NAK_ERROR (3) Too many NAKs. XYMRC_DATA_ERROR (4) Too many CRC or checksum errors. XYMRC_SEQ_ERROR (5) Bad sequence number. XYMRC_HANDLER_ERROR (6) Problem with the block handler. XYMRC_INIT_ERROR (7) Unable to initialize Y-modem file.
+4.1.9.2 XYMP_*
+Description
+Constants defining the possible protocols.
+XYMP_CHKSUM (0) X-modem with 128-byte packets and 8-bit checksum. XYMP_CRC (1) X-modem with 128-byte packets and 16-bit CRC. XYMP_1K (2) X-modem with 1024-byte packets and 16-bit CRC. XYMP_YMODEM (3) Y-modem (X-modem compatible on receive)
+
+
+4.1.9.3 receive()
+Description
+Receive file(s) using the specified protocol.
+Syntax
+receive(serial, proto, initFileCb, blockCb)
+Parameters
+serial  The serial handle to use for the transfer.
+proto initFileCb  The protocol to use for the transfer (XYMP_*). A function which is called when a new file is received. This is only used when the protocol is XYMP_ YMODEM. This function is given three arguments path the path of the file that is being received size the size of the file that is being received ts the timestamp of the file and must open the file, to be prepared to receive data. It must return true or false, to indicate success or failure.
+blockCb  A function which is called when data is received. This function is given two arguments blockSize the number of bytes received data a string containing the received data and is responsible for writing the data to the file. It must return true or false, to indicate success or failure.
+Returns
+number  The return code (XYMRC_*)
+
+4.1.9.4 receiveX()
+Description
+Receive file(s) using X-modem. This is a shortcut for receive(), with the protocol set to XYMP_1K.
+Syntax
+receiveX(serial)
+Parameters
+serial The serial handle to use for the transfer.
+Returns
+numberorstring A string of the received data, or the return code if there was a failure (XYMRC_*).
+
+
+4.1.9.5 transmit()
+Description
+Transmit file(s) using the specified protocol.
+Syntax
+transmit(serial, proto, nextFileCb, blockCb)
+Parameters
+serial  The serial handle to use for the transfer.
+proto nextFileCb blockCb  The protocol to use for the transfer (XYMP_*). A function which is called when ready to send a new file. This is only used when the protocol is XYMP_ YMODEM. This function is not given any arguments, and must open the next file to send, to be prepared to send data. It must return the path of the file and the file size, or nil in case of error. A function which is called when ready to send a block of data. This function is given one argument blockSize the number of bytes to send and is responsible for reading a block of data of the given size from the file. It must return a string with the data and the data size, or nil on error.
+Returns
+number  The return code (XYMRC_*)
+
+4.1.9.6 transmitX()
+Description
+Transmit file(s) using X-modem. This is a shortcut for transmit(), with the protocol set to XYMP_CRC.
+Syntax
+transmitX(serial,data,size)
+Parameters
+serial The serial handle to use for the transfer. data A string with the data to send. size The number of bytes to send.
+Returns
+number The return code (XYMRC_*).
+4.1.9.7 getError()
+Description
+Converts the return code to a string describing the error.
+
+
+Syntax
+getError(code)
+Parameters
+code The return code (XYMRC_*).
+Returns
+string The error description, or �Unknown error� if the code is invalid.
+4.2 Scheduler
+The scheduler provides a cooperative thread dispatch system that supports the posting and waiting on queued events. The scheduler supports:
+�
+Thread spawning/destroying and management functions
+�
+Event queue creation and management functions
+�
+Posting and waiting on event queues
+4.2.1 Scheduler Module Functions
+4.2.1.1 allThreads()
+Description
+A function iterator that calls the supplied function over all thread handles spawned by the system.
+Syntax
+sched.allThreads(func)
+Parameters
+func Lua function called as func(<thread handle>)
+Blocking
+No
+Returns
+None
+4.2.1.2 createEventQ()
+Description
+Create a new event queue to collect posted events.
+Syntax
+sched.createEventQ(size, source, , ...)
+
+
+Parameters
+size  Maximum size of the queue (integer)
+source  Source of the event to collect (any non-nil Lua type)
+...  Optional events to collect. If missing, all events posted to the source are collected.
+
+Blocking
+No
+Returns
+queue Event queue instance
+Example
+Create a queue five entries deep that collects system shutdown events.
+Local q = sched.createEventQ(5, svc.system, 'SHUTDOWN')
+See Also
+destroy()
+
+4.2.1.3 delay()
+Description
+Yield the CPU and block for the specified duration in integer units of 1/10 of a second. NOTE: A duration value must be include (for example, sched.delay(0)), otherwise the software fails.
+Syntax
+sched.delay(duration)
+Parameters
+duration Duration in units of 1/10 of a second. A value must be included. Special timeouts are: 0 � Force a reschedule to free the CPU to allow other threads to execute -1 � Wait forever
+Blocking
+Yes
+Returns
+None
+Example
+Delay the current thread for 1.5 seconds.
+sched.delay(15)
+Yield the CPU and allow other ready threads to execute.
+
+
+sched.delay(0)
+Block forever (function never returns).
+sched.delay(-1)
+See Also:
+waitQ()
+
+4.2.1.4 getThread()
+Description
+Given a string name, return the thread handle of the corresponding thread if it exists.
+Syntax
+sched.getThread(name)
+Parameters
+name String name of a thread or nil to specify the current thread
+Blocking
+No
+Returns
+threadHandle Handle of the thread
+Example
+Get the thread handle of the thread named �TestThread�.
+local th = sched.getThread("TestThread")
+Get the thread handle of the current thread.
+local myThread = sched.getThread()
+See Also
+spawn()
+
+4.2.1.5 post()
+Description
+Posts an event with a source of source and with optional arguments.
+Syntax
+sched.post(source, event, �)
+
+
+Parameters
+source  Indicates the source of the event. This can be any non-nil Lua value
+event  A Lua value that represents the event to be posted
+�  Optional
+arguments
+that
+are
+returned
+by
+the
+wait()
+or
+waitQ()
+method
+of
+an
+event
+queue.
+
+
+Blocking
+No
+Returns
+None
+Example
+Send Lua object data with string event DONE with a source of Worker.
+sched.post('Worker', 'DONE', data)
+Send the event wakeup with a source of _M. In this case, wakeup is an empty table that is guaranteed to be unique, and _M is the table of the current module.
+wakeup = {} . . . sched.post(_M, wakeup)
+See Also
+createEventQ()
+
+4.2.1.6 spawn()
+Description
+Create a new named thread to be managed by the scheduler. The thread immediately becomes ready to run.
+Syntax
+sched.spawn(name, function, �)
+Parameters
+name Name to assign to the new thread (string) function Function to be called when the thread starts (function) � Optional arguments passed to the function when the thread starts
+Blocking
+No
+
+
+Returns
+thread Handle representing the thread
+Example
+local th = sched.spawn("myThread", testThread, 100)
+See Also
+terminate()
+
+4.2.1.7 terminate()
+Description
+Terminate the thread specified by a thread handle.
+Syntax
+sched.terminate(threadHandle)
+Parameters
+threadHandle Thread handle representing the thread to be terminated. If nil or no arguments are present then the current thread is terminated. If a string, then the thread of that name is terminated, if it exists.
+Blocking
+No
+Returns
+None
+Example
+Create a thread called test consisting of the function myThread. Wait for 1 second, and then terminate the thread.
+local th = sched.spawn("test", myThread) sched.delay(10) sched.terminate(th)
+Cause a thread to terminate itself.
+sched.terminate()
+Terminate the thread named testthread.
+sched.terminate("testThread")
+See Also
+spawn(), terminate()
+
+
+
+4.2.1.8 waitQ()
+Description
+Wait on zero or more event queues for events to be collected with a timeout. If a queue already has an event, then sched.waitQ() returns immediately. If multiple event queues have posted events, then sched.waitQ () returns the first event from the first queue in the parameter list.
+If multiple threads wait on the same event queue, then the first thread to wait for the event gets the event.
+Note: Calling sched.waitQ() with only a timeout and no queues is semantically the same as calling sched.delay (0). The use of sched.delay(0) is preferred as it results in clearer code and is a more efficient function.
+Syntax
+sched.waitQ(timeout, �)
+Parameters
+timeout Timeout in units of 1/10 of a second. Special timeouts are: 0 � Poll the queue for events and return immediately after yielding the CPU -1 � Wait forever � Optional list of event queues to wait on
+Blocking
+Yes
+Returns
+queue Queue that collected the event, or nil if the timeout occurred event Event that was posted � Optional event arguments pass to sched.post()
+Example
+Set up two queues: one to collect system shutdown events and the other to collect received to-mobile messages. The main loop then waits indefinitely on events posted to either queue.
+local sysQ = sched.createEventQ(1, svc.system, 'SHUTDOWN') local msgQ = sched.createEventQ(5, svc.transport) while true do
+local q, event = sched.waitQ(-1, sysQ, msgQ) if q == msgQ then --handle received message, where 'event is the event. elseif q == sysQ then --handle shutdown message else --should not happen end
+
+
+end
+Yield the CPU and allow other ready threads to run. This is a less efficient version of sched.delay(0).
+sched.waitQ(0)
+See Also
+post(), delay()
+
+4.2.2 Thread Handle Methods
+The function sched.spawn() returns a handle that defines the following methods:
+4.2.2.1 addTerminationHandler()
+Description
+Add a function and optional argument to be called when the thread terminates.
+Syntax
+<thread>:addTerminationHandler(func, closure)
+Parameters
+func Function to call when the thread terminates. The function is called with the following arguments: thread The thread handle of the terminated thread closure The closure argument passed to addTerminationHandler() result Boolean value of true if the thread finished normally, or false if a runtime error
+occurred errMsg Error message string if result is false, otherwise nil traceBack Traceback string of error location if result is false, otherwise nil
+closure User argument passed to func
+Blocking
+No
+Returns
+None
+Example
+Register the handler function reaper to be called when the thread �My thread� terminates.
+function reaper(thread)
+print("Thread '", thread, "' terminated") end . . .
+
+
+th = sched.spawn("My thread", myThreadFunc)
+th:addTerminationHandler(reaper)
+See Also
+spawn(), terminate()
+
+4.2.2.2 destroy()
+Description
+Destroys the thread handle. If the thread is still active, it is terminated.
+Syntax
+<thread>:destroy()
+Parameters
+None
+Blocking
+No
+Returns
+None
+See Also
+spawn(), terminate()
+
+4.2.2.3 dispatches()
+Description
+This method returns the number of times the thread has been dispatched by the scheduler.
+Syntax
+<thread>:dispatches()
+Parameters
+None
+Blocking
+No
+Returns
+number Number of times the thread has been dispatched
+
+
+4.2.2.4 maxExecutionTime()
+Description
+This method returns the maximum execution time of the thread in milliseconds.
+Syntax
+<thread>:maxExecutionTime()
+Parameters
+None
+Blocking
+No
+Returns
+number The maximum execution time of the thread in milliseconds
+4.2.2.5 name()
+Description
+Returns the name of the thread.
+Syntax
+<thread>:name()
+Parameters
+None
+Blocking
+No
+Returns
+name String name of thread or nil if not found
+Example
+Print �My Thread�; the name of the spawned thread.
+local myThread = sched.spawn("My Thread", testFunc)
+print(myThread:name())
+Print the name of the current thread.
+print(sched.getThread():name())
+
+
+See Also
+getThread(), spawn()
+
+4.2.2.6 removeTerminationHandler()
+Description
+Given a handle returned by addTerminationHandler(), remove the termination handler function.
+Syntax
+<thread>:removeTerminationHandler(handle)
+Parameters
+handle Handle returned by a call to addTerminationHandler()
+
+Blocking
+No
+Returns
+None
+Example
+Add the function handlerFunc() with argument myData as a termination handler to the thread represented by th. The handle is saved in tHandle and then used later to remove the handler function.
+tHandle = th:addTerminationHandler(handlerFunc(), myData) . . . th:removeTerminationHandler(tHandle)
+See Also
+addTerminationHandler()
+
+4.2.2.7 status()
+Description
+Returns the Lua thread status of the thread. This function maps to the Lua coroutine.status()call.
+Syntax
+<thread>:status()
+Parameters
+None
+
+
+Blocking
+No
+Returns
+status Lua thread status (one of running, suspended or dead)
+Example
+Print the status of the current thread that would be running.
+print(sched.getThread():status())
+See Also
+getThread(), spawn()
+
+4.2.2.8 terminate()
+Description
+Terminate the thread represented by the thread handle.
+Syntax
+<thread>:terminate()
+Parameters
+None
+Blocking
+No
+Returns
+None
+Example
+Create a thread called �test� consisting of the function myThread. Wait for 1 second, and then kill the thread.
+local theadH = sched.spawn("test", myThread) sched.delay(10) threadH:terminate()
+See Also
+spawn(), terminate()
+
+
+
+4.2.2.9 thread()
+Description
+Returns the underlying Lua thread of a thread handle.
+Syntax
+<thread>:thread()
+Parameters
+None
+Blocking
+No
+Returns
+thread Lua thread
+See Also
+status()
+
+4.2.2.10 totalExecutionTime()
+Description
+This method returns the cumulative execution time of the thread in milliseconds.
+Syntax
+<thread>:totalExecutionTime()
+Parameters
+None
+Blocking
+No
+Returns
+number The cumulative execution time of the thread in milliseconds
+4.2.3 Event Queue Methods
+The methods below can be used on the event queue object returned by createEventQ().
+
+
+4.2.3.1 clear()
+Description
+The clear function removes all currently collected events from the queue.
+Syntax
+<queue>:clear()
+Parameters
+None
+Blocking
+No
+Returns
+None
+See Also
+count()
+
+4.2.3.2 count()
+Description
+Returns the current number of events in the event queue.
+Syntax
+<queue>:count()
+Parameters
+None
+Blocking
+No
+Returns
+count Current number of events in the event queue
+See Also
+clear()
+
+4.2.3.3 destroy()
+Description
+Destroys the event queue.
+
+
+Syntax
+<queue>:destroy()
+Parameters
+None
+Blocking
+No
+Returns
+None
+Example
+Destroy the event queue q.
+q:destroy()
+See Also
+createEventQ()
+
+4.2.3.4 event()
+Description
+Returns the first event that the event queue was created to collect, or nil if no event was specified. This method is present for backwards compatibility. Use the events() method.
+Syntax
+<queue>:event()
+Parameters
+None
+Blocking
+No
+Returns
+event First event or nil if no event was specified on queue creation
+See Also
+createEventQ()
+
+
+
+4.2.3.5 events()
+Description
+Returns a table containing all events that the event queue was created to collect. The table is empty if no event was specified.
+Syntax
+<queue>:events()
+Parameters
+None
+Blocking
+No
+Returns
+events Table of all events
+4.2.3.6 lastEvent()
+Description
+Returns the last queued event and arguments.
+Syntax
+<queue>:lastEvent()
+Parameters
+None
+Blocking
+No
+Returns
+event The collected event � Arguments passed to the post() call
+4.2.3.7 lastEventTime()
+Description
+Returns the time stamp associated with the last retrieved event.
+Syntax
+<queue>:lastEventTime()
+
+
+Parameters
+None
+Blocking
+No
+Returns
+table A table containing the following fields: sec The seconds portion of the time stamp msec
+Example
+local q, ev, args = myQ:wait(-1) if q == myQ then
+if ev == �MYEVENT� then local ts = myQ:lastEventTime() printf(�MYEVENT was sent at %d.%03d seconds\n�, ts.sec, ts.msec)
+end end
+4.2.3.8 name()
+Description
+Returns and optionally sets the name of the event queue.
+Syntax
+<queue>:name(name)
+Parameters
+name Optional string name to give value in the output
+Blocking
+No
+Returns
+name Returns the string name of the event queue
+Example
+Create a message queue and name it message queue.
+msgQ = sched.createEventQ(3, svc.transport) msgQ:name('message queue')
+
+
+Print the name, if any, of myQ.
+myQ:name()
+4.2.3.9 size()
+Description
+Returns the size of the event queue.
+Syntax
+<queue>:size()
+Parameters
+None
+Blocking
+No
+Returns
+size Maximum number of events the event queue can hold
+See Also
+createEventQ()
+
+4.2.3.10 source()
+Description
+Returns the source that the event queue was created to collect.
+Syntax
+<queue>:source()
+Parameters
+None
+Blocking
+No
+Returns
+source Returns the source of the event queue
+See Also
+createEventQ()
+
+
+
+4.2.3.11 wait()
+Description
+Blocks the event queue until an event is collected or the timeout, if specified, occurs. If the queue already has an event, then the call to wait() returns immediately.
+Syntax
+<queue>:wait(timeout)
+Parameters
+timeout  Timeout
+in
+units
+of
+1/10
+of
+a
+second.
+Special
+timeouts
+are:
+0
+�
+Poll
+the
+queue
+for
+events
+and
+return
+immediately
+after
+forcing
+rescheduling
+-1
+�
+Wait
+forever
+
+
+Blocking
+Yes
+Returns
+queue Queue that collected the event, or nil if the timeout occurred event Event that was posted � Optional event arguments pass to post()
+Example
+Wait on the event queue for the ALARM event of the geofence service for up to 180 seconds.
+gpsQ = sched.createEventQ(5, svc.geofence, �ALARM�)
+.
+.
+local q, event = gpsQ:wait(180)
+See Also
+waitQ()
+
+4.3 Service Manager
+The Service Manager provides facilities to manage and control services. Services are software modules that implement the user-visible terminal functionality.
+Each service is identified by a service identification number (SIN). SIN values in the range 0-15 are reserved for use by the IsatData Pro satellite modem. SIN values in the range 16-127 are reserved for services implemented by ORBCOMM; those in the range of 16-63 are referred to as core services, those in the range of 64-127 as terminal apps. SIN values in the range 128-255 are free to be used by ORBCOMM's customers in implementing their own services; these are usually referred to as user services.
+Each service can optionally define the format of the various messages that they can send and receive over-the-air. Each message format is identified by the direction in which it is used and a message identification number (MIN).
+
+
+The message directions are commonly referred to as to-mobile, for message going to the terminal, and from-mobile, for message coming from the terminal.
+Each service can optionally define a number of properties. Properties are values related to the functionality of the service and can be one of two types. Configuration properties are static in nature, and are generally used to affect the service's behavior. Volatile properties are more dynamic in nature, and are generally used to report status information. Each property is identified by a property identification number (PIN).
+4.3.1 dataPath()
+Description
+This function returns the name of a directory where a service should store its data files.
+Syntax
+svcmgr.dataPath()
+Parameters
+None
+Blocking
+No
+Returns
+string The directory path
+4.3.2 decodeMsg()
+Description
+This function decodes a binary encoded message.
+Syntax
+svcmgr.decodeMsg(dir, bytes)
+Parameters
+dir  The message direction (msgs.Direction.RETURN(1), msgs.Direction.FORWARD(0))
+bytes  A string containing the message bytes
+Blocking
+No
+Returns
+string  An error message on failure, or nil otherwise
+table  The decoded message
+number  The number of bits used in decoding the message
+
+
+
+4.3.3 disableService()
+Description
+This function adds or removes a service from the list of disabled services. The disabled services are prevented from starting up on the next framework restart.
+Syntax
+svcmgr.disableService(sin, disable)
+Parameters
+sin The service to disable/enable disable A Boolean, true=disable the service, false=enable the service
+Blocking
+No
+Returns
+boolean Indicates success or failure
+4.3.4 encodeMsg()
+Description
+This function verifies and encodes the fields of a message into the binary common format.
+Syntax
+svcmgr.encodeMsg(msg)
+Parameters
+msg  A table with the following fields:
+sin  The service identification number of the service containing the message
+min  The message identification number of the message
+dir  The message direction (msgs.Direction.RETURN(1), msgs.Direction.FORWARD(0))
+fields  A table containing the message fields and their values
+Blocking
+No
+Returns
+string  An error message on failure, or nil otherwise
+string  The encoded message (binary)
+number  The number of bits used to encode the message
+
+
+
+4.3.5 getDisabledServices()
+Description
+This function returns a list of services that are currently disabled.
+Syntax
+svcmgr.getDisabledServices()
+Parameters
+None
+Blocking
+No
+Returns
+table An array of SINs
+4.3.6 getInfo()
+Description
+Retrieves information about a given service.
+Syntax
+svcmgr.getInfo(sin)
+Parameters
+sin The service identification number (16-255)
+Blocking
+No
+Returns:
+table The service information, with the following fields:
+sin The service identification number
+name The name of the service
+version The version of the service
+enabled Indicates whether the service is enabled or not
+4.3.7 getList()
+Description
+Retrieves a list of services currently installed and not disabled.
+
+
+Syntax
+svcmgr.getList(core)
+Parameters
+core Whether to get only core services (true) or not (false)
+Blocking
+No
+Returns
+table An array of the requested SINs sorted in ascending order
+4.3.8 getMsgDef()
+Description
+Retrieves the definition of a message.
+Syntax
+svcmgr.getMsgDef(sin, min, dir)
+Parameters
+sin The service identification number (16-255) min The message identification number (1-255) dir The message direction (0 � To-mobile, 1 � From-mobile)
+Blocking
+No
+Returns
+table The message definition with the following fields, or nil on error:
+name The message's name
+fields An array with each entry containing the following:
+name The field name
+type The field type (Section 5.1)
+size The field size (in bytes (B) for data and string in bit (b)for others)
+Each entry may also contain the following fields:
+optional Denotes whether the field is optional
+fixed Denotes whether a string or data field is of a fixed size
+values A table defining the mapping between Enum names and their associated values
+(only enum type)
+
+
+valuesStr A table defining the mapping between Enum values and their associated names (only enum type) sin The SIN for the service from which a property value will be used (only property type) pin The PIN of the property value to use (only property type) string An error message, or nil if none occurred
+4.3.9 getProp()
+Description
+Retrieves a property value from a given service.
+Syntax
+svcmgr.getProp(sin, pin)
+Parameters
+sin The service identification number (16-255) pin The property identification number (1-255)
+Blocking
+No
+Returns
+The property value, or nil on error string An error message, or nil if none occurred
+4.3.10 getPropDef()
+Description
+Retrieves the definition of a property.
+Syntax
+svcmgr.getPropDef(sin, pin)
+Parameters
+sin The service identification number (16-255) pin The property identification number (1-255)
+Blocking
+No
+
+
+Returns
+table  The property definition with the following fields, or nil on error:
+name  The property's name
+type  The
+property's
+type
+(Section
+5.1)
+
+storage  The property storage type (0 � Config, 1 � Volatile)
+default  The property's default value
+The property definitions may also contain the following fields:
+minVal  The minimum value supported by the property (only integer types)
+maxVal  The maximum value supported by the property (only integer types)
+values  A table defining the mapping between enum names and their associated values
+(only enum type)
+valuesStr  A table defining the mapping between enum names and their associated names
+(only enum type)
+string  An error message, or nil if none occurred
+
+4.3.11 getPropList()
+Description
+Retrieves a list of PINs for a given service.
+Syntax
+svcmgr.getPropList(sin)
+Parameters
+sin The service identification number (16-255)
+Blocking
+No
+Returns
+table An array of the PINs for that given service stored in ascending order
+4.3.12 loadCode()
+Description
+This function is a wrapper around loadfile. It loads the specified file from the appropriate service directory, sets it to run within the calling service's environment, and returns the loaded chunk. It is up to the caller to run the chunk to load its contents.
+Syntax
+svcmgr.loadCode(name)
+
+
+Parameters
+name The name of the Lua file to load, without any path information
+Blocking
+No
+Returns
+function The loaded, compiled chunk, or nil on error string An error message, or nil if successful
+4.3.13 resetProps()
+Description
+Reset multiple properties to their default values.
+Syntax
+svcmgr.resetProps(list)
+Parameters
+list  An array wisin pinList  th each element containing the following fields: The service identification number (16-255) An array of PINs to reset
+
+Blocking
+No
+Example
+svcmgr.resetProps({{sin=20,pinList={15}},{sin=22,pinList={31,43,44}}})
+Returns
+string An error message, or nil if none occurred
+4.3.14 restart()
+Description
+Restart a service.
+Syntax
+svcmgr.restart(sin)
+Parameters
+sin The SIN for the service to restart (16-255)
+
+
+Blocking
+No
+Returns
+string An error message in case of failure, or nil
+4.3.15 revertProps()
+Description
+Reverts multiple properties to their saved values. Only configuration properties are affected; volatile properties are ignored.
+Syntax
+svcmgr.revertProps(list)
+Parameters
+list  An array with each element containing the following fields:
+sin  The service identification number (16-255)
+pinList  An array of PINs to save
+Blocking
+No
+Example
+
+svcmgr.revertProps({{sin=20,pinList={15}},{sin=22,pinList={31,43,44}}})
+Returns
+string An error message, or nil if none occurred
+4.3.16 saveProps()
+Description
+Save multiple properties' values to nonvolatile storage. Only configuration properties are saved; volatile properties are ignored.
+Syntax
+svcmgr.saveProps(list)
+Parameters
+list Optional array with each element containing the fields below. Omitting this parameter results in all properties being saved to NVM. sin The service identification number (16-255) pinList An array of PINs to save
+
+
+Blocking
+Yes
+Example
+svcmgr.saveProps({{sin=20,pinList={15}},{sin=22,pinList={31,43,44}}})
+Returns
+string An error message, or nil if none occurred
+4.3.17 setProp()
+Description
+Set a property value on a given service.
+Syntax
+svcmgr.setProp(sin, pin, val)
+Parameters
+sin pin val  The service identification number (16-255) The property identification number (1-255) The value to set
+Blocking No
+Returns
+string  An error message, or nil if none occurred
+
+4.3.18 setProps()
+Description
+Set multiple property values. This operation is performed in two passes; first all property values are validated, and if they are all valid, then they are applied.
+Syntax
+svcmgr.setProps(list)
+Parameters
+list An array with each element containing the following fields:
+sin The service identification number (16-255)
+propList An array with each element containing the following:
+
+
+pin value  The property identification number The desired property value
+Blocking No
+Example
+
+svcmgr.setProps({{sin=20, propList={{pin=15,value=2}}},{sin=22,propList={{pin=31,value=4}, {pin=43,value=2}}}})
+Returns
+string An error message, or nil if none occurred
+4.3.19 validateSin()
+Description
+Validate a SIN.
+Syntax
+svcmgr.validateSin(sin)
+Parameters
+sin The SIN to validate (16-255)
+Blocking
+No
+Returns
+boolean Indicates whether the sin is valid and identifies a service that is not disabled
+4.3.20 verifyProp()
+Description
+Check whether a value is valid for the given property.
+Syntax
+svcmgr.verifyProp(sin, pin, val)
+Parameters
+sin The service identification number (16-255) pin The property identification number (1-255) val The property value to test
+
+
+Blocking
+No
+Returns
+boolean Indicates whether the property value is valid string An error message describing the problem with the first value is false or nil
+4.4 Message Library
+4.4.1 Direction
+Description
+This table maps message direction names to their numerical values. It has the following fields:
+FORWARD RETURN  0 1
+Syntax msgs.Direction
+4.4.2 DirectionStr
+Description
+
+This table does the reverse of Direction; it maps numerical values to direction names. It has the following indices:
+0 FORWARD 1 RETURN
+Syntax
+msgs.DirectionStr
+4.4.3 Types
+Description
+This table maps message field and property type names to their numerical values. It has the following fields:
+ENUM 0 BOOLEAN 1 UNSIGNED 2 SIGNED 3 STRING 4
+
+
+DATA 5 ARRAY 6 DYNAMIC 7 PROPERTY 8 MESSAGE 9
+Syntax
+msgs.Types
+4.4.4 TypesStr
+Description
+This table does the reverse of Types; it maps numerical values to type names. It has the following indices:
+0 ENUM 1 BOOLEAN 2 UNSIGNED 3 SIGNED 4 STRING 5 DATA 6 ARRAY 7 DYNAMIC 8 PROPERTY 9 MESSAGE
+Syntax
+msgs.TypesStr
+4.5 Property Library
+4.5.1 Storage
+Description
+This table maps property storage class names to their numerical values. It has the following fields:
+CONFIG 0 VOLATILE 1
+Syntax
+props.Storage
+
+
+4.5.2 StorageStr
+Description
+This table does the reverse of Storage; it maps numerical values to storage class names. It has the following
+indices:
+0  CONFIG
+1  VOLATILE
+Syntax
+
+props.StorageStr
+4.6 Utilities
+4.6.1 clone()
+Description
+Create a clone of a Lua object. This new object is a deep copy and does not reference any parts of the original object.
+Syntax
+clone(obj)
+Parameters
+obj The Lua object to clone; can be any valid Lua type
+Blocking
+No
+Returns
+object A copy of the original object
+4.6.2 dumpvar()
+Description
+Recursively dump the types of an arbitrary Lua data structure.
+Syntax
+dumpvar(value, name, limit, dumpMem)
+
+
+Parameters
+value  Lua value to dump
+name  Optional string name to give value in the output
+limit  Optional integer which limits the depth of the output recursion
+dumpMem  Optional Boolean which indicates if object size information should be included in the output
+
+Blocking
+Yes
+Returns
+None
+Example
+Display a complex table.
+lua> t = { "one", "two", "three", opts = { fast = true, SIN = 21 } } lua> dumpvar(t) ["table: 64041470"] = { --table: 64041470 (count= 3)
+[1] = "one";
+[2] = "two";
+[3] = "three";
+opts = { --table: 640578d8 (count= 0) SIN = 21; fast = true;
+}; }; Use dumpvar() to display all the available functions and tables in the global environment. The name _G is used to label the table and the limit two is used to print only the top level content of the table.
+lua> dumpvar(_G, '_G', 2)
+_G = { --table: 640105a0 (count= 0) print = function: 64095d48; string = table: 64013720; --LIMIT xpcall = function: 64010b98; pairs = function: 64011a00; package = table: 64011518; --LIMIT tostring = function: 64010b58; gcinfo = function: 64011098; props = table: 64022858; --LIMIT msgs = table: 64010498; --LIMIT _VERSION = "Lua 5.1";
+
+
+os = table: 64013618; --LIMIT unpack = function: 640111e0; tonumber = function: 64011198; _RELEASE = "Lua 5.1.4"; require = function: 640124d8; getfenv = function: 640110d8; svcmgr = table: 64022f88; --LIMIT tracef = function: 640191f8; setmetatable = function: 640118b0; next = function: 64011028; assert = function: 64010f68; sys = table: 64022518; --LIMIT ipairs = function: 64011998; printf = function: 6408b7b8; io = table: 64012b90; --LIMIT rawequal = function: 64011398; md5 = table: 64015510; --LIMIT collectgarbage = function: 64010e68; _LNUM = "float int32"; newproxy = function: 64011ab0; sched = table: 6401bd68; --LIMIT module = function: 64012498; makeEnum = function: 6401a798; toHex = function: 6401a678; dogc = function: 6401b990; objsize = function: 6401b8c8; _G = ref"table: 640105a0"; tdumpvar = function: 6401b7a0; args = table: 640106b0; --LIMIT LSF_BUILD_TIME = "16:22:00"; LSF_BUILD_DATE = "Jun 21 2011"; LSF_FIRMWARE_API_COMPATIBILITY_LEVEL = 21; LSF_API_LEVEL = 1; rawset = function: 64011138; math = table: 64013cd8; --LIMIT trace = function: 640191b0; pcall = function: 64011318; dumpvar = function: 64019fb8;
+
+
+base64 = table: 640153f8; --LIMIT type = function: 640118f8; bit32 = table: 64014fc8; --LIMIT debug = table: 64014cb8; --LIMIT select = function: 64011158; getmetatable = function: 64010fa8; LSF_VERSION = "3.2.0"; rawget = function: 64011118; loadstring = function: 64011008; table = table: 64012558; --LIMIT load = function: 64010fe8; setfenv = function: 64010b10; svc = table: 64031638; --LIMIT error = function: 64010e88; loadfile = function: 64010fc8;
+};
+See Also
+print()
+4.6.3 makeEnum()
+Description
+This function creates two lists, one mapping the entries in the names list to their numerical values, the other mapping the numerical values to their string representations. These lists are useful for implementing and accessing enumerated types. The first string in the list is assigned the value 0, the second one 1, and so on.
+Syntax
+makeEnum(names)
+Parameters
+names A table containing a list of strings for the enumerated type values
+Blocking
+No
+Returns
+table A table that maps string values to their numerical equivalents table A table that maps numerical values to their string equivalents
+Example
+The following code
+
+
+Parity, ParityStr = makeEnum({"NONE", "ODD", "EVEN", "MARK", "SPACE"}) par = 1 print(ParityStr[par]) par = Parity.NONE print(ParityStr[par])
+results in the following text being output.
+ODD NONE
+4.6.4 tdumpvar()
+Description
+Same as dumpvar()
+except that the output is sent to the serial tracing facility.
+Syntax
+tdumpvar(value, name, limit, dumpMem)
+Parameters
+value  Lua value to dump
+name  Optional string name to give value in the output
+limit  Optional integer which limits the depth of the output recursion
+dumpMem  Optional Boolean which indicates if object size information should be included in the output
+
+Blocking
+Yes
+Returns
+None
+4.6.5 toHex()
+Description
+Convert the bytes of a string into a string of hexadecimal digits.
+Syntax
+toHex(string)
+Parameters
+string String to convert
+Blocking
+No
+
+
+Returns
+string A string of hexadecimal digits
+Example
+lua> print(toHex("12345")) 3132333435
+
+
+5 CORE SERVICES
+Description
+Provides
+general
+management
+and
+control
+of
+such
+things
+as
+service
+identification,
+metrics,
+and
+status
+query/response.
+Unified
+interface
+to
+power
+management
+at
+the
+Lua
+level.
+Routes
+incoming
+messages
+to
+the
+appropriate
+service
+and
+ensures
+outgoing
+messages
+use
+the
+appropriate
+format.
+Sends
+report
+messages
+that
+consist
+of
+properties
+from
+other
+services.
+Messages
+can
+be
+sent
+on
+demand
+or
+on
+a
+preconfigured
+schedule.
+Interface
+to
+GPS
+position
+information.
+Includes
+position-based
+accelerometer
+capabilities.
+The
+geofence
+service
+provides
+the
+ability
+to
+define
+geographical
+regions
+based
+on
+circles,
+polygons,
+rectangles,
+as
+well
+as
+reporting
+entry
+and
+exit
+from
+these
+regions.
+Manages
+communication
+through
+the
+various
+serial
+ports
+(RS-232,
+RS-485),
+including
+their
+configuration
+and
+status.
+Stores
+data
+in
+nonvolatile
+storage.
+The
+data
+can
+be
+application
+data,
+which
+can
+be
+retrieved
+at
+later
+date,
+or
+diagnostic
+information
+for
+troubleshooting.
+This
+service
+also
+provides
+auto
+upload
+capabilities.
+Provides
+an
+interface
+for
+the
+file
+system
+that
+is
+in
+the
+application
+firmware.
+Configures
+and
+reports
+the
+status
+of
+the
+general
+purpose
+I/O.
+In
+addition,
+it
+is
+used
+to
+monitor
+the
+internal
+temperature
+.
+Alarms
+can
+be
+configured
+if
+thresholds
+are
+exceeded.
+Shell
+command-line
+interface
+on
+the
+RS-232
+interface.
+It
+also
+provides
+the
+ability
+to
+execute
+the
+same
+commands
+over-the-air
+and
+allows
+you
+to
+change
+the
+access
+level
+of
+the
+shell.
+Provides
+access
+to
+some
+of
+the
+functionality
+offered
+by
+the
+IsatData
+Pro
+satellite
+modem.
+-Provides
+support
+for
+JSON
+and
+binary
+encoding
+of
+messages,
+allows
+configuration
+and
+monitoring
+of
+the
+module;
+and
+also
+provides
+a
+plugin
+to
+the
+message
+service
+allowing
+it
+to
+send/receive
+messages
+over
+cellular.
+(cellular
+and
+satellite-cellular
+terminals)
+--32
+campaign
+A
+mandatory
+service
+that
+must
+be
+running
+to
+support
+software
+over-the-air
+updates.
+33
+ip
+Allows
+ST
+products
+to
+take
+advantage
+of
+protocols
+and
+their
+associated
+features
+on
+the
+internet
+for
+the
+development
+of
+IP
+enabled
+Lua
+applications.
+34
+accelerometer
+Defines
+the
+global
+configuration
+of
+the
+accelerometer
+API.
+35
+bluetooth
+Provides
+global
+management
+and
+control
+over
+the
+Bluetooth
+operations.
+Only
+available
+on
+terminals
+that
+support
+Bluetooth
+hardware.
+SINName16system17power18message19report20position21geofence22serial23log24filesystem25eio26shell27idp28reserved29cell30reserved31reserved5.1 Types
+Property and message fields are defined in terms of their type. This section describes the various types available, and how they are handled.
+
+
+Reserved or undocumented core properties (PINs) are for ORBCOMM use only.
+Table 1: Field Types Supported
+
+Field Type1 Description
+Properties support:
+
+ENUM (0) An enumeration, a common construct in some high-level programming languages. It maps a defined set of strings to numerical values; the makeEnum() function is useful for generating such a mapping. ENUMs
+can be from 1 to 16 bits wide and can support up to 65535 values.
+BOOLEAN (1) A simple true/false type.
+UNSIGNED (2) Used to represent unsigned integer values from 1 to 31 bits wide.
+SIGNED (3) Used to represent signed integer values from 1 to 32 bits wide.
+STRING (4) Used to represent string values. String objects can be up to 32767 characters long.
+DATA (5) Used to easily represent data (byte) arrays, without having to resort to strings (that are typically for
+printable characters) or the more generic arrays. Data objects can be up to 32767 bytes long. Message fields also support:
+
+ARRAY (6) Used to represent a combination of arrays and data structures. The ARRAY is further defined as
+containing more fields. Array objects can contain up to 32767 entries.
+DYNAMIC (7) Used when the actual type of a value is not known ahead of time. A description of the contained type is passed in any over-the-air messages, prior to the value, so that the receiver can figure out on the fly what the content is.
+PROPERTY (8) Used in message definitions as a placeholder to indicate a spot in the message where a service property value needs to be inserted. The definition specifies the property's SIN and PIN, and the framework automatically fills the value in prior to sending the message. This is mainly useful for easily defining new report formats (Section 5.5). MESSAGE (9)
+Used in message definitions as a placeholder to indicate a spot in the message where another message is inserted in its entirety.
+5.2 System (SIN 16)
+The system service provided management and control of the global aspects of the terminal.
+5.2.1 Properties
+
+1The unit of the field size for a particular field is dependent on the field type.
+
+
+
+
+
+5.2.2 To-Mobile Messages
+MIN
+Name
+Description
+1
+Request
+terminal
+information.
+A
+terminalInfo
+message
+is
+generated
+in
+response.
+2
+Request
+terminal
+status.
+A
+terminalStatus
+message
+is
+generated
+in
+response.
+3
+Request
+a
+list
+of
+all
+services.
+A
+serviceList
+message
+is
+generated
+in
+response.
+4
+Request
+information
+for
+one
+or
+more
+services.
+A
+serviceInfo
+message
+is
+generated
+in
+response.
+5
+Request
+to
+restart
+a
+service.
+6
+Resets
+the
+terminal
+(modem
+and
+LSF).
+All
+terminal
+hardware
+is
+reset
+regardless
+of
+the
+field
+value.
+7
+getTerminalMetrics
+Request
+current
+terminal
+metrics.
+Currently,
+no
+message
+is
+generated
+in
+response,
+because
+no
+metrics
+have
+been
+defined.
+8
+Request
+the
+value
+of
+one
+or
+more
+properties.
+A
+propertyValues
+message
+is
+generated
+in
+response.
+9
+Sets
+the
+value
+of
+one
+or
+more
+properties.
+10
+Resets
+one
+or
+more
+properties
+to
+their
+default
+values.
+11
+Saves
+one
+or
+more
+property
+values
+to
+nonvolatile
+storage.
+12
+Reverts
+one
+or
+more
+property
+values
+from
+nonvolatile
+storage.
+13
+Restarts
+the
+Lua
+Framework.
+14
+Sets
+the
+Solution
+Provider
+(level
+1)
+password
+value
+15
+Disables
+or
+re-enables
+a
+service
+on
+the
+terminal.
+The
+service
+is
+not
+loaded
+/
+unloaded
+until
+a
+subsequent
+restart
+of
+the
+Lua
+Service
+Framework
+(LSF).
+Generates
+a
+disableServiceResult
+message
+in
+response.
+16
+This
+message
+sets
+the
+full
+list
+of
+enabled
+services.
+Any
+SINs
+not
+in
+this
+list
+are
+disabled.
+17,
+18
+reserved
+-getTerminalInfogetTerminalStatusgetServiceListgetServiceInforestartServiceresetTerminalgetPropertiessetPropertiesresetPropertiessavePropertiesrevertPropertiesrestartFrameworksetPassworddisableServicesetEnabledServices5.2.2.1 getTerminalInfo (SIN 16, MIN 1)
+This message does not contain any fields. A terminalInfo message is generated in response.
+
+5.2.2.2 getTerminalStatus (SIN 16, MIN 2)
+This message does not contain any fields. A terminalStatus message is generated in response.
+5.2.2.3 getServiceList (SIN 16, MIN 3)
+This message does not contain any fields. A serviceList message is generated in response
+5.2.2.4 getServiceInfo (SIN 16, MIN 4)
+
+
+
+5.2.2.5 restartService (SIN 16, MIN 5)
+
+5.2.2.6 resetTerminal (SIN 16, MIN 6)
+
+5.2.2.7 getTerminalMetrics (SIN 16, MIN 7)
+This message does not contain any fields. No message is generated in response.
+5.2.2.8 getProperties (SIN 16, MIN 8)
+
+5.2.2.9 setProperties (SIN 16, MIN 9)
+
+Name Type Optional Size Comments
+list Array No �255 elements .sin Unsigned No 8 bits .propList Array No �255 elements .pin Unsigned No 8 bits .value Dynamic No n/a .
+save Boolean No 1 bit If true, saves the new property values after setting them
+5.2.2.10 resetProperties (SIN 16, MIN 10)
+
+5.2.2.11 saveProperties (SIN 16, MIN 11) 5.2.2.12 revertProperties (SIN 16, MIN 12)
+
+
+
+
+
+5.2.2.13 restartFramework (SIN 16, MIN 13)
+This message does not contain any fields.
+5.2.2.14 setPassword (SIN 16, MIN 14)
+
+5.2.2.15 disableService (SIN 16, MIN 15)
+
+5.2.2.16 setEnabledServices (SIN 16, MIN 16)
+
+5.2.2.17 Reserved (SIN 16, MIN 17)
+This message is reserved.
+5.2.2.18 Reserved (SIN 16, MIN 18)
+This message is reserved.
+5.2.3 From-Mobile Messages 5.2.3.1 terminalInfo (SIN 16, MIN 1)
+
+
+
+
+This message contains static information about the terminal.
+
+
+
+
+5.2.3.2 terminalStatus (SIN 16, MIN 2)
+This message contains dynamic information about the terminal.
+
+
+
+
+Name Type Comments
+uptime Signed No 32 bits The number of seconds the terminal has been in continuous operation since reset
+timeOfDay Signed No 32 bits The current date and time, expressed as number of seconds since the epoch
+
+
+
+hardwareResetReason
+
+Enum
+
+No
+
+8 bits
+
+The reason for the last terminal reset. 0 � Unknown 1 � PowerOn 2 � External 3 � WindowWD 4 � IndependentWD 5 � LowPower 6 � Software 7 � JTAG 8 � CoreLockup
+
+
+
+Name Type Comments
+softwareResetReason Enum No 8 bits The cause of the software reset
+0 � None (hardwareResetReason is software)
+1 � Unknown
+2 � Exception
+3 � CAssert
+4 � CMSISAssert
+5 � AbnormalExit
+6 � KernelError
+7 � Panic
+8 � BootIdle
+9 � BootConsole
+10 � Startup
+11 � Console
+12 � PasswordFailure
+13 � CriticalLog
+14 � RFHardware
+15 � Update
+16 � LossOfPower
+17 � SwWatchdog
+18-19 � Reserved
+20 � Lua
+21 � LuaPanic
+22 � LuaOTA
+23 � LuaShell
+24 � LuaAPI
+25 � LuaSerial
+26 � IDPModem
+softwareResetDescription String No �1000 Additional information about the software reset cause bytes
+LSFUptime Signed No 32 bits The number of seconds the LSF has been running
+powerSaveTime Signed No 32 bits The number of seconds the terminal has been in power save mode since reset
+LSFIdleTime Signed No 31 bits The number of seconds since startup that the LSF has been idle waiting for an event.
+5.2.3.3 serviceList (SIN 16, MIN 3)
+
+5.2.3.4 serviceInfo (SIN 16, MIN 4) 5.2.3.5 propertyValues (SIN 16, MIN 5)
+
+
+
+
+5.2.3.6 termReset (SIN 16, MIN 6)
+This message does not contain any fields and is used only for logging purposes. It is never sent out.
+5.2.3.7 terminalRegistration (SIN 16, MIN 8)
+NameTypeOptionalSizeCommentslistArrayNo�255elementsAlistofservicessinUnsignedNo8bitsTheSINpropListArrayNo�255elementsAlistofpropertiesforthatservicepinUnsignedNo8bitsThePINvalueDynamicNon/aThepropertyvalueOptionalSizeName
+Type
+Comments
+hardwareVariant
+Enum
+No
+8
+bits
+hardwareRevision
+Unsigned
+No
+8
+bits
+hardwareResetReason
+Enum
+No
+8
+bits
+Section
+5.2.3.1.
+0
+�
+Unknown
+1
+�
+PowerOn
+2
+�
+External
+3
+�
+WindowWD
+4
+�
+IndependentWD
+5
+�
+LowPower
+6
+�
+Software
+7
+�
+JTAG
+8
+�
+CoreLockup
+firmwareMajor
+Unsigned
+No
+8
+bits
+firmwareMinor
+Unsigned
+No
+8
+bits
+firmwarePatch
+Unsigned
+No
+8
+bits
+LSFVersion
+String
+No
+�16
+bytes
+Version
+of
+the
+Lua
+services
+framework
+
+
+
+Name Type
+Comments
+softwareResetReason Enum No 8 bits The cause of the software reset
+0 � None (hardwareResetReason is
+1 � Unknown Software)
+2 � Exception
+3 � CAssert
+4 � CMSISAssert
+5 � AbnormalExit
+6 � KernelError
+7 � Panic
+8 � BootIdle
+9 � BootConsole
+10 � Startup
+11 � Console
+12 � PasswordFailure
+13 � CriticalLog
+14 � RFHardware
+15 � Update
+16 � LossOfPower
+17 � SwWatchdog
+18-19 � Reserved
+20 � Lua
+21 � LuaPanic
+22 � LuaOTA
+23 � LuaShell
+24 � LuaAPI
+25 � LuaSerial
+26 � IDPModem
+sinList Data No 240 bytes Each byte in the data field is the
+SIN of an installed and enabled
+service
+packageVersion String No 32 bytes Version string of the loaded package file
+5.2.3.8 setPasswordResult (SIN 16, MIN 9)
+This message is sent in response to setPassword.
+
+5.2.3.9 disableServiceResult (SIN 16, MIN 10)
+This message is sent in response to a disableService
+request.
+
+
+
+5.2.3.10 newTimeSync
+This message is logged when system time is adjusted.
+Name  Type  Optional  Size  Comments
+delta
+
+
+ The time adjustment, in seconds. A negative value indicates the time moved backwards.
+source  Enum  No  4 bits  The time source that was used to set the internal system clock (IsatData Pro terminals). 0 � None 1 � NTP 2 � Cellular 3 � GNSS 4 � IDP
+
+
+5.2.4 Constants
+The system service defines the following constants.
+5.2.4.1 shutdownCause
+Description
+This table maps shutdown causes to their numerical values. It has the following fields:
+Unknown  0
+API  1
+OTA  2
+Shell  3
+Campaign  4
+Serial  5
+Error  6
+IDPModem  7
+Switch  8
+LowBattery  9
+reserved  10
+reserved  11
+Syntax
+
+svc.system.shutdownCause
+
+
+5.2.4.2 shutdownCauseStr
+Description
+This table does the reverse of shutdownCause; it maps numerical values to cause reason strings. It has the following
+fields:
+0 1 2 3 4 5 6 7 8 9 10 11  Unknown API OTA Shell Campaign Serial Error IDPModem Switch LowBattery reserved reserved
+Syntax
+
+svc.system.shutdownCauseStr
+5.2.4.3 shutdownReason
+Description
+This table maps shutdown reasons to their numerical values. It has the following fields:
+Stop 0 Restart 1 Reset 2 PowerOff 3
+Syntax
+svc.system.shutdownReason
+5.2.4.4 shutdownReasonStr
+Description
+This table does the reverse of the shutdownReason; it maps numerical values to shutdown reason strings. It has the following fields:
+0 Stop 1
+Restart
+2
+Reset
+3
+PowerOff
+
+
+Syntax
+svc.system.shutdownReasonStr
+5.2.5 Functions
+5.2.5.1 ledFlash()
+This function has been deprecated. See sys.led.flash().
+5.2.5.2 reset()
+Description
+Resets the application card.
+Syntax
+svc.system.reset(now)
+Parameters
+now  Optional Boolean that forces immediate reset if specified and set to true, otherwise a clean
+shutdown occurs before the reset.
+
+Blocking
+Yes
+Returns
+None
+Example
+Resets the application card
+svc.system.reset()
+See Also
+restart()
+5.2.5.3 restart()
+Description
+Restart the Lua services framework.
+Syntax
+svc.system.restart(now)
+
+
+Parameters
+now  Optional Boolean that forces immediate restart if specified and set to true, otherwise a clean
+shutdown occurs before the restart.
+
+Blocking
+No
+Returns
+None
+Example
+Shut down the LSF and then restart it.
+svc.system.restart()
+See Also
+reset()
+5.2.5.4 shutdown()
+Description
+Shuts down the LSF and drop to the application firmware command prompt on the main serial interface.
+Syntax
+svc.system.shutdown(now)
+Parameters
+now Optional Boolean that forces immediate shutdown if specified and set to true, otherwise a clean shutdown occurs.
+Blocking
+No
+Returns
+None
+Example
+Shut down the LSF and enter the application firmware command console.
+svc.system.shutdown()
+See Also
+reset()
+
+
+5.2.6 Posted Events
+5.2.6.1 Shutdown
+Description
+This event is posted before the system shuts down. If the system is forced to shut down immediately, then this event is not posted.
+Source
+svc.system  (system service table)
+Event
+�SHUTDOWN�  (string)
+
+Arguments
+table A table containing the following fields:
+reason The reason for the shutdown:
+0 � Stop
+1 � Restart
+2 � Reset
+3 � PowerOff cause The cause of the shutdown event:
+0 � Unknown
+1 � API
+2 � OTA
+3 � Shell
+4 � Campaign
+5 � Serial
+6 � Error
+7 � IDPModem
+8 � Switch
+9 � LowBattery
+10 � reserved
+11 � reserved
+5.2.6.2 Terminal Registered
+Description
+This event is posted when the terminal completes registration.
+Source
+svc.system (system service table)
+
+
+Event
+�TERMINAL_REGISTERED� (string)
+Arguments
+None
+5.2.6.3 Time Synchronization
+Description
+This event is posted when the terminal time of day is synced to an external source.
+Source
+Event  svc.system �TIME_SYNC�  (system (string)  service  table)
+Arguments
+
+number The delta between the new and old times, in seconds (negative if old>new) string The time source
+5.3 Power (SIN 17)
+The power service provides a unified interface to terminal power management at the Lua level. The power service does not apply to ST 6000 models because power is managed externally.
+5.3.1 Properties
+
+
+PIN Name Description Type Storage Default Class Value
+1 batteryConfig Battery configuration of the terminal Enum Volatile None 0 � None
+An ST 9100 with battery is LilON, without 1 � reserved a battery it is �Disabled�.
+2 � reserved 3 � reserved 4 � LiION
+2
+batteryChargerState Current state of the charger Enum Volatile
+Disabled 0 � Disabled 1 � reserved 2 � Charging 3 � reserved 4 � reserved 5 � Suspended 6 � Fault 7 � Aborted
+
+
+
+
+
+
+PIN
+Name
+Description
+Type
+Storage Default Class Value
+
+24 postTriggerVoltage The voltage in mV just after the start of Unsigned Volatile n/a the last satellite modem transmit. Min. � 0 Max. � 32000
+25-reserved ---.29 30
+ledControl Determines whether the Power LED is Enum Config
+Terminal controlled by the user or the terminal.
+0 � Terminal 1 � User
+Refer to [T404] for more details.
+5.3.2 To-Mobile Messages
+
+5.3.2.1 powerOff (SIN 17, MIN 1)
+
+5.3.3 From-Mobile Messages
+
+5.3.3.1 extPowerAlarm (SIN 17, MIN 1) 5.3.3.2 powerOnAlarm (SIN 17, MIN 2)
+
+
+
+
+5.3.3.3 powerOffResult (SIN 17, MIN 3)
+
+5.3.3.4 reserved (SIN 17, MIN 4)
+5.3.4 Constants
+The power service defines the following constants.
+5.3.4.1 PowerOnReason
+Description
+This table contains a mapping of the power on reasons to their numerical value. Refer to PIN 13 for product specific values and descriptions.
+Unknown  0
+External  1  (ST 9100 only)
+reserved  2
+reserved  3
+Timer  4
+reserved  5
+ResetButton  6  (ST 9100 only)
+Temperature 7  (ST 9100 only, battery shutdown)
+Syntax
+
+svc.power.PowerOnReason
+
+
+5.3.4.2 PowerOnReasonStr
+Description
+This table contains a mapping of the power on reason numerical values to their string representation. Refer to PIN 13 for product specific values and descriptions.
+0  Unknown
+1  External  (ST 9100 only)
+2  reserved
+3  reserved
+4  Timer
+5  reserved
+6  ResetButton  (ST 9100 only)
+7  Temperature  (ST 9100 only, battery shutdown)
+Syntax
+
+svc.power.PowerOnReasonStr
+5.3.4.3 ExtPowerState
+Description
+This table contains a mapping of the external power state to their numerical value:
+Disabled 0 Present 1 Absent 2 Both 3
+Syntax
+svc.power.ExtPowerState
+5.3.4.4 ExtPowerStateStr
+Description
+This table contains a mapping of the external power state numerical values to their string representation:
+0 Disabled 1 Present 2
+Absent 3 Both
+Syntax
+svc.power.ExtPowerStateStr
+
+
+5.3.5 Functions
+5.3.5.1 powerOff()
+Description
+This function powers off the terminal. If the powerOnDelay argument is missing or zero, the terminal is powered off until external power is physically reapplied to turn on the terminal. If the powerOnDelay parameter is nonzero, then power is restored after the specified number of minutes.
+Power off the terminal for a specified number of minutes. This results in a complete power off of the terminal, including the IsatData Pro modem. After the specified delay in minutes, the terminal powers back on (comes out of reset) and reregisters and restarts the LSF framework. The powerOnReason property indicates a reason of Timer.
+The minimum valid powerOnDelay is 60 minutes. The maximum allowed value is 525600 minutes.
+When the terminal is OFF, physical interaction, applying external power , is required to power it back on before the powerOffDelay expires.
+Syntax
+powerOff(powerOnDelay)
+Parameters
+powerOnDelay Minutes to power the terminal off for. Zero (0) minutes powers off the terminal indefinitely
+Blocking
+Yes
+Returns
+String Nil if success, or an error message if the command failed
+5.3.6 Posted Events
+5.3.6.1 External Power Alarm
+Description
+This event is posted when the external power status changes and matches the edge detect configuration.
+Source
+svc.power (power service table)
+Event
+�EXT_POWER_ALARM� (string)
+
+
+Arguments
+table  The alarm message, which is a table containing the following fields: extPowerPresent true if external power input is present reserved -
+externalVoltage  External power voltage in mV
+
+5.3.7 Firmware Events
+5.3.7.1 External Power
+Description
+This event is posted when the external power status changes.
+Source
+�_POWER� (string)
+Event
+�EXTERNAL� (string)
+Arguments
+boolean true if external power is present, false otherwise
+5.3.7.2 Shutdown Pending
+Description
+This event is posted when the terminal is about to be powered off.
+Source
+�_POWER� (string)
+Event
+�SHUTDOWN_PENDING� (string)
+Arguments
+None
+5.4 Message (SIN 18)
+The message service is responsible for making sure that any incoming messages are routed to the appropriate service, and that outgoing messages are sent over the appropriate transport, and in the appropriate format.
+The message service keeps all messages that are awaiting transmission in a queue. This queue is limited to a maximum size of 100 pending messages. The service also keeps track of the last five (5) messages that completed (whether by success, failure, timeout or cancellation). There is only one queue shared among all services and all message priorities; however the priority mechanism is used by the transmitting device and not by the terminal. Finally, this queue is only stored in volatile storage. On a terminal reset, or power cycle, all messages that were in the queue are gone; however messages that were already passed to the transmitting terminals may still go out.
+
+
+The send() and sendRaw() functions allow you to queue up to 30 messages per minute in order to protect the Gateway from a high rate of cellular messages.
+The ip service (SIN 33) exposes a plugin to the message service. This allows the message service to route messages to this transport, based on a user-supplied preference list.
+The cell transport provides a buffer for from-mobile messages; up to two transmit messages can be in progress at any given time when using JSON, but only one transmit message at a time when using MTBP. It is therefore dependent on the message service's queuing ability to keep track of any further messages to be sent.
+Synchronized Transmissions
+It is important to design IsatData Pro applications so that they avoid synchronizing transmissions to or from multiple terminals, as this may result in excessive message segment loss and retransmission due to collisions in the from-mobile traffic channel or excessive queuing delays in the to-mobile traffic channel. For example, terminals should not be configured so that they all transmit at the start of an hour. If the application requires synchronized transmissions please contact Customer Support to discuss a solution.
+5.4.1 Multiple Transports (ST 9100)
+The following set of rules defines how messages are handled:
+�
+If only one transport is defined for a message, the only timeout value used is the lifetime of the message.
+�
+When a transport is busy, the message service does not move on to the next one. Subsequent attempts are automatically scheduled according to the retryInterval and retryMultiplier properties, until the timeout for that transport elapses, or the message is accepted for transmission.
+�
+Upon timeout on the current transport, the message service attempts to cancel the message transmission; this may or may not be possible, and can result in duplicate messages being delivered.
+�
+Upon timeout on the current transport, or when it reports a message delivery failure, the message service moves on to the next transport in the list.
+�
+After timing out or failing on the last transport in the list, the message service starts over at the beginning of the list, if the retry property, or message option, is set to true; the retryInterval and retryMultiplier properties are used to schedule subsequent attempts.
+�
+Messages are given to, and received from, the transport plugins in binary encoded format. It is up to the plugins to convert the message to their required format prior to transmission, and from this format back to binary when receiving messages.
+5.4.2 Properties
+
+
+
+
+
+
+
+
+
+
+5.4.3 To-Mobile Messages
+
+MIN Name Description
+1 getStatus
+Request the current status for multiple messages. Note that the terminal has a queue depth of 20 for pending messages, and 5 for completed messages. A msgStatus
+message is generated in response.
+2 cancel
+Cancel a pending message 3, 4 reserved .5 getInstance
+Retrieves a message instance 6 deleteInstance
+Removes a message instance 7 getKeys
+Retrieves a list of keys from a message store 10 setOverrideInstance Reserved 11 setOverrides
+This message is used to create or modify per-MIN from-mobile message option overrides for one
+or more MINs for a specific SIN.
+12 getOverriddenMins
+This message is used to request the SINs and MINs of messages with option overrides. The overriddenMins
+from-mobile message is sent in response.
+13 getOverrides
+This message is used to request the current per-MIN from-mobile message option overrides from-
+mobile message.
+14 deleteOverrides
+This message is used to delete one or more per-MIN from-mobile message option overrides.
+15
+deleteAllOverrides
+
+This message is used to delete all per-MIN from-mobile message option overrides.
+5.4.3.1 getStatus (SIN 18, MIN 1)
+
+5.4.3.2 cancel (SIN 18, MIN 2) 5.4.3.3 getInstance(SIN 18, MIN 5)
+Name  Type  Optional  Size  Comments
+refNo  Unsigned  No  16 bits  Specifies the reference number of a single message that is to be cancelled. This operation removes the message from the terminal's queue. The same is attempted with the modem but may not be possible if the message is already transmitting.
+
+
+
+
+5.4.3.4 deleteInstance (SIN 18, MIN 6)
+
+5.4.3.5 getKeys (SIN 18, MIN 7)
+
+5.4.3.6 setOverrideInstance (SIN 18, MIN 10)
+This message is reserved.
+5.4.3.7 setOverrides (SIN 18, MIN 11)
+If an option field is present, an override is set (and any existing override is replaced). If an option field is absent, no override is set (and any existing override is removed).
+
+
+Name Type Optional Field Size Comments
+sin Unsigned No 8 bits The SIN identifying the message option overrides to set
+
+
+
+
+
+overrides Unsigned No 255 bits Lists the message option overrides. min Unsigned No 8 bits Specifies the MIN of the message. log Boolean Yes n/a log override value to use when options.log is not specified for a
+
+
+
+
+
+
+message with SIN and MIN corresponding to sin and min. If this field and options.log are absent, then svc.message.properties.log is used. send
+
+
+
+
+
+
+
+
+Boolean Yes n/a
+send override value to use when options.send is not specified for a message with SIN and MIN corresponding to sin and min.
+If this field and options.send are absent, then svc.message.properties.send is used.
+
+
+Name  Type  Optional  Field Size  Comments
+transports override value to use when options.transports is not specified for a message with SIN and MIN corresponding to sin and min.
+If this field and options.transports are absent, the message uses the transport(s) and timeout(s) configured in PINs 5-20.
+Transport number.
+1 � SatOnly 2 � CellOnly
+Specifies the amount of time in minutes, to wait before giving up transmitting on the transport specified by number and moving on to the next one. Not used if only one transport/timeout pair is specified.
+Valid range is 1-60.
+priority override value from 1 (highest) to 4 to use when options.priority is not specified for a message with SIN and MIN corresponding to sin and min.
+If this field and options.priority are absent, then svc.message.properties.priority is used.
+lifetime override value (in minutes) to use when options.lifetime is not specified for a message this SIN and MIN corresponding to sin and min.
+If this field and options.lifetime are absent, then svc.message.properties.lifetime is used.
+persistent override value to use when options.persistent is not specified for a message with SIN and MIN corresponding to sin and min.
+If this field and options.persistent are absent, then svc.message.properties.persistent is used.
+duplicate override value to use when options.duplicate is not specified for a message with SIN and MIN corresponding to sin and min.
+If neither options.duplicate nor a duplicate override value exist, then the default is Allow.
+0 � Allow 1 � Replace 2 � Extend 3 � ReplaceOldest
+dispersion override value (in minutes) to use when options.dispersion is not specified for a message with SIN and MIN corresponding to key.
+If this field and options.dispersion are absent, then no dispersion delay is used.
+retry  Boolean  Yes  n/a  retry override value to use when options.retry is not specified for a message with SIN and MIN corresponding to key.
+If this field and options.retry are absent, then svc.message.properties.retry is used.
+
+
+
+
+
+
+
+Name Type Optional Field Size Comments
+retryInterval Unsigned Yes 12 bits retryInterval override value (in minutes) to use when options.retryInterval is not specified for a message with SIN and MIN corresponding to key.
+If this field and options.retryInterval are absent, then no svc.message.properties.retryInterval is used. retryMultiplier
+
+
+Unsigned
+
+Yes
+
+3 bits
+
+retryMultiplier override value (in minutes) to use when options.retryMultiplier is not specified for a message with SIN and MIN corresponding to key.
+
+If this field and options.retryMultiplier are absent, then no svc.message.properties.retryMultiplier is used.
+5.4.3.8 getOverriddenMins (SIN 18, MIN 12)
+5.4.3.9 getOverrides (SIN 18, MIN 13)
+
+5.4.3.10 deleteOverrides (SIN 18, MIN 14)
+
+5.4.3.11 deleteAllOverrides (SIN 18, MIN 15)
+
+5.4.4 From-Mobile Messages 5.4.4.1 custom (SIN 18, MIN 1)
+
+
+
+
+
+5.4.4.2 msgStatus (SIN 18, MIN 2)
+
+
+
+
+5.4.4.3 msgInvalid (SIN 18, MIN 3)
+This message is sent when no definition exists for a received message (only core service), or a message cannot be decoded properly when a definition does exist (all services). It is also sent by default in response to messages received with an invalid SIN; this behavior can be overridden by providing an invalid SIN message handler.
+
+5.4.4.4 msgError (SIN 18, MIN 4)
+This message is sent by a service when it cannot process a received message, due to lack of resources, being busy, or an invalid combination of field values.
+
+
+
+5.4.4.5 instance (SIN 18, MIN 5)
+
+5.4.4.6 deleteResult (SIN 18, MIN 6)
+
+5.4.4.7 keys (SIN 18, MIN 7)
+
+5.4.4.8 overriddenMins (SIN 18, MIN 12)
+
+5.4.4.9 overriddes (SIN 18, MIN 13)
+
+Name Type Optional Field Size Comments
+sin Unsigned No 8 bits Specifies the SIN of the message.
+Only SINs with message option overrides are included.
+overrides Unsigned No 255 bits Lists the per MIN overrides.
+Only MINs with message option overrides are included.
+min Unsigned No 8 bits Specifies the MIN of the message.
+log Boolean Yes n/a The log override value (see setOverrides).
+Only present if this value has been configured.
+send Boolean Yes n/a The send override value (see setOverrides). Only present if this value has been configured.
+
+
+
+5.4.5 Constants
+5.4.5.1 MsgDuplicate
+Description
+This table maps duplicate message handling actions to their numerical values. It has the following fields:
+Allow  0
+Replace  1
+Extend  2
+ReplaceOldest  3
+Syntax
+
+svc.messageMsgDuplicate
+
+
+5.4.5.2 MsgDuplicateStr
+Description
+This table does the reverse of MsgDuplicate. It maps numerical values back to the string value. It has the following
+fields:
+0 1 2 3  Allow Replace Extend ReplaceOldest
+Syntax
+
+svc.message.MsgDuplicateStr
+5.4.5.3 MsgStatus
+Description
+This table contains a mapping of the message status to their numerical value.
+Invalid 0 In_progress 1 Cancelled 2 Success 3 Failure 4 Timeout 5 Corrupted 6 Delayed 7
+Syntax
+svc.message.MsgStatus
+5.4.5.4 MsgStatusStr
+Description
+This table contains a mapping of the message status numerical values to their string representation.
+0 Invalid 1 In_progress 2
+Cancelled
+3
+Success
+4
+Failure
+5
+Timeout
+6
+Corrupted
+7
+Delayed
+
+
+Syntax
+svc.message.MsgStatusStr
+5.4.6 Functions
+5.4.6.1 allInstances()
+Description
+An iterator for all message instances in a store.
+Syntax
+svc.message.alltInstances(sin, min)
+Parameters  sin min  The SIN identifying the message instance to retrieve. The MIN identifying the message instance to retrieve.
+Blocking No
+Returns  function  The iterator
+Example
+
+for instance in allInstances(mySIN, myMIN) do process(instance)
+end
+5.4.6.2 deleteInstance()
+Description
+Remove a message from the message store.
+Syntax
+svc.message.deleteInstance(sin, min, key)
+Parameters
+sin The SIN identifying the message instance to remove. min The MIN identifying the message instance to remove. key If present, identifies which instance to remove. If absent, all instances are removed. This is
+ignored for single-instance messages.
+
+
+Blocking
+No
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error.
+5.4.6.3 getInstance()
+Description
+Retrieve a message from the message store.
+Syntax
+svc.message.getInstance(sin, min, key)
+Parameters
+sin min key  The SIN identifying the message instance to retrieve. The MIN identifying the message instance to retrieve. If present, identifies which instance to retrieve. For single-instance messages, the key is ignored if present. For multi-instance messages, they key must be present.
+Blocking No
+Returns
+table string  The retrieved message, or nil in case of error. In the case of failure, a description of the error.
+
+5.4.6.4 getOverrides()
+Description
+Get the current per-MIN from-mobile message options overrides.
+Syntax
+svc.message.getOverrides(mins, sin)
+Parameters
+mins Optional single MIN, or table (list) of MINs whose overrides are to be retrieved, overrides are returned for all MINs if nil
+sin Optional SIN of the target service. If nil the caller�s SIN is used
+Blocking
+No
+
+
+Returns
+table  A list table containing tables indexed by MIN, each containing the following optional
+fields; or nil if no overridden MINs exist for the specified SIN; or nil and an error string
+if an error
+log  In the case of failure, a description of the error.
+send  Boolean to indicate whether to send the message.
+transports  An array of (transport number, transport timeout) pairs.
+priority  The message priority (1-4).
+lifetime  The lifetime of the message in minutes (1-2103840).
+duplicate  Action to take if another message with the same MIN is already queued: can be one of
+Allow,
+Replace
+or
+Extend
+(see
+svc.message.MsgDuplicate).
+The
+default
+is
+Allow.
+
+persistent  Boolean to indicate if the message is persistent.
+dispersion  The maximum amount of time (in minutes) to delay the message. The mobile ID is used
+to calculate the actual delay.
+retry  Boolean to indicate whether to retry the message.
+retryInterval  The base interval (in seconds) between retry attempts.
+retryMultiplier  The multiplier to use on the retryInterval for every attempt after the first lifetime.
+5.4.6.5 getKeys()
+Description
+
+Retrieve a list of all keys that are currently present in the message store.
+Syntax
+svc.message.getKeys(sin, min)
+Parameters
+sin The SIN identifying the message store. min The MIN identifying the message store.
+Blocking
+No
+Returns
+table A list of all keys; empty if there are no instances, if the SIN and/or MIN are invalid or the message is a single-instance one.
+5.4.6.6 invalidSinHandler()
+Description
+Install a handler to process incoming messages with an invalid SIN. If no function is provided, use the default handler, which sends an msgInvalid message.
+
+
+Syntax
+svc.message.invalidSinHandler(func)
+Parameters
+func  The function that is being installed to process messages with an invalid SIN. The function is given a string (byte array) representing the message as its sole argument
+Blocking No
+Returns None
+
+5.4.6.7 register()
+Description
+Registers a service for receiving and sending messages.
+Syntax
+svc.message.register(sin)
+Parameters
+sin The Service Identification Number (SIN) of the service being registered
+Blocking
+No
+Returns
+handle A handle to used to access message service functionality, or nil if the particular SIN value has already been registered
+5.4.6.8 setInstance()
+Description
+Add a message to the message store. The message is assumed to be a to-mobile message
+Syntax
+svc.message.setInstance(msg)
+Parameters
+msg The message to add. It must be a table with the following fields: sin The SIN of the message
+
+
+min The MIN of the message fields A table containing the message fields, in the form �<field name> = <value>�.
+Blocking No
+Returns
+string  In the case of failure, a description of the error.
+
+5.4.7 Message Handle Methods
+The register()
+function returns a handle that defines the following functions:
+5.4.7.1 cancel()
+Description
+Cancels transmission of a queued message. If message transmission has begun on the satellite modem, the message may still be delivered.
+Syntax
+<handle>:cancel(id)
+Parameters
+id The message�s reference number, which was returned by a previous call to send()
+or
+sendRaw()
+
+Blocking
+No
+Returns
+string An error message in the case of a failure, or nil if successful
+5.4.7.2 getList()
+Description
+Retrieves a list of the service�s specified messages currently in the queue.
+Syntax
+<handle>:getList(min)
+Parameters
+min Optional MIN to look for; if not specified, retrieves all of the service's messages
+Blocking
+No
+
+
+Returns
+table An array of tables, each containing the following fields; the table can be empty if there are no messages, or nil if the handle is invalid: id The identification number of the message min The MIN of the current message time A timestamp from when the message was queued transport The transport the message is currently transmitting on, or 0 if in a retry delay attempt The number of the current attempt scheduled A timestamp for when the message is scheduled to start transmitting. This is the same as the time field if the message was not flagged for dispersion.
+5.4.7.3 msgError()
+Description
+Send out an error response for a received message.
+Syntax
+<handle>:msgError(min, desc)
+Parameters
+min The MIN of the message that caused the error desc A string describing the error
+Blocking
+No
+Returns
+number A reference number for the queued error message, or 0 if there was a problem string An error message if there is a problem queuing the error message, or nil
+5.4.7.4 reply()
+Description
+Queue a formatted message to be sent over-the-air and/or logged in response to a request. This function allows you to queue up to 30 messages per minute.
+The options parameter allows you to override the default parameters for the message as defined by the service properties. The num parameter specifies the transport on which the original request was received; it is only used if the replyOnSameTransport (PIN 25) property is set to true and the options table does not contain a list of specific transports to use.
+Syntax
+<handle>:reply(min, num, fields, options)
+
+
+Parameters
+min num fields options
+Blocking
+No
+Returns
+number string
+Default Options
+priority send log retry lifetime transports
+retryInterval retryMultiplier duplicate persistent dispersion
+The MIN of the message to send The transport number the request was received on A table containing the message fields and their values A table that may contain any of the following options: priority The message priority (1-4) send Boolean to indicate whether to send the message log Boolean to indicate whether to log the message retry Boolean to indicate whether to retry the message lifetime The lifetime value (1-2103840) transports An array of (transport number, transport timeout) pairs that override the property
+values, also overrides the num parameter
+retryInterval The base interval (in seconds) between retry attempts
+retryMultiplier The multiplier to use on the retryInterval for every attempt after the first
+duplicate Action to take if another message with the same MIN is already queued. Can be
+one of Allow, Replace or Extend. The default is Allow.
+persistent Boolean to indicate whether to save the message in flash
+dispersion The maximum amount of time (in minutes) to delay the message. The mobile ID is used to calculate the actual delay; this is useful when a number of terminals send messages at a fixed time to ensure they do not all transmit at exactly the same time.
+A reference number for the queued message, or 0 if there was a problem An error message if there is a problem queuing the message, or nil
+priority property (PIN 1) true log property (PIN 4) retry property (PIN 2) lifetime property (PIN 3) num parameter if the replyOnSameTransport property is true; transport and timeout service
+properties otherwise retryInteval property (PIN 22) retryMultiplier property (PIN 23) Allow false 0 (no delay)
+
+
+5.4.7.5 send()
+Description
+Queue a formatted message to be sent over-the-air and/or logged. This function allows you to queue up to 30 messages per minute. You can override the default parameters for the message as defined by the service properties.
+Note: It is important to design IsatData Pro applications so that they avoid synchronizing transmissions to or from multiple terminals, as this may result in excessive message segment loss and retransmission due to collisions in the from-mobile traffic channel or excessive queuing delays in the to-mobile traffic channel. For example, terminals should not be configured so that they all transmit at the start of an hour. If the application requires synchronized transmissions, use the dispersion option judiciously.
+Syntax
+<handle>:send(min, fields, options)
+Parameters
+min fields options  The MIN of the message to send A table containing the message fields and their values A table that may contain any of the following options: priority The message priority (1-4) send Boolean to indicate whether to send the message log Boolean to indicate whether to log the message retry Boolean to indicate whether to retry the message lifetime The lifetime value (1-2103840) transports An array of (transport number, transport timeout) pairs that override the property values
+retryInterval retryMultiplier duplicate persistent dispersion  The base interval (in seconds) between retry attempts The multiplier to use on the retryInterval for every attempt after the first lifetime Action to take if another message with the same MIN is already queued. Can be one of Allow, Replace or Extend. The default is Allow. Boolean to indicate whether to save the message in flash The maximum amount of time (in minutes) to delay the message. The mobile ID is used to calculate the actual delay; this is useful when a number of terminals send messages at a fixed time to ensure they do not all transmit at exactly the same time.
+Blocking
+No
+Returns
+number string  A reference number for the queued message, or 0 if there was a problem An error message if there is a problem queuing the message, or nil
+
+
+
+Default Options
+priority  priority property (PIN 1)
+send  true
+log  log property (PIN 4)
+retry  retry property (PIN 2)
+lifetime  lifetime property (PIN 3)
+transports  transport and timeout service properties
+retryInterval  retryInteval property (PIN 22)
+retryMultiplier  retryMultiplier property (PIN 23)
+duplicate  Allow
+persistent  false
+dispersion  0 (no delay)
+Example
+
+Attempts to send a message with MIN 1 over cellular (satellite-cellular terminals) first, with a timeout of 2 minutes, then over satellite, with a timeout of 10 minutes.
+msgHdl:send(1, myFields, {transports={{2, 2}, {1, 10}}})
+5.4.7.6 sendRaw()
+Description
+Queue a raw (binary) message to be sent over-the-air and/or logged. This function allows you to queue up to 30 messages per minute. The specified MIN must not be defined. This option allows you to override the default parameters for the message as defined by the service properties.
+Note: Raw messages are supported only over satellite; they are not supported over MTWS.
+To send binary data, use send() rather than sendRaw() and define a message that contains a single field of type data. The binary data is received as a base64 encoded string over satellite and cellular.
+Syntax
+<handle>:sendRaw(min, data, options)
+Parameters
+min The MIN of the raw message to send data The message payload as a string options A table that may contain any of the following options:
+priority The message priority (1-4) send Boolean to indicate whether to send the message log Boolean to indicate whether to log the message retry Boolean to indicate whether to retry the message lifetime The lifetime value (1-2103840)
+
+
+Blocking
+No
+Returns
+number string
+Default Options
+priority send log retry lifetime transports retryInterval retryMultiplier duplicate persistent dispersion
+transports An array of (transport number, transport timeout) pairs that override the property values
+retryInterval The base interval (in seconds) between retry attempts
+retryMultiplier The multiplier to use on the retryInterval for every attempt after the first lifetime
+duplicate Action to take if another message with the same MIN is already queued. Can be one of Allow, Replace or Extend. The default is Allow.
+persistent Boolean to indicate whether to save the message in flash
+dispersion The maximum amount of time (in minutes) to delay the message. The mobile ID is used to calculate the actual delay; this is useful when a number of terminals send messages at a fixed time to ensure they do not all transmit at exactly the same time.
+A reference number for the queued message, or 0 if there was a problem An error message if there is a problem queuing the message, or nil
+priority property (PIN 1)
+true
+log property (PIN 4)
+retry property (PIN 2)
+lifetime property (PIN 3)
+transport and timeout service properties
+retryInteval property (PIN 22)
+retryMultiplier property (PIN 23)
+Allow
+false
+0 (no delay)
+5.4.8 Posted Events
+5.4.8.1 All Overrides Deleted
+Description
+This event is sent when all the per-MIN from-mobile message option overrides are deleted.
+Source
+svc.message
+Event
+�ALL_OVERRIDES_DELETED� (string)
+
+
+Arguments
+None
+5.4.8.2 Instance Added
+Description
+This event is sent whenever a message instance has been added to the message store
+Source
+The handle that was returned by the call to register()
+Event
+�INSTANCE_ADDED� (string)
+Arguments
+table  A table containing the following fields:
+min  The MIN identifying the message store
+key  A key identifying the specific message instance (nil for a single-instance message)
+
+5.4.8.3 Instance Cleared
+Description
+This event is sent whenever a message store is cleared.
+Source
+The handle that was returned by the call to register()
+Event
+�INSTANCE_CLEARED� (string)
+Arguments
+table A table containing the following fields: min The MIN identifying the message store
+5.4.8.4 Instance Deleted
+Description
+This event is sent whenever a message instance has been deleted from the message store.
+Source
+The handle that was returned by the call to register()
+
+
+Event
+�INSTANCE_DELETED� (string)
+Arguments
+table  A table containing the following fields:
+min  The MIN identifying the message store
+key  A key identifying the specific message instance (nil for a single-instance message)
+
+5.4.8.5 Message Status
+Description
+This event is sent whenever a message changes state, whether is succeeds or fails.
+Source
+The handle that was returned by the call to register()
+Event
+�TX_STATUS� (string)
+Arguments
+table A table containing the following fields: id The message's reference number status The completion status, which is one of:
+svc.message.MsgStatus.Cancelled (2) svc.message.MsgStatus.Success (3) svc.message.MsgStatus.Failure (4) svc.message.MsgStatus.Timeout (5) svc.message.MsgStatus.Corrupted (6)
+transport The transport the message was delivered on, or was last attempted on in the case of a failure msg A copy of the original message, in encoded format. If a Lua version of the message is required, the application can call svcmgr.decodeMsg().
+5.4.8.6 Message Service Ready
+Description
+Alerts interested parties that the message service is ready to receive messages.
+Source
+Event send by the message service
+Event
+�MSG_SVC_READY� (string)
+
+
+Arguments
+None
+5.4.8.7 New Decoded Message
+Description
+This event is posted when a new decoded to-mobile message is available.
+Source
+The handle that was returned by the call to register()
+Event
+�RX_DECODED� (string)
+Arguments
+table  A table contmin transport fields  aining the following fields: Integer MIN of the message Transport the message was received on A table of the message fields and their values
+
+5.4.8.8 New Raw Message
+Description
+This event is posted when a new raw to-mobile message is available. The event is sent when a message comes in for a user service and a MIN that is not defined.
+Source
+Handle that was returned by the call to register()
+Event
+�RX_RAW� (string)
+Arguments
+table The raw message, which is a table containing the following fields: min Integer MIN of the message transport Transport the message was received on payload The message payload, as a string (byte array)
+5.4.8.9 Overrides Changed
+Description
+This event is sent when the per-MIN from-mobile message option overrides for one or more from-mobile messages are added or modified.
+
+
+Source
+svc.message
+Event
+�OVERRIDES_CHANGED� (string)
+Arguments
+sin The SIN. minList An array list of MINs, whose overrides have been added and/or modified for the SIN.
+5.4.8.10 Overrides Deleted
+Description
+This event is sent when the per-MIN from-mobile message option overrides for one or more from-mobile messages are deleted.
+Source
+svc.message
+Event
+�OVERRIDES_DELETED� (string)
+Arguments
+sin The SIN. minList An array list of MINs, whose overrides have been deleted for the SIN.
+5.4.8.11 Queue Blockage
+Description
+This event is posted when a message remains unsent in the queue for too long, or when a previous blockage condition clears (for example, a message is finally successfully transmitted).
+Source
+svc.message (message service table)
+Event
+�QUEUE_BLOCKAGE� (string)
+Arguments
+table A table containing the following fields: blocked A Boolean indicating whether blockage was detected (true) or cleared (false) lsfUptime The LSF uptime at event generation time The time (in seconds since the epoch) at event generation, or 0 if not available
+
+
+5.5 Report (SIN 19)
+The report service sends out report messages, consisting of properties from various services, either on-demand, or following preconfigured schedules.
+5.5.1 Properties
+The SIN and MIN properties for each of the four reports must specify a valid return message format, which must contain only PROPERTY fields. If these conditions are not met, the reports are not generated properly.
+For example, setting report1SIN to 19 and report1MIN to 1 selects simpleReport
+as the message format; because it contains only PROPERTY fields, the report is generated properly. However, setting report1SIN to 19 and report1MIN to 6 can cause errors, because there is no return MIN 6 for the report service. And setting report1SIN to 18 and report1MIN to 2 selects msgStatus
+as the message format; because that message contains fields that are not of type PROPERTY, the report fails.
+
+
+
+
+
+
+
+
+
+
+
+Description Type Storage Default Value Class
+29 logRequests Controls whether reports that are manually requested Boolean Config false should be logged.
+40 maxAge1 The maximum age value (in seconds) to use if a GPS Config 0 fix request is required to send report 1. Setting this to 0 automatically uses half the interval value. Any value greater than 600 is automatically replaced with 600, as that is the largest maximum age value the modem supports.
+
+
+41 timeout1 The timeout value (in seconds) to use if a GPS fix Config 180 request is required to send report 1. If this value is greater than the interval, then the interval is used instead.
+
+
+
+42 maxAge2 The maximum age value (in seconds) to use if a GPS Config 0 fix request is required to send report 2. Setting this to 0 automatically uses half the interval value. Any value greater than 600 is automatically replaced with 600, as that is the largest maximum age value the modem supports.
+
+
+43 timeout2 The timeout value (in seconds) to use if a GPS fix Config 180 request is required to send report 2. If this value is greater than the interval, then the interval is used instead.
+
+
+
+44 maxAge3 The maximum age value (in seconds) to use if a GPS Config 0 fix request is required to send report 3. Setting this to 0 automatically uses half the interval value. Any value greater than 600 is automatically replaced with 600, as that is the largest maximum age value the modem supports.
+
+
+45 timeout3 The timeout value (in seconds) to use if a GPS fix Config 180 request is required to send report 3. If this value is greater than the interval, then the interval is used instead.
+
+
+
+46 maxAge4 The maximum age value (in seconds) to use if a GPS Config 0 fix request is required to send report 4. Setting this to 0 automatically uses half the interval value. Any value greater than 600 is automatically replaced with 600, as that is the largest maximum age value the modem supports. 47 timeout4 The timeout value (in seconds) to use if a GPS fix
+
+
+Config
+180 request is required to send report 4. If this value is greater than the interval, then the interval is used instead.
+
+
+
+
+Unsigned Minimum � 1 Maximum � 180
+5.5.2 To-Mobile Messages 5.5.2.1 generateReport (SIN 19, MIN 1)
+
+
+
+Name  Type
+ Comments
+reportSIN
+
+ The SIN of the report to send (16-255)
+reportMIN
+
+ The MIN of the report to send (1-255)
+reserved
+
+ -
+priority  An optional priority for the message. If not specified, uses the priority property of
+the message service.
+retry  An optional retry flag for the message. If not specified, uses the retry property of
+the message service.
+lifetime  An optional lifetime for the message. If not specified, uses the lifetime property
+of the message service.
+send
+
+ An optional send flag for the message. If not specified, the default value is true.
+log  An optional log flag for the message. If not specified, uses the log property of the
+message service.
+maxAge  The maximum age value (in seconds) to use if a GPS fix request is required to
+send the report. If omitted, or set to 0, 60 seconds is used. Any value greater than
+600 is automatically replaced with 600, as that is the largest maximum age value
+the modem supports.
+timeout  Unsigned  Yes  8 bits  The timeout value (in seconds) to use if a GPS fix request is required to send the
+report. If omitted, or set to 0, 180 seconds is used.
+
+
+5.5.3 From-Mobile Messages
+The service predefines four reports. Additional custom report formats can be defined.
+
+5.5.3.1 simpleReport (SIN 19, MIN 1) 5.5.3.2 fullReport (SIN 19, MIN 2)
+
+
+
+
+5.5.3.3 eioReport (SIN 19, MIN 3) 5.5.3.4 noEIO (SIN 19, MIN 4)
+
+
+
+
+Name Type Optional Size SIN PIN
+fixValid 2 (fixValid) fixType 3 (fixType) latitude 6 (latitude_mm) longitude 7 (longitude_mm) speed 9 (speed) heading 10 (heading) altitude 8 (altitude) fixTime 11 (fixTime) DTEConnect Property No n/a 22 (serial)
+7 (rs232mainDTEIsConnected)
+
+
+
+
+
+
+5.5.4 Functions
+5.5.4.1 sendReport()
+Description
+Send a report immediately. This operation does not affect the schedule for any of the periodic reports.
+Syntax
+svc.report.sendReport(sin, min, opt, maxAge, timeout, wait)
+Parameters
+sin  The SIN of the report to send
+min  The MIN of the report to send
+opt  The options for sending the message (see the send() message handle method)
+maxAge  The maximum age for the fix request, if the message contains data from the position service
+(default: 60)
+timeout  The timeout for the fix request, if the message contains data from the position service (default:
+180)
+wait  Whether to wait for the message to be queued (default: false)
+Blocking
+
+Yes, if wait is set to true
+Returns
+string An error message if a failure occurs, or nil otherwise. NOTE: If wait is false, the return value does not reflect any queuing errors, for example, queue full.
+5.5.5 Posted Events
+This service does not currently generate any events.
+
+
+5.6 Position (SIN 20)
+The position service is responsible for providing position information. It includes position-based accelerometer capabilities.
+5.6.1 Properties
+
+
+
+Description Type Storage Default Class Value
+13 GPS
+14
+GPS
+15 0
+16 Unknown 17
+
+jammingFlag GPS jamming detection flag. Available on Boolean Volatile
+false modem hardware number 4 or higher. This is reported only for control word.

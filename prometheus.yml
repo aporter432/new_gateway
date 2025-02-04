@@ -1,0 +1,42 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'new_gateway'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['app:8000']
+    scrape_interval: 5s
+
+  - job_name: 'gateway_node'
+    static_configs:
+      - targets: ['app:8000']
+    metrics_path: '/metrics/gateway'
+    scrape_interval: 10s
+
+  - job_name: 'device_metrics'
+    static_configs:
+      - targets: ['app:8000']
+    metrics_path: '/metrics/devices'
+    scrape_interval: 30s
+
+  - job_name: 'message_metrics'
+    static_configs:
+      - targets: ['app:8000']
+    metrics_path: '/metrics/messages'
+    scrape_interval: 15s

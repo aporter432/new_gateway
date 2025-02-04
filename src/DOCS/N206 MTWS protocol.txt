@@ -1,0 +1,453 @@
+
+IDP 700 Terminal Series
+IsatData Pro Cellular Protocol
+N206, Version 01
+The electronic version of this document allows you to use the built-in Hyperlinks and bookmarks when using Adobe Reader
+© SkyWave Mobile Communications Inc.
+Mar 2013
+
+Legal Notice
+This documentation is owned by SkyWave Mobile Communications Inc. (SkyWave) and protected by applicable copyright laws and international treaty provisions. Other copyrighted names used are the property of their respective owners. Therefore, you must treat this documentation like any other copyrighted material. You may not make the documentation, or copies thereof, available in any manner or form, or use, copy or transfer any part, to anyone outside your company.
+If you received this documentation by electronic transmission or download, by installation or use of the documentation, you acknowledge that you have read and understand this license agreement and agree to be bound by its terms and conditions.
+This documentation is provided on an as-is basis without any warranty of any kind. You assume the entire risk as to the results or performance of the software. Under no circumstance shall SkyWave be held liable for any direct, indirect, consequential, or incidental damages arising from the use or inability to use the software or documentation.
+All trademarks or registered trademarks are the property of their respective owners. INMARSAT, the Inmarsat logo and IsatData Pro are trademarks of Inmarsat used under license by SkyWave. Inmarsat is not responsible for the operation and regulatory compliance of the products and services referred to in this document that connect to the Inmarsat system.
+SkyWave reserves the right to make changes to products and or specifications without notice.
+From support.skywave.com login and follow the link to the downloads section. The complete Software and Documentation License Agreement is distributed as a part of the IDP Developer Toolkit.
+
+Contact Information
+SkyWave Mobile Communications Inc.
+Online:
+. Website www.SkyWave.com
+Online Documentation:
+. Login at support.skywave.com and follow the link to the downloads section
+Customer Support by Email:
+. support@skywave.com
+Customer Support by Telephone:
+. +1.613.836.2222
+
+
+TABLE OF CONTENTS
+Legal Notice.................................................................................................................................... ii
+Contact Information...................................................................................................................... ii
+List of Figures ............................................................................................................................... iv
+Preface ............................................................................................................................................ v
+Purpose ......................................................................................................................................... v Audience....................................................................................................................................... v Reference ...................................................................................................................................... v Limited Liability........................................................................................................................... v
+1 Product Overview ............................................................................................................... 1
+1.1 Web Service Interface ........................................................................................................ 1
+1.1.1 From-Mobile Data (Return Messages) ............................................................................ 2
+1.1.2 To-Mobile Data (Forward Messages).............................................................................. 2
+2 Protocol Description ........................................................................................................... 3
+2.1 From-Mobile Data.............................................................................................................. 3
+2.1.1 Example: Send GPS Data simpleReport.......................................................................... 3
+2.2 To-Mobile Data .................................................................................................................. 4
+2.2.1 Example: Request Pending Messages (none pending) .................................................... 4
+2.2.2 Example: Request Pending Messages (generateReport pending).................................... 4
+2.2.3 Example: Typical System Operation ............................................................................... 5
+2.3 Dual-Mode Routing............................................................................................................ 7
+2.3.1 From-Mobile Data Routing ............................................................................................. 7
+2.3.2 To-Mobile Data Routing.................................................................................................. 7
+2.4 GPRS Data Structure.......................................................................................................... 7
+2.4.1 Common Message Structure............................................................................................ 7 2.4.2 Encoding.......................................................................................................................... 7
+2.4.3 GPRS Data Usage............................................................................................................ 8
+2.4.3.1 JSON Data Content Size ...................................................................................................... 9
+2.4.3.2 HTTP Header ......................................................................................................................10
+2.4.3.3 TCP/IP Protocol Overhead..................................................................................................10
+2.4.3.4 TCP Session and GPRS Rounding......................................................................................10
+2.4.3.5 Example GPRS Transaction Use Cases ..............................................................................10
+3 Sample C#.......................................................................................................................... 13
+3.1 Message Web Service ...................................................................................................... 13
+3.1.1 Common Message ......................................................................................................... 13
+3.1.2 Message Web Service Interface..................................................................................... 14
+3.1.3 Message Web Service Implementation.......................................................................... 14
+3.2 Use Messenger to Test the C# Web Service .................................................................... 15
+3.2.1 Set up the Web Service.................................................................................................. 15
+3.2.2 Set up Messenger........................................................................................................... 16
+3.2.3 Transmitting and Receiving........................................................................................... 17
+Revision History .......................................................................................................................... 21
+Acronyms/Glossary ..................................................................................................................... 22
+
+List of Figures
+Figure 1 Data Communications Overview................................................................................. 1 Figure 2 Post From-Mobile Message Sequence Diagram (simpleReport) ................................ 3 Figure 3 Get To-Mobile Message Sequence Diagram (none waiting) ...................................... 4 Figure 4 Get To-Mobile Message Sequence Diagram (generateReport)................................... 5 Figure 5 60 Minutes Periodic Report......................................................................................... 6 Figure 6 Common Message Structure........................................................................................ 7 Figure 7 Project File................................................................................................................. 15 Figure 8 System Message ........................................................................................................ 16 Figure 9 GPRS Menu............................................................................................................... 16 Figure 10 Web Service Test....................................................................................................... 16 Figure 11 To-Mobile Message................................................................................................... 17 Figure 12 From-Mobile Message............................................................................................... 18 Figure 13 Microsoft Visual Studio Output Tab ......................................................................... 18
+
+
+
+Preface
+Purpose
+This document is as an overview of the protocol between the IDP 700 terminal series cellular modem and the IsatData Pro messaging server.
+
+Audience
+This document is for software developers and their managers. It provides information to help them develop software that interfaces with IsatData Pro.
+
+Reference
+The content of the following documents may be useful in conjunction with this guide. These documents are available from the IDP Developer Toolkit or support.skywave.com.
+[N200]  IsatData Pro Network Services Overview
+[N201]  IsatData Pro Gateway Web Service User Guide
+[T204]  IDP Terminal User Guide
+[T205]  IDP Terminal Programmer Guide
+[T208]  IDP 700 Terminal Series API Reference Guide
+
+
+Limited Liability
+SkyWave’s liability is limited to the cost of repair or replacement of any of SkyWave’s
+products during the warranty period. In no event will SkyWave be responsible for incidental, special, consequential, indirect or similar damages associated with product application and usages. SkyWave’s products are not suitable for life critical applications. SkyWave’s aggregate liability shallin no circumstances exceed the product’s original
+price paid by the Solution Provider to SkyWave and this limitation of liability is reasonable given the price of SkyWave’s products, which reflect reasonable risk allocation.
+
+THIS PAGE INTENTIONALLY LEFT BLANK
+
+
+
+Product Overview
+IDP 700 series terminals (mobile devices) from SkyWave provide dual-mode data communications using both satellite (IsatData Pro) and cellular (GPRS) networks. An IDP 700 series terminal can be configured to select the optimal available network for messages generated by the mobile, based on factors such as least-cost routing and redundancy. An application server (Solution Provider or SP application) can do similar network selection for messages destined for the mobile device.
+Figure 1 Data Communications Overview
+
+Satellite data transits the IsatData Pro gateway between the mobile device and the SP application using a web services interface defined by SkyWave and documented in [N201]. Cellular data transits directly between mobile devices and the SP application using a separate web services interface defined by SkyWave, as described in this document.
+1.1 Web Service Interface
+To support IDP 700 series terminals a user must develop a TCP client for satellite data, as well as a TCP server for GPRS data.
+The terminal acts as a TCP client when communicating via GPRS. The satellite gateway acts as a TCP server (almost more like a proxy) for communications via IsatData Pro.
+The data format used by customer applications in exchanging messages with the terminals is identical whether satellite or cellular is used: a web services interface using a JSON1 encoding and REST architectural style.
+Because of technological and historical differences between satellite and cellular network operation, there are important differences in how applications communicate using these networks. Basically on satellite the communications can be initiated by either the mobile or the server, whereas on GPRS the communications is always initiated by the mobile.
+Satellite nomenclature refers to from-mobile data as return and to-mobile data as forward. The GPRS protocol uses the return and forward nomenclature in its operations.
+1 The IsatData Pro satellite gateway also supports XML encoding using SOAP architecture.
+
+1.1.1 From-Mobile Data (Return Messages)
+On the satellite interface, from-mobile data is polled from the gateway by the SP's TCP client using the IsatData Pro Gateway Web Service (IGWS) protocol (get_return_messagesmethod [N201]).
+On the GPRS interface, from-mobile data is pushed to the SP's TCP server using the SubmitReturnmethod described below.
+
+1.1.2 To-Mobile Data (Forward Messages)
+Most cellular networks restrict data communications to be initiated by the mobile device; the customer application can never initiate communications. To accommodate this restriction, IDP 700 series terminals poll for to-mobile data.
+All to-mobile data to be sent via GPRS must be queued in the SP application, and may be delivered when polled by the terminal using the GetFowardmethod. This implies that the terminal must be configured to poll for data periodically (managed by properties of the GPRS core/Lua service defined in [T208]).
+Alternatively, to-mobile data can be submitted to the satellite gateway using the submit_messagesmethod [N201], and its status/progression updated using the get_forward_statusesmethod described later in this document.
+
+
+
+
+2 Protocol Description
+The GPRS web service provides the necessary functions to allow IDP 700 series terminals to send from-mobile data, and retrieve to-mobile data.
+2.1 From-Mobile Data
+The SubmitReturnweb method is used automatically by the TCP client to send a from-mobile message over GPRS. From-mobile messages are typically generated as a result of embedded logic on-board the terminal application processor.
+The mobile ID is specified in the URL and corresponds to the satellite modem serial number for correlation to satellite data for this terminal. Data content is sent using POST. The GPRS/TCP server returns True if the message was accepted, otherwise it returns False.
+URL  http://<server>/SubmitReturn/<mobile ID>
+Return value  Boolean (True = success)
+Argument 1  Mobile ID (specified in URL)
+Argument 2  Payload (POSTed as JSON encoded CommonMessage)
+
+2.1.1 Example: Send GPS Data simpleReport
+Figure 2 shows a typical application behavior sending GPS information from the terminal using the simpleReport content defined in [T208]. All examples use HTTP 1.0.
+Figure 2 Post From-Mobile Message Sequence Diagram (simpleReport)
+
+The to-mobile message with SIN 19 and MIN 1 (generateReport) is a message that requests the terminal to send a simple report. The terminal responds by posting the from-mobile message (simpleReport) back to the server.
+
+
+
+2.2 To-Mobile Data
+The GetForwardweb method is used by the terminal TCP client to request pending to-mobile data from the TCP server (SP application), via GPRS. The polling interval is configured using properties defined within the GPRS core service of the terminal [T208]; polling can be periodic and/or after each from-mobile message is sent.
+Essentially, you can consider the (GetForward) polling interval as the maximum latency for to-mobile data, since it dominates other effects in the system.
+The mobile ID is specified in the URL and corresponds to the satellite modem serial number for correlation to satellite data for this terminal. The GPRS/TCP server returns the message contents or null if no to-mobile data is waiting.
+URL  http://<server>/ GetForward/<mobile ID>
+Return value  JSON encoded CommonMessage (or null if none)
+Argument 1  Mobile ID (specified in URL)
+
+2.2.1 Example: Request Pending Messages (none pending)
+Figure 3 illustrates a transaction between the terminal and a GPRS web server where no message is waiting to be retrieved on the server.
+Figure 3 Get To-Mobile Message Sequence Diagram (none waiting)
+
+
+2.2.2 Example: Request Pending Messages (generateReport pending)
+Figure 4 illustrates a typical example where a customer has requested the current GPS information from a terminal using the generateReport content defined in [T208]. The request has been queued in the SP application and is sent in response to a poll from the terminal.
+
+Figure 4 Get To-Mobile Message Sequence Diagram (generateReport)
+
+
+2.2.3 Example: Typical System Operation
+Assume that the terminal is configured to poll for to-mobile messages every 30 minutes and send GPS data every 60 minutes, combining the previous examples. Figure 5 illustrates the transactions for such a scenario.
+
+Figure 5 60 Minutes Periodic Report
+
+
+
+
+2.3 Dual-Mode Routing
+2.3.1 From-Mobile Data Routing
+The terminal automatically selects the available network path based on availability and its priority as defined in the message core service's transport properties [T208]. Retries are controlled by the message service properties [T208].
+
+2.3.2 To-Mobile Data Routing
+The SP application is responsible for routing of mobile-terminated messages, providing flexibility to individual applications. Typically, a time-out is set based on the GetForwardpolling interval (configured in the terminal) and upon expiry the message can be attempted on satellite. The SP application then polls the satellite gateway for message status and may elect to re-try on GPRS after some interval or if the satellite message fails (for example, the vehicle is blocked from the satellite in a parking garage).
+
+
+2.4 GPRS Data Structure
+2.4.1 Common Message Structure
+The CommonMessage structure is used to represent the message content when using the IDP gateway to encode or decode messages. It is also used in the GPRS web service. It is named CommonMessage because it is a format shared between the satellite gateway and the GPRS web service.
+Figure 6 Common Message Structure
+
+
+2.4.2 Encoding
+The GPRS web service exclusively supports JSON/REST encoding, because it is more bit-efficient than XML. The IDP gateway can use either XML/SOAP encoding or JSON/REST encoding. Regardless of which encoding is used, the CommonMessage structure remains the same.
+
+For the purpose of comparison, an arbitrary message (getProperties defined in [T208]) looks as follows in XML, making it more human readable. XML format is available from the satellite gateway as an option, however JSON is also available. The XML encoding of this message takes 333 characters, not counting formatting characters such as multiple spaces or linefeeds.
+<Message SIN="16" MIN="8"> <Fields> <Field Name="list"> <Elements> <Element Index="0">
+<Fields> <Field Name="sin" Value="16" /> <Field Name="pinList" Value="AQID" />
+</Fields> </Element> <Element Index="1">
+<Fields> <Field Name="sin" Value="17" /> <Field Name="pinList" Value="BAUG" />
+</Fields> </Element> </Elements> </Field> </Fields> </Message>
+When using the GPRS web service, this same message is encoded using JSON as shown below. The JSON encoding of this message takes 228 characters, which is a 30% reduction from XML encoding.
+{"SIN":16,"MIN":8,"Fields":[{"Name":"list","Elements":[{"Index":0 ,"Fields":[{"Name":"sin","Value":"16"},{"Name":"pinList","Value": "AQID"}]},{"Index":1,"Fields":[{"Name":"sin","Value":"17"},{"Name ":"pinList","Value":"BAUG"}]}]}]}
+
+2.4.3 GPRS Data Usage
+In many cases, the rationale for using GPRS is to achieve a lower cost of sending data to an application, relative to satellite. Satellite provides enhanced coverage and reliability but may incur a cost premium relative to cellular data. However, in both cases the business case of a given application requires the ability to estimate the data consumption and therefore the network cost. GPRS data usage can be highly variable, with a number of unknowns such as available coverage and quality of service; however the following approach should help roughly approximate usage.
+Data usage on GPRS typically consists of the following elements:
+.
+JSON-encoded data content
+
+.
+HTTP header
+
+.
+TCP/IP protocol overhead, including acknowledgements and retries
+
+.
+TCP session initiation (SYN, SYN/ACK, ACK) and termination (FIN, ACK, FIN, ACK)
+
+.
+GPRS carrier session round-up
+
+
+
+2.4.3.1 JSON Data Content Size
+The data content size depends on the structure of the specific message being sent. Size is determined by the following elements:
+.
+Message envelope -2 bytes {}
+
+.
+Message name -9 bytes plus variable-length string defined in [T208] for core services or IDP project file for user services
+
+.
+SIN -7 bytes plus variable length string up to 3 bytes (1-255)
+
+.
+MIN -7 bytes plus variable length string up to 3 bytes (1-255)
+
+.
+Fields envelope -12 bytes
+
+.
+Variable number of fields, each with:
+
+.
+Field envelope -2 bytes
+
+.
+Field name -10 bytes plus variable-length string defined in [T208] for core services or IDP project file for user services
+
+.
+One of:
+
+.
+Value -10 bytes plus variable-length string, character representation of data defined in [T208] for core services or IDP project file for user services
+
+.
+Elements -16 bytes envelope plus an Index (10 bytes plus variable length string) plus a Field defined as above for each element
+
+.
+Message -an embedded structure starting from message envelope above
+
+
+
+
+
+
+
+
+2.4.3.2 HTTP Header
+HTTP header can be variable size depending on the server URL and content length for each direction of the communication. The basic formula is as follows:
+.
+POST
+
+SubmitReturn – 97 bytes + content length characters True reply -136 bytes + server characters
+
+.
+GET
+
+
+SubmitReturn – 97 bytes + content length characters True reply -136 bytes + server characters
+
+2.4.3.3 TCP/IP Protocol Overhead
+Each direction of communication carries 40 bytes of TCP/IP overhead, for a total of 80 bytes per transaction.
+If a packet fails, TCP retransmits which multiplies the overall (JSON data + HTTP + TCP/IP) by the number of retries attempted.
+
+2.4.3.4 TCP Session and GPRS Rounding
+Session initiation consists of three TCP/IP packets, plus four TCP/IP packets for session termination, for a total of 280 bytes.
+Typically GPRS sessions are rounded up to the nearest 1 kilobyte increment for billing purposes, though this number depends on the carrier and any roaming arrangements they may have in place.
+
+2.4.3.5 Example GPRS Transaction Use Cases
+A typical transaction example follows, showing transmission of GPS data (simpleReport) followed by a poll for to-mobile messages with none pending. Note that GetForward traffic may be the dominant traffic for terminals which poll for return messages periodically.
+Scenario  Sent Byte Count  Receive Byte Count
+Header  Data  Total  Header  Data  Total
+TCP/IP  HTTP  TCP/IP  HTTP
+POST SubmitReturn (simpleReport)  40  100  272  412  40  153  4  197
+GET GetForward (none pending)  40  44  0  84  40  106  0  146
+
+POST + GET + Session = 609 bytes + 230 bytes + 280 bytes = 1119 bytes. The above sizes correspond to the below transaction examples, plus TCP/IP overhead. SubmitReturn sending simpleReport (GPS data):
+POST /SubmitReturn/00000000SKYEE3D HTTP/1.0 Content-Type: application/json Content-Length: 272
+
+{"Name":"simpleReport","SIN":19,"MIN":1, "Fields":[ {"Name":"latitude","Value":"2717873","Type":"signedInt"}, {"Name":"longitude","Value":"-4555177","Type":"signedInt"}, {"Name":"speed","Value":"0","Type":"unsignedInt"}, {"Name":"heading","Value":"1858","Type":"unsignedInt"}]}
+HTTP/1.0 200 OK Content-Length: 4 Content-Type: application/json; charset=utf-8 Server: Microsoft-HTTPAPI/2.0 Date: Thu, 29 Dec 2011 21:12:24 GMT
+true
+GetForwardwith no message pending:
+GET /GetForward/00000000SKYEE3D HTTP/1.0
+HTTP/1.0 200 OK Content-Length: 0 Content-Type: application/json; charset=utf-8 Server: Microsoft-HTTPAPI/2.0 Date: Thu, 29 Dec 2011 21:12:24 GMT
+
+THIS PAGE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+3 Sample C#
+After installing the IDP Developer Toolkit using the default installation path, some C# sample code can be found in the Program Files\SkyWave\IDP Developer Toolkit\GPRS Samples\C# Server folder. This sample code shows how a customer application creates a Web Service to exchange cellular messages with one or more terminals.
+You can use any text editor to view the C# code (files with .cs extension) but you need Microsoft Visual Studio 2010 to open the entire project, compile and run it.
+3.1 Message Web Service
+The sample code creates a service, Message Web Service, to handle both SubmitReturnand GetForwardweb methods.
+The following table outlines the three .cs files found in the project.
+File Name  Description
+CommonMessage.cs  Common message class. Instances of this class represent the message in both the to-mobile and from-mobile direction via GPRS.
+IMessageWebService.cs  Message web service interface. The file defines the signatures of message web service methods.
+MessageWebService.cs  Message web service class. The implementation of the message web service interface.
+
+3.1.1 Common Message
+All IsatData Pro messages, both to-mobile and from-mobile via GPRS, can be defined by a common message format.
+CommonMessage  Instances of this class represent the message in both the to-mobile and from-mobile direction via GPRS.
+Member  Type  Description
+IsForward  string  This field is relevant only if the message is part of another field. In that case, the message is a to-mobile message if set to true. Otherwise it is a from-mobile message.
+MIN  int  Message identification number for the given SIN
+Name  string  Message name
+SIN  int  Service identification number
+Fields  CommonMessageFieldList  An instance of the CommonMessageFieldList. Each Field could be made of either a name/value pair, or contain another array of fields.
+
+CommonMessageFieldList  A list containing one or more fields. A field is made of a name/value pair or an array of elements.
+Member  Type  Description
+Name  string  Field name
+Type  string  Type of the field
+Value  string  Value of the field
+Message  CommonMessage  A message embedded within a field
+Elements  CommonMessageEl  An instance of CommonMessageElementList class
+
+
+CommonMessageElementList  A list containing one or more CommonMessageFieldList.
+Member  Type  Description
+Index  int  Element's index.
+Fields  CommonMessageFieldList  An instance of the CommonMessageFieldList. Each Field could be made of either a name/value pair, or contain another array of fields.
+
+
+3.1.2 Message Web Service Interface
+The interface defines two functions which service the two web methods. The following shows the exact code:
+
+SubmitReturnweb method is mapped to SubmitReturnMessageand GetForwardweb method is mapped to GetForwardMessage.
+
+3.1.3 Message Web Service Implementation
+The objective of the sample code is to show a simple GPRS web service; the two functions are relatively simple.
+SubmitReturnMessage-Print the entire message information including all fields.
+
+GetForwardMessage-Generate the getPosition message once every five times the terminal checks for to-mobile messages.
+
+
+
+3.2 Use Messenger to Test the C# Web Service
+This section steps you through how to test the web service (the code) without using an actual terminal. To help you develop your web service, Messenger (found on the IDP Developer Toolkit) has been enhanced with a built-in web client.
+The web client allows you to emulate the terminal and control when it polls for to-mobile message or posts a from-mobile message.
+3.2.1 Set up the Web Service
+1.
+Navigate to \Program Files\SkyWave\IDP Developer Toolkit\GPRS Samples\C# Server (IDP Developer Toolkit).
+
+2.
+Open the MessageWebService project file. The project by default uses the following address: http://localhost:8080. Make
+
+
+sure the port is not opened for other application. You receive an error message when you run it if the port cannot be opened.
+If you need to change the port for the evaluation, open App.config by double clicking it in Solution Explorer.
+Figure 7 Project File
+
+3. Click Build > Start Debugging (from the top menu) or F5 to run the web service.
+
+The service runs in the background and there is no GUI associated with it. You see a pop-up in the system tray indicating that the service has been hosted.
+Figure 8 System Message
+
+Make sure you can see the Output tab in Microsoft Visual Studio.
+4. Click View > Output. You have now completed the setup for the C# sample code web service.
+
+3.2.2 Set up Messenger
+1.
+Launch Messenger from the Start menu (default location: Program Files > SkyWave > IDP Developer Toolkit > Applications).
+
+2.
+Click GPRS > Web Service Test. Figure 9 GPRS Menu
+
+
+
+A pop-up window, Web Service Test appears. This is the terminal emulator.
+3. Configure the URL to point the web service you configured earlier. The default, http://localhost:8080 matches the default in the sample code. Do not close this window.
+
+
+
+3.2.3 Transmitting and Receiving
+1.
+Arrange the windows so that you can see the Output tab in the Microsoft Visual Studio and the Messenger's Web Service Test window.
+
+2.
+Click Get To-Mobile Message… on the Web Service Test window. The Message window (Figure 11) displays the sample message returned by
+
+
+MessageWebService you started earlier. You also see the text "GetForwardMessage()" printed on the Microsoft Visual Studio Output tab.
+
+Note: As described earlier, the GetForward function only returns a message once every five times the terminal checks for to-mobile messages.
+3. Close the window. In response the terminal returns the position information. To simulate the terminal's response:
+1.
+Click Send From-Mobile Message… on the Web Service Test window. The Message window appears (Figure 12).
+
+2.
+Click (Figure 12) the SIN drop-down box and select 020 -position.
+
+3.
+Click the MIN drop-down box and select 001 -position. Optionally, you could replace the default value of each field.
+
+4.
+Ensure that you can see Microsoft Visual Studio's Output tab before clicking send.
+
+5.
+Click Send.
+
+
+
+IDP 700 Terminal Series -IsatData Pro Cellular Protocol
+
+MessageWebService displays the following in the Output tab of Visual Studio (Figure 13).
+
+
+Note: This sample project is only needed if you require source code. If you only want to test the GPRS client or web service, use Messenger with transport set to GPRS.
+
+THIS PAGE INTENTIONALLY LEFT BLANK
+
+
+
+
+Revision History
+Version  Date  Details
+01  Mar 2013  Official customer release
+0.10  Nov 2012  Limited customer release -Preliminary
+0.09  Oct 2012  Limited customer release -Preliminary
+0.05  May 2012  Limited Beta customer release
+0.02  Apr 2012  Limited Beta customer release
+
+
+
+Acronyms/Glossary
+GPRS  General Packet Radio Service
+IDP  IsatData Pro
+IGWS  IsatData Pro Gateway Web Service
+JSON  JavaScript Object Notation
+REST  Representational State Transfer
+WSDL  Web Service Definition Language
+
+
+THIS PAGE INTENTIONALLY LEFT BLANK
+
+www.SkyWave.com

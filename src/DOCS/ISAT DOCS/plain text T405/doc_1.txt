@@ -1,0 +1,2725 @@
+PREFACE
+Purpose
+This document is as an overview of the Lua code for terminals running firmware v4.x or higher, which is a key element of the embedded software that controls all of the product components. This document is for use with ST terminals, however some content in this document may not apply to all models.
+Terminals
+ST 6100
+ST 6000
+Satellite-Cellular Terminals
+ST 9100
+
+Notation
+The epoch for ST products is midnight, January 1st, 1970. An epoch is a specific instance, date or year from which time is marked. The epoch then serves as a reference point from which time is measured. The time kept internally by software timekeeping systems is usually expressed as the number of seconds terminals have elapsed since a specified epoch.
+A forward message is a message sent to the terminal from the gateway (to-mobile), while a return message is one sent from the terminal (from-mobile).
+Items listed as reserved are for ORBCOMM use only.
+Reference
+The content of the following documents may be useful in conjunction with this guide. These documents are available from the ORBCOMM Developer Toolkit (hereafter referred to as the Toolkit) or from Customer Support.
+The names, numbers, and content of these documents are subject to change without notice. Always check the customer support website for the most current version of each document.
+[N207]  Software Over-the-Air (SOTA) User Guide
+[T203]  IDP Modem Developer Guide
+[T403]  AT Interface Developer Guide
+[T404]  LSF Developer Guide for FW v4.x
+[T406]  ST 6100 Hardware Guide
+[T407]  ST 6000 Hardware Guide
+[T413]  ST 9100 Hardware Guide
+
+Refer to the embedded help file in each of the software tools for additional information. These tools are available from the Toolkit.
+
+
+1 INTRODUCTION
+The ST products are designed to be integrated with the IsatData Pro gateway (Figure 1). The messaging system is designed to support the management of mobile or fixed assets over very wide areas. An asset fitted with one of the products can have its state and location monitored.
+ST products provide two-way communication for messaging to and from the asset for near real-time control. The network supports up to 6,399 byte from-mobile messages and up to 10,000 byte to-mobile messages.
+This document focuses on the Lua code that is a key element of the embedded software, which controls all the ST product components.
+The Lua code enables you to control the products. As requirements change the code can be reconfigured and redeployed.
+Lua coding can be simplified by using ORBCOMM software tools.
+
+
+2 TERMINAL SOFTWARE ARCHITECTURE
+Most end-user functionality on the terminals is implemented by software constructs called services. Services are self-contained, individually addressable modules each offering well-defined functionality. This document details the various core and user services available on the terminals.
+Core services (Section 5) are the basic building blocks of functionality available on a terminal, most of which have network visibility. These building blocks include (but are not limited to) I/O accessibility, sending and receiving external messages via a desired communication channel, getting and reporting a position, querying status and configuration.
+Terminal apps are configurable device-level applications that include specific feature sets that are implemented by ORBCOMM . Contact ORBCOMM for a list of terminal apps.
+User services provide relatively complex or advanced functions.
+The terminal software allows custom application development (Lua scripting). Lua is the scripting language used because it is a proven, robust, embedded scripting language with many applications. Lua is a fast language engine with a small footprint that can easily be embedded into almost any application. The application programming interface (API) allows it to integrate with code written in other languages.
+Figure 1: Terminal Software Architecture
+
+The software stack may be loosely divided into three (3) fundamental layers, which are integrated together within a Lua framework:
+�
+Hardware
+�
+Application
+�
+Network The hardware is separated from the application via a service call-able application programming interface (API). Services access hardware (for example, serial port, digital input, hardware timers) or other services through this API. Each service is implemented through a Lua application. Maximum flexibility is achieved by allowing for custom applications and services. In this model, a complex function could be created through a user programmable Lua application. Services are identified and registered through the network interface. The network interface accepts messages from services, formats these messages according to the particular network channel being used, and sends them via that channel. In the from-mobile direction, the network layer removes the channel-specific formatting and sends the from-mobile message to the appropriate service. This is accomplished through the use of terminal specific plug-ins as required.
+
+
+On power on or reset, basic hardware tests run and upon success, each of the core services (Section 5) is initialized and started based on their stored configuration. The Lua framework uses the available service and configuration information to register and synchronize with the network. On receipt of network acknowledgment, the transport queue is then emptied as required.
+In a very basic application, consider a terminal solely configured to generate a message when digital input 1 moves from low to high. On some terminals the external input/output (EIO) service may be configured (locally or remotely) to define port 1 as a digital input and to generate an alarm message on a low to high transition. The alarm destination may be specified as the transport layer that would accept the message, format it, send it, and finally notify the service of the delivery status.
+
+
+3 LUA FIRMWARE EXTENSIONS
+3.1 Global Functions
+3.1.1 Base64 Library
+The base64 library is a firmware extension that supports base64 encoding/decoding of strings.
+3.1.1.1 decode()
+Description
+Decodes a base64 encoded string and returns the decoded results.
+Syntax
+base64.decode(str)
+Parameters
+str Lua string containing base64 encoded data
+Returns
+string Decoded string
+Example
+Encodes �This is a test message� and then decodes and prints it.
+lua> print(base64.decode(base64.encode("This is a test message."))) This is a test message.
+See Also
+base64.encode()
+3.1.1.2 encode()
+Description
+Returns the base64 encoding of a specified string.
+Syntax
+base64.encode(str)
+Parameters
+str Lua string to encode
+
+
+Returns
+string Base64 encoded string
+Example
+Displays the base 64 encoding of the string �Hello world�.
+shell> lua print(base64.encode("Hello world"))
+SGVsbG8gd29ybGQ=
+See Also
+base64.decode()
+3.1.2 bit32 Library
+The bit32 library contains functions to perform bitwise manipulation of integers and is based on the Lua 5.2 alpha version of the library. This is included for backwards compatibility; Lua 5.3 has built-in bitwise operators.
+3.1.2.1 arshift()
+Description
+Return the number value shifted disp bits to the right. Negative displacements shift to the left. The shift operation is an arithmetic shift. Vacant bits on the left are filled with copies of the higher bit of value; vacant bits on the right zeros. Displacements with absolute values higher than 31 result in zero or 0XFFFFFFFF (all original bits are shifted out).
+Syntax
+bit32.arshift(value, disp)
+Parameters value disp  Number to shift Displacement to shift (negative values shift left)
+Returns integer  Shifted result
+3.1.2.2 band()
+Description
+
+Return the bitwise and of all operands.
+Syntax
+bit32.band(�)
+Parameters
+� Numbers to and together
+
+
+Returns
+integer And of all operands
+3.1.2.3 bnot()
+Description
+Return the bitwise negation of value.
+Syntax
+bit32.bnot(value)
+Parameters
+value Numbers to negate
+Returns
+integer Bitwise negation of value
+3.1.2.4 bor()
+Description
+Return the bitwise or of all operands.
+Syntax
+bit32.bor(�)
+Parameters
+� Numbers to or together
+Returns
+integer Or of all operands
+3.1.2.5 btest()
+Description
+Return true if the bitwise and of all operands is different from zero.
+Syntax
+bit32.btest(�)
+Parameters
+� Numbers to test
+
+
+Returns
+boolean true if bitwise and of all operands is different from zero
+3.1.2.6 bxor()
+Description
+Return the bitwise exclusive or of all operands.
+Syntax
+bit32.bxor(�)
+Parameters
+� Numbers to exclusive or together
+Returns
+integer Exclusive or of all operands
+3.1.2.7 lrotate()
+Description
+Returns the number value rotated disp bits to the left.
+Syntax
+bit32.lrotate(value, disp)
+Parameters
+value Number to rotate disp Displacement to rotate (negative values rotate right)
+Returns
+integer Rotated result
+3.1.2.8 lshift()
+Description
+Returns the number value shifted disp bits to the left. Negative displacements shift to the right. In any direction, vacant bits are filled with zeros. Displacements with absolute values greater than 31 result in zero (all bits are shifted out).
+Syntax
+bit32.lshift(value, disp)
+
+
+Parameters
+value  Number to shift
+disp  Displacement to shift (negative values shift right)
+Returns
+integer  Shifted result
+
+3.1.2.9 rrotate()
+Description
+Returns the number value rotated disp bits to the right.
+Syntax
+bit32.rrotate(value, disp)
+Parameters
+value Number to rotate disp Displacement to rotate (negative values rotate left)
+Returns
+integer Rotated result
+3.1.2.10 rshift()
+Description
+Returns the number value shifted disp bits to the right. Negative displacements shift to the left. In any direction, vacant bits are filled with zeros. Displacements with absolute values greater than 31 result in zero (all bits are shifted out).
+Syntax
+bit32.rshift(value, disp)
+Parameters
+value Number to shift disp Displacement to shift (negative values shift left)
+Returns
+integer Shifted result
+
+
+3.1.3 Debugging
+3.1.3.1 trace()
+Description
+This command accepts arguments exactly like print(), except that instead of sending the output to the main RS-232 port, the output is sent to the firmware serial tracing facility.
+Syntax
+trace(�)
+Parameters
+� Zero or more Lua objects to print. If no arguments are specified, just a carriage return/line feed pair is output.
+Returns
+None
+Example
+Sends the output to the serial tracing channel, if it is configured.
+lua> trace("Current thread is: ", sched.getThread())
+lua>
+See Also
+print()
+3.1.3.2 tracef()
+Description
+This command accepts arguments exactly like printf(), except that instead of sending the output to the main RS-232 port, the output is sent to the firmware serial tracking facility.
+Syntax
+tracef(format, �)
+Parameters
+format String optionally containing format specifiers. � Zero or more arguments matching the format specifiers contained in the format argument.
+Returns
+None
+
+
+3.1.4 Pickle Library
+The pickle library is used to serialize and deserialize Lua data structures.
+3.1.4.1 dump
+Description
+Serializes a Lua data structure to a string, which is also written out to the given file.
+Syntax
+pickle.dump(object, filename)
+Parameters object filename  The Lua object to serialize The name of the file to write the serialized object to
+Returns string  The serialized object
+3.1.4.2 dumps
+Description
+
+Serializes a Lua data structure to a string. The string is Lua code, which can actually be loaded with loadstring (), and then subsequently run to produce the original object.
+Syntax
+pickle.dumps(object)
+Parameters
+object The Lua object to serialize
+Returns
+string The serialized object
+3.1.4.3 load
+Description
+Deserializes a Lua data structure from a file.
+Syntax
+pickle.load( filename)
+Parameters
+filename The name of the file where the serialized Lua object is saved
+
+
+Returns
+object The original Lua object, or nil if the content of the file does not represent a valid Lua object
+3.1.4.4 loads
+Description
+Deserializes a Lua data structure from a string.
+Syntax
+pickle.loads(serialized)
+Parameters
+serialized The string representing the serialized Lua object
+Returns
+object The original Lua object, or nil if the content of the file does not represent a valid Lua object
+3.1.5 Serial Output
+3.1.5.1 print()
+Description
+Receives any number of arguments and prints their values to the main serial port, if the shell is enabled. The Lua tostring() function is used on each argument to convert the arguments to strings before printing them, followed by a carriage return/line feed pair. This function is similar to the standard Lua print() function except that tab characters are NOT output between each item.
+Syntax
+print(�)
+Parameters
+� Zero or more Lua objects to print. If no arguments are specified, just a carriage return/line feed pair is output.
+Returns
+None
+Example
+lua> print("Current thread is: ", sched.getThread())
+Current thread is: thread: 64050130 [lua nores chunk]
+See Also
+printf()
+
+
+
+3.1.5.2 printf()
+Description
+Writes a sequence of data formatted as the format string argument specifies to the main serial port. After the format string argument, the function expects at least as many additional arguments as specified in the format string. Unlike print(), a trailing new-line is NOT output.
+The format uses the same specifiers as the standard Lua string.format().
+Syntax
+printf(format, �)
+Parameters
+format �  String optionally containing format specifiers. Zero or more arguments matching the format specifiers contained in the format argument.
+Returns None
+Example
+
+lua> printf("%10s -0x%X\n", "abc", 123) abc -0x7B
+See Also
+print()
+3.2 System Table
+The system table, or sys, is a Lua table that contains all functions and values exported by the application firmware. The following sections describe the top-level entries within this table.
+3.2.1 bitmask
+3.2.1.1 Bitmask Handle Methods
+3.2.1.1.1 clear()
+Description
+Clears the specified bit. This function is a shortcut to <handle>:setval(bitnum, false).
+Syntax
+<handle>:clear(bitnum)
+
+
+Parameters
+bitnum The bit number. The function throws an error if the bit number exceeds the array size.
+Returns
+None
+3.2.1.1.2 clearall()
+Description
+Clears all the bits in the array.
+Syntax
+<handle>:clearall()
+Parameters
+None
+Returns
+None
+3.2.1.1.3 get()
+Description
+Get the specified bit value.
+Syntax
+<handle>:get(bitnum)
+Parameters
+bitnum The bit number. The function throws an error if the bit number exceeds the array size.
+Returns
+boolean Whether the bit is currently set (true) or cleared (false)
+3.2.1.1.4 getall()
+Description
+This retrieves the entire bitmask as a string. Bit 7 of the first byte represents the first bit, bit 6 is second, and so on.
+Syntax
+<handle>:getall()
+
+
+Parameters
+None
+Returns
+string The entire bitmask
+3.2.1.1.5 invert()
+Description
+Invert the specified bit.
+Syntax
+<handle>:invert(bitnum)
+Parameters
+bitnum The bit number. The function throws an error if the bit number exceeds the array size.
+Returns
+None
+3.2.1.1.6 invertall()
+Description
+Invert all the bits in the array.
+Syntax
+<handle>:invertall()
+Parameters
+None
+Returns
+None
+3.2.1.1.7 set()
+Description
+Set the specified bit. This function is a shortcut to <handle>:setval(bitnum, true).
+Syntax
+<handle>:set(bitnum)
+
+
+Parameters
+bitnum The bit number. The function throws an error if the bit number exceeds the array size.
+Returns
+None
+3.2.1.1.8 setall()
+Description
+Sets all the bits in the array.
+Syntax
+<handle>:setall()
+Parameters
+None
+Returns
+None
+3.2.1.1.9 setval()
+Description
+Set the specified bit to the given value.
+Syntax
+<handle>:setval(bitnum, val)
+Parameters
+bitnum The bit number. The function throws an error if the bit number exceeds the array size.
+val The value to set. Zero (0) clears the bit, any other number sets it; otherwise, true/false can also be used to set/clear the bit.
+Returns
+None
+3.2.1.2 create()
+Description
+Create a bitmask that holds an array of bit values (true/false).
+Syntax
+sys.bitmask.create(sizeOrContent)
+
+
+Parameters
+sizeOrContent This is either a number, to indicate the number of bits to be stored in the array, or a string. If the first option is used, all bits are initialized to false. If the second one is used, each byte in the string represents 8 bits, with the most significant bit used first.
+Returns
+
+handle A handle to access the bitmask functions. The bitmask elements are accessed or modified with a zero-based bit index.
+Examples
+Create a bitmask with space for 10 bits.
+local bitmask = sys.bitmask.create(10)
+Create a bitmask with 16 bits, where bits 0 and 9 are true, and all others are false.
+local bitmask = sys.bitmask.create(string.char(0x80, 0x40))
+3.2.2 buffer
+3.2.2.1 Buffer Handle Methods
+3.2.2.1.1 addBits()
+Description
+Adds the given number of bits to the buffer.
+Syntax
+<handle>:addBits(val, bits)
+Parameters
+val The least significant bits of this integer are the bits to add, up to 32; because Lua only supports signed integers. 32-bit values must be passed in as negative or hexadecimal numbers.
+bits The number of bits to add, up to 32
+Returns
+boolean true if there is enough space left for the bits; false otherwise
+Example
+Add 2 bits (binary 11) to the buffer.
+local buffer = sys.buffer.create(100)
+local result = buffer:addBits(3, 2)
+Add 32 bits (binary 11110000000000000000000000000000) to the buffer.
+local buffer = sys.buffer.create(100)
+local result = buffer:addBits(0xF0000000, 32)
+
+
+Prints false, because it is trying to add 32 bits (4 bytes) to a buffer that only has space for 3 bytes.
+local buffer = sys.buffer.create(3) local result = buffer:addBits(0xF0000000, 32) print(result)
+3.2.2.1.2 addFloat()
+Description
+This adds a single-precision floating point value to the byte stream in IEEE 754 format.
+Syntax
+<handle>:addFloat(value, lowWordFirst, littleEndian)
+Parameters
+value  The floating point value to add to the byte stream
+lowWordFirst  Whether to add the low word first (optional, default is false)
+littleEndian  Whether to add the value in little-endian or big-endian format (optional, default is false)
+Returns
+boolean  true if there is enough space left for the data; false otherwise
+
+3.2.2.1.3 addInt16()
+Description
+This adds a 16-bit integer value to the byte stream.
+Syntax
+<handle>:addInt16(value, isSigned, littleEndian)
+Parameters
+value The 16-bit value to add to the byte stream (-32768 to 32767 for signed, 0 to 65535 for unsigned) isSigned Whether the value is signed or not littleEndian Whether to add the value in little-endian or big-endian format (optional, default is false)
+Returns
+boolean true if there is enough space left for the data; false otherwise
+Example
+Examples for this function can be found in Section 3.2.15.
+
+
+3.2.2.1.4 addInt32()
+Description
+This adds a 32-bit integer value to the byte stream.
+Syntax
+<handle>:addInt32(value, lowWordFirst, littleEndian)
+Parameters
+value  The 32-bit value to add to the byte stream
+lowWordFirst  Whether to add the low word first (optional, default is false)
+littleEndian  Whether to add the value in little-endian or big-endian format (optional, default is false)
+Returns
+boolean  true if there is enough space left for the data; false otherwise
+Example
+
+Examples for this function can be found in Section 3.2.15.
+3.2.2.1.5 addString()
+Description
+Adds the given bytes to the buffer.
+Syntax
+<handle>:addString(val)
+Parameters
+val The bytes to add to the buffer (string)
+Returns
+boolean true if there is enough space left for the bits; false otherwise
+Example
+Add 4 bytes to the buffer
+local buffer = sys.buffer.create(100) local result = buffer:addString(string.char(0xEE, 0xEF, 0xF0, 0xF1))
+
+Prints false, because it is trying to add 5 bytes to a buffer that only has space for 4.5 bytes
+local buffer = sys.buffer.create(6)
+local result = buffer:addBits(0xFFF, 12)
+result = buffer:addString("hello")
+print(result)
+
+
+3.2.2.1.6 clear()
+Description
+This empties the buffer so it can be reused.
+Syntax
+<handle>:clear()
+Parameters
+None
+Returns
+boolean Indicates success or failure
+3.2.2.1.7 getBits()
+Description
+Gets the specified number bits from the byte stream.
+Syntax
+<handle>:getBits(bits)
+Parameters
+bits The number of bits to get, up to 32
+Returns
+integer The retrieved bits, or nil if there are not enough bits left
+Example
+Retrieve the first 12 bits from the buffer (hexadecimal FED).
+local buffer = sys.buffer.create(string.char(0xFE, 0xDC)) local result = buffer:getBits(12)
+Retrieve the first 12 bits (hexadecimal FED), then the next 3 bits (binary 110).
+local buffer = sys.buffer.create(string.char(0xFE, 0xDC)) local result = buffer:getBits(12) result = buffer:getBits(3)
+Prints nil, because it is trying to get 17 total bits from a buffer that only contains 16.
+local buffer = sys.buffer.create(string.char(0xFE, 0xDC)) local result = buffer:getBits(12) result = buffer:getBits(5) print(result)
+
+
+3.2.2.1.8 getFloat()
+Description
+This gets a single-precision floating point value from the byte stream in IEEE 754 format.
+Syntax
+<handle>:getFloat(lowWordFirst, littleEndian)
+Parameters
+lowWordFirst  Whether the value is low word first (optional, default is false)
+littleEndian  Whether the value is in little-endian or big-endian format (optional, default is false)
+Returns
+number The retrieved floating point value, or nil if there are not enough bits left
+
+3.2.2.1.9 getInt16()
+Description
+This gets a 16-bit integer value from the byte stream.
+Syntax
+<handle>:getInt16(isSigned, littleEndian)
+Parameters
+isSigned Whether the value is signed or not littleEndian Whether the value is in little-endian or big-endian format (optional, default is false)
+Returns
+integer The retrieved 16-bit value, or nil if there are not enough bits left (-32768 to 32767 for signed, 0 to 65535 for unsigned)
+Example
+Examples for this function can be found in Section 3.2.15.
+3.2.2.1.10 getInt32()
+Description
+This gets a 32-bit integer value from the byte stream.
+Syntax
+<handle>:getInt32(lowWordFirst, littleEndian)
+
+
+Parameters
+lowWordFirst  Whether the value is low word first (optional, default is false)
+littleEndian  Whether the value is in little-endian or big-endian format (optional, default is false)
+Returns
+integer The retrieved 32-bit value, or nil if there are not enough bits left
+Example
+
+Examples for this function can be found in Section 3.2.15.
+3.2.2.1.11 getString()
+Description
+Retrieves the specified number of bytes from the buffer.
+Syntax
+<handle>:getString(len)
+Parameters
+len The number of bytes to retrieve, or nil to get the rest of the buffer
+Returns
+string The retrieved bytes, or nil if there are not enough bytes left number If getString is called with nil, returns the total bit length of the bytes
+Example
+Print hel.
+local buffer = sys.buffer.create("hello") print(buffer:getString(3))
+Retrieve the first 4 bits (hexadecimal F) and the next two bytes, 0xED and 0xCB.
+local buffer = sys.buffer.create(string.char(0xFE, 0xDC, 0xBA)) local result = buffer:getBits(4) result = buffer:getString(2)
+Retrieve the first 4 bits (hexadecimal F) and the next two and a half bytes, 0xED, 0xCB and 0xA0.
+local buffer = sys.buffer.create(string.char(0xFE, 0xDC, 0xBA)) local result = buffer:getBits(4) result = buffer:getString()
+Create a buffer with space for up to 100 bytes, then add some bits and bytes to it, and finally retrieve the resulting byte stream.
+local buffer = sys.buffer.create(100)
+
+
+buffer:addBits(..., ...) buffer:addBits(..., ...) buffer:addString(...) buffer:addBits(..., ...) local result = buffer:getString()
+3.2.2.2 create()
+Description
+This creates a bit buffer, which is useful for getting bits into or out of a byte stream. It supports two different modes of operation.
+�
+Create an empty buffer by specifying the maximum size it can contain, then add bits and bytes to it, and finally retrieve the resulting byte stream at the end.
+�
+Create a buffer from an existing byte stream (string), and retrieve bits and bytes out of it.
+Syntax
+sys.buffer.create(size_or_string)
+Parameters
+size_or_string If an integer, specifies the maximum size of an empty buffer in bytes, if a string, specifies the initial buffer content
+Returns
+handle A handle to access the buffer
+3.2.3 crc16()
+Description
+Calculates the 16-bit CCITT CRC of the given string.
+Syntax
+sys.crc16(data, seed)
+Parameters
+data The string for which a CRC is needed seed Optional integer seed (default is 0xFFFF)
+Returns
+integer The resulting 16-bit CRC
+
+
+3.2.4 createTable()
+Description
+Creates a new empty table, optionally with space preallocated for array elements (indexed with a positive integer), and nonarray elements. This preallocation is useful when the number of elements in the table is known ahead of time.
+Syntax
+sys.createTable(narray, nrec)
+Parameters
+narray  The number of array entries in the table; defaults to 0
+nrec  The number of nonarray entries in the table; defaults to 0
+
+Returns
+table The new table
+3.2.5 csum16()
+Description
+Calculates the 16-bit checksum value of the bytes in the given string.
+Syntax
+sys.csum16(data, sum, offset, len)
+Parameters
+data The string for which a checksum is needed
+sum The starting sum value (optional -default is 0). This is useful when calculating a checksum over several different strings; the checksum of a previous one can be passed in as a starting point for another.
+offset The offset within the string at which to start calculating the checksum (optional .default is 0). This indicates the number of bytes, at the beginning of the string, to exclude in the checksum calculation.
+len The number of bytes to include in the checksum calculation (optional -default is the number of bytes from offset to the end of data). If the requested number of bytes is greater than what is available, then len is decremented accordingly.
+Returns
+integer The resulting 16-bit checksum
+
+
+3.2.6 csum16w()
+Description
+Calculates the 16-bit checksum value of the words in the given string. Each word must be placed in the string with the most significant byte first. If the string contains an odd number of bytes, or the specified length is an odd number, then the extra byte is assumed to be 0.
+Syntax
+sys.csum16w(data, sum, offset, len)
+Parameters
+data  The string for which a checksum is needed
+sum  The starting sum value (optional -default is 0). This is useful when calculating a checksum over several different strings; the checksum of a previous one can be passed in as a starting point for another.
+offset  The offset within the string at which to start calculating the checksum (optional -default is 0). This indicates the number of bytes, at the beginning of the string, to exclude in the checksum calculation.
+len  The number of bytes to include in the checksum calculation (optional -default is the number of bytes from offset to the end of data). If the requested number of bytes is greater than what is available, then len is decremented accordingly.
+
+Returns
+integer The resulting 16-bit checksum
+integer The accumulated sum. If a checksum needs to be calculated over different strings, this value can be passed as the second argument to a subsequent csum16w() call.
+3.2.7 fs
+The file system where LSF code can store files is limited in the amount of space available. The listv shell command displays the total space available, as well as the current usage.
+However, there is another limit placed on the file system that is not quite as evident. The total number of entries (directories and files) that can be created is also constrained. The file system is limited to 1661 entries. Furthermore, any entries whose name exceeds 13 characters actually count as more than 1 against this limit. The following table summarizes this.
+
+Care should be taken when choosing file names. The limit can be quickly reached on systems where there are many files with long file names.
+Note: Only five (5) files can be open at the same time.
+3.2.7.1 ATTR_DIRECTORY
+Attribute value that indicates a directory.
+
+
+3.2.7.2 ATTR_READ_ONLY
+Attribute value that indicates a read-only object.
+3.2.7.3 basename()
+Description
+This returns the base name of path; that is, the portion of the path name after the last directory separator.
+Syntax
+sys.fs.basename(pathname)
+Parameters
+pathname  The file/directory path name
+Returns
+string  The base name
+Example
+Prints main.lua.
+
+print(sys.fs.basename("/act/svc/geofence/main.lua"))
+Prints foo.
+print(sys.fs.basename("foo"))
+3.2.7.4 chdir()
+Description
+This changes the current working directory to the specified one. All subsequent relative paths are based off of this one.
+Syntax
+sys.fs.chdir(path)
+Parameters
+path The directory path name
+Returns
+boolean Indicates success or failure string An error message if the first return value is false; nil otherwise
+
+
+3.2.7.5 copy()
+Description
+This copies the source file to the destination file/directory.
+This function blocks the Lua scheduler while running, so it could trigger the watchdog or add extra latency to the system.
+Syntax
+sys.fs.copy(src, dest)
+Parameters
+src The source file dest The destination file/directory
+Returns
+boolean Indicates success or failure string An error message if the first return value is false; nil otherwise
+Example
+Copy the file file.txt from the /path1 directory to the /path2 directory.
+sys.fs.copy("/path1/file.txt", "/path2/")
+Copy the file file.txt from the path /path1 to the file foo in the/path2 directory.
+sys.fs.copy("/path1/file.txt", "/path2/foo")
+3.2.7.6 dir()
+Description
+This function returns a directory iterator (like ipairs), which can be used to traverse the contents of a directory. The iterator function returned by dir() returns the following on each iteration:
+name  Directory entry name
+size  Size of directory entry in bytes
+attr  Bitmap
+attributes
+of
+the
+entry
+(see
+info()
+for
+details)
+
+fileTime  The file creation time in number of seconds since the epoch
+
+Syntax
+sys.fs.dir(path)
+Parameters
+path Optional directory path name string. If not provided, the current directory is used
+
+
+Returns
+iterator  Directory iterator function
+handle  Directory handle
+
+Example
+The shell extension code below displays the contents of a directory similar to the LSF shell.
+local function dirCmd(args) if #args == 1 and args[1] == '?' then print("Usage: dir [<dirpath>]")
+else local totalSize = 0 local fileCount = 0 for name,size,attr,mtime in sys.fs.dir(args[1]) do
+local typeStr
+if bit32.band(attr, sys.fs.ATTR_DIRECTORY) == 0 then typeStr = " " fileCount = fileCount + 1
+else
+typeStr = "(Dir)" end printf("%s %8d %s %s\n", typeStr, size, os.date('%d/%m/%Y %X', mtime),
+name)
+totalSize = totalSize + size end printf("Found %d files using a total of %d bytes.\n", fileCount, totalSize)
+end end
+3.2.7.7 expand()
+Description
+This expands a relative file/directory path name into an absolute path name.
+Syntax
+sys.fs.expand(pathname)
+Parameters
+pathname The file/directory path name to expand
+
+
+Returns
+string The expanded path name
+Example
+Print /some/path/file.txt.
+sys.fs.chdir("/some/path/") print(sys.fs.expand("file.txt"))
+3.2.7.8 getcwd()
+Description
+This returns the current working directory.
+Syntax
+sys.fs.getcwd()
+Parameters
+None
+Returns
+string The current working directory
+3.2.7.9 info()
+Description
+This returns information about the given file/directory path name.
+Syntax
+sys.fs.info(pathname)
+Parameters
+pathname The file/directory to get information about
+Returns
+boolean Indicates success or failure table A table with the following fields if the previous value is true: attr A bitmap of the file attributes 0x01 � Read-only
+0x10 � Directory size The file size, in bytes, or 0 if it is a directory fileTime The file creation time; number of seconds since the epoch
+
+
+3.2.7.10 isdir()
+Description
+This returns whether the given path name is a directory.
+Syntax
+sys.fs.isdir(pathname)
+Parameters
+pathname  The path name to check
+Returns
+boolean  true if the path name is a directory; false otherwise
+3.2.7.11 md5()
+Description
+
+This returns the MD5 hash for the given file/directory.
+Syntax
+sys.fs.md5(pathname)
+Parameters
+pathname The file/directory path name
+Returns
+string A 16 character string representing the MD5 has of the file content, or nil if the path name is a directory or does not exist
+3.2.7.12 mkdir()
+Description
+This creates a directory.
+Syntax
+sys.fs.mkdir(path)
+Parameters
+path The directory path name
+Returns
+boolean Indicates success or failure string An error message if the first value is false
+
+
+3.2.7.13 numvols()
+Description
+This returns the number of volumes available.
+Syntax
+sys.fs.numvols()
+Parameters
+None
+Returns
+integer The number of available volumes
+3.2.7.14 rmdir()
+Description
+This function removes directory entries. The directory to be removed must be empty if the recurse Boolean option is false or missing. If the recurse Boolean option is true then rmdir() recursively deletes all subdirectories and their contents.
+Syntax
+sys.fs.rmdir(path, recurse)
+Parameters
+path  Directory path to remove
+recurse  Optional Boolean to recursively remove directory entries if true
+
+Returns
+boolean Indicates success or failure string An error message if the first return value is false; nil otherwise
+3.2.7.15 truncate()
+Description
+This truncates a file to the given size.
+Syntax
+sys.fs.truncate(pathname, size)
+Parameters
+pathname The file path name size The desired file size
+
+
+Returns
+boolean Indicates success or failure
+3.2.7.16 volinfo()
+Description
+This returns information about the given volume.
+Syntax
+sys.fs.volinfo(volumeID)
+Parameters
+volumeID This is an integer identifying the volume; it ranges from 1 to the value returned by fs.numvols()
+.1
+Returns
+table A table with the following fields:
+name The volume name
+size The total volume size in bytes
+free The free space on the volume in bytes
+bytesPerSector The number of bytes per sector
+sectorsPerCluster The number of sectors per cluster
+totalClusters The total number of clusters in the volume
+freeClusters The number of unused clusters in the volume
+maxDirEntries The maximum number of directory entries the volume supports
+freeDirEntries The number of unused directory entries in the volume
+3.2.8 heapInfo
+Description
+This returns a table with information about the current state of the heap.
+Syntax
+sys.heapInfo()
+Parameters
+None
+Returns
+table A structure with the following fields:
+size The total heap size (bytes)
+used The amount of the heap in use (bytes) free The amount of free heap space (bytes) freeFragments A structure with the number of free fragments by size:
+
+
+[1] Number of fragments � 16 bytes
+[2] Number of fragments > 16 and � 32 bytes
+[3] Number of fragments > 32 and � 64 bytes
+[4] Number of fragments > 64 and � 128 bytes
+[5] Number of fragments > 128 and � 256 bytes
+[6] Number of fragments > 256 and � 512 bytes
+[7] Number of fragments > 512 and � 1024 bytes
+[8] Number of fragments > 1024 and � 2048 bytes
+[9] Number of fragments > 2048 and � 4096 bytes
+[10] Number of fragments > 4096 and � 8192 bytes
+[11] Number of fragments > 8192 and � 16384 bytes
+[12] Number of fragments > 16384 and � 32768 bytes
+[13] Number of fragments > 32768 and � 65536 bytes
+[14] Number of fragments > 65536 and � 131072 bytes
+[15] Number of fragments > 131072 and � 262144 bytes
+[16] Number of fragments > 262144 and � 524288 bytes
+[17] Number of fragments > 524288 and � 1048576 bytes
+[18] Number of fragments > 1048576 and � 2097152 bytes
+[19] Number of fragments > 2097152 and � 4194304 bytes
+[20] Number of fragments > 4194304 and � 8388608 bytes
+[21] Number of fragments > 8388608 and � 16777216 bytes
+fragTotal Total size of all fragments (bytes) topSize Size of nonfragmented block at the top of memory (bytes)
+3.2.9 info
+Description
+The sys.info global table, below, includes a Bluetooth table under sys.info.bluetooth. The table below contains static information about the ST product and has the fields shown.
+
+1Aux is only available on some models.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Field Field Type Description
+BOOT_VERSION MAJOR INTEGER Boot loader major version MINOR INTEGER Boot loader minor version PATCH_LEVEL INTEGER Boot loader patch level REVISION INTEGER Boot loader revision number BUILD_TIME STRING Time the boot loader was built BUILD_DATE STRING Date the boot loader was built
+APPL_VERSION MAJOR INTEGER Application major version MINOR INTEGER Application minor version PATCH_LEVEL INTEGER Application patch level REVISION INTEGER Application loader revision number BUILD_TIME STRING Time the application was built BUILD_DATE STRING Date the application was built
+HARDWARE DEVICE_ADDRESS_TYPE INTEGER Device address type (see addrType) DEVICE_ADDRESS STRING 48-bit device address SOFT_DEVICE_VERSION INTEGER Version of the internal protocol stack BLUETOOTH_VERSION
+STRING
+Bluetooth protocol version
+
+
+Syntax
+sys.info.bluetooth
+Example
+sys.info = { bluetooth = {
+APPL_VERSION = { REVISION = 21094 BUILD_TIME = "13:54:11" MAJOR = 2 PATCH_LEVEL = 0 BUILD_DATE = "Mar 12 2020" MINOR = 6
+}
+HARDWARE = { DEVICE_ADDRESS_TYPE = 1 BLUETOOTH_VERSION = "5.0" SOFT_DEVICE_VERSION = 182 DEVICE_ADDRESS = "D4:4D:3F:87:8D:6C"
+}
+BOOT_VERSION = { REVISION = 21082 BUILD_TIME = "09:50:04" MAJOR = 2
+
+
+PATCH_LEVEL = 0 BUILD_DATE = "Mar 11 2020" MINOR = 2
+} }
+HARDWARE = { MANUFACTURING_ID = "Test" PROCESSOR_CLOCK = 120 REVISION = 2 REVISION_MAJOR = 2 VARIANT = 10 FS_FLASH_DEVICE = "W25Q128JV-IM" FEATUREMASK = "\0\0\0\0\0\0\8\0" VARIANT_STRING = "ST9" RESET_REASON = 6 UNIQUEID = "0001FFFFFFFFFFFF4E45529930100014" FUNCTIONMASK = "0000000000000000" REVISION_MINOR = 0 RESET_REASON_STRING = "SOFTWARE"
+} HEAP_SIZE = 7864320 CONSOLE_CHANNEL = "main" APPL_VERSION = {
+REVISION = 21096 BUILD_TIME = "15:31:46" BUILD_DATE = "Mar 13 2020" MAJOR = 4 PATCH_LEVEL = 0 DESCRIPTION = "Debug" MINOR = 1
+}
+BOOT_VERSION = { REVISION = 0 BUILD_TIME = "10:53:19" BUILD_DATE = "Mar 17 2020" MAJOR = 4 PATCH_LEVEL = 0 DESCRIPTION = "Debug" MINOR = 1
+} SOFTWARE = { RESET_DESCRIPTION = ""
+
+
+RESET_REASON_STRING = "CONSOLE"
+RESET_REASON = 11 } }
+3.2.10 J1587
+3.2.10.1 J1587 event
+Description
+This event is posted if a response message is available after a request.
+Source
+�_J1587� (string)
+Event
+string �OnRequest�
+Arguments
+Event Return Atableofresponsesfortherequestedmessage.
+mid Number pid Number data A string of message data
+Example
+Example of a read vehicle identification number.
+local jbusQ = sched.createEventQ(1,"_J1587") jbus:request(128,237) local _,_ msg = jbusQ:wait(-1)
+printf("VIN=%s\n�, msg.data) jbusQ:destroy()
+3.2.10.2 J1587 Handle Methods
+The following methods can be used on the handle returned by sys.J1587.open()
+
+3.2.10.2.1 add()
+Description
+This method adds message identification (MID) and its parameter identification (PID) to the APIs receiving filter table. After J1587 is opened, all receive messages are disabled; this call is to set a specified parameter that will be accepted.
+
+
+Syntax
+handle:add(mid, pid)
+Parameters
+mid pid  Message identification (MID) number to assigned. MID range is 128 � 255. Parameter identification (PID) number to be assigned. PID range is 0 � 511.
+Returns
+string  Nil if success. A description of the error if failure.
+
+Example
+--Add PIDs receiving table
+local function j1587AddPIDs() jbus:add(128,84) --For road speed from engine #1 jbus:add(136,84) --For road speed from ABS jbus:add(128,96) --For fuel level jbus:add(128,100) -�For engine oil pressure jbus:add(128,244) --For trip distance
+end
+3.2.10.2.2 captureOff()
+Description
+This function ends capturing J1587 activities.
+Syntax
+handle:captureOff()
+Parameters
+None
+Returns
+list A table of list mid Number pid Number counts Number
+
+
+Example
+Local stat = jbus:captureOff() if (stat) then for _,v in ipairs(stat) do printf("MID:%d, PID:%d, Counts:%d \n",v.mid,v.pid,v.counts) end end
+3.2.10.2.3 captureOn()
+Description
+This function starts capturing J1587 bus activities. Recalling this method resets counting.
+Syntax
+handle:captureOn()
+Parameters
+None
+Returns
+None
+Example
+jbus:captureOn()
+3.2.10.2.4 clean()
+Description
+This function empties the receiving table.
+Syntax
+handle:clean()
+Parameters
+None
+Returns
+None
+Example
+jbus:clean() --Empty the PID table
+
+
+3.2.10.2.5 close()
+Description
+This function closes the J1587 service.
+Syntax
+handle:close()
+Parameters
+None
+Returns
+None
+Example
+jbus:close() jbus=nil collectgarbage()
+3.2.10.2.6 list()
+Description
+A list of message identification (MID) numbers and parameter identification (PID) numbers in receiving filter table.
+Syntax
+handle:list()
+Parameters
+None
+Returns
+list A MID and PID array table. mid Number pid Number
+Example
+List all PIDs in the current list.
+local list = jbus:list() if (list) then for _,v in ipairs(list) do printf("MID:%d, PID:%d\n",v.mid,v.pid)
+
+
+end end
+3.2.10.2.7 remove()
+Description
+This function removes a parameter identification (PID) number from the receiving list.
+Syntax
+handle:remove(mid, pid)
+Parameters
+mid  MID number to be assigned. MID range is 128 � 255.
+pid  PID number
+
+Returns
+rstr A string description of the error. Nil if no error.
+Example
+jbus:remove(128,127) --remove oil pressure PID on engine #1
+3.2.10.2.8 request()
+Description
+This function is used to get an on request parameter. It sends a request parameter message to J1708 bus. Later on, the firmware posts an event if data is available.
+Syntax
+handle:request(mid, pid)
+Parameters
+mid MID number to be assigned. MID range is 128 � 255. pid PID number to be assigned
+Returns
+string Nil if success. A description of the error if failure.
+Note: Only one request is available at a time. A new request replaces an old request.
+Example:
+local jbusQ = sched.createEventQ(1,"_J1587")
+jbus:request(128,237)
+local _,_ msg = jbusQ:wait(-1)
+
+
+printf("VIN=%s\n�, msg.data) jbusQ:destroy()
+3.2.10.2.9 query()
+Description
+To query the latest parameter, the message identification (MID) number and parameter identification (PID) number have to be added to the receiving table before querying.
+Syntax
+handle:query(mid, pid)
+Parameters
+mid MID number to be assigned. MID range is 128 � 255 pid PID number to be assigned
+Returns
+msg A message table. Nil if MID/PID is not in the list or data is not available data A string of variable length data timestamp Integer timestamp in 0.1 second. Note: If connection is not lost, timestamp could be used as
+counter divided by update rate from 1 to 100 (0.1s to 10s).
+Examples
+Get a trip distance and dump raw data.
+local msg = jbus:query(128,244) -�Trip distance if (msg) then printf("time:%d, raw data:\n",msg.timestamp) for i=1,msg.data:len() do
+printf("%02X ",msg.data:byte(i)) end print("\n")
+else print("Data is not available \n") end
+Get the road speed.
+local speed = jbus:query(128,84) --Dump road speed printf("Vehicle speed:%3.2f KM/H (%3.1f miles/H)\n", speed.data:byte(1) * 0.805, speed.data:byte(1) * 0.5)
+
+
+3.2.10.3 open()
+Description
+This function opens the J1587 interface.
+Syntax
+sys.J1587.open()
+Parameters
+None
+Returns
+handle A handle to access the rest of the API functions if no error. rstr A string description of the error. Nil if no error.
+Example
+Open the J1587 interface. If success the handle is saved to �jbus�.
+if (sys.J1587) then --open J1587 interface jbus,rstr = sys.J1587.open() if (jbus) then
+--success print(J1587 port is opened")
+else --used by others print(rstr)
+end end
+3.2.11 J1939 Lua Firmware Extensions
+The hardware supports a CAN controller with 14 PGN filter banks.
+The IsatData Pro system library provides a way to get PGN data on a query basis.
+�
+It only keeps the latest data on each specified PGN
+�
+Uses Broadcast Announcement Message (BAM) for multipacket communications
+�
+A total of 14 PGN filter entries are available with 1 filter is reserved for requests and one for multipacket BAM messages and address management.
+�
+PGN messages through BAM have a maximum data size of 512 bytes
+�
+Each successful query returns the PGN and an 8-byte data buffer or up to 64 bytes if it is a fast packet used by the NMEA 2000 protocol (NMEA 2000 is a replacement for NMEA 0183 and is based on SAE1939 format).
+�
+To request a PGN, an event �_J1939� is triggered if PGN data is received These are the Lua extensions available in the framework. The following extensions can be found in sys.J1939.
+
+
+3.2.11.1 captureOff()
+Description
+Stops capturing J1939 activities and/or gets the PGN list.
+Syntax
+<handle>:J1939.captureOff()
+Parameters
+None
+Returns
+list  pgn counts sa  A table of list: The pgn number The number of occurrences Source address (ECU ID) of the sender
+
+Example
+Local stat = sys.J1939.captureOff() if (stat) then for _,v in ipairs(stat) do printf("pgn:%d, sa:%d, counts:%d \n",v.pgn, v.sa, v.counts) end end
+3.2.11.2 captureOn()
+Description
+Starts capturing J1939 activities. Initially the interface is closed and then the API runs a special collection mode. This function does not filter PGNs on the bus, it collects all broadcasting PGNs.
+Syntax
+<handle>:J1939.captureOn(device, baud, extID, listenOnly)
+
+
+Parameters
+device baud  Specify which device to use. This is currently ignored; the function always opens CAN1. (optional) Specify which baud rate to use (ST 6xxx). Default is 250K.
+0 � 1M 1 � 800K 2 � 500K 3 � 250K 4 � 125K 5 � 100K 6 � 50K 7 � 20K 8 � 10K
+extID listenOnly  (optional) Specify extended IDs (29-bit) if true, otherwise standard 11-bit IDs (ST 6xxx). Default is true. (optional) Allow listenOnly mode to be used or not (ST 6xxx). Default is true.
+Returns
+true  If successful
+OR
+false  If unsuccessful
+errStr  Error string
+Example
+
+Ok,err = sys.J1939.captureOn()
+3.2.11.3 J1939 Handle Methods
+The following methods can be used on the handle returned by sys.J1939.open().
+3.2.11.3.1 add()
+Description
+Adds a parameter group number (PGN) to the filer table for CAN monitoring. After the CAN port is opened, all receiving messages are filtered out; this call configures CAN so that the specified messages are accepted.
+If connected to an NMEA 2000 bus, a fast packet message can be received in addition to a single frame 8-byte message. The application must set the PGN type if it is a fast packet (even if it is less than 8 bytes of data), otherwise the API treats it as a regular message and the data could be corrupted. The API defines the maximum fast packet size as 64 bytes. The default method of transmitting multiframe parameter groups in NMEA 2000 is using the fast packet protocol.
+For NMEA 2000, it is possible that multiple ECUs broadcast the same PGN with different instances; rapid update (broadcast) rate may overwrite previous instance of data before querying. An optional parameter can be used to filter specific data instance, this instance or source ID is defined in the first byte of the PGN data field. For example, Engine, Rudder, Transmission, Switch Bank, AC, Fluid, Charger, Battery, Inverter, AGS and Source IDs.
+Syntax
+<handle>:add(pgn,type,ext)
+
+
+Parameters
+pgn PGN to be assigned type (optional) 1 -Fast packet (used by most NMEA 2000 PGNs). If 0 or nil, it is standard. ext (optional) The extension parameter to PGN ranges from 0 to 255 used for NMEA 2000. It is the first byte
+(8 bits) of data. If nil or 255, this setting is ignored.
+Returns
+string Nil if success. A description of the error if failure
+Example
+--Add PGNs to filter table
+local function j1939AddPGNs() canPort:add(61444) --For engine speed canPort:add(65248) --For trip distance and odometer canPort:add(65265) --For vehicle speed canPort:add(65266) --For fuel rate and fuel economy canPort:add(65271) --For battery voltages canPort:add(65276) --For fuel level(percent)
+end
+--NMEA 2000 Trip Fuel Consumption, Vessel. Fast packet. canPort:add(127496,1)
+Note: type and ext must be used on NMEA 2000 PGNs if needed. Applying these options to regular J1939 PGNs may return unexpected results.
+Note: Each PGN frame type is well defined in the NMEA 2000 document. Applications must follow the document requirements to set PGN types, otherwise unexpected result can occur.
+Note: The NMEA 2000 PGN filter must be unique. Two filters may have the same PGN and a different ext.
+For example, Engine parameters, dynamic, fast packet:
+canPort:add(127489,1,0) --Engine instance 0 canPort:add(127489,1,1) --Engine instance 1 --Or canPort:add(127489,1) --if there is only one engine or don�t care
+Engine Parameters, Rapid Update, Single Frame
+canPort:add(127489,1) --All Engine(if more than one), or don�t care. canPort:add(127489,1,1) � Incorrect. Above setting covers engine 1
+The setting below is duplicated:
+canPort:add(127489,1) --All Engine(if more than one), or don�t care. canPort:add(127489,1,1) � Incorrect. Above setting covers engine 1
+
+
+3.2.11.3.2 close()
+Description
+Closes the specified interface.
+Syntax
+<handle>:close()
+Parameters
+None
+Returns
+None
+Example
+canPort:close()
+3.2.11.3.3 flush()
+Description
+Flushes out the parameter group number (PGN) buffer from the interface. If PGN is zero, flushes out all PGN data buffer in the filter table.
+This function lets Lua flush out stale data and wait for an update. If there is no update available, querying PGN returns nil.
+Syntax
+<handle>:flush(pgn)
+Parameters
+pgn  PGN or 0
+ext  (optional) the extension parameter to PGN ranges from 0 to 255 used for NMEA 2000. It is the first byte
+(8 bits) of data if nil or 255, ext setting is ignored.
+Returns
+None
+Example
+
+canPort:flush(0) --reset all PGN data to default invalid.
+3.2.11.3.4 list()
+Description
+Lists the parameter group numbers (PGN) in a filter table.
+
+
+Syntax
+<handle>:list()
+Parameters
+None
+Returns
+list A PGN array
+Example
+List all PGNs in current filter list.
+local list = canPort:list() if (list) then for _,v in ipairs(list) do printf("PGN:%d\n",v) end end
+3.2.11.3.5 list_ext()
+Description
+Lists the PGNs with type and extension parameter. This method can be used to list NMEA 2000 filter table settings.
+Syntax
+<handle>:list_ext()
+Parameters
+None
+Returns
+list A PGN array
+Example
+This example lists all PGNs in the current filter list.
+local list = canPort:list_ext() if (list) then for _,v in ipairs(list) do printf("PGN:%d Fast Type:%d Data Instance: %d\n",v.pgn, v.type, v.ext) end end
+
+
+3.2.11.3.6 query()
+Description
+Queries the latest parameter group number (PGN) raw data by specified PGN.
+Syntax
+<handle>:query(pgn, ext)
+Parameters
+pgn  PGN to be queried
+ext  (optional) the extension parameter to PGN ranges from 0 to 255 used for NMEA 2000. It is the first byte
+(8 bits) of data if nil or 255, ext setting is ignored.
+
+Returns
+rpgn The queried PGN. Returns nil if the PGN data is not available or if the PGN is not in the filter list. data 8-byte data buffer. Or variable size of data buffer if it is a fast packet. seq The sequence number of received PGN data (0 � 65535). If two queries have the same
+sequence number no new data is updated. sa Source address (ECU ID) of the sender.
+Example
+Check coolant temperature and dump its raw data.
+Local rpgn,dstr,sa = canPort:query(65262) --coolant temp if (rpgn) then
+printf("PGN %d sa %d, raw data:",rpgn,sa)
+printf("%02X %02X %02X %02X %02X %02X %02X %02X\n", dstr:byte(1),dstr:byte(2),dstr:byte(3),dstr:byte(4), dstr:byte(5),dstr:byte(6),dstr:byte(7),dstr:byte(8))
+else print("pgn is not in filter list\n") end
+Fleet management needs converting raw data to measured speed.
+Local rpgn,dstr = canPort:query(65265) --val = (byte(3)<<8) | byte(2) local val = bit32.bor( bit32.lshift(dstr:byte(3),8),dstr:byte(2)) --Convert to speed val = val/256 --Dump printf("PGN:%3.2f, Vehicle speed:%3.2f KM/H (%d miles/H)\n",
+rpgn,val, val/1.60934)
+
+
+end
+NMEA 2000 data:
+canPort:query(127489,1) --Engine instance 1 parameters
+3.2.11.3.7 queryBAM()
+Description
+Queries BAM data. The parameter group number (PGN) is defined using the setBAM() method. This method only applies to broadcasting BAM. it returns the last received BAM data. For �on request� BAM, the application uses the �_J1939� event to receive the requested data. LUA also keeps the data in this query buffer if it is available.
+Syntax
+<handle>:queryBAM()
+Parameters
+None
+Returns
+pgn The queried PGN, or nil if no data is available size 512 bytes data Variable length data buffer seq Sequence number of received PGN data(0 � 65535). If two queries have a same sequence number
+no new data is updated. sa Source address (ECU ID) of the sender.
+Examples
+To monitor multiple BAMs, the application may change PGNs at different time slots.
+local pgn,size,data,seq,sa = canPort:queryBAM() if (pgn) then printf("PGN %d(sa%d,seq %d), size %d,raw data:\n",pgn,sa,seq,size) for i=1,size do
+printf("%02X ",data:byte(i)) end print("\n")
+else print("PGN data is not available \n") end
+
+
+3.2.11.3.8 remove()
+Description
+Removes a parameter group number (PGN) from a filter table. If the PGN is zero, the filter table is emptied.
+Syntax
+<handle>:remove(pgn, ext)
+Parameters
+pgn  PGN or 0
+ext  (optional) the extension parameter to PGN ranges from 0 to 255 used for NMEA 2000. It is the first
+byte (8 bits) of data if nil or 255, ext setting is ignored.
+
+Returns
+None
+Example
+canPort:remove(65263) --remove oil pressure PGN
+And
+canPort:remove(127489,1) --NMEA2000.remove Engine instance 1 filter
+And
+canPort:remove(0) --Empty the PGN filter table
+3.2.11.3.9 request()
+Description
+Many PGNs support data query, these PGNs are not usually broadcast or updated at a low rate. To get data for these PGNs, the application must issue a request (through ISO GPN 59904). Electronic control units (ECUs) send the data to the bus if the PGN is valid and the feature is supported.
+The J1939 standard recommends that the application does not send more than three requests per second. The API rejects any additional requests during this 1 second window.
+For get request PGN data, the PGN number must be added to the filter table. The API uses a reserved filter for both regular PGN and BAM messages.
+Use the setBAM method for broadcast messages and query the latest updated data. Using request on broadcast only PGNs may result in a longer response time, a time out , or an increase in bus traffic. If there is no response, a J1939 timeout event code of 0 is returned. If the PGN is unavailable, a J1939 data event code of 1 with an 8-byte payload is returned. If the PGN is available and the size is larger than 8 bytes, a J1939 BAM data event code of 2 with payload (�8 bytes) is returned. If the PGN is available and the request is a fast packet (NMEA 2000), a J1939 data event code 3 with variable size payload is returned. The firmware rejects any new requests if the previous request is not complete. NMEA 2000 request group function (PGN 126208) for specific fields is not supported.
+The optional da parameter is for sending a PGN request to a specific destination address. The application knows the ECU ID and associated PGNs. By default, without this option, the API sends a request as a global type to the bus. It is possible that some ECUs use the same PGNs with a different source address. In this case, application can use this destination address to filter out the PGN source, the application will not add this PGN to the regular filter table.
+
+
+Syntax
+<handle>:request(pgn, type, ext, da, specific)
+Parameters
+pgn  PGN number or 0
+type  (optional) 1 -Fast packet (used by most NMEA 2000 PGNs). If 0 or nil, it is standard.
+ext  (optional) The extension parameter to PGN ranges from 0 to 255 used for NMEA 2000. It is the first
+byte (8 bits) of data if nil or 255, ext setting is ignored.
+da  (optional) Specific destination address (ECU ID) of the request.
+specific  (optional) Default, global PGN request. 1 specific peer request.
+
+Returns
+boolean True if successful string Error description on error, nil otherwise
+Examples
+--Request time/date. local ok,errMsg= canPort:request(65253)
+if not ok then --Request failed print(errMsg) end
+--Request VIN, max 200 byte chars(in BAM message) local ok,errMsg= canPort:request(65260)
+if not ok then --Request failed print(errMsg) end
+--NMEA 2000. Request Engine 0 static configuration, fast packet. local ok,errMsg= canPort:request(127498,1,0)
+if not ok then --Request failed
+
+
+print(errMsg) end
+Note: Most on request messages are not broadcasted and many broadcasted PGNs cannot be requested.
+Note: When using the optional da parameter for broadcasting PGNs, the firmware does not send a request to the CAN bus, it catches the first available packet from the specific source and then returns. It is recommended you only use this parameter on duplicated PGNs.
+Note: Peer to peer multipacket communication (RTS/CTS handshaking) is not supported for request.
+3.2.11.3.10 setBAM()
+Description
+Flushes and assigns a parameter group number (PGN) that has its data filtered and saved if it generates a BAM. This function only supports one BAM PGN at a time but the application can change this by recalling this method. This function applies to Broadcasting and �on request� BAM messages.
+Current NMEA 2000 PGNs do not use BAM messages.
+Syntax
+<handle>:setBAM(pgn)
+Parameters
+pgn  PGN is valid for BAM. This method flushes the old BAM data buffer.
+Returns
+boolean  True if successful
+string  Error description on error, nil otherwise
+Example
+
+canPort:setBAM(65226) --set report DM1 with BAM
+3.2.11.4 open()
+Description
+Opens the CAN interface.
+Syntax
+sys.J1939.open(bus, baud, listenOnly, forceOpen)
+
+
+Parameters
+bus  CAN device to use (currently ignored). Device is a number, not a string.
+baud  (optional) Specify which baud rate to use. Default is 250K.
+0 � 1000 kbps 1 � 800 kbps 2 � 500 kbps 3 � 250 kbps (default) 4 � 125 kbps 5 � 100 kbps 6 � 50 kbps 7 � 20 kbps 8 � 10 kbps
+listenOnly  (optional) Allow listenOnly mode to be used or not. Default is false.
+forceOpen  Boolean that if true opens the bus even if errors are detected (default: false)
+
+Returns
+handle A handle to access the rest of the API functions; nil on failure string In the case of failure, a description of the error
+3.2.12 J1979 (Terminals with CAN bus)
+The examples in this section use 0 for 11-bit ID (CAN2.0A) and 1 for 29-bit ID (CAN2.0B) bus type.
+3.2.12.1 detect
+Description
+Detects the J1979 protocol on the active bus. It is possible to search all emission related ECU on the bus by detecting Service 01 and PID 0. For correct results, the device must be connected to a CAN bus.
+Syntax
+sys.J1979.detect()
+Parameters
+None
+Returns
+conf A table of scan result. Nil if failure.
+type Number, bus type. 0 for 11-bit ID, 1 for 29-bit ID.
+baud Number, baud rate. 0 for 500 K, 1 for 250 K
+list A table of ECU addresses found on the bus. It can be used for a later request. err In the case of failure, a description of the error.
+Examples
+--Power
+local Jconf,errMsg = J1979.detect()
+
+
+if (Jconf) then --success printf("Scan type: %s\n",Jconf.type == CAN20B and "29 bit" or "11 bit") printf("Scan baud: %s\n",Jconf.baud == 1 and "250K" or "500K") print("ECU addresses:") for _,v in ipairs(Jconf.list) do
+printf("%X\n",v) end else
+--Open failed print(errMsg) end
+3.2.12.2 open
+Description
+This opens the CAN interface.
+Syntax
+sys.J1979.open()
+Parameters
+type  Number. Optional bus type. 0 for 11-bit ID. 1 for 29-bit CAN IDs.
+baud  Number. Optional baud rate. 0 for 500 K, 1 for 250 K.
+
+Note: The firmware interprets any parameter value lager than 1, as 1.
+Returns
+handle A handle to access the rest of the API functions; nil if failure errStr In the case of failure, a description of the error
+Example
+--Open available CAN port for OBD test obdHdl, errMsg= J1979.open(1,0) if (obdHdl) then
+--success, with default CAN 2.0B and 500K baud print(�J1979 Session started\n") else
+--Open failed print(errMsg) end
+
+
+3.2.12.3 J1979 Handle Methods
+The following methods can be used on the handle returned by sys.J1979open().
+3.2.12.3.1 close
+Description
+This closes the CAN bus interface.
+Syntax
+<handle>:close()
+Parameters
+None
+Returns
+None
+Examples
+--Close CAN interface
+obdHdl:close()
+3.2.12.3.2 request
+Description
+This sends a request for diagnostic service. Any active ECU that supports requested service responds. The firmware posts an event if a response is available.
+Normal response time is less than 50 ms. A timeout event is posted if a response is not received after 50 ms.
+For a functional (broadcast) request, multiple responses are possible. The firmware posts the first response as soon as it is received. The firmware also posts another event to indicate that there are no additional responses from ECUs.
+The firmware rejects the new request if a previous one is not finished.
+Syntax
+<handle>:request()
+Parameters
+addr  Number. ECU address (CAN ID)
+service  Number of the Service ID. Service IDs 5 and 8 are rejected.
+pid  Optional Number. Many services require this ID. It must be a PID or test ID or monitor ID or
+info type. If a request is missing a pid for its service, it is considered an incomplete
+request.
+parm  Optional additional parameter number (0-255). It could be used by a nonstandard service
+if need.
+
+
+
+Returns
+boolean  true on success
+string  Error description, nil otherwise
+
+Examples
+--Request engine speed for all ECUs local ok,errMsg=obdHdl:request(ECU_ALL 1,0xd)
+if not ok then --Request failed print(errMsg) end
+3.2.12.4 J1979 Event
+Description
+An event is posted if the response message is available after request.
+Source
+�_J1939� (string)
+Event
+�Response� (string)
+Event Return
+evtCode Event code number 0 Response from physical address request. No more messages. 1 Response from functional address request. Possible multiple messages. 2 End of response for functional request. No message data. 3 Timeout. No response from any ECUs. No message data.
+msg A table that contains the response to the requested message. Nil if there is no message data.
+ecu Number. Indicate the ECU address. For 11-bit CAN bus, response address range:7E8-7EF(requested +8) For 29-bit CAN bus, response address is 18DBF1xx. Where xx is the ECU number.
+data A string of data payload. The maximal size is 128 bytes. The first byte is always the service ID, which is the requested SID plus 0x40. The second byte is the requested PID, or the first byte of the service data.
+Refer to SAEJ19979/ISO 15031-5 specification for response message formats and data byte definitions.
+
+
+Example
+An example of a service response.
+local value local jbusQ = sched.createEventQ(5, "_J1979" ) while true do
+local _,_,evtcode,msg =sched.waitQ(-1,jbusQ)
+if evtcode <2 then printf("RX:ECU=%X Data:",msg.ecu) for i=1, msg.data:len() do
+printf("%02X ",msg.data:byte(i)) end print("") local sid = msg.data:byte(1) -0x40 local pid = msg.data:byte(2) if sid ==1 or sid == 2 then
+printf("SID=%02X, PID=%02X ",sid,pid) if pid == 0x5 then printf("Coolant Temperature: %dC\n", msg.data:byte(3) -40) elseif pid == 0xC then value = bit32.bor( bit32.lshift(msg.data:byte(4),8), msg.data:byte(3)) printf("Engine Speed:%.2f RPM\n" , value * 0.25) elseif pid == 0xD then printf("Vehicle Speed:%dKM\n", msg.data:byte(3)) elseif pid>= 0x14 and pid<=0x1B then printf("Oxygen Sensor Voltage:%.3fV\n", msg.data:byte(3) * 0.005) elseif pid == 0x10 then value = bit32.bor( bit32.lshift(msg.data:byte(4),8), msg.data:byte(3)) printf("Airflow Rate:%.2f g/s\n" , value * 0.01) end
+elseif sid == 9 and pid ==2 then printf("SID=%02X, PID=%02X ",sid,pid) printf("VIN=%s\n",msg.data:sub(4,msg.data:len()))
+end
+
+
+print("") else if evtcode == 2 then print("End of Response\n") else --code 3 print("Timeout.\n") end end end
+3.2.13 LED Operation
+These functions are used to control the hardware LEDs. They have no effect unless the ledControl property of the associated service is set to User.
+3.2.13.1 flash()
+Description
+This flashes the specified LED at the specified rate, for a given number of repetitions. Note the period is capped at 65 seconds.
+Each LED can be flashed independently. If the same LED is configured to flash before the previous flash sequence has completed, the new configuration overrides the old.
+Syntax
+sys.led.flash(lid, onTime, period, reps)
+Parameters
+lid  LED identifier (for example, sys.led.SATCOMM)
+onTime  The amount of time, in ms, that the LED is ON in each cycle. (Range: 0 � 5000 ms, where 0 is disabled)
+period  The flashing period, in ms (must be greater than, or equal to, the �onTime�).
+Range: <onTime> -65535 ms)
+reps  The number of repetitions of the flashing pattern (0 -65535 where 0 signifies repeat forever)
+Returns
+true  Operation was successful
+false  Operation failed
+errMsg  String description of the error
+3.2.13.2 off()
+Description
+
+Turns OFF the specified LED.
+
+
+Syntax
+sys.led.off(lid)
+Parameters
+lid  LED identifier (for example, sys.led.POWER)
+Returns
+true  Operation was successful
+false  Operation failed
+errMsg  String description of the error
+
+3.2.13.3 on()
+Description
+Turns ON the specified LED.
+Syntax
+sys.led.on(lid)
+Parameters
+lid LED identifier (for example, sys.led.CELL)
+Returns
+true Operation was successful false Operation failed errMsg String description of the error
+3.2.13.4 Constants
+
+3.2.14 math
+Firmware extensions performing math operations.
+3.2.14.1 convertcoord()
+Description
+This converts the coordinates in string format to numerical format.
+
+
+Syntax
+sys.math.convertcoord(lat, long)
+Parameters
+lat  The latitude, in the form [+-]DDMM.MMMM
+long  The longitude, in the form [+-]DDMM.MMMM
+Returns
+integer  The latitude in minutes, scaled up to fill a 31-bit range (multiplied by 134217728, then divided by
+675)
+integer  The latitude in milliminutes
+integer  The longitude in minutes, scaled up to fill a 32-bit range (multiplied by 134217728, then divided
+by 675)
+integer  The longitude in milliminutes
+
+3.2.14.2 geodistance()
+Description
+This calculates the great-circle distance between two points, using the haversine formula.
+Syntax
+sys.math.geodistance(lat1, long1, lat2, long2)
+Parameters
+lat1 The latitude of the first point, in milliminutes long1 The longitude of the first point, in milliminutes lat2 The latitude of the second point, in milliminutes long2 The longitude of the second point, in milliminutes
+Returns
+number The distance between the two point in meters (single-precision floating point)
+3.2.14.3 packint()
+Description
+This packs 4 bytes into a single 32-bit value.
+Syntax
+sys.math.packint(b1, b2, b3, b4)
+
+
+Parameters
+b1 b2 b3 b4  The first (most significant) byte The second byte The third byte The fourth (least significant) byte
+Returns
+integer  The 32-bit value composed of the four above bytes
+3.2.14.4 uadd()
+Description
+
+Adds two 32-bit unsigned integer values. Because Lua supports only signed integer values, the two arguments are first cast from signed to unsigned, then added together. The result is again cast as a signed integer before being returned.
+Syntax
+sys.math.uadd(int1, int2)
+Parameters
+int1 The first unsigned integer value int2 The second unsigned integer value
+Returns
+integer The resulting sum of the two integer values, converted to a signed integer
+3.2.14.5 uge()
+Description
+Compares two 32-bit unsigned integers to one another and returns true if the first one is greater than, or equal to, the second. Because Lua supports only signed integer values, the two arguments are first cast from signed to unsigned, then compared to one another.
+Syntax
+sys.math.uge(int1, int2)
+Parameters
+int1 The first unsigned integer value int2 The second unsigned integer value
+Returns
+boolean Whether the first integer value is greater than, or equal to, the second.
+
+
+3.2.14.6 ugt()
+Description
+Compares two 32-bit unsigned integers to one another and returns true if the first one is greater than the second. Because Lua supports only signed integer values, the two arguments are first cast from signed to unsigned, then compared to one another.
+Syntax
+sys.math.ugt(int1, int2)
+Parameters int1 int2  The first unsigned integer value The second unsigned integer value
+Returns boolean  Whether the first integer value is greater than the second.
+3.2.14.7 ule()
+Description
+
+Compares two 32-bit unsigned integers to one another and returns true if the first one is less than, or equal to, the second. Because Lua supports only signed integer values, the two arguments are first cast from signed to unsigned, then compared to one another.
+Syntax
+sys.math.ule(int1, int2)
+Parameters
+int1 The first unsigned integer value int2 The second unsigned integer value
+Returns
+boolean Whether the first integer value is less than, or equal to, the second.
+3.2.14.8 ult()
+Description
+Compares two 32-bit unsigned integers to one another and returns true if the first one is less than the second. Because Lua supports only signed integer values, the two arguments are first cast from signed to unsigned, then compared to one another.
+Syntax
+
+sys.math.ult(int1, int2)
+
+
+Parameters
+int1 int2  The first unsigned integer value The second unsigned integer value
+Returns boolean  Whether the first integer value is less than the second.
+3.2.14.9 usub()
+Description
+
+Subtracts one 32-bit unsigned integer value from another. Because Lua supports only signed integer values, the two arguments are first cast from signed to unsigned, then subtracted from one another. The result is again cast as a signed integer before being returned.
+Syntax
+sys.math.usub(int1, int2)
+Parameters
+int1 The first unsigned integer value int2 The second unsigned integer value
+Returns
+integer The resulting difference between the two integer values, converted to a signed integer.
+3.2.14.10 unpackint()
+Description
+This unpacks a single 32-bit value into 4 bytes.
+Syntax
+sys.math.unpackint(val)
+Parameters
+val The 32-bit value
+Returns
+integer The first (most significant) byte integer The second byte integer The third byte integer The fourth (least significant) byte
+
+
+3.2.15 Modbus
+3.2.15.1 Supported Interfaces
+
+3.2.15.2 RS232
+A constant value indicating that the main or auxiliary RS-232 serial channel is used for Modbus.
+3.2.15.3 RS485
+A constant value indicating that the RS-485 serial channel is used for Modbus.
+3.2.15.4 PARITY_NONE
+A constant value indicating that no parity is to be used on the serial channel.
+3.2.15.5 PARITY_EVEN
+A constant value to indicate that even parity is to be used on the serial channel.
+3.2.15.6 PARITY_ODD
+A constant value to indicate that odd parity is to be used on the serial channel.
+3.2.15.7 MODE_RTU
+A constant value to indicate that the RTU transmission mode is to be used; implies 8 data bits, to comply with the Modbus specification.
+3.2.15.8 MODE_ASCII
+A constant value to indicate that the ASCII transmission mode is to be used; implies 7 data bits, to comply with the Modbus specification. When using this Modbus mode, PARITY_NONE cannot be used, due to a hardware limitation.
+3.2.15.9 open()
+Description
+This opens the specified serial channel for the Modbus operation.
+Syntax
+sys.modbus.open(id, mode, baud, parity, plcAddr, stopBits)
+
+
+Parameters
+id  The serial channel ID (RS232, RS232_AUX, or RS485).
+mode  The Modbus transmission mode to use (MODE_RTU or MODE_ASCII). RTU connections use 8 data
+bits, while ASCII connections use 7 data bits.
+baud  The baud rate to use on the serial channel (optional; default is 9600).
+parity  The parity to use on the serial channel (optional; default is PARITY_EVEN).
+plcAddr  Boolean indicating whether PLC addressing should be used (optional; default is false)
+stopBits  The number of stop bits to use on the serial channel ((optional) default is 0, which uses the
+appropriate value as defined in the Modbus protocol specification).
+
+Returns
+handle A handle to access the rest of the API functions; nil in the case of failure string In the case of failure, a description of the error
+Example
+Open the RS485 serial channel for use with Modbus, using the RTU transmission mode, at 9600 baud, with even parity.
+local handle, error = sys.modbus.open(sys.modbus.RS485, sys.modbus.MODE_RTU)
+Open the main RS232 serial channel for use with Modbus, using the ASCII transmission mode, at 19200 baud, with no parity. sys.modbus.
+local handle, error = sys.modbus.open(sys.modbus.RS232, sys.modbus.MODE_ASCII, 19200, sys.modbus.PARITY_NONE)
+3.2.15.10 open_tcp()
+Description
+Available on satellite-cellular terminals. This opens the specified serial channel for the Modbus operation.
+Syntax
+sys.modbus.open_tcp(ip, port, plcAddr)
+Parameters
+ip The IP address of the external device to connect to port The port to connect to plcAddr Boolean indicating whether PLC addressing should be used (optional; default is false)
+Returns
+handle A handle to access the rest of the API functions; nil in the case of failure string In the case of failure, a description of the error
+
+
+3.2.15.11 Modbus Handle Methods
+The following methods can be used on the handle returned by sys.modbus.open().
+3.2.15.11.1 close()
+Description
+This closes the specified serial channel.
+Syntax
+<handle>:close()
+Parameters
+None
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+3.2.15.11.2 maskwritereg()
+Description
+This builds and sends a query to modify a holding register value. The final register value is (current value AND andMask)OR (orMask AND (NOT andMask). Does not wait for the response.
+Syntax
+<handle>:maskwritereg(slave, addr, addMask, orMask, timeout)
+Parameters
+slave  The slave device address; 0 -247 (0 is broadcast)
+addr  The address of the holding register to modify; 0 -65535 (or 1 -65536 for PLC addressing)
+addMask  Value that is AND'ed with the current register value (0 -0xFFFF)
+orMask  Value that is OR'ed with the current register value (0 -0xFFFF)
+timeout  The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000)
+
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+Example
+local result, error = handle:maskwritereg(1, 2, 0xF3F0,
+
+
+0x0007)
+The following illustrates what happens after this call when the original register value is 0x0712.
+Hex  Binary
+current value  0712  0000  0111  0001  0010
+and mask  F3F0  1111  0011  1111  0000
+or mask  0007  0000  0000  0000  0111
+final value  0317  0000  0011  0001  0111
+
+3.2.15.11.3 raw()
+Description
+This sends a raw request to a Modbus device. The data parameter is passed on to the device verbatim.
+Syntax
+<handle>:raw(slave, fcode, data, timeout)
+Parameters
+slave The slave device address; 0 -247 (0 is broadcast). fcode The Modbus function code; 1-127. data A byte stream (string) containing the raw data to be sent to the device. timeout The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000).
+Blocking
+No
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+3.2.15.11.4 readcoils()
+Description
+This builds and sends a query to read one or more coils. Does not wait for the response.
+Syntax
+<handle>:readcoils(slave, addr, count, timeout)
+Parameters
+slave The slave device address; 1 -247 addr The address of the coil to read; 0 -65535 (or 1 -65536 for PLC addressing)
+
+
+count The number of coils to read (optional; minimum is 1, maximum is 2000, default is 1)
+timeout The maximum amount of time (in ms) to wait for a response; must be a positive value (optional; default is 5000)
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+3.2.15.11.5 readholdingregs()
+Description
+This builds and sends a query to read one or more holding registers. Does not wait for the response.
+Syntax
+<handle>:readholdingregs(slave, addr, count, timeout)
+Parameters
+slave The slave device address; 1 -247 addr The address of the holding register to read; 0 -65535 (or 1 -65536 for PLC addressing) count The number of holding registers to read (optional; minimum is 1, maximum is 125, default is 1) timeout The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000)
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+Example
+Read three unsigned holding register values starting at address 7 in little-endian format.
+local mb485Q = sched.createEventQ(1,"_MODBUS", handle) local result, err = handle:readholdingregs(1, 7, 3) if result then
+local q, event, success, count, data, raw q, event, success, err, count, data, raw = mb485Q:wait(-1) if success then
+local buf = sys.buffer.create(data) for i = 1, count do printf("Register #%d = 0x%04X\n", 6 + i, buf:getInt16(false, true)) end else print(err) end
+
+
+else print(err) end
+Read four 32-bit values from eight holding registers starting at address 3 in the default high word first, big.endian format:
+local mb485Q = sched.createEventQ(1,"_MODBUS", handle) local result, error = handle:readholdingregs(1, 3, 8) local q, event, success, error, count, data, raw = mb485Q:wait(-1) if success then
+local buf = sys.buffer.create(data) for i = 1, count/2 do printf("Register #%d = 0x%08X\n", 2 + i, buf:getInt32()) end else print(error) end
+3.2.15.11.6 readinfo()
+Description
+This builds and sends a query to read a device information value.
+Syntax
+<handle>:readinfo(slave, object, timeout)
+Parameters
+slave  The slave device address(1 � 247)
+object  The ID of the device information object to read (0 -0xFF)
+timeout  The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000)
+
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+3.2.15.11.7 readinputregs()
+Description
+This builds and sends a query to read one or more input registers. Does not wait for the response.
+Syntax
+<handle>:readinputregs(slave, addr, count, timeout)
+
+
+Parameters
+slave  The slave device address; 1 -247
+addr  The address of the input register to read; 0 -65535 (or 1 -65536 for PLC addressing)
+count  The number of input registers to read (optional; minimum is 1, maximum is 125, default is 1)
+timeout  The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000)
+Returns
+boolean  Indicates success or failure
+string  In the case of failure, a description of the error
+
+3.2.15.11.8 readinputs()
+Description
+This builds and sends a query to read one or more discrete inputs. Does not wait for the response.
+Syntax
+<handle>:readinputs(slave, addr, count, timeout)
+Parameters
+slave The slave device address; 1 -247 addr The address of the discrete input to read; 0 -65535 (or 1 -65536 for PLC addressing) count The number of discrete inputs to read (optional; minimum is 1, maximum is 2000, default is 1) timeout The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000)
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+3.2.15.11.9 readwriteregs()
+Description
+This builds and sends a query to write one or more holding register values at a given address and read one or more holding registers at a possibly different address. The write operation takes place before the read. Does not wait for the response.
+Syntax
+<handle>:readwriteregs(slave, rdAdd, rdCount, wrAddr, values, timeout)
+
+
+Parameters
+slave The slave device address; 1 -247 rdAdd The address of the first holding register to read; 0 -65535 (or 1 -65536 for PLC addressing) rdCount The number of registers to read (1 -125) wrAddr The address of the first holding register to write; 0 -65535 (or 1 -65536 for PLC addressing) values A byte stream (string) containing the packed 16-bit values (1 -121 values, each is 0 -0xFFFF) timeout The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000)
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+3.2.15.11.10 setcfg()
+Description
+This allows changing the configuration that was set in the call to sys.modbus.open(): mode, baud rate, parity, PLC addressing.
+Syntax
+<handle>:setcfg(cfg)
+Parameters
+cfg A table with any of the following fields (a missing field means the current configuration remains unchanged): mode The Modbus transmission mode to use (MODE_RTU or MODE_ASCII). baud The baud rate to use on the serial parity The parity to use on the serial channel plcAddr Boolean indicating whether PLC addressing should be used stopBits The number of stop bits to use (see open)
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+3.2.15.11.11 writecoil()
+Description
+Builds and sends a query to write a single coil value. Does not wait for the response.
+Syntax
+<handle>:writecoil(slave, addr, value, timeout)
+
+
+Parameters
+slave  The slave device address; 0 -247 (0 is broadcast)
+addr  The address of the coil to write; 0 -65535 (or 1 -65536 for PLC addressing)
+value  The coil value (true/false)
+timeout  The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000)
+
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+3.2.15.11.12 writecoils()
+Description
+This builds and sends a query to write one or more coil values. Does not wait for the response.
+Syntax
+<handle>:writecoils(slave, addr, count, values, timeout)
+Parameters
+slave The slave device address; 0 -247 (0 is broadcast) addr The address of the first coil to write; 0 -65535 (or 1 -65536 for PLC addressing) count The number of coil values to write (1 -1968) values A byte stream (string) containing the packed bit values timeout The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000)
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+Example
+--Create a buffer with space for 10 bits (2 bytes) local buf = sys.buffer.create(2) --Add the 10 bit values buf:addBits(1, 1) buf:addBits(0, 1) buf:addBits(0, 1) buf:addBits(1, 1) buf:addBits(0, 1) buf:addBits(1, 1) buf:addBits(1, 1)
+
+
+buf:addBits(1, 1)
+buf:addBits(0, 1)
+buf:addBits(0, 1)
+--Write the 10 coil values to slave 1, address 0
+local bytes, numBits = buf:getString()
+local result, error = handle:writecoils(1, 0, 10, bytes)
+Note: The result of getString() is not passed directly to the writeregs() call. That would have the side effect of
+passing the second result of the getString() call (the number of bits) as the fourth argument to the writeregs()
+call (the timeout value in milliseconds). In this case, because there are two 16-bit integers in the buffer, for a
+total of 32 bits, the timeout value is set at 32 milliseconds, likely causing the operation to time out.
+3.2.15.11.13 writereg()
+Description
+Builds and sends a query to write a single holding register value. Does not wait for the response.
+Syntax
+<handle>:writereg(slave, addr, value, timeout)
+Parameters
+slave The slave device address; 0 -247 (0 is broadcast) addr The address of the register to write; 0 -65535 (or 1 -65536 for PLC addressing) value The register value (0 -0xFFFF) timeout The maximum amount of time (in ms) to wait for a response; must be a positive value (optional;
+default is 5000)
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+3.2.15.11.14 writeregs()
+Description
+Builds and sends a query to write one or more holding register values. Does not wait for the response.
+Syntax
+<handle>:writeregs(slave, addr, values, timeout)
+Parameters
+slave The slave device address; 0 -247 (0 is broadcast) addr The address of the first holding register to write; 0 -65535 (or 1 -65536 for PLC addressing)
+
+
+values A byte stream (string) containing the packed 16-bit values (1 -123 values, each is 0 -0xFFFF)
+timeout The maximum amount of time (in ms) to wait for a response; must be a positive value (optional; default is 5000)
+Returns
+boolean Indicates success or failure string In the case of failure, a description of the error
+Example
+Write two signed holding register values starting at address 5 in the default big-endian format.
+local mb485Q = sched.createEventQ(1,"_MODBUS", handle)
+--Create a buffer for 2 register values (4 bytes)
+local buf = sys.buffer.create(4)
+buf:addInt16(178, true)
+buf:addInt16(-456, true)
+--Issue a query to write the registers
+local bytes, numBits = buf:getString()
+local result, error = handle:writeregs(1, 5, bytes)
+--Process the response
+local q, event, success, error, count, data, raw = mb485Q:wait(-1)
+if not success then
+print("Could not write registers: ", error)
+end
+Write two 32-bit values to four holding register values starting at address 0 with the high word first, but the bytes within the words in the little-endian format.
+local mb485Q = sched.createEventQ(1,"_MODBUS", handle)
+--Create a buffer for 2 32-bit values (8 bytes)
+local buf = sys.buffer.create(8)
+buf:addInt32(0x01234567, false, true)
+buf:addInt32(0x89ABCDEF, false, true)
+--Issue a query to write the registers
+local bytes, numBits = buf:getString()
+local result, error = handle:writeregs(1, 0, bytes)
+--Process the response
+local q, event, success, error, count, data, raw = mb485Q:wait(-1)
+if not success then
+print("Could not write registers: ", error)
+end
+
+
+Write a single 32-bit value to two holding register values starting at address 4 with the low word first and the bytes within the words in the big-endian format.
+local mb485Q = sched.createEventQ(1,"_MODBUS", handle) --Create a buffer for 1 32-bit values (4 bytes) local buf = sys.buffer.create(4) buf:addInt32(0x01234567, true) --Issue a query to write the registers local result, error = handle:writeregs(1, 0, buf:setString()) --Process the response local q, event, success, error, count, data, raw = mb485Q:wait(-1) if not success then
+print("Could not write registers: ", error) end
+3.2.15.12 Response Event
+3.2.15.12.1 Modbus
+Description
+This event is posted when a response to a query is received.
+Source
+"_MODBUS" (string)
+Event
+handle
+Arguments
+boolean This indicates if the response was received successfully or not. string A description of the error that occurred; or an empty string otherwise. integer The number of result values, or 0 on write operation, raw request or error. string The operation result as a stream of bytes; an empty string on write operation, raw request or
+error. See examples below for the data format. string A byte stream of the raw Modbus response; nil when a response is not received (i.e., timeout)
+Example
+Read four coil values starting at address 3.
+local mb485Q = sched.createEventQ(1,"_MODBUS", handle) local result, error = handle:readcoils(1, 3, 4) local q, event, success, error, count, data, raw = mb485Q:wait(-1) if success then
+
+
+local buf = sys.buffer.create(data) for i = 1, count do printf("Coil #%d = %d\n", 2 + i, buf:getBits(1)) end else print(error) end
+3.2.16 onewire
+1-wire functionality is supported on some ST models, refer to the product hardware guide for additional details.
+1-Wire is a device communications bus system that provides low-speed data, signaling, and power over a single signal.
+For a complete list of supported families refer to APPENDIX
+F.
+Refer to APPENDIX
+G
+for sample code.
+3.2.16.1 connect()
+Description
+Detect and enable 1-Wire control circuit to open a connection to the 1-Wire bridge (DS2484).
+Syntax
+sys.onewire.connect()
+Parameters
+None
+Returns
+handle  A handle to access the remaining API functions; nil upon failure
+errStr  An error message on failure
+
+Example
+--Power on DS2484 or open serial port on DS2480B local owHdl,errMsg = sys.onewire.connect() if (owHdl) then
+--success print(�1-Wire Session started\n")
+else --Open failed print(errMsg)
+end
+
+
+3.2.16.2 crc8()
+Description
+Calculates the 8-bit DOW CRC of the given byte stream (x^8 + x^5 + x^4 + 1). CRC8 is used for all ROM code checks.
+In the 1-Wire protocol, the crc8 function is used to verify the data integrity on the bus. Check the device datasheet to determine when to use crc16 rather than crc8.
+Syntax
+sys.onewire.crc8(dStr)
+Parameters
+dStr The string of byte stream for which a CRC8 needs to be computed
+Returns
+ncrc8 The resulting 8-bit CRC value
+Example
+DS1920 temperature reading pseudo code.
+local DS1920_READ_SCRATCHPAD = 0xBE local DS1920_CONVERT_TEMPERATURE = 0x44 local DS1920_FAMILY_CODE = 0x10 local DS1920_SCRATCHPAD_SIZE = 8
+--Power on DS2484 or open serial port on DS2480B local owHdl = sys.onewire.connect() if (owHdl == nil) then return end
+--Reset + ROM Search algorithm local idTbl = owHdl:search() if (idTbl == nil) then owHdl:disconnect() return end
+--This demo tests first device only local deviceID = idTbl[1]
+if (deviceID:byte(8) == DS1920_FAMILY_CODE) then
+owHdl:matchRom(deviceID) --Temperature conversion --Strong Pull-up for 750ms defined by spec owHdl:writeBytePower(DS1920_CONVERT_TEMPERATURE,750)
+
+
+--Read Scratchpad to check temperature reading owHdl:matchRom(deviceID) owHdl:writeByte(DS1920_READ_SCRATCHPAD) --Read entire scratchpad plus CRC8. 8 + 1 = 9 bytes local rbuf = owHdl:readBlock(DS1920_SCRATCHPAD_SIZE) local rcrc = owHdl:readByte() owHdl:reset()
+--Check CRC8 local ccrc8 =sys.onewire.crc8(rbuf) if (ccyc8 == rcrc) then
+--Alternative to check if crc8 of whole data is 0; --local rbuf = owHdl:readBlock(DS1920_SCRATCHPAD_SIZE + 1) --owHdl:reset() --local ccrc8 = owHdl:crc8(rbuf) --if (ccyc8 == 0)) then
+--CRC8 calculation matched, get temperature reading local degree = bit32.bor( bit32.lshift(rbuf:byte(2),8), rbuf:byte(1))
+printf("Temperature:%.1f\n", degree * 0.5) end
+else
+print("Not a DS1920 temperature sensor\n") end --Disconnect 1-Wire Bus
+owHdl:disconnect()
+3.2.16.3 crc16()
+Description
+Calculate the 16-bit CRC of a given byte stream (x^16 + x^15 + x^2 + 1).
+In the 1-Wire protocol, the crc16 function is used to verify the data integrity on the bus. Check the device datasheet to determine when to use crc16 rather than crc8.
+Syntax
+sys.onewire.crc16(dStr)
+
+
+Parameters
+dStr The byte stream for which a CRC needs to be computed
+Returns
+ncrc16 The resulting 16-bit CRC value
+Example
+DS1972 EEPROM Fast Access pseudo code.
+local DS1972_FAMILY_CODE = 0x2D local DS1972_WRITE_SCRATCHPAD = 0x0F local DS1972_READ_SCRATCHPAD = 0xAA local DS1972_COPY_SCRATCHPAD = 0x55
+--Power on DS2484 or open serial port on DS2480B local owHdl = sys.onewire.connect() if (owHdl == nil) then return end
+--Reset + ROM Search algorithm local idTbl = owHdl:search() if (idTbl == nil) then owHdl:disconnect() return end
+--This demo tests first device only local deviceID = idTbl[1]
+if (deviceID:byte(8) == DS1972_FAMILY_CODE) then --Scratchpad data size shall be: 8 --Write EEPROM address: 0x0020 local wbuf=string.char(DS1972_WRITE_SCRATCHPAD) .. '\032\000' wbuf = wbuf .. 'SkyWave!' --Calculate CRC16 local wcrc16 sys.onewire.crc16(wbuf)
+--Write scratchpad, overdrive speed for short cable owHdl:matchRom(deviceID,true) owHdl:writeBlock(wbuf)
+--Check CRC16, read inverted CRC16 local temp = owHdl:readBlock(2) local rcrc16 = bit32.bor( bit32.lshift(temp:byte(2),8), temp:byte(1)) if (wcrc16 + rcrc16 == 0xffff) then
+
+
+--CRC16 calculation matched, --Copy scratchpad to EEPROM owHdl:matchRom(deviceID,true) owHdl:writeByte(DS1972_COPY_SCRATCHPAD) --Send Authorization code --Address:0x0020, End offset:7 owHdl:writeByte(0x20)
+owHdl:writeByte(0) owHdl:writeByte(0x7,10) --delay 10 ms
+--Check AA state. local status = owHdl:readByte() if (status == 0xAA) then
+print('Write EEPROM OK\n') else print('Write EEPROM Failed\n') end
+else print('CRC 16 error\n') end else print('Not a DS1972 1024-Bit EEPROM device\n') end --Disconnect 1-Wire Bus owHdl:disconnect()
+Note: CRC16 value from the device is inverted, so the sum of local CRC16 and the device CRC16 is 0xffff.
+3.2.16.4 Onewire Handle Methods
+3.2.16.4.1 disconnect()
+Description
+Close the 1-Wire interface.
+Syntax
+<handle>:disconnect()
+Parameters
+None
+
+
+Returns
+boolean  Indicates success or failure. If success returned, the slave device responded and is present
+on the bus.
+string  An error message on failure, or nil otherwise
+
+Example
+--Power on DS2484 or open serial port on DS2480B owHdl,errMsg=sys.ow.connect() --Session start
+--Send commands to access iButton data
+---Power off DS2484 or close DS2480B owHdl:disconnect() --Session end
+3.2.16.4.2 matchRom()
+Description
+This call allows the bus master to select a device to access. Only the device with a matching ROM Code (ID) is active on the bus. This call is usually followed by a device-specific command (for example, writeByte()). This call must be in the first place for a transaction sequence.
+Syntax
+<handle>:matchRom(deviceID,overdrive)
+Parameters
+deviceID A string of 8 bytes ROM code
+overdrive Optional Boolean. If nil, this function assumes that the bus operates at a normal speed. True to use overdirve fast speed (125 kbps).
+Returns
+boolean Indicates success or failure. If success returned, the slave device responded and is present on the bus.
+string An error message on failure, or nil otherwise
+Example
+Multidrop bus operation.
+local DS1972_FAMILY_CODE = 0x2D --Scan devices on the bus. local idTbl = owHdl:search() if (idTbl == nil) then return end --Check first device if (idTble[1]:byte(8) == DS1972_FAMILY_CODE) then
+
+
+--Normal speed device access owHdl:matchRom(idTbl[1])
+--Overdrive speed access --Reset + Overdrive Match ROM + 8 byte Rom Code, --owHdl:matchRom(idTble[1],true)
+--Send Read or Write command here else print(�Not a DS1972 1024-Bit EEPROM device\n�) end
+Note: Application performs a 1-Wire bus sync reset, send a Match ROM, or Overdrive Match ROM function, and then sends 8 bytes ROM code to all devices for matching.
+If a device does not support fast speed, any following commands are not executed.
+Next transaction sequence exits the fast speed mode after a bus sync reset.
+Refer to APPENDIX
+H
+for supported Overdrive speed device.
+3.2.16.4.3 readBlock()
+Description
+After a read command, the master starts to read the bus data 1-byte at a time until the data size is reached.
+This call always follows a writeByte(), writeBytePower
+or writeBlock().
+
+Syntax
+<handle>:readBlock(size)
+Parameters
+size 1-Wire device datasheet
+defines the data size, if the read size is larger than real data buffer; dummy data (such as 0xff) is returned. The value should be between 1 and 128.
+Returns
+rbuf A data string of received from the device, nil if failed. errStr An error message on failure
+
+
+Example
+local DS1972_READ_MEMORY = 0xF0 local DS1972_FAMILY_CODE = 0x2D
+--Got deviceID before if (deviceID:byte(8) == DS1972_FAMILY_CODE) then
+owHdl:matchRom(deviceID)
+--Setup read memory command and address 0 local buf= string.char(DS1972_READ_MEMORY) .. �\000\000�
+--Send command to read memory from address 0 owHdl:writeBlock(buf)
+--Read 100 bytes local rbuf,errStr = owHdl:readBlock(100) --Transaction Done, owHdl:reset()
+if (rbuf) then print("Memory data:�) print(toHex(rbuf))
+else print( errStr) end
+else print(�Not a DS1972 1024-Bit EEPROM device\n�) end
+Note: After this call, the current transaction sequence is finished. The application can start another transaction or call reset() if not immediately starting a new transaction.
+3.2.16.4.4 readByte()
+Description
+Read a single byte from the 1-Wire bus. This call follows a writeByte(), writeBytePower, or writeBlock().
+After sending a read command, the master has to read data from the device.
+It may be also need to read back a device response after data transmission.
+
+
+Syntax
+<handle>:readByte()
+Parameters
+None
+Returns
+rbyte  A data byte if success, nil if failed
+errStr  An error message on failure
+
+Example
+local DS1972_READ_MEMORY = 0xF0 local DS1972_FAMILY_CODE = 0x2D
+--Got deviceID before if (deviceID:byte(8) == DS1972_FAMILY_CODE) then
+owHdl:matchRom(deviceID)
+--Setup read memory command --Read memory from address 64 local buf=string.char(DS1972_READ_MEMORY) .. �\064\000�
+--Send command owHdl:writeBlock(buf)
+--Read a byte local rbyte= owHdl:readByte()
+--Transaction Done, owHdl:reset()
+else print(�Not a DS1972 1024-Bit EEPROM device\n�) end
+Note: Not every device-specific command has data content. In this case, the current transaction sequence is finished, the application can start another transaction or call reset() if not immediately starting a new transaction.
+writeByte(0xff) is equal to readByte() in signal level.
+
+
+3.2.16.4.5 readRom()
+Description
+Read the ROM code from the slave device on a single-drop bus. For multiple drop buses, this call results in an incorrect code because of data collision, CRC8 check error.
+Syntax
+<handle>:readRom()
+Parameters
+None
+Returns
+romCode  The obtained ROM code data when successful ROM code is read. Nil if CRC error or there is no
+device on the bus.
+errStr  An error string if CRC error or no device on the bus
+Example
+
+--Read Device Serial ID from single drop bus. --Reset + Read ROM + 8 bytes Rom code
+local romCode,errStr = owHdl:readRom() --Print device ID if (romCode) then
+print("Device ID:�) print(toHex(romCode)); else print(errStr) end
+Note: This API performs a 1-Wire bus reset. Send readRom()
+and then receive 8 bytes ROM code from the device.
+3.2.16.4.6 reset()
+Description
+Resets all devices on the 1-Wire bus.
+Syntax
+<handle>:reset()
+Parameters
+None
+
+
+Returns
+boolean  Indicates success or failure
+string  An error message on failure, or nil otherwise
+
+Example
+local DS1920_CONVERT_TEMPERATURE = 0x44 --Got deviceID before owHdl:matchRom(deviceID)
+--Begin a temperature conversion, strong pull-up for 750ms owHdl:writeBytePower(DS1920_CONVERT_TEMPERATURE,750)
+--transaction is done owHdl:reset()
+Note: After a 1-Wire transaction is finished, use reset()
+if not immediately starting a new transaction.
+3.2.16.4.7 search()
+Description
+Scan 1-Wire bus to search available devices. This call can be used for both single and multiple drop buses.
+Syntax
+<handle>:search(alarm)
+Parameters
+alarm Optional Boolean. Nil to scan all devices. True to scan devices only with event alarmed. Refer to APPENDIX
+H
+for a list of supported devices.
+Returns
+idTable A table of 8 byte ROM code string. Nil if failed or there is no device on the bus errStr An error string if failed or no device on the bus
+
+
+Example
+Search all devices on the bus --Use owHdl:search(true) to search event alarmed devices.
+--Reset + ROM Search algorithm local idTbl,errStr = owHdl:search()
+if (idTbl) then print("Device list:�) for _,id in ipairs(idTbl) do
+print(toHex(id));
+end --Output examples --A90000003DE58724 --020000077C35C42D --3B0000054E378E2D
+else
+print(errStr) end --Other operations �
+Note: This API performs 1-Wire search algorithm. If there is no matching device found, the API returns an empty table.
+3.2.16.4.8 skipRom()
+Description
+Resets the 1-Wire bus, sends the 1-Wire skipRom()
+command and is intended to be used with a single device on the bus. This call is usually followed by a device-specific command, such as writeByte(). If more than one device replies on the bus a protocol error may occur.
+This call is usually followed by a device-specific function command, then read or write data from/to the device if necessary. This call must be in the first place for a transaction sequence.
+Syntax
+<handle>:skipRom(overdrive)
+Parameters
+overdrive Optional Boolean. If nil, this function assumes that the bus operates at a normal speed. True to use overdrive fast speed (125 kbps).
+
+
+Returns
+boolean  Indicates success or failure
+string  An error message on failure, or nil otherwise
+
+Example
+The example below is for a single drop bus operation.
+local DS1920_CONVERT_TEMPERATURE = 0x44
+--Reset + Skip ROM
+owHdl:skipRom() --Begin a temperature conversion, strong pull-up for 750ms --Send command to all DS1920 sensors
+owHdl:writeBytePower(DS1920_CONVERT_TEMPERATURE,750)
+--transaction is done owHdl:reset()
+Note: API performs 1-Wire bus sync reset, send a skipRom()
+or skipRom(overdrive).
+Refer to APPENDIX
+H
+for supported Overdrive devices.
+3.2.16.4.9 writeBlock()
+Description
+Write one or more bytes to the 1-Wire bus. Note that this call must be preceded by matchRom()
+or skipRom().
+The buffer can include a device-specific command, its address and its data content. For example of an IO switch, data buffer includes a pin number and new state. Refer to device datasheet
+for detail.
+Syntax
+<handle>:writeBlock(buf)
+Parameters
+buf The byte stream to write to the bus
+Returns
+boolean Indicates success or failure string An error message on failure, or nil otherwise
+
+
+Example
+local DS1920_WRITE_SCRATCHPAD = 0x4E local DS1920_COPY_SCRATCHPAD = 0x48 local DS1920_FAMILY_CODE = 0x10
+--Got deviceID before if (deviceID:byte(8) == DS1920_FAMILY_CODE) then
+owHdl:mathcRom(deviceID) --Write scratchpad --25 degree C, high trigger threshold ---1 degree C, Low trigger threshold local buf= string.char(DS1920_WRITE_SCRATCHPAD) .. '\025\255'
+--Set new thresholds owHdl:writeBlock(buf)
+--You could read back to verify it here
+--Start a new sequence, save new thresholds to EEPROM. owHdl:matchRom(deviceID) --Send Copy command and enable strong pull-up for 10 ms by spec owHdl:writeBytePower(DS1920_COPY_SCRATCHPAD,10)
+--transaction is done owHdl:reset()
+else print('Not a DS1920 temperature sensor\n') end
+Note: For memory operation, majority of devices have the scratchpad size same as memory page, in most cases, this size is 32 bytes. But there is an exception, an 8-byte scratchpad with a 32-page size. To write to the memory scratchpad, the starting address should always align with the scratchpad size, and should always write full size scratchpad; otherwise the programing memory will fail.
+If no additional read operation from the device, current transaction sequence is finished, application can start another transaction or call reset()
+if not immediately starting a new transaction.
+
+
+3.2.16.4.10 writeByte()
+Description
+Write one byte to the 1-Wire bus. This function is blocking if a delay parameter is provided. This call should always be used after matchRom()
+or skipRom().This call is the same as writeBytePower().
+This byte can be device-specific function command or any kind of data to be exchanged.
+Syntax
+<handle>:writeByte(wbyte, delay)
+Parameters
+wbyte  The byte to write to the bus
+delay  Optional number in milliseconds that defines the duration to block the serial interface and wait
+for completion. Value must be between 1 and 1000 milliseconds (optional number
+
+Returns
+boolean Indicates success or failure
+string An error message on failure, or nil otherwise
+Example
+local DS1920_RECALL_CMD = 0xB8 local DS1920_FAMILY_CODE = 0x10
+--Got deviceID before if (deviceID:byte(8) == DS1920_FAMILY_CODE) then
+owHdl:skipRom()
+--Send Recall command to device owHdl:writeByte(DS1920_RECALL_CMD) else print(�Not a DS1920 temperature sensor\n�) end
+Note: For some operations, a delay is necessary to wait until a job has completed, application must follow the timing specified in the product manufacturer's datasheet.
+Not every device-specific command has data content. In this case, current transaction sequence is finished, application can start another transaction or call reset()
+if not immediately starting a new transaction.
+
+
+3.2.16.4.11 writeBytePower()
+Description
+Write one or more bytes to the 1-Wire bus. This call must be preceded by matchRom()
+or skipRom(). This call is the same as writeByte().
+In addition, it changes the power level to strong pull-up after writing. For some devices, standard pull-up time is not enough for a parasite powered device to finish operations such as programming EEPROM and ADC, therefore, the master (usually within 10 us) must change 1-Wire pull-up timing to keep charging and provide extra power.
+Syntax
+<handle>:writeBytePower(wbyte, delay)
+Parameters
+wbyte  The byte to write to the bus
+delay  Optional number in mSec. Block the serial interface for a period of time. Value must be between 1
+and 1000 mSec
+
+Returns
+boolean Indicates success or failure string An error message on failure, or nil otherwise
+Example
+local DS1920_CONVERT_TEMPERATURE = 0x44 local DS1920_FAMILY_CODE = 0x10
+--Got deviceID before if (deviceID:byte(8) == DS1920_FAMILY_CODE) then
+owHdl:matchRom(deviceID)
+--Begin a temperature conversion, --Enable strong pull-up for 750ms defined by spec owHdl:writeBytePower(DS1920_CONVERT_TEMPERATURE,750)
+--Transaction is done owHdl:reset()
+else print(�Not a DS1920 temperature sensor\n�) end
+
+
+Note: Strong pull-up is automatically terminated on timeout or next 1-Wire bus read, write, or reset. If a strong pull-up is needed for more than one byte, call this API again for each byte.
+If a delay is required, the application must follow the timing specified in the specific product datasheet, generally available from the manufacturer.
+Refer to APPENDIX
+I
+for devices that require a strong pull-up (extra power).
+3.2.17 Stopwatch
+Stopwatch provides a firmware extension to support millisecond resolution stopwatch like functionality, which can be used to measure the elapsed time between two points in a Lua application.
+A stopwatch instance is implemented as two start/stop timestamps, so active stopwatches do not use any CPU resources. The number of stopwatch instances is limited only by available Lua heap memory.
+A stopwatch can overflow if its internal counter exceeds math.hugeint. When this happens, querying the stopwatch returns a -1.
+3.2.17.1 create()
+Description
+This method creates a new stopwatch instance. New stopwatches start in a clear and stopped state. There is no limit on the number of stopwatches that can be created other than memory resources.
+Syntax
+sys.stopwatch.create()
+Parameters
+None
+Returns
+handle A handle to access the stopwatch
+Example
+local sw = sys.stopwatch.create()--create the stopwatch � sw = nil--deletes the stopwatch
+3.2.17.2 Stopwatch Handle Methods
+3.2.17.2.1 clear()
+Description
+This method resets the contents of a stopped or running stopwatch to zero. It does not stop the stopwatch if it is running.
+
+
+Syntax
+<handle>:clear()
+Parameters
+None
+Returns
+None
+3.2.17.2.2 query()
+Description
+Queries the value of the stopwatch counter and optionally clears the counter value.
+Syntax
+<handle>:query(clear)
+Parameters
+clear  (Optional) Boolean to indicate if the stopwatch should be cleared or not after being queried. If
+omitted, the default is not to clear the stopwatch.
+Returns
+number  Current value of the stopwatch in milliseconds. If the stopwatch counter has exceeded
+math.hugeint, -1 is returned.
+
+3.2.17.2.3 start()
+Description
+Starts the stopwatch and optionally clear it. If the counter is already running, this function has no effect.
+Syntax
+<handle>:start(clear)
+Parameters
+clear Optional Boolean to indicate if the stopwatch should be cleared or not before being started. If omitted, the default is not to clear the stopwatch.
+Returns
+None
+3.2.17.2.4 stop()
+Description
+Stops the stopwatch counter.
+
+
+Syntax
+<handle>:stop()
+Parameters
+None
+Returns
+None
+Example
+shell> lua lua> sw=sys.stopwatch.create() lua> print(sw) stopwatch (6814d57c) [stopped] lua> print(sw:query()) 0 lua> sw:start() lua> print(sw:query()) 2471 lua> print(sw:query()) 4551 lua> print(sw) stopwatch (6814d57c) [running] lua> sw:stop() lua> print(sw:query()) 25824 lua> print(sw) stopwatch (6814d57c) [stopped] lua> print(sw:query()) 25824 lua> sw:clear() lua> print(sw:query()) 0 lua> sw=nil lua>
+
+
+3.2.18 timer
+3.2.18.1 MAX_TIMEOUT
+Specifies the maximum timeout supported. If a larger timeout is specified, an error is raised. The maximum value is 21474836 tenths of seconds (about 24 days).
+3.2.18.2 MIN_TIMEOUT
+Specifies the minimum timeout supported. If a smaller timeout is specified, an error is raised.
+3.2.18.3 create()
+Description
+This creates a new timer.
+Syntax
+sys.timer.create()
+Parameters
+None
+Returns
+handle A handle to access the timer
+3.2.18.4 Timer Handle Methods
+3.2.18.4.1 arm()
+Description
+This arms the timer to generate an event after the timeout has expired. This is a one-time event. An optional
+user argument can be provided that is passed as an argument to the timeout event.
+Syntax
+<handle>:arm(timeout, userArg)
+Parameters
+timeout  The timeout value, in 10ths of a second
+userArg  Optional user argument to be passed with the timeout event
+Returns
+boolean  Returns true if the alarm was rearmed (active alarm was cancelled)
+
+
+
+3.2.18.4.2 disarm()
+Description
+This disarms the timer, so that it no longer generates any events. Events that have already been queued are not removed.
+Syntax
+<handle>:disarm()
+Parameters
+None
+Returns
+boolean Returns true if the alarm was active and cancelled
+3.2.18.4.3 timeleft()
+Description
+This method returns the time remaining until the timer expires.
+Syntax
+<handle>:timeleft()
+Parameters
+None
+Returns
+number The time remaining until the timer expires, in tenths of seconds. 0 indicates less than1 /10th of a second remaining, while -1 indicates that the timer is not armed.
+3.2.18.5 Firmware Events
+3.2.18.5.1 _TIMER event
+Description
+Posted when a timer has expired.
+Source
+�_TIMER� (string)
+Event
+<timer handle>
+
+
+Arguments
+userArg User argument passed to the arm()
+call(optional)
+3.2.19 Uptime
+3.2.19.1 framework()
+Description
+Returns the amount of time since the Lua Services Framework was started.
+Syntax
+sys.uptime.framework(format)
+Parameters
+format  optional format specification string which can be one of:
+�*s�  return integer seconds since the Lua Services Framework was started (default)
+�*t�  return table with uptime broken into components
+Returns
+number  Seconds since Lua Services Framework was started if using the �*s� format
+OR
+table  With the following fields if using the �*t� format:
+totalSeconds  Total seconds since the Lua Services Framework was started
+days  Framework uptime days
+hours  Framework uptime hours
+minutes  Framework uptime minutes
+seconds  Framework uptime seconds
+ms  Framework uptime milliseconds
+
+3.2.19.2 idle()
+Description
+Returns the idle time of the framework.
+Syntax
+sys.uptime.idle(format)
+Parameters
+format optional format specification string which can be one of:
+�*s� return integer seconds of idle time since the framework was started
+�*t� return a table containing the framework idle time broken into components
+
+
+Returns
+number Seconds of idle time since the framework was started if using the �*s� format
+OR table With the following fields if using the �*t� format:
+totalSeconds Total idle seconds since the framework started
+days Framework idle days
+hours Framework idle hours
+minutes Framework idle minutes
+seconds Framework idle seconds
+ms Framework idle milliseconds
+3.2.19.3 powersave()
+Description
+Returns the amount of time the terminal was in power save (low power) mode since the last reset.
+Syntax
+sys.uptime.powersave(format)
+Parameters
+format  Optional format specification string which can be one of:
+�*s�  return integer seconds (default)
+�*t�  return table with uptime broken into components
+
+Returns:
+number Seconds terminal spent in power save mode if using the �*s� format OR table With the following fields if using the �*t� format: totalSeconds Total seconds terminal was in power save mode days Terminal power save time in days hours Terminal power save time in hours minutes Terminal power save time in minutes seconds Terminal power save time in seconds ms Terminal power save time in milliseconds
+3.2.19.4 terminal()
+Description
+Returns the amount of time since terminal was last reset.
+Syntax
+sys.uptime.terminal(format)
+
+
+Parameters
+format  Optional format specification string that can be one of:
+�*s�  Return integer seconds since the terminal reset (default)
+�*t�  Return table with uptime broken into components
+
+Returns:
+number Seconds since the terminal was reset if using the �*s� format
+OR table With the following fields if using the �*t� format:
+totalSeconds Total seconds since the terminal reset
+days Terminal uptime in days
+hours Terminal uptime in hours
+minutes Terminal uptime in minutes
+seconds Terminal uptime in seconds
+ms Terminal uptime in milliseconds
+3.2.20 watchdog
+3.2.20.1 clearmaxtime()
+Description
+This function clears the Lua thread maximum execution time metric.
+Syntax
+sys.watchdog.clearmaxtime()
+Parameters
+None
+Returns
+None
+3.2.20.2 getmaxtime()
+Description
+This function returns the maximum execution time in milliseconds of a Lua thread since the LSF was started or the maximum time was cleared.
+Syntax
+sys.watchdog.getmaxtime()
+Parameters
+None
+
+
+Returns
+number The maximum execution time of a Lua thread in milliseconds.
+3.2.20.3 kick()
+Description
+This function restarts the Lua execution watchdog timer, so that its timeout period is reset to the default.
+Syntax
+sys.watchdog.kick()
+Parameters
+None
+Returns
+None
+
+
+4 LUA INFRASTRUCTURE
+This section describes the Lua infrastructure.
+4.1 Globals
+Globals are described below.
+4.1.1 LSF_VERSION
+The string version of the Lua Services Framework.
+4.1.2 LSF_REVISION
+The numeric revision (build number) of the Lua Services Framework.
+4.1.3 LSF_BUILD_DATE
+The date the Lua Services Framework was built.
+4.1.4 LSF_BUILD_TIME
+The time the Lua Services Framework was built.
+4.1.5 LSF_GENERATION
+LSF Generation value which corresponds to the following:
+
+4.1.6 LSF_API_LEVEL
+This global defines the API level of the framework. This value is incremented for every release that changes the API in any way.
+4.1.7 SKYWAVE_PACKAGE_VERSION
+A string containing the version of the package file loaded onto the ST terminals.
+4.1.8 zlib Library
+The zlib library is provided to help applications with data decompression.
+4.1.8.1 compress()
+Description
+This function compresses the given data (ST 6xxx).
+
+
+Syntax
+zlib.compress(data, level, method, windowBits, memLevel, strategy)
+Parameter
+
+data This is the data for the compressed (string) level The compression level (optional ; default is -1). The following constants are defined:
+zlib.DEFAULT_COMPRESSION -1 (compression level 6 is used in this implementation) 0 1 9
+method The compression method. The only supported value on this platform is 8 (optional; default is 8). windowBits This defines the compression window size. A smaller value results in less memory usage, but with lower compression. The value can range from 8 to 15 (optional; default is 15). Adding 16 to this value
+produces a simple gzip header and trailer around the compressed data instead of a zlib wrapper. The following constants are defined: zlib.DEFAULT_WINDOWBITS 15
+8 15 Adding 16 to the windowBits value causes the library to wrap the compressed data in a simple gzip header and trailer. The gzip header will have no file name, no extra data, no comment, no modification time (set to zero), no header crc, and the operating system will be set to 255 (unknown). memLevel This defines the amount of memory used for the internal compression state. A smaller value results in
+less memory usage, but with lower compression and slower speed. The value can range from 1 to 9 (optional; default is 8). The following constants are defined: zlib.DEFAULT_MEMLEVEL 8
+1 9 strategy This defines the compression strategy (optional; default is 0). The following constants are defined:
+zlib.DEFAULT_STRATEGY 0 1 2 3 zlib.FIXED
+4
+
+
+Blocking
+No
+Returns
+string The compressed data
+
+
+4.1.8.2 decompress()
+Description
+This function decompresses the given data.
+Syntax
+zlib.decompress(data, windowBits)
+Parameters
+data windowBits  This is the of data to decompress (string) This defines the decompression window size. A smaller value results in less memory usage, but the stream will not decompress properly if this value is smaller than the value used when compressing (optional; default is 15). Add 16 to decompress gzip-formatted data.
+Adding 32 to the windowBits value causes the library to automatically detect a zlib or gzip header, and to decompress accordingly. Adding 16 to the windowBits value causes the library to decompress only data with a gzip header
+Blocking
+No
+Returns
+string  The decompressed data
+
+4.1.8.3 deflate()
+Description
+This sets up a streaming data compressor.
+Syntax
+zlib.deflate(dataSink, level, method, windowBits, memLevel, strategy)
+Parameters
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+zlib.BEST_SPEED 1
+zlib.BEST_COMPRESSION 9 method The compression method. The only supported value on this platform is 8 (optional; default is 8). windowBits This defines the compression window size. A smaller value results in less memory usage, but with
+lower compression. The value can range from 8 to 15 (optional; default is 15). Adding 16 to this value produces a simple gzip header and trailer around the compressed data instead of a zlib wrapper. The following constants are defined:
+zlib.DEFAULT_WINDOWBITS 15 zlib.MINIMUM_WINDOWBITS 8 zlib.MAXIMUM_WINDOWBITS 15 Adding 16 to the windowBits value causes the library to wrap the compressed data in a simple gzip
+header and trailer. The gzip header will have no file name, no extra data, no comment, no modification time (set to zero), no header crc, and the operating system will be set to 255 (unknown).
+memLevel This defines the amount of memory used for the internal compression state. A smaller value results in less memory usage, but with lower compression and slower speed. The value can range from 1 to 9 (optional; default is 8). The following constants are defined:
+zlib.DEFAULT_MEMLEVEL 8 zlib.MINIMUM_MEMLEVEL 1 zlib.MAXIMUM_MEMLEVEL 9
+strategy This defines the compression strategy (optional; default is 0). The following constants are defined: zlib.DEFAULT_STRATEGY 0 zlib.FILTERED 1 zlib.HUFFMAN_ONLY 2 zlib.RLE 3 zlib.FIXED
+4
+
+
+Blocking
+No
+Returns
+handle A handle to the compressor
+4.1.8.4 Deflate Handle Methods
+4.1.8.4.1 close()
+Description
+This method closes the data decompressor.
+Syntax
+<handle>:close()
+
+
+Parameters
+None
+Blocking
+No
+Returns
+boolean true or false to indicate the success of the close
+4.1.8.4.2 lines()
+Description
+This method returns an iterator to read all lines in the decompressed data in a loop.
+Syntax
+<handle>:lines()
+Parameters
+None
+Blocking
+No
+Returns
+object An iterator to use in a loop
+Example
+local inFile, err = io.open(�/path/to/my/compressed/file�, �r�)
+if inFile then local hdl = zlib.inflate(inFile) for line in hdl:lines() do
+print(�line = �, line) end hdl:close() inFile:close()
+end
+4.1.8.4.3 write()
+Description
+This method writes a block of data to compress.
+
+
+Syntax
+<handle>:write()
+Parameters data  A string to compress. It can be repeated multiple times.
+Blocking No
+Returns boolean  true or false to indicate the success of the close
+4.1.8.5 inflate()
+Description
+
+This function sets up a streaming data decompressor.
+Syntax
+zlib.inflate(dataSource, windowBits)
+Parameters
+dataSource This is the source of data to decompress. It can be:
+string The actual data to decompress.
+function A function to call to get the next block of data. The block size is passed in as an argument and it must return a string of that size.
+object A handle to an object (table or userdata) that supports a read and a close methods. The read method is given the block size as an argument and must return a string of that size. An open file handle is a perfect candidate to be passed to this function.
+windowBits This defines the decompression window size. A smaller value results in less memory usage, but the stream will not decompress properly if this value is smaller than the value used when compressing (optional; default is 15). Add 16 to decompress gzip-formatted data.
+Adding 32 to the windowBits value causes the library to automatically detect a zlib or gzip header, and to decompress accordingly. Adding 16 to the windowBits value causes the library to decompress only data with a gzip header.
+Blocking
+No
+Returns
+handle A handle to the decompressor.
+
+
+4.1.8.6 Inflate Handle Methods
+4.1.8.6.1 read()
+Description
+This method reads a block of decompressed data.
+Syntax
+<handle>:read(option, ...)
+Parameters
+option This specifies the kind of read to perform (optional; default is to read one line). This parameter can be repeated many times to return multiple strings. It can be one of:
+number  The number of bits to read
+�*l�  Read a single line
+�*a�  Read all the remaining data
+
+Blocking
+No
+Returns
+
+string The block of decompressed data, or nil when no data is left. There can be multiple such values, if multiple option parameters were passed.
+Example
+local inFile, err1 = io.open(�/path/to/my/compressed/file�, �r�) local outFile, err2 = io.open(�/path/to/my/decompressed/file�, �w�) if inFile and outFile then
+local hdl = zlib.inflate(inFile)
+repeat local data = hdl:read(8192) if data and #data > 0 then
+outFile:write(data)
+end until not data or #data == 0 hdl:close() inFile:close() outFile:close()
