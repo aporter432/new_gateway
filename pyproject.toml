@@ -54,10 +54,11 @@ disallow_untyped_defs = true
 check_untyped_defs = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["src/tests"]
 python_files = ["test_*.py"]
-addopts = "-v --cov=smart_gateway --cov-report=term-missing"
+addopts = "-v --cov=protocols --cov-report=term-missing"
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.flake8]
 max-line-length = 100
@@ -65,12 +66,12 @@ extend-ignore = "E203"
 exclude = [".git", "__pycache__", "build", "dist"]
 
 [tool.bandit]
-exclude_dirs = ["tests", "scripts"]
-targets = ["smart_gateway"]
+exclude_dirs = ["src/tests", "scripts"]
+targets = ["protocols"]
 
 [tool.coverage.run]
-source = ["smart_gateway"]
-omit = ["tests/*", "scripts/*"]
+source = ["protocols"]
+omit = ["src/tests/*", "scripts/*"]
 
 [tool.coverage.report]
 exclude_lines = [
