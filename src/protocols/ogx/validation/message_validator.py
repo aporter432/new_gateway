@@ -40,6 +40,25 @@ class OGxMessageValidator:
         # Validate message field types and values
         self._validate_message_field_types(message)
 
+        # Validate Fields is a list
+        if not isinstance(message["Fields"], list):
+            raise ValidationError(
+                "Message Fields must be a list", ValidationError.INVALID_MESSAGE_FORMAT
+            )
+
+        # Validate each field's required properties first
+        for field in message["Fields"]:
+            self._validate_field(field)
+
+        # Check for duplicate field names after validating required properties
+        field_names = set()
+        for field in message["Fields"]:
+            if field["Name"] in field_names:
+                raise ValidationError(
+                    f"Duplicate field name: {field['Name']}", ValidationError.INVALID_MESSAGE_FORMAT
+                )
+            field_names.add(field["Name"])
+
         # Validate Name is a string and not empty
         if not isinstance(message["Name"], str):
             raise ValidationError(
@@ -49,25 +68,6 @@ class OGxMessageValidator:
             raise ValidationError(
                 "Message Name cannot be empty", ValidationError.INVALID_MESSAGE_FORMAT
             )
-
-        # Validate Fields is a list
-        if not isinstance(message["Fields"], list):
-            raise ValidationError(
-                "Message Fields must be a list", ValidationError.INVALID_MESSAGE_FORMAT
-            )
-
-        # Check for duplicate field names
-        field_names = set()
-        for field in message["Fields"]:
-            if field["Name"] in field_names:
-                raise ValidationError(
-                    f"Duplicate field name: {field['Name']}", ValidationError.INVALID_MESSAGE_FORMAT
-                )
-            field_names.add(field["Name"])
-
-        # Validate each field
-        for field in message["Fields"]:
-            self._validate_field(field)
 
     def _validate_field(self, field: Dict[str, Any]) -> None:
         """

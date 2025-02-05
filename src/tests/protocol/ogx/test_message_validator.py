@@ -168,6 +168,7 @@ class TestOGxMessageValidator:
 
     def test_validate_field_required_properties(self, validator):
         """Test validation of required field properties"""
+        # Test missing Name
         message = {
             "Name": "test_message",
             "SIN": 16,
@@ -176,19 +177,29 @@ class TestOGxMessageValidator:
         }
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_message(message)
-        assert ValidationError.MISSING_REQUIRED_FIELD == exc_info.value.error_code
+        assert exc_info.value.error_code == ValidationError.MISSING_REQUIRED_FIELD
+        assert "Name" in str(exc_info.value)
 
         # Test missing Type
         message["Fields"][0] = {"Name": "field1", "Value": "test"}
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_message(message)
-        assert ValidationError.MISSING_REQUIRED_FIELD == exc_info.value.error_code
+        assert exc_info.value.error_code == ValidationError.MISSING_REQUIRED_FIELD
+        assert "Type" in str(exc_info.value)
 
         # Test missing Value (except for array fields)
         message["Fields"][0] = {"Name": "field1", "Type": "string"}
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_message(message)
-        assert ValidationError.MISSING_REQUIRED_FIELD == exc_info.value.error_code
+        assert exc_info.value.error_code == ValidationError.MISSING_REQUIRED_FIELD
+        assert "Value" in str(exc_info.value)
+
+        # Test array field with missing Elements
+        message["Fields"][0] = {"Name": "field1", "Type": "array"}
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_message(message)
+        assert exc_info.value.error_code == ValidationError.MISSING_REQUIRED_FIELD
+        assert "Elements" in str(exc_info.value)
 
     def test_validate_dynamic_field(self, validator):
         """Test validation of dynamic field type"""
@@ -216,3 +227,18 @@ class TestOGxMessageValidator:
         message["Fields"][0]["TypeAttribute"] = "invalid_type"
         with pytest.raises(ValidationError):
             validator.validate_message(message)
+
+    def test_validate_message_name_type(self):
+        """Test validation of message name type"""
+        validator = OGxMessageValidator()
+        message = {
+            "Name": 42,  # Invalid: number instead of string
+            "SIN": 16,
+            "MIN": 1,
+            "Fields": [],
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_message(message)
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+        assert "Name must be a string" in str(exc_info.value)

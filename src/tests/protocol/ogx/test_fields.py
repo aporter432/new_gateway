@@ -74,47 +74,86 @@ class TestField:
 
     def test_data_field_validation(self):
         """Test validation of data field values"""
-        # Valid base64 string
-        valid_b64 = b64encode(b"test data").decode()
-        field = Field(name="test_data", type=FieldType.DATA, value=valid_b64)
-        field.validate()
-
-        # Valid bytes
+        # Valid data field with bytes
         field = Field(name="test_data", type=FieldType.DATA, value=b"test data")
-        field.validate()
+        field.validate()  # Should not raise
 
-        # Invalid: not base64 or bytes
+        # Valid data field with base64 string
+        field = Field(
+            name="test_data", type=FieldType.DATA, value="dGVzdCBkYXRh"
+        )  # "test data" in base64
+        field.validate()  # Should not raise
+
+        # Invalid data field with non-base64 string
         field = Field(name="test_data", type=FieldType.DATA, value="not base64!")
         with pytest.raises(ValidationError):
             field.validate()
+
+        # Invalid data field with wrong type
+        field = Field(name="test_data", type=FieldType.DATA, value=123)
+        with pytest.raises(ValidationError):
+            field.validate()
+
+        # Test None value (should not raise)
+        field = Field(name="test_data", type=FieldType.DATA, value=None)
+        field.validate()
+
+    def test_field_to_dict_with_bytes(self):
+        """Test field serialization with bytes data"""
+        # Test DATA field with bytes
+        field = Field(name="test_data", type=FieldType.DATA, value=b"test data")
+        dict_repr = field.to_dict()
+        assert dict_repr["Name"] == "test_data"
+        assert dict_repr["Type"] == "data"
+        assert dict_repr["Value"] == "dGVzdCBkYXRh"  # base64 encoded "test data"
+
+        # Test field with None value
+        field = Field(name="test_null", type=FieldType.STRING, value=None)
+        dict_repr = field.to_dict()
+        assert dict_repr["Name"] == "test_null"
+        assert dict_repr["Type"] == "string"
+        assert "Value" not in dict_repr
 
 
 class TestArrayField:
     """Test cases for array field functionality"""
 
     def test_array_field_initialization(self):
-        """Test array field initialization and structure"""
-        elements = [
-            Element(index=0, fields=[Field(name="sub_field", type=FieldType.STRING, value="test")])
-        ]
-        array_field = ArrayField(name="test_array", type=FieldType.ARRAY, elements=elements)
+        """Test array field initialization"""
+        # Test default initialization
+        field = ArrayField(name="test_array", type=FieldType.ARRAY)
+        assert field.type == FieldType.ARRAY
+        assert field.value is None
+        assert field.elements == []
 
-        assert array_field.type == FieldType.ARRAY
-        assert array_field.value is None
-        assert len(array_field.elements) == 1
+        # Test initialization with elements
+        elements = [
+            Element(
+                index=0,
+                fields=[Field(name="sub_field", type=FieldType.STRING, value="test")],
+            )
+        ]
+        field = ArrayField(name="test_array", type=FieldType.ARRAY, elements=elements)
+        assert field.type == FieldType.ARRAY
+        assert field.value is None
+        assert field.elements == elements
 
     def test_array_field_to_dict(self):
         """Test array field serialization to dictionary"""
         elements = [
-            Element(index=0, fields=[Field(name="sub_field", type=FieldType.STRING, value="test")])
+            Element(
+                index=0,
+                fields=[Field(name="sub_field", type=FieldType.STRING, value="test")],
+            )
         ]
-        array_field = ArrayField(name="test_array", type=FieldType.ARRAY, elements=elements)
+        field = ArrayField(name="test_array", type=FieldType.ARRAY, elements=elements)
 
-        dict_repr = array_field.to_dict()
+        dict_repr = field.to_dict()
         assert dict_repr["Name"] == "test_array"
-        assert dict_repr["Type"] == FieldType.ARRAY.value
+        assert dict_repr["Type"] == "array"
         assert len(dict_repr["Elements"]) == 1
         assert dict_repr["Elements"][0]["Index"] == 0
+        assert dict_repr["Elements"][0]["Fields"][0]["Name"] == "sub_field"
 
 
 class TestDynamicField:

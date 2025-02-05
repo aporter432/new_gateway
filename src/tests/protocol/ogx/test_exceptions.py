@@ -22,10 +22,10 @@ def error_message():
 class TestOGxProtocolError:
     """Test cases for the base OGx protocol error class"""
 
-    def test_base_exception(self, error_message_fixture):
+    def test_base_exception(self, error_message):
         """Test base exception with error code"""
-        error = OGxProtocolError(error_message_fixture, 1001)
-        assert str(error) == error_message_fixture
+        error = OGxProtocolError(error_message, 1001)
+        assert str(error) == error_message
         assert error.error_code == 1001
 
     def test_base_exception_no_code(self):

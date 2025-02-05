@@ -201,6 +201,31 @@ class TestMessage:
         assert dict_repr["Fields"][0]["Name"] == "field1"
         assert dict_repr["Fields"][1]["Name"] == "field2"
 
+    def test_message_field_validation(self):
+        """Test validation of message fields"""
+        # Create a message with an invalid field
+        fields = [
+            Field(
+                name="field1", type=FieldType.STRING, value=42
+            ),  # Invalid: number for string field
+        ]
+        message = OGxMessage(name="test_message", sin=16, min=1, fields=fields)
+
+        # Validation should fail
+        with pytest.raises(ValidationError):
+            message.validate()
+
+        # Create a message with multiple fields, one invalid
+        fields = [
+            Field(name="field1", type=FieldType.STRING, value="test"),  # Valid
+            Field(name="field2", type=FieldType.UNSIGNED_INT, value=-1),  # Invalid: negative number
+        ]
+        message = OGxMessage(name="test_message", sin=16, min=1, fields=fields)
+
+        # Validation should fail
+        with pytest.raises(ValidationError):
+            message.validate()
+
 
 class TestCommonMessage:
     """Test suite for OGx common message functionality.

@@ -491,3 +491,25 @@ class TestFieldValidator:
             validator.validate_field_value("invalid_type", "value")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_TYPE
         assert "Unknown field type" in str(exc_info.value)
+
+    def test_validate_field_value_data_type_errors(self):
+        """Test validation of data field type errors"""
+        validator = OGxFieldValidator()
+
+        # Test invalid data type (not str or bytes)
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value(FieldType.DATA, 42)
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+        assert f"Invalid value for field type {FieldType.DATA}: 42" in str(exc_info.value)
+
+        # Test invalid base64 string
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value(FieldType.DATA, "not-base64!")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+        assert "Invalid base64 encoding" in str(exc_info.value)
+
+        # Test invalid base64 string (incorrect padding)
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value(FieldType.DATA, "YWJjZA=")  # Invalid padding
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+        assert "Invalid base64 encoding" in str(exc_info.value)
