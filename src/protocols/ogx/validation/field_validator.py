@@ -248,7 +248,7 @@ class OGxFieldValidator:
     def validate_message_name(self, name: str) -> None:
         """
         Validates message name format.
-        Must be non-empty string matching terminal message definition.
+        Must be non-empty string containing only alphanumeric characters and underscores.
 
         Args:
             name: Message name to validate
@@ -259,6 +259,12 @@ class OGxFieldValidator:
         if not name or not isinstance(name, str):
             raise ValidationError(
                 "Message name must be a non-empty string",
+                ValidationError.INVALID_FIELD_FORMAT,
+            )
+
+        if not name.replace("_", "").isalnum():
+            raise ValidationError(
+                "Message name must contain only alphanumeric characters and underscores",
                 ValidationError.INVALID_FIELD_FORMAT,
             )
 

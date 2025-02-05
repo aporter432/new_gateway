@@ -1,138 +1,84 @@
 """
-OGx field models according to N214 specification section 5.
-Implements field type definitions from Table 3 of the Common Message Format.
+OGx message models according to N214 specification section 5.
+Implements message format definitions from the Common Message Format.
 """
 
-from base64 import b64decode, b64encode
-from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from dataclasses import dataclass, field as dataclass_field
+from typing import Any, Sequence
 
 from ..constants import FieldType
-from ..exceptions import ValidationError
+from .fields import Field, ArrayField, Element
 
-__all__ = ["Field", "Element", "DynamicField", "PropertyField", "ArrayField"]
+__all__ = ["OGxMessage"]
 
 
 @dataclass
-class Field:
-    """Base field structure as defined in N214 section 5 Table 3"""
+class OGxMessage:
+    """Message structure as defined in N214 section 5"""
 
     name: str
-    type: FieldType
-    value: Optional[Any] = None
+    sin: int
+    min: int
+    fields: Sequence[Field] = dataclass_field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "OGxMessage":
+        """
+        Create message instance from dictionary data.
+
+        Args:
+            data: Dictionary containing message data
+
+        Returns:
+            OGxMessage instance
+        """
+        fields_data = data.get("Fields", [])
+        message_fields = []
+
+        for field_data in fields_data:
+            field_type = field_data.get("Type")
+            if field_type == "array":
+                elements = []
+                for element_data in field_data.get("Elements", []):
+                    element_fields = [
+                        Field(name=f["Name"], type=FieldType(f["Type"]), value=f.get("Value"))
+                        for f in element_data.get("Fields", [])
+                    ]
+                    elements.append(Element(index=element_data["Index"], fields=element_fields))
+                message_fields.append(
+                    ArrayField(name=field_data["Name"], type=FieldType.ARRAY, elements=elements)
+                )
+            else:
+                message_fields.append(
+                    Field(
+                        name=field_data["Name"],
+                        type=FieldType(field_data["Type"]),
+                        value=field_data.get("Value"),
+                    )
+                )
+
+        return cls(name=data["Name"], sin=data["SIN"], min=data["MIN"], fields=message_fields)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert message to dictionary format.
+
+        Returns:
+            Dictionary representation of the message
+        """
+        return {
+            "Name": self.name,
+            "SIN": self.sin,
+            "MIN": self.min,
+            "Fields": [message_field.to_dict() for message_field in self.fields],
+        }
 
     def validate(self) -> None:
-        """Validate field value matches its type"""
-        if self.value is None:
-            return
+        """
+        Validate message structure and field values.
 
-        try:
-            if self.type == FieldType.BOOLEAN:
-                if not isinstance(self.value, bool):
-                    raise ValueError("Must be true or false")
-
-            elif self.type == FieldType.UNSIGNED_INT:
-                val = int(self.value)
-                if val < 0:
-                    raise ValueError("Must be non-negative")
-
-            elif self.type == FieldType.SIGNED_INT:
-                int(self.value)  # Validates it's an integer
-
-            elif self.type == FieldType.STRING:
-                if not isinstance(self.value, str):
-                    raise ValueError("Must be a string")
-
-            elif self.type == FieldType.ENUM:
-                if not isinstance(self.value, str):
-                    raise ValueError("Must be a string")
-
-            elif self.type == FieldType.DATA:
-                if isinstance(self.value, str):
-                    try:
-                        b64decode(self.value)
-                    except Exception as e:
-                        raise ValueError("Must be valid base64") from e
-                elif not isinstance(self.value, bytes):
-                    raise ValueError("Must be base64 string or bytes")
-
-        except (TypeError, ValueError) as e:
-            raise ValidationError(f"Invalid value for {self.type.value}: {self.value}") from e
-
-    def to_dict(self) -> dict:
-        """Convert field to dictionary format"""
-        result = {
-            "Name": self.name,
-            "Type": self.type.value,
-        }
-        if self.value is not None:
-            # Handle bytes for DATA fields
-            if self.type == FieldType.DATA and isinstance(self.value, bytes):
-                result["Value"] = b64encode(self.value).decode()
-            else:
-                result["Value"] = self.value
-        return result
-
-
-@dataclass
-class ArrayField(Field):
-    """Array field type as defined in N214 section 5 Table 3"""
-
-    elements: List["Element"] = field(default_factory=list)
-
-    def __post_init__(self):
-        """Ensure type is set correctly"""
-        self.type = FieldType.ARRAY
-        self.value = None  # Arrays use elements instead of value
-
-    def to_dict(self) -> dict:
-        """Convert array field to dictionary format"""
-        result = super().to_dict()
-        result["Elements"] = [element.to_dict() for element in self.elements]
-        return result
-
-
-@dataclass
-class Element:
-    """Element structure as defined in N214 section 5"""
-
-    index: int
-    fields: List[Field]
-
-    def to_dict(self) -> dict:
-        """Convert element to dictionary format"""
-        return {"Index": self.index, "Fields": [field.to_dict() for field in self.fields]}
-
-
-@dataclass
-class DynamicField(Field):
-    """Dynamic field type as defined in N214 section 5 Table 3"""
-
-    type_attribute: str = ""  # One of the base field types
-
-    def __post_init__(self):
-        """Ensure type is set correctly"""
-        self.type = FieldType.DYNAMIC
-
-    def to_dict(self) -> dict:
-        """Convert dynamic field to dictionary format"""
-        result = super().to_dict()
-        result["Type"] = self.type_attribute
-        return result
-
-
-@dataclass
-class PropertyField(Field):
-    """Property field type as defined in N214 section 5 Table 3"""
-
-    type_attribute: str = ""  # One of the base field types
-
-    def __post_init__(self):
-        """Ensure type is set correctly"""
-        self.type = FieldType.PROPERTY
-
-    def to_dict(self) -> dict:
-        """Convert property field to dictionary format"""
-        result = super().to_dict()
-        result["Type"] = self.type_attribute
-        return result
+        Raises:
+            ValidationError: If validation fails
+        """
+        for message_field in self.fields:
+            message_field.validate()

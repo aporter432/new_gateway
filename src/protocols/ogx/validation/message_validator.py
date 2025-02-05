@@ -37,14 +37,8 @@ class OGxMessageValidator:
         # Validate required message fields
         self._validate_required_fields(message, REQUIRED_MESSAGE_FIELDS, "message")
 
-        # Validate MIN and SIN are integers
-        try:
-            int(message["MIN"])
-            int(message["SIN"])
-        except (ValueError, TypeError) as exc:
-            raise ValidationError(
-                "MIN and SIN must be integers", ValidationError.INVALID_MESSAGE_FORMAT
-            ) from exc
+        # Validate message field types and values
+        self._validate_message_field_types(message)
 
         # Validate Name is a string
         if not isinstance(message["Name"], str):
@@ -72,13 +66,20 @@ class OGxMessageValidator:
         Raises:
             ValidationError: If field structure is invalid
         """
-        # Validate required field properties
-        self._validate_required_fields(field, REQUIRED_FIELD_PROPERTIES, "field")
+        # For array fields, Elements is required instead of Value
+        if field.get("Type") == "array":
+            required_fields = {"Name", "Type", "Elements"}
+        else:
+            required_fields = REQUIRED_FIELD_PROPERTIES
 
-        # Validate field value against its type
-        self.field_validator.validate_field_value(
-            field["Type"], field.get("Value"), field.get("TypeAttribute")
-        )
+        # Validate required field properties
+        self._validate_required_fields(field, required_fields, "field")
+
+        # Validate field value against its type (skip for array fields)
+        if field.get("Type") != "array":
+            self.field_validator.validate_field_value(
+                field["Type"], field.get("Value"), field.get("TypeAttribute")
+            )
 
         # If field has elements, validate them
         if "Elements" in field:
