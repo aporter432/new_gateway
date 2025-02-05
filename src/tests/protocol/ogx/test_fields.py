@@ -1,6 +1,5 @@
 """Tests for OGx protocol field validation and types"""
 
-from base64 import b64encode
 import pytest
 from src.protocols.ogx.models.fields import Field, ArrayField, Element, DynamicField, PropertyField
 from src.protocols.ogx.constants import FieldType
