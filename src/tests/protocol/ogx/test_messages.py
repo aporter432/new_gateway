@@ -5,6 +5,7 @@ from src.protocols.ogx.models.messages import OGxMessage
 from src.protocols.ogx.models.fields import Field, ArrayField, Element
 from src.protocols.ogx.constants import FieldType
 from src.protocols.ogx.exceptions import ValidationError
+from src.protocols.ogx.validation.message_validator import OGxMessageValidator
 
 
 class TestMessage:
@@ -13,6 +14,11 @@ class TestMessage:
     Tests basic message operations, initialization, validation, and serialization
     according to the N214 specification.
     """
+
+    @pytest.fixture
+    def validator(self):
+        """Create a message validator instance for testing"""
+        return OGxMessageValidator()
 
     def test_message_initialization(self):
         """Test basic message initialization with valid fields"""
@@ -146,7 +152,7 @@ class TestMessage:
         assert dict_repr["Fields"][0]["Type"] == "array"
         assert len(dict_repr["Fields"][0]["Elements"]) == 2
 
-    def test_message_validation_with_array(self):
+    def test_message_validation_with_array(self, validator):
         """Test message validation with array fields"""
         elements = [
             Element(
@@ -160,14 +166,14 @@ class TestMessage:
         message = OGxMessage(name="test_message", sin=16, min=1, fields=fields)
 
         with pytest.raises(ValidationError):
-            message.validate()
+            validator.validate_message(message.to_dict())
 
-    def test_message_validation_empty(self):
+    def test_message_validation_empty(self, validator):
         """Test message validation with no fields"""
         message = OGxMessage(name="test_message", sin=16, min=1, fields=[])
-        message.validate()  # Should not raise
+        validator.validate_message(message.to_dict())  # Should not raise
 
-    def test_message_validation_duplicate_fields(self):
+    def test_message_validation_duplicate_fields(self, validator):
         """Test message validation with duplicate field names"""
         fields = [
             Field(name="same_name", type=FieldType.STRING, value="test1"),
@@ -176,7 +182,7 @@ class TestMessage:
         message = OGxMessage(name="test_message", sin=16, min=1, fields=fields)
 
         with pytest.raises(ValidationError) as exc_info:
-            message.validate()
+            validator.validate_message(message.to_dict())
         assert "Duplicate field name" in str(exc_info.value)
 
     def test_message_to_dict(self):
@@ -202,6 +208,11 @@ class TestCommonMessage:
     Tests common message operations, validation, and error handling
     according to the N214 specification.
     """
+
+    @pytest.fixture
+    def validator(self):
+        """Create a message validator instance for testing"""
+        return OGxMessageValidator()
 
     def test_common_message_initialization(self):
         """Test common message initialization with valid fields"""
@@ -230,26 +241,29 @@ class TestCommonMessage:
         assert dict_repr["MIN"] == 1
         assert len(dict_repr["Fields"]) == 2
 
-    def test_common_message_validation(self):
+    def test_common_message_validation(self, validator):
         """Test common message validation and error handling"""
         # Test with invalid SIN
+        message = OGxMessage(
+            name="test_message",
+            sin=-1,  # Invalid negative SIN
+            min=1,
+            fields=[],
+        )
         with pytest.raises(ValidationError):
-            OGxMessage(
-                name="test_message",
-                sin=-1,  # Invalid negative SIN
-                min=1,
-                fields=[],
-            )
+            validator.validate_message(message.to_dict())
 
         # Test with invalid MIN
+        message = OGxMessage(
+            name="test_message",
+            sin=16,
+            min=-1,  # Invalid negative MIN
+            fields=[],
+        )
         with pytest.raises(ValidationError):
-            OGxMessage(
-                name="test_message",
-                sin=16,
-                min=-1,  # Invalid negative MIN
-                fields=[],
-            )
+            validator.validate_message(message.to_dict())
 
         # Test with missing name
+        message = OGxMessage(name="", sin=16, min=1, fields=[])  # Empty name
         with pytest.raises(ValidationError):
-            OGxMessage(name="", sin=16, min=1, fields=[])  # Empty name
+            validator.validate_message(message.to_dict())
