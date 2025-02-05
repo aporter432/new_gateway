@@ -7,15 +7,17 @@ Single Responsibility: Define error types for MTWS protocol violations.
 from typing import Optional
 
 
-class MTWSProtocolError(Exception):
-    """Base exception for all MTWS protocol errors."""
+class MTWSError(Exception):
+    """Base class for MTWS protocol errors."""
 
-    def __init__(self, message: str, error_code: Optional[int] = None):
+    def __init__(self, message: str, error_code: int, **context):
+        """Initialize error with message and code."""
         self.error_code = error_code
-        super().__init__(f"Error {error_code if error_code else 'Unknown'}: {message}")
+        self.context = context
+        super().__init__(f"Error {error_code}: {message}")
 
 
-class MTWSEncodingError(MTWSProtocolError):
+class MTWSEncodingError(MTWSError):
     """Encoding errors according to N206 section 2.4.2.
 
     These errors occur during JSON encoding/decoding operations.
@@ -30,7 +32,7 @@ class MTWSEncodingError(MTWSProtocolError):
         super().__init__(f"Encoding Error: {message}", error_code)
 
 
-class MTWSSizeError(MTWSProtocolError):
+class MTWSSizeError(MTWSError):
     """Size validation errors according to N206 section 2.4.3.
 
     These errors relate to message size constraints including:
@@ -47,6 +49,7 @@ class MTWSSizeError(MTWSProtocolError):
     EXCEEDS_HTTP_HEADER = 302  # HTTP header size violation
     EXCEEDS_GPRS_ROUND = 303  # Exceeds GPRS 1KB rounding
     EXCEEDS_TCP_OVERHEAD = 304  # TCP/IP overhead limit exceeded
+    EXCEEDS_FIELD_SIZE = 305  # Field value size exceeds 1KB limit
 
     def __init__(self, message: str, error_code: int, current_size: int, max_size: int):
         self.current_size = current_size
@@ -57,20 +60,16 @@ class MTWSSizeError(MTWSProtocolError):
         )
 
 
-class MTWSFieldError(MTWSProtocolError):
-    """Field validation errors according to N206 section 2.4.1.
+class MTWSFieldError(MTWSError):
+    """Field-related errors in MTWS protocol."""
 
-    These errors relate to field structure and constraints including:
-    - Field envelope (2 bytes)
-    - Field name requirements
-    - Value/Message/Elements constraints
-    """
-
-    INVALID_NAME = 401  # Field name missing or invalid
-    INVALID_VALUE = 402  # Field value constraint violation
-    MULTIPLE_VALUES = 403  # Multiple of Value/Message/Elements present
-    MISSING_VALUE = 404  # No Value/Message/Elements present
-    INVALID_TYPE = 405  # Field type specification invalid
+    INVALID_NAME = 401  # Invalid field name
+    INVALID_TYPE = 408  # Invalid field type
+    INVALID_LENGTH = 406  # Field length exceeds maximum
+    INVALID_VALUE = 405  # Invalid field value
+    MISSING_VALUE = 404  # Required field missing
+    MULTIPLE_VALUES = 407  # Multiple values provided where only one allowed
+    DUPLICATE_NAME = 409  # Duplicate field name
 
     def __init__(self, message: str, error_code: int, field_name: Optional[str] = None):
         self.field_name = field_name
@@ -80,20 +79,17 @@ class MTWSFieldError(MTWSProtocolError):
         )
 
 
-class MTWSElementError(MTWSProtocolError):
-    """Element validation errors according to N206 section 2.4.1.
+class MTWSElementError(MTWSError):
+    """Element-related errors."""
 
-    These errors relate to element structure and constraints including:
-    - Elements envelope (16 bytes)
-    - Index requirements
-    - Fields requirements
-    """
-
-    INVALID_INDEX = 501  # Element index invalid or duplicate
-    MISSING_FIELDS = 502  # Required Fields array missing
-    INVALID_STRUCTURE = 503  # Element structure invalid
-    NON_SEQUENTIAL = 504  # Element indices not sequential
-    NEGATIVE_INDEX = 505  # Element index is negative
+    INVALID_INDEX = 500
+    MISSING_INDEX = 501
+    DUPLICATE_INDEX = 502
+    MISSING_FIELDS = 503
+    NON_SEQUENTIAL = 504
+    NEGATIVE_INDEX = 505
+    INVALID_FIELDS = 506
+    INVALID_STRUCTURE = 507  # Invalid element structure or format
 
     def __init__(self, message: str, error_code: int, element_index: Optional[int] = None):
         self.element_index = element_index
@@ -104,7 +100,7 @@ class MTWSElementError(MTWSProtocolError):
         )
 
 
-class MTWSTransportError(MTWSProtocolError):
+class MTWSTransportError(MTWSError):
     """Transport-related errors according to N206 section 2.3.
 
     These errors relate to GPRS transport constraints and dual-mode routing.

@@ -27,9 +27,9 @@ SIN_BASE_SIZE = 7  # Base bytes for SIN
 MIN_BASE_SIZE = 7  # Base bytes for MIN
 FIELDS_ENVELOPE_SIZE = 12  # Fields envelope bytes
 FIELD_ENVELOPE_SIZE = 2  # Field envelope bytes
-FIELD_NAME_BASE_SIZE = 10  # Base bytes for field name
-FIELD_VALUE_BASE_SIZE = 10  # Base bytes for field value
-ELEMENTS_ENVELOPE_SIZE = 16  # Elements envelope bytes
+FIELD_NAME_BASE_SIZE = 10  # Base bytes for field name per N206 2.4.3.1
+FIELD_VALUE_BASE_SIZE = 10  # Base bytes for field value per N206 2.4.3.1
+ELEMENTS_ENVELOPE_SIZE = 16  # Elements envelope bytes per N206 2.4.3.1
 INDEX_BASE_SIZE = 10  # Base bytes for element index
 
 # GPRS Session (N206 section 2.4.3.4)
@@ -39,9 +39,9 @@ SESSION_PACKET_SIZE = 40  # Bytes per session packet
 GPRS_ROUNDING_SIZE = 1024  # 1KB rounding for GPRS billing
 
 # Add to existing constants
-MAX_NAME_LENGTH = 32
-MAX_TYPE_LENGTH = 32
-MAX_VALUE_LENGTH = 1024
-PROTOCOL_VERSION = "2.0.6"
+MAX_NAME_LENGTH = 32  # Maximum field name length per N206 2.4.1
+MAX_TYPE_LENGTH = 32  # Maximum field type length per N206 2.4.1
+MAX_VALUE_LENGTH = 1024  # Maximum field value length (1KB) per N206 2.4.3
+PROTOCOL_VERSION = "2.0.6"  # Protocol version per N206
 NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_]+$")
 TYPE_PATTERN = re.compile(r"^[a-zA-Z0-9_]+$")

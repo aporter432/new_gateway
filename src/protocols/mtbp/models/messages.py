@@ -14,6 +14,7 @@ from typing import List, Optional
 
 from src.protocols.mtbp.constants.message_types import MessageType
 from src.protocols.mtbp.validation.exceptions import ParseError
+
 from .fields import Field
 
 

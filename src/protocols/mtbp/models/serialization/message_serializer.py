@@ -5,13 +5,13 @@ to bytes according to N210 spec section 3.2.
 """
 
 import struct
-from typing import Tuple, List
+from typing import List, Tuple
 
 from src.protocols.mtbp.constants.field_types import FieldType
 from src.protocols.mtbp.constants.message_types import MessageType
+from src.protocols.mtbp.models.fields import Field, FieldSize
 from src.protocols.mtbp.models.messages import MTBPMessage
 from src.protocols.mtbp.validation.exceptions import ParseError
-from src.protocols.mtbp.models.fields import Field, FieldSize
 
 
 class MTBPMessageSerializer:

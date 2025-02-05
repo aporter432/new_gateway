@@ -1,1 +1,1 @@
-"""Test suite for OGx protocol implementation""" 
+"""Test suite for OGx protocol implementation"""

@@ -1,17 +1,19 @@
-"""MTWS Protocol."""
+"""MTWS protocol implementation."""
 
 from .exceptions import (
     MTWSElementError,
+    MTWSEncodingError,
+    MTWSError,
     MTWSFieldError,
-    MTWSProtocolError,
     MTWSSizeError,
     MTWSTransportError,
 )
 
 __all__ = [
-    "MTWSProtocolError",
-    "MTWSElementError",
+    "MTWSError",
+    "MTWSEncodingError",
     "MTWSFieldError",
+    "MTWSElementError",
     "MTWSSizeError",
     "MTWSTransportError",
 ]

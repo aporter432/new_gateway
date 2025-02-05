@@ -8,6 +8,7 @@ from dataclasses import field as field_decorator
 from typing import List, Tuple
 
 from src.protocols.mtbp.validation.exceptions import ParseError
+
 from .fields import Field
 
 

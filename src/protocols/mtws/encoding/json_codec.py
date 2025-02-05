@@ -33,7 +33,7 @@ class JSONCodec:
             # Validate protocol constraints
             self._validator.validate_message_size(encoded)
             return encoded
-        except (TypeError, ValueError) as e:
+        except Exception as e:
             raise MTWSEncodingError(
                 f"Failed to encode message: {str(e)}", MTWSEncodingError.ENCODE_FAILED
             ) from e
@@ -43,14 +43,31 @@ class JSONCodec:
         try:
             # Validate protocol constraints before decoding
             self._validator.validate_message_size(json_str)
-            data = json.loads(json_str)
+            try:
+                data = json.loads(json_str)
+            except json.JSONDecodeError as e:
+                raise MTWSEncodingError(
+                    f"Invalid JSON format: {str(e)}", MTWSEncodingError.INVALID_JSON_FORMAT
+                ) from e
+
             if not isinstance(data, Dict):
                 raise MTWSEncodingError(
                     "JSON data must be an object", MTWSEncodingError.INVALID_JSON_FORMAT
                 )
+
+            # Check for required fields before attempting to create message
+            required_fields = {"Name", "SIN", "MIN", "Version", "IsForward"}
+            if missing := required_fields - data.keys():
+                raise MTWSEncodingError(
+                    f"Invalid JSON format: missing required field {next(iter(missing))}",
+                    MTWSEncodingError.INVALID_JSON_FORMAT,
+                )
+
             # Use existing from_dict method from CommonMessage
             return CommonMessage.from_dict(data)
-        except json.JSONDecodeError as e:
+        except MTWSEncodingError as e:
+            raise e
+        except Exception as e:
             raise MTWSEncodingError(
-                f"Invalid JSON format: {str(e)}", MTWSEncodingError.INVALID_JSON_FORMAT
+                f"Failed to decode message: {str(e)}", MTWSEncodingError.DECODE_FAILED
             ) from e

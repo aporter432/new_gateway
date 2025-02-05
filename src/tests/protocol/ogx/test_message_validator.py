@@ -1,8 +1,9 @@
 """Tests for OGx message validation"""
 
 import pytest
-from src.protocols.ogx.validation.message_validator import OGxMessageValidator
+
 from src.protocols.ogx.exceptions import ValidationError
+from src.protocols.ogx.validation.message_validator import OGxMessageValidator
 
 
 class TestOGxMessageValidator:

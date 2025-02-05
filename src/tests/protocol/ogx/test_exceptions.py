@@ -3,13 +3,13 @@
 import pytest
 
 from src.protocols.ogx.exceptions import (
+    ElementFormatError,
+    EncodingError,
+    FieldFormatError,
+    MessageFormatError,
     OGxProtocolError,
     ProtocolError,
-    MessageFormatError,
-    FieldFormatError,
-    ElementFormatError,
     ValidationError,
-    EncodingError,
 )
 
 

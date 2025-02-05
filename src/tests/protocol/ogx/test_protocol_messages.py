@@ -1,10 +1,12 @@
 """Tests for OGx protocol-specific message types and performance"""
 
 import time
+
 import pytest
+
+from src.protocols.ogx.encoding.json_codec import OGxJsonCodec
 from src.protocols.ogx.models.messages import OGxMessage
 from src.protocols.ogx.validation.message_validator import OGxMessageValidator
-from src.protocols.ogx.encoding.json_codec import OGxJsonCodec
 
 
 class TestProtocolMessages:

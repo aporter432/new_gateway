@@ -1,9 +1,10 @@
 """Tests for OGx protocol field validation and types"""
 
 import pytest
-from src.protocols.ogx.models.fields import Field, ArrayField, Element, DynamicField, PropertyField
+
 from src.protocols.ogx.constants import FieldType
 from src.protocols.ogx.exceptions import ValidationError
+from src.protocols.ogx.models.fields import ArrayField, DynamicField, Element, Field, PropertyField
 
 
 class TestField:

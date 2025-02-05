@@ -1,17 +1,19 @@
 """Tests for OGx field validation edge cases"""
 
 from base64 import b64encode
+
 import pytest
-from src.protocols.ogx.validation.field_validator import OGxFieldValidator
-from src.protocols.ogx.models.fields import (
-    Field,
-    ArrayField,
-    Element,
-    DynamicField,
-    PropertyField,
-)
+
 from src.protocols.ogx.constants import FieldType
 from src.protocols.ogx.exceptions import ValidationError
+from src.protocols.ogx.models.fields import (
+    ArrayField,
+    DynamicField,
+    Element,
+    Field,
+    PropertyField,
+)
+from src.protocols.ogx.validation.field_validator import OGxFieldValidator
 
 
 class TestField:

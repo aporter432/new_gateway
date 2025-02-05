@@ -5,21 +5,21 @@ N206 section 2.4.1.
 It includes message, field, and element structures in a single module to avoid circular
 dependencies."""
 
-import json
+from __future__ import annotations  # Enable forward references in type hints
+
 from dataclasses import dataclass
 from dataclasses import field as field_decorator
 from enum import Enum
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union, cast
 
 from ..constants import (
+    FIELD_VALUE_BASE_SIZE,
     MAX_NAME_LENGTH,
     MAX_TYPE_LENGTH,
-    NAME_PATTERN,
+    MAX_VALUE_LENGTH,
     PROTOCOL_VERSION,
-    TYPE_PATTERN,
 )
 from ..exceptions import MTWSElementError, MTWSFieldError
-from ..validation.validation import MTWSProtocolValidator
 
 
 class FieldValueType(Enum):
@@ -53,7 +53,7 @@ class CommonMessageElement:
         """Validate element structure according to N206 section 2.4.1."""
         if not isinstance(self.index, int):
             raise MTWSElementError(
-                f"Element index must be an integer, got {type(self.index).__name__}",
+                "Element index must be an integer, got " f"{type(self.index).__name__}",
                 MTWSElementError.INVALID_INDEX,
                 element_index=self.index,
             )
@@ -78,7 +78,7 @@ class CommonMessageElement:
             if field.name in field_names:
                 raise MTWSElementError(
                     f"Duplicate field name '{field.name}' in element",
-                    MTWSElementError.INVALID_STRUCTURE,
+                    MTWSElementError.INVALID_FIELDS,
                     element_index=self.index,
                 )
             field_names.add(field.name)
@@ -87,6 +87,10 @@ class CommonMessageElement:
     def to_dict(self) -> Dict[str, Any]:
         """Convert element to dictionary format according to N206 section 2.4.1."""
         return {"Index": self.index, "Fields": [field.to_dict() for field in self.fields]}
+
+    def __json__(self):
+        """Make the class JSON serializable."""
+        return self.to_dict()
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CommonMessageElement":
@@ -121,7 +125,11 @@ class CommonMessageElementList:
     def validate_structure(self) -> None:
         """Validate element list structure according to N206 section 2.4.1."""
         if not self.elements:
-            raise MTWSElementError("Element list cannot be empty", MTWSElementError.MISSING_FIELDS)
+            raise MTWSElementError(
+                "Elements array cannot be empty",
+                MTWSElementError.MISSING_FIELDS,
+                element_index=None,
+            )
 
         # Ensure elements are in the correct order; sort if necessary
         if not all(self.elements[i].index == i for i in range(len(self.elements))):
@@ -131,12 +139,8 @@ class CommonMessageElementList:
         expected_index = 0
         for element in self.elements:
             if element.index != expected_index:
-                msg = (
-                    f"Element indices must be sequential starting from 0, "
-                    f"missing index {expected_index}"
-                )
                 raise MTWSElementError(
-                    msg,
+                    f"Element indices must be sequential starting from 0, missing index {expected_index}",
                     MTWSElementError.NON_SEQUENTIAL,
                     element_index=element.index,
                 )
@@ -147,35 +151,58 @@ class CommonMessageElementList:
         """Convert element list to dictionary format according to N206 section 2.4.1."""
         return [element.to_dict() for element in self.elements]
 
+    def __json__(self):
+        """Make the class JSON serializable."""
+        return self.to_dict()
+
     @classmethod
     def from_dict(cls, data: List[Dict[str, Any]]) -> "CommonMessageElementList":
         """Create element list from dictionary according to N206 section 2.4.1."""
         if not isinstance(data, list):
             raise MTWSElementError(
-                "Element list data must be an array", MTWSElementError.INVALID_STRUCTURE
+                "Element list data must be an array",
+                MTWSElementError.INVALID_STRUCTURE,
+                element_index=None,
             )
         return cls(elements=[CommonMessageElement.from_dict(element) for element in data])
 
 
-@dataclass
 class CommonMessageField:
     """Represents a field within a MTWS protocol message.
 
-    As defined in N206 section 2.4.1, each field must contain:
-    - Name (required, alphanumeric, max 32 chars)
-    - Type (optional, alphanumeric, max 32 chars)
-    - Exactly one of: Value (string), Message (nested message), or Elements (list of elements)
+    As defined in N206 section 2.4.1, each field contains:
+    - Name (required)
+    - Type (optional)
+    - One of:
+        - Value
+        - Message
+        - Elements
     """
 
-    name: str
-    type: Optional[str] = None
-    value: Optional[str] = None
-    message: Optional["CommonMessage"] = None
-    elements: Optional[CommonMessageElementList] = None
-    _validator: ClassVar[MTWSProtocolValidator] = MTWSProtocolValidator()
+    def __init__(
+        self,
+        name: str,
+        field_type: Optional[str] = None,
+        value: Optional[Any] = None,
+        message: Optional[CommonMessage] = None,
+        elements: Optional[Union[List[Dict[str, Any]], CommonMessageElementList]] = None,
+    ):
+        """Initialize a field."""
+        self.name = name
+        self.type = field_type
+        self._value = str(value) if value is not None else None
+        self.message = message
 
-    def __post_init__(self):
-        """Validate field structure according to N206 specifications."""
+        if elements is not None:
+            if isinstance(elements, list):
+                self.elements = CommonMessageElementList(
+                    elements=[CommonMessageElement.from_dict(element) for element in elements]
+                )
+            else:
+                self.elements = elements
+        else:
+            self.elements = None
+
         self.validate_structure()
 
     def validate_structure(self) -> None:
@@ -185,21 +212,13 @@ class CommonMessageField:
             raise MTWSFieldError("Field name is required", MTWSFieldError.INVALID_NAME)
         if not isinstance(self.name, str):
             raise MTWSFieldError(
-                f"Field name must be a string, got {type(self.name).__name__}",
+                "Field name must be a string, got " f"{type(self.name).__name__}",
                 MTWSFieldError.INVALID_TYPE,
-                field_name=self.name,
             )
         if len(self.name) > MAX_NAME_LENGTH:
             raise MTWSFieldError(
                 f"Field name exceeds maximum length of {MAX_NAME_LENGTH}",
-                MTWSFieldError.INVALID_NAME,
-                field_name=self.name,
-            )
-        if not NAME_PATTERN.match(self.name):
-            raise MTWSFieldError(
-                "Field name must contain only alphanumeric characters and underscores",
-                MTWSFieldError.INVALID_NAME,
-                field_name=self.name,
+                MTWSFieldError.INVALID_LENGTH,
             )
 
         # Validate type if present
@@ -208,154 +227,243 @@ class CommonMessageField:
                 raise MTWSFieldError(
                     f"Field type must be a string, got {type(self.type).__name__}",
                     MTWSFieldError.INVALID_TYPE,
-                    field_name=self.name,
                 )
             if len(self.type) > MAX_TYPE_LENGTH:
                 raise MTWSFieldError(
                     f"Field type exceeds maximum length of {MAX_TYPE_LENGTH}",
-                    MTWSFieldError.INVALID_TYPE,
-                    field_name=self.name,
+                    MTWSFieldError.INVALID_LENGTH,
                 )
-            if not TYPE_PATTERN.match(self.type):
+
+        # Validate value size if present
+        if self._value is not None:
+            value_size = FIELD_VALUE_BASE_SIZE + len(str(self._value))
+            if value_size > MAX_VALUE_LENGTH:
                 raise MTWSFieldError(
-                    "Field type must contain only alphanumeric characters and underscores",
-                    MTWSFieldError.INVALID_TYPE,
+                    f"Field value exceeds maximum length of {MAX_VALUE_LENGTH} bytes",
+                    MTWSFieldError.INVALID_LENGTH,
                     field_name=self.name,
                 )
 
-        # N206 2.4.1: Must have exactly one of Value, Message, or Elements
-        values = [v for v in (self.value, self.message, self.elements) if v is not None]
-        if len(values) != 1:
+        # Must have exactly one of Value, Message, or Elements
+        values = [v for v in (self._value, self.message, self.elements) if v is not None]
+        if len(values) == 0:
             raise MTWSFieldError(
-                "Field must have exactly one of: value, message, or elements",
-                MTWSFieldError.MULTIPLE_VALUES if len(values) > 1 else MTWSFieldError.MISSING_VALUE,
+                "Field must have exactly one of: Value, Message, or Elements",
+                MTWSFieldError.MISSING_VALUE,
+                field_name=self.name,
+            )
+        if len(values) > 1:
+            raise MTWSFieldError(
+                "Field can only have one of: Value, Message, or Elements",
+                MTWSFieldError.MULTIPLE_VALUES,
                 field_name=self.name,
             )
 
-        # Validate field constraints using the validator
-        self._validator.validate_field_constraints(self.to_dict())
+    @property
+    def value(self) -> Optional[str]:
+        """Get the field value."""
+        return self._value
+
+    @value.setter
+    def value(self, val: Any) -> None:
+        """Set the field value, converting to string."""
+        self._value = str(val) if val is not None else None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert field to dictionary format according to N206 section 2.4.1."""
-        field_dict = {"Name": self.name}
+        result: Dict[str, Any] = {"Name": self.name}
         if self.type is not None:
-            field_dict["Type"] = self.type
-        if self.value is not None:
-            field_dict["Value"] = self.value
-        elif self.message is not None:
-            field_dict["Message"] = json.dumps(self.message.to_dict())
-        elif self.elements is not None:
-            field_dict["Elements"] = json.dumps(self.elements.to_dict())
-        return field_dict
+            result["Type"] = self.type
+        if self._value is not None:
+            result["Value"] = self._value
+        if self.message is not None:
+            result["Message"] = cast(Dict[str, Any], self.message.to_dict())
+        if self.elements is not None:
+            result["Elements"] = cast(List[Dict[str, Any]], self.elements.to_dict())
+        return result
+
+    def __json__(self):
+        """Make the class JSON serializable."""
+        return self.to_dict()
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CommonMessageField":
         """Create field from dictionary according to N206 section 2.4.1."""
         if not isinstance(data, dict) or "Name" not in data:
             raise MTWSFieldError(
-                "Field data must be a dictionary containing Name",
-                MTWSFieldError.INVALID_TYPE,
+                "Field data must be a dictionary with Name",
+                MTWSFieldError.INVALID_NAME,
             )
 
-        field = cls(
+        # Extract optional fields
+        field_type = data.get("Type")
+        value = data.get("Value")
+        message = data.get("Message")
+        elements = data.get("Elements")
+
+        # Create field instance
+        return cls(
             name=data["Name"],
-            type=data.get("Type"),
+            field_type=field_type,
+            value=value,
+            message=CommonMessage.from_dict(message) if message is not None else None,
+            elements=elements,
         )
-
-        # Handle exactly one of Value, Message, or Elements
-        if "Value" in data:
-            field.value = str(data["Value"])
-        elif "Message" in data:
-            field.message = CommonMessage.from_dict(data["Message"])
-        elif "Elements" in data:
-            field.elements = CommonMessageElementList.from_dict(data["Elements"])
-
-        return field
 
 
 @dataclass
 class CommonMessage:
-    """MTWS protocol message structure as defined in N206 section 2.4.1."""
+    """Represents a MTWS protocol message.
 
-    sin: int  # Service Identification Number (0-255)
-    min: int  # Message Identification Number (0-255)
-    is_forward: bool  # True = To-Mobile, False = From-Mobile
-    version: str = PROTOCOL_VERSION  # Use imported constant
-    name: Optional[str] = None  # Optional message name
-    sequence: Optional[int] = None  # Optional sequence number
+    As defined in N206 section 2.4.1, each message contains:
+    - Name (required)
+    - SIN (required, 0-255)
+    - MIN (required, 0-255)
+    - Version (required)
+    - IsForward (required)
+    - Fields (optional)
+    - Sequence (optional, 16-bit unsigned int)
+    """
+
+    name: str
+    sin: int
+    min_value: int
+    version: str = PROTOCOL_VERSION
+    is_forward: bool = False
     fields: List[CommonMessageField] = field_decorator(default_factory=list)
-    _validator: ClassVar[MTWSProtocolValidator] = MTWSProtocolValidator()
+    sequence: Optional[int] = None
 
     def __post_init__(self):
-        """Validate message structure according to N206 specifications."""
-        self._validate_structure()
+        """Validate message structure according to protocol specifications."""
+        self.validate_structure()
 
-    def _validate_structure(self) -> None:
-        """Validate message structure according to N206 section 2.4."""
-        # SIN validation (0-255)
-        if not isinstance(self.sin, int) or not 0 <= self.sin <= 255:
+    def validate_structure(self) -> None:
+        """Validate message structure according to N206 section 2.4.1."""
+        # Validate name
+        if not isinstance(self.name, str):
             raise MTWSFieldError(
-                f"Invalid SIN value: {self.sin}. Must be an integer between 0-255",
+                f"Message name must be a string, got {type(self.name).__name__}",
+                MTWSFieldError.INVALID_TYPE,
+            )
+        if not self.name:
+            raise MTWSFieldError("Message name is required", MTWSFieldError.INVALID_NAME)
+        if len(self.name) > MAX_NAME_LENGTH:
+            raise MTWSFieldError(
+                f"Message name exceeds maximum length of {MAX_NAME_LENGTH}",
+                MTWSFieldError.INVALID_LENGTH,
+            )
+
+        # Validate SIN
+        if not isinstance(self.sin, int):
+            raise MTWSFieldError(
+                f"SIN must be an integer, got {type(self.sin).__name__}",
+                MTWSFieldError.INVALID_TYPE,
+            )
+        if not 0 <= self.sin <= 255:
+            raise MTWSFieldError(
+                "SIN must be between 0 and 255",
                 MTWSFieldError.INVALID_VALUE,
             )
-        # MIN validation (0-255)
-        if not isinstance(self.min, int) or not 0 <= self.min <= 255:
-            raise MTWSFieldError("MIN must be between 0 and 255", MTWSFieldError.INVALID_VALUE)
 
-        # IsForward validation (boolean)
-        if not isinstance(self.is_forward, bool):
-            raise MTWSFieldError("IsForward must be a boolean", MTWSFieldError.INVALID_VALUE)
-
-        # Version validation (2.0.6)
-        if self.version != PROTOCOL_VERSION:
-            raise MTWSFieldError("Invalid protocol version", MTWSFieldError.INVALID_VALUE)
-
-        # Add validation for field name max length (32 chars per N206)
-        if self.name and len(self.name) > MAX_NAME_LENGTH:
+        # Validate MIN
+        if not isinstance(self.min_value, int):
             raise MTWSFieldError(
-                "Message name exceeds maximum length of 32 characters", MTWSFieldError.INVALID_NAME
+                f"MIN must be an integer, got {type(self.min_value).__name__}",
+                MTWSFieldError.INVALID_TYPE,
+            )
+        if not 0 <= self.min_value <= 255:
+            raise MTWSFieldError(
+                "MIN must be between 0 and 255",
+                MTWSFieldError.INVALID_VALUE,
             )
 
-        # Validate message size using the validator
-        self._validator.validate_message_size(json.dumps(self.to_dict()))
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert message to dictionary format as per N206."""
-        message_dict = {
-            "SIN": self.sin,
-            "MIN": self.min,
-            "Version": self.version,
-            "IsForward": self.is_forward,
-        }
-        if self.name:
-            message_dict["Name"] = self.name
-        if self.sequence:
-            message_dict["Sequence"] = self.sequence
-        if self.fields:
-            message_dict["Fields"] = [field.to_dict() for field in self.fields]
-        return message_dict
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CommonMessage":
-        """Create message from dictionary as per N206."""
-        if not isinstance(data, dict) or "SIN" not in data or "MIN" not in data:
+        # Validate version
+        if not isinstance(self.version, str):
             raise MTWSFieldError(
-                "Message data must be a dictionary containing SIN and MIN",
+                f"Version must be a string, got {type(self.version).__name__}",
                 MTWSFieldError.INVALID_TYPE,
             )
 
-        required = {"SIN", "MIN", "Version", "IsForward"}
-        if missing := required - data.keys():
+        # Validate is_forward
+        if not isinstance(self.is_forward, bool):
             raise MTWSFieldError(
-                f"Missing required fields: {missing}", MTWSFieldError.MISSING_VALUE
+                f"IsForward must be a boolean, got {type(self.is_forward).__name__}",
+                MTWSFieldError.INVALID_TYPE,
             )
 
-        return cls(
-            sin=int(data["SIN"]),
-            min=int(data["MIN"]),
-            is_forward=data["IsForward"],
+        # Validate sequence if present
+        if self.sequence is not None:
+            if not isinstance(self.sequence, int):
+                raise MTWSFieldError(
+                    f"Sequence must be an integer, got {type(self.sequence).__name__}",
+                    MTWSFieldError.INVALID_TYPE,
+                )
+            if not 0 <= self.sequence <= 65535:  # 16-bit unsigned int
+                raise MTWSFieldError(
+                    "Sequence must be between 0 and 65535",
+                    MTWSFieldError.INVALID_VALUE,
+                )
+
+        # Validate fields if present
+        field_names = set()
+        for field in self.fields:
+            if field.name in field_names:
+                raise MTWSFieldError(
+                    f"Duplicate field name: {field.name}",
+                    MTWSFieldError.INVALID_NAME,
+                )
+            field_names.add(field.name)
+            field.validate_structure()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert message to dictionary format according to N206 section 2.4.1."""
+        result = {
+            "Name": self.name,
+            "SIN": self.sin,
+            "MIN": self.min_value,
+            "Version": self.version,
+            "IsForward": self.is_forward,
+        }
+        if self.sequence is not None:
+            result["Sequence"] = self.sequence
+        if self.fields:  # Only include fields if non-empty
+            result["Fields"] = [field.to_dict() for field in self.fields]
+        return result
+
+    def __json__(self):
+        """Make the class JSON serializable."""
+        return self.to_dict()
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "CommonMessage":
+        """Create message from dictionary according to N206 section 2.4.1."""
+        if not isinstance(data, dict):
+            raise MTWSFieldError(
+                "Message data must be a dictionary",
+                MTWSFieldError.INVALID_TYPE,
+            )
+
+        # Check required fields
+        required_fields = {"Name", "SIN", "MIN", "Version", "IsForward"}
+        if missing := required_fields - data.keys():
+            raise MTWSFieldError(
+                f"Missing required field: {next(iter(missing))}",
+                MTWSFieldError.MISSING_VALUE,
+            )
+
+        # Create message with required fields
+        message = cls(
+            name=data["Name"],
+            sin=data["SIN"],
+            min_value=data["MIN"],
             version=data["Version"],
-            name=data.get("Name"),
-            sequence=data.get("Sequence"),
-            fields=[CommonMessageField.from_dict(field) for field in data.get("Fields", [])],
+            is_forward=data["IsForward"],
         )
+
+        # Add optional fields
+        if "Sequence" in data:
+            message.sequence = data["Sequence"]
+        if "Fields" in data:
+            message.fields = [CommonMessageField.from_dict(field) for field in data["Fields"]]
+
+        return message

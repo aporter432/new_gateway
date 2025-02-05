@@ -3,11 +3,12 @@ OGx message models according to N214 specification section 5.
 Implements message format definitions from the Common Message Format.
 """
 
-from dataclasses import dataclass, field as dataclass_field
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from typing import Any, Sequence
 
 from ..constants import FieldType
-from .fields import Field, ArrayField, Element
+from .fields import ArrayField, Element, Field
 
 __all__ = ["OGxMessage"]
 
