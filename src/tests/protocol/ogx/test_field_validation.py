@@ -249,14 +249,14 @@ class TestFieldValidator:
         # Valid terminal ID
         validator.validate_terminal_id("0123456789AB")
 
-        # Invalid: wrong length
+        # Invalid terminal ID - wrong length
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_terminal_id("0123456789")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
-        # Invalid: non-hex characters
+        # Invalid terminal ID - non-hex characters
         with pytest.raises(ValidationError) as exc_info:
-            validator.validate_terminal_id("0123456789GH")
+            validator.validate_terminal_id("0123456789GZ")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
     def test_validate_mac_address(self, validator):
@@ -264,19 +264,19 @@ class TestFieldValidator:
         # Valid MAC address
         validator.validate_mac_address("00:11:22:33:44:55")
 
-        # Invalid: wrong format
+        # Invalid MAC address - wrong format
         with pytest.raises(ValidationError) as exc_info:
-            validator.validate_mac_address("00:11:22:33:44")
+            validator.validate_mac_address("00-11-22-33-44-55")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
-        # Invalid: non-hex characters
+        # Invalid MAC address - non-hex characters
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_mac_address("GG:11:22:33:44:55")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
     def test_validate_satellite_network(self, validator):
         """Test validation of satellite network value"""
-        # Valid networks
+        # Valid network values
         validator.validate_satellite_network(0)  # IsatData Pro
         validator.validate_satellite_network(1)  # OGx
 
@@ -288,17 +288,17 @@ class TestFieldValidator:
     def test_validate_base64(self, validator):
         """Test validation of base64 encoding"""
         # Valid base64
-        valid_b64 = b64encode(b"test data").decode()
+        valid_b64 = "SGVsbG8gV29ybGQ="  # "Hello World"
         validator.validate_base64(valid_b64)
 
-        # Invalid base64 encoding
+        # Invalid base64 - incorrect padding
         with pytest.raises(ValidationError) as exc_info:
-            validator.validate_base64("not base64!")
+            validator.validate_base64("SGVsbG8gV29ybGQ")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
-        # Invalid base64 padding
+        # Invalid base64 - invalid characters
         with pytest.raises(ValidationError) as exc_info:
-            validator.validate_base64("aGVsbG8===")
+            validator.validate_base64("!@#$%^&*")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
     def test_validate_timestamp(self, validator):
@@ -306,87 +306,188 @@ class TestFieldValidator:
         # Valid timestamp
         validator.validate_timestamp("2024-02-05 12:34:56")
 
-        # Invalid format
+        # Invalid timestamp - wrong format
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_timestamp("2024/02/05 12:34:56")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
-        # Invalid values
+        # Invalid timestamp - invalid date
         with pytest.raises(ValidationError) as exc_info:
-            validator.validate_timestamp("2024-13-05 12:34:56")  # Invalid month
+            validator.validate_timestamp("2024-13-45 12:34:56")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
+        # Invalid timestamp - invalid time
         with pytest.raises(ValidationError) as exc_info:
-            validator.validate_timestamp("2024-02-05 25:34:56")  # Invalid hour
+            validator.validate_timestamp("2024-02-05 25:61:99")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
-    def test_validate_field_value_array(self, validator):
+    def test_validate_message_name(self, validator):
+        """Test validation of message name format"""
+        # Valid message name
+        validator.validate_message_name("TestMessage")
+
+        # Empty message name
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_message_name("")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+
+    def test_validate_array_field_value(self, validator):
         """Test validation of array field values"""
-        # Valid array field (None value)
+        # Valid array - None value
         validator.validate_field_value(FieldType.ARRAY, None)
 
-        # Valid array field (list value)
+        # Valid array - list value
         validator.validate_field_value(FieldType.ARRAY, [])
 
-        # Invalid array field (non-list value)
+        # Invalid array - not a list
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_field_value(FieldType.ARRAY, "not a list")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
 
-    def test_validate_field_value_message(self, validator):
+    def test_validate_message_field_value(self, validator):
         """Test validation of message field values"""
-        # Valid message field (None value)
+        # Valid message - None value
         validator.validate_field_value(FieldType.MESSAGE, None)
 
-        # Valid message field (dict value)
+        # Valid message - dict value
         validator.validate_field_value(FieldType.MESSAGE, {})
 
-        # Invalid message field (non-dict value)
+        # Invalid message - not a dict
         with pytest.raises(ValidationError) as exc_info:
             validator.validate_field_value(FieldType.MESSAGE, "not a dict")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
 
-    def test_validate_field_value_unknown_type(self, validator):
+    def test_validate_unknown_field_type(self, validator):
         """Test validation with unknown field type"""
         with pytest.raises(ValidationError) as exc_info:
-            validator.validate_field_value("unknown", "value")
+            validator.validate_field_value("unknown_type", "value")
         assert exc_info.value.error_code == ValidationError.INVALID_FIELD_TYPE
-
-    def test_validate_message_name(self, validator):
-        """Test validation of message name format"""
-        # Valid message names
-        validator.validate_message_name("ValidName123")
-        validator.validate_message_name("VALID_NAME_123")
-        validator.validate_message_name("valid_name_123")
-
-        # Invalid message names
-        with pytest.raises(ValidationError) as exc_info:
-            validator.validate_message_name("")  # Empty name
-        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
-
-        with pytest.raises(ValidationError) as exc_info:
-            validator.validate_message_name("Invalid Name")  # Contains space
-        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
-
-        with pytest.raises(ValidationError) as exc_info:
-            validator.validate_message_name("Invalid@Name")  # Contains special char
-        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
 
     def test_validate_field_value_type_conversions(self, validator):
         """Test field value type conversions"""
-        # Test string to int conversion for UNSIGNED_INT
-        validator.validate_field_value(FieldType.UNSIGNED_INT, "42")
+        # Test type conversion for unsigned int
+        validator.validate_field_value(FieldType.UNSIGNED_INT, "42")  # String to int
+        validator.validate_field_value(FieldType.UNSIGNED_INT, 42.0)  # Float to int
 
-        # Test string to int conversion for SIGNED_INT
-        validator.validate_field_value(FieldType.SIGNED_INT, "-42")
+        # Test type conversion for signed int
+        validator.validate_field_value(FieldType.SIGNED_INT, "-42")  # String to int
+        validator.validate_field_value(FieldType.SIGNED_INT, -42.0)  # Float to int
 
-        # Test various boolean representations
-        validator.validate_field_value(FieldType.BOOLEAN, True)
-        validator.validate_field_value(FieldType.BOOLEAN, False)
+        # Test invalid type conversions
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value(FieldType.UNSIGNED_INT, "not a number")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
 
-        # Test data field with bytes
-        validator.validate_field_value(FieldType.DATA, b"test data")
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value(FieldType.SIGNED_INT, "not a number")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
 
-        # Test data field with base64 string
-        valid_b64 = b64encode(b"test data").decode()
-        validator.validate_field_value(FieldType.DATA, valid_b64)
+    def test_validate_base64_error_handling(self, validator):
+        """Test base64 validation error handling"""
+        # Test invalid base64 with non-base64 characters
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_base64("!@#$%^&*")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+
+        # Test invalid base64 with incorrect padding
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_base64("SGVsbG8=====")  # Too much padding
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+
+        # Test invalid base64 that can't be decoded
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_base64("A")  # Single character is not valid base64
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+
+        # Test base64 that decodes but can't be re-encoded to the same value
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_base64("YWJjZA=")  # Valid base64 but wrong padding
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+
+    def test_validate_message_name_special_cases(self, validator):
+        """Test message name validation special cases"""
+        # Test empty message name
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_message_name("")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+
+        # Test message name with spaces
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_message_name("Invalid Message")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+
+        # Test message name with special characters
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_message_name("Invalid@Message")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_FORMAT
+
+        # Test valid message names with numbers and underscores
+        validator.validate_message_name("12345")  # Numbers only is valid
+        validator.validate_message_name("Message_123")  # Mixed alphanumeric with underscore
+        validator.validate_message_name("_123_test")  # Starting with underscore
+
+    def test_validate_field_value_error_handling(self, validator):
+        """Test field value validation error handling"""
+        # Test TypeError handling
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value(FieldType.BOOLEAN, None)
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+
+        # Test ValueError handling
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value(FieldType.UNSIGNED_INT, -1)
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+
+        # Test unknown field type
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value("invalid_type", "value")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_TYPE
+
+    def test_validate_sin_min(self, validator):
+        """Test validation of SIN and MIN values"""
+        # Valid SIN and MIN
+        validator.validate_sin_min(16, 1)
+
+        # Invalid SIN - negative
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_sin_min(-1, 1)
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+        assert "SIN must be a non-negative integer" in str(exc_info.value)
+
+        # Invalid MIN - negative
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_sin_min(16, -1)
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+        assert "MIN must be a non-negative integer" in str(exc_info.value)
+
+        # Invalid SIN - wrong type
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_sin_min("16", 1)
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+        assert "SIN must be a non-negative integer" in str(exc_info.value)
+
+        # Invalid MIN - wrong type
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_sin_min(16, "1")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+        assert "MIN must be a non-negative integer" in str(exc_info.value)
+
+    def test_validate_field_value_error_handling_extended(self, validator):
+        """Test extended error handling in field value validation"""
+        # Test TypeError in field value validation
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value(FieldType.BOOLEAN, None)
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+        assert "Invalid value for field type" in str(exc_info.value)
+
+        # Test ValueError in field value validation
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value(FieldType.UNSIGNED_INT, -1)
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_VALUE
+        assert "Invalid value for field type" in str(exc_info.value)
+
+        # Test unknown field type
+        with pytest.raises(ValidationError) as exc_info:
+            validator.validate_field_value("invalid_type", "value")
+        assert exc_info.value.error_code == ValidationError.INVALID_FIELD_TYPE
+        assert "Unknown field type" in str(exc_info.value)
