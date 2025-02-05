@@ -14,7 +14,7 @@ from src.protocols.ogx.exceptions import (
 
 
 @pytest.fixture
-def error_message():
+def test_error_msg():
     """Fixture providing a test error message"""
     return "Test error message"
 
@@ -22,10 +22,10 @@ def error_message():
 class TestOGxProtocolError:
     """Test cases for the base OGx protocol error class"""
 
-    def test_base_exception(self, error_message):
+    def test_base_exception(self, test_error_msg):
         """Test base exception with error code"""
-        error = OGxProtocolError(error_message, 1001)
-        assert str(error) == error_message
+        error = OGxProtocolError(test_error_msg, 1001)
+        assert str(error) == test_error_msg
         assert error.error_code == 1001
 
     def test_base_exception_no_code(self):
