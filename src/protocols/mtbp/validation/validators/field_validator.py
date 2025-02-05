@@ -5,7 +5,7 @@ MTBP field validation according to N210 IGWS2 specification section 3.2
 from typing import Any
 
 from ...constants.field_types import FieldType
-from ...models.fields import MTBPField
+from ...models.fields import Field
 from ..exceptions import ParseError
 
 
@@ -14,7 +14,7 @@ class MTBPFieldValidator:
 
     MAX_FIELD_LENGTH = 0xFFFF  # 2 bytes max
 
-    def validate(self, field: MTBPField) -> None:
+    def validate(self, field: Field) -> None:
         """
         Validate complete field structure and content.
 

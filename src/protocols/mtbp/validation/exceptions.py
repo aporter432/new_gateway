@@ -29,6 +29,7 @@ class ParseError(MTBPError):
     12 - Message decoding failed - Unable to decode message content
     13 - Invalid message structure - Message structure does not match specification
     14 - Message validation failed - Message failed validation rules
+    15 - Invalid sequence number - Invalid sequence number in message
     """
 
     INVALID_FORMAT = 3
@@ -43,6 +44,7 @@ class ParseError(MTBPError):
     DECODE_FAILED = 12
     INVALID_STRUCTURE = 13
     VALIDATION_FAILED = 14
+    INVALID_SEQUENCE = 15
 
 
 class ValidationError(MTBPError):
