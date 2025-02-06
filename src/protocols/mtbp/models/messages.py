@@ -50,7 +50,16 @@ class MTBPMessage:
                 f"Invalid MIN value: {self.min_id}",
                 error_code=ParseError.INVALID_MIN,
             )
-        if not isinstance(self.message_type, MessageType):
+        # Convert integer to MessageType enum if needed
+        if isinstance(self.message_type, int):
+            try:
+                self.message_type = MessageType(self.message_type)
+            except ValueError as exc:
+                raise ParseError(
+                    f"Invalid message type value: {self.message_type}",
+                    error_code=ParseError.INVALID_FIELD_TYPE,
+                ) from exc
+        elif not isinstance(self.message_type, MessageType):
             raise ParseError(
                 f"Invalid message type: {self.message_type}",
                 error_code=ParseError.INVALID_FIELD_TYPE,
@@ -72,19 +81,29 @@ class MTBPMessage:
                     error_code=ParseError.INVALID_FIELD_VALUE,
                 )
 
-    def add_field(self, new_field: Field) -> None:
+    def add_field(self, field: Field) -> None:
         """Add a field to the message"""
-        self.fields.append(new_field)  # __post_init__ will validate on next access
+        # Validate field before adding
+        try:
+            # This will validate the field type and value
+            field.to_bytes()
+        except ParseError:
+            raise
+        except Exception as e:
+            raise ParseError(
+                f"Invalid field: {str(e)}",
+                error_code=ParseError.INVALID_FIELD_VALUE,
+            ) from e
+
+        self.fields.append(field)
 
     def get_field(self, index: int) -> Field:
         """Get field at specified index"""
-        try:
-            return self.fields[index]
-        except IndexError as exc:
+        if not 0 <= index < len(self.fields):
             raise ParseError(
-                f"Field index {index} out of range",
-                error_code=ParseError.INVALID_FIELD_VALUE,
-            ) from exc
+                f"Invalid field index {index}", error_code=ParseError.INVALID_FIELD_VALUE
+            )
+        return self.fields[index]
 
     def clear_fields(self) -> None:
         """Clear all fields from message"""

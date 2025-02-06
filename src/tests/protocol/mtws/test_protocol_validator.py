@@ -412,7 +412,7 @@ def test_validate_message_size():
     validator.validate_message_size(json.dumps(message.to_dict()))
 
     # Message too large
-    with pytest.raises(MTWSSizeError) as exc_info:
+    with pytest.raises(MTWSSizeError) as _:
         validator.validate_message_size(
             json.dumps(
                 {

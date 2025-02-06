@@ -1,5 +1,5 @@
 """MTBP encoding utilities"""
 
-from .binary import BinaryParser
+from .binary_parser import BinaryParser
 
 __all__ = ["BinaryParser"]

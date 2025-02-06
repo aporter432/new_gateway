@@ -65,6 +65,8 @@ class MTBPProtocolValidator:
         except ParseError:
             raise
         except Exception as e:
+            if isinstance(e, ProtocolError):
+                raise
             raise ProtocolError(
                 f"Protocol validation failed: {str(e)}", ProtocolError.PROTOCOL_VIOLATION
             ) from e
@@ -120,9 +122,9 @@ class MTBPProtocolValidator:
                 )
 
         # Check if sequence is too far ahead
-        if len(self._pending_sequences) >= self.MAX_OUT_OF_ORDER:
+        if abs(sequence - self._last_sequence) > self.MAX_OUT_OF_ORDER:
             raise ProtocolError(
-                f"Too many out-of-order messages (max {self.MAX_OUT_OF_ORDER})",
+                f"Sequence number {sequence} too far out of order (max {self.MAX_OUT_OF_ORDER})",
                 ProtocolError.SEQUENCE_ERROR,
             )
 
@@ -157,9 +159,13 @@ class MTBPProtocolValidator:
         Raises:
             ProtocolError: If message type transition is invalid
         """
-        if message_type not in MessageType:
+        try:
+            # Ensure message_type is a valid MessageType enum value
+            if not isinstance(message_type, MessageType):
+                message_type = MessageType(message_type)
+        except ValueError:
             raise ProtocolError(
-                f"Invalid message type: {message_type}",
+                f"Invalid message type value: {message_type}",
                 ProtocolError.PROTOCOL_VIOLATION,
             )
 
