@@ -68,6 +68,20 @@ plugins = ["pydantic.mypy"]
 module = ["jwt.*", "redis.*", "pydantic.*", "fastapi.*", "sqlalchemy.*"]
 ignore_missing_imports = true
 
+[tool.pylint]
+init-hook='import sys; sys.path.append("src")'
+ignore = ["CVS"]
+ignore-patterns = ["^\\.#"]
+persistent = "yes"
+load-plugins = []
+jobs = 0
+unsafe-load-any-extension = "no"
+extension-pkg-whitelist = []
+suggestion-mode = "yes"
+py-version = "3.11"
+fail-under = 10.0
+evaluation = "10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

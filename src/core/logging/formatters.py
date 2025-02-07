@@ -19,9 +19,9 @@ Type Definitions:
 import json
 import logging
 from datetime import datetime
-from typing import Any, TypedDict, NotRequired, cast, Union
+from typing import Any, TypedDict, NotRequired, Union, Dict
 
-from .config import LogComponent
+from .log_settings import LogComponent
 
 
 class ProcessInfo(TypedDict):
@@ -67,6 +67,7 @@ class LogData(TypedDict, total=False):
     auth_info: dict[str, Any]
     security_event: str
     metric: MetricInfo
+    extra: Dict[str, Any]
 
 
 class BaseFormatter(logging.Formatter):
@@ -117,7 +118,7 @@ class BaseFormatter(logging.Formatter):
         # Handle extra attributes safely
         extra = getattr(record, "extra", {})
         if extra:
-            data.update(cast(LogData, extra))
+            data["extra"] = extra
 
         return json.dumps(data)  # type: ignore[no-any-return]
 
@@ -194,7 +195,7 @@ class SecurityFormatter(BaseFormatter):
 
     SENSITIVE_FIELDS = {"password", "token", "secret", "key"}
 
-    def _sanitize_data(self, data: dict[str, Any]) -> dict[str, Any]:
+    def _sanitize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Remove sensitive information from log data.
 
         Args:

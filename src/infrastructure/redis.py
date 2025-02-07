@@ -1,8 +1,8 @@
 """Redis client for token storage."""
 
-from redis import Redis
+from redis.asyncio import Redis
 
-from core.config import get_settings
+from core.app_settings import get_settings
 
 
 async def get_redis_client() -> Redis:

@@ -14,7 +14,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from core.config import Settings, get_settings
+from core.app_settings import Settings, get_settings
 from core.security import OGWSAuthManager, get_auth_manager
 from protocols.ogx.services.ogws import get_ogws_message_status, get_ogws_messages
 

@@ -1,6 +1,6 @@
 """Core functionality for the application."""
 
-from .config import Settings
+from .app_settings import Settings
 from .message_processor import MessageProcessor
 from .message_receiver import MessageReceiver
 from .message_sender import MessageSender
