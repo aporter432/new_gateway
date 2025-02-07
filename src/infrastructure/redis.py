@@ -5,3 +5,4 @@ from typing import Optional
 
 async def get_redis_client() -> Redis:
     """Get configured Redis client."""
+    

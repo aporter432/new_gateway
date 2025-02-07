@@ -6,11 +6,13 @@ from .message_format import (
     REQUIRED_FIELD_PROPERTIES,
     REQUIRED_ELEMENT_PROPERTIES,
 )
-from .message_states import MessageState, TransportType
+from .message_states import MessageState
 from .network_types import NetworkType
 from .operation_modes import OperationMode
 from .auth import AuthRole, ThrottleGroup, GrantType
 from .message_types import MessageType
+from .transport_types import TransportType
+from .endpoints import APIEndpoint
 from .limits import (
     MESSAGE_RETENTION_DAYS,
     MAX_SIMULTANEOUS_CONNECTIONS,
@@ -29,6 +31,8 @@ from .limits import (
     MAX_OUTSTANDING_MESSAGES_PER_SIZE,
     MESSAGE_TIMEOUT_DAYS,
     DEFAULT_TOKEN_EXPIRY,
+    ERR_SUBMIT_MESSAGE_RATE_EXCEEDED,
+    ERR_RETRIEVE_STATUS_RATE_EXCEEDED,
 )
 
 __all__ = [
@@ -41,6 +45,7 @@ __all__ = [
     "NetworkType",
     "OperationMode",
     "MessageType",
+    "APIEndpoint",
     # Auth and authorization
     "AuthRole",
     "ThrottleGroup",
@@ -63,4 +68,7 @@ __all__ = [
     "MAX_OUTSTANDING_MESSAGES_PER_SIZE",
     "MESSAGE_TIMEOUT_DAYS",
     "DEFAULT_TOKEN_EXPIRY",
+    # Error codes
+    "ERR_SUBMIT_MESSAGE_RATE_EXCEEDED",
+    "ERR_RETRIEVE_STATUS_RATE_EXCEEDED",
 ]

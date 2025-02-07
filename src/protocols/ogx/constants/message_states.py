@@ -1,180 +1,117 @@
-"""Transport types and message states as defined in OGWS-1.txt.
+"""Message states as defined in OGWS-1.txt.
 
 This module defines:
-- Message states that track the lifecycle of messages in the system
-- Transport types that specify how messages should be delivered
-- Network-specific timeout behaviors and error handling
-- Cross-network message routing rules
+- Message states for tracking message delivery status
 
-These constants are used to:
-- Monitor message delivery status and handle errors
-- Control message routing through available transport channels
-- Manage message lifecycle from submission to completion
-- Handle network-specific timeouts and retries
+Message State Characteristics (from OGWS-1.txt):
+- OGx Network States:
+    - ACCEPTED (0): Message accepted by OGWS
+    - RECEIVED (1): Message acknowledged by destination
+    - ERROR (2): Submission error (check error code)
+    - DELIVERY_FAILED (3): Message failed to deliver
+    - TIMED_OUT (4): Message timed out (10 days)
+    - CANCELLED (5): Message cancelled
+    - BROADCAST_SUBMITTED (7): Broadcast message transmitted
+    - SENDING_IN_PROGRESS (8): Message sending in progress
 
-Network Timeout Handling:
-    OGx Network:
-    - Initial timeout: 5 minutes
-    - Retry interval: 10 minutes
-    - Max retries: 3
-    - Final timeout: 12 hours
+- IsatData Pro Network States:
+    - ACCEPTED (0): Message queued by Gateway
+    - RECEIVED (1): Terminal acknowledged receipt
+    - ERROR (2): Error occurred (check error code)
+    - DELIVERY_FAILED (3): Delivery failed
+    - TIMED_OUT (4): Not delivered within 120 minutes
+    - CANCELLED (5): Cancelled by client
+    - WAITING (6): Queued for delayed send
+    - BROADCAST_SUBMITTED (7): Broadcast submitted
 
-    IDP Network:
-    - Initial timeout: 15 minutes
-    - Retry interval: 30 minutes
-    - Max retries: 5
-    - Final timeout: 24 hours
 
-Error State Handling:
-    Transient Errors (Retryable):
-    - Network congestion
-    - Temporary terminal unavailable
-    - Gateway processing delays
-    - Beam handover in progress
 
-    Terminal Errors (Non-Retryable):
-    - Invalid terminal ID
-    - Terminal deactivated
-    - Message size exceeds limit
-    - Invalid message format
+OGWS API Usage Examples:
 
-    System Errors (Requires Investigation):
-    - Gateway internal error
-    - Database connectivity issues
-    - Network subsystem failure
-    - Configuration errors
-
-Cross-Network Routing:
-    Message Size Based:
-    - Small messages (<400 bytes): Either network
-    - Medium messages (400-1023 bytes): Either network
-    - Large messages (1024-10000 bytes): IDP only
-
-    Priority Based:
-    - High priority: Prefer OGx for faster delivery
-    - Normal priority: Network availability based
-    - Low priority: Cost optimization based
-
-    Terminal State Based:
-    - Active terminals: Primary network
-    - Power-saving mode: Wait for wake-up
-    - Hybrid mode: Network availability based
-
-Usage:
-    from protocols.ogx.constants import MessageState, TransportType
-
-    # Handle network-specific timeouts
-    def get_timeout_config(network: str, message_size: int) -> dict:
-        if network == "OGX":
-            return {
-                "initial_timeout": timedelta(minutes=5),
-                "retry_interval": timedelta(minutes=10),
-                "max_retries": 3,
-                "final_timeout": timedelta(hours=12)
-            }
-        else:  # IDP
-            return {
-                "initial_timeout": timedelta(minutes=15),
-                "retry_interval": timedelta(minutes=30),
-                "max_retries": 5,
-                "final_timeout": timedelta(hours=24)
-            }
-
-    # Determine if error is retryable
-    def is_retryable_error(state: MessageState, error_code: int) -> bool:
-        transient_errors = {
-            "network_congestion": range(1000, 1100),
-            "temp_unavailable": range(2000, 2100),
-            "gateway_delay": range(3000, 3100),
-            "beam_handover": range(4000, 4100)
+    # Example 1: Submit message with transport type
+    # POST https://ogws.orbcomm.com/api/v1.0/submit/messages
+    submit_request = {
+        "DestinationID": "01008988SKY5909",
+        "UserMessageID": 2097,
+        "TransportType": TransportType.SATELLITE,
+        "Payload": {
+            "Name": "getTerminalStatus",
+            "SIN": 16,
+            "MIN": 2,
+            "IsForward": True,
+            "Fields": []
         }
-        return any(error_code in codes for codes in transient_errors.values())
+    }
+    
+    # Example 2: Check message status response
+    # GET https://ogws.orbcomm.com/api/v1.0/get/fw_statuses?IDList=10844864715
+    status_response = {
+        "ErrorID": 0,
+        "Statuses": [{
+            "ID": 10844864715,
+            "State": MessageState.RECEIVED,  # Message delivered
+            "IsClosed": True,
+            "Transport": TransportType.SATELLITE
+        }]
+    }
+    
+    # Example 3: Submit with delayed send (IDP only)
+    # POST https://ogws.orbcomm.com/api/v1.0/submit/messages
+    delayed_request = {
+        "DestinationID": "01097623SKY2C68",
+        "DelayedSendOptions": {
+            "DelayedSend": True,
+            "MessageExpireUTC": "2024-01-25 12:00:00"
+        },
+        "Payload": {...}
+    }
+    # Check status - should be WAITING
+    delayed_status = {
+        "ID": 10844864999,
+        "State": MessageState.WAITING,
+        "IsClosed": False
+    }
 
-    # Select optimal transport
-    def select_transport(message: dict, terminal: dict) -> TransportType:
-        size = len(message["payload"])
-        if size > 1023:
-            return TransportType.SATELLITE  # Force IDP for large messages
-        
-        if message.get("priority") == "high":
-            return TransportType.SATELLITE  # OGx for speed
-        
-        if terminal["power_mode"] == "sleep":
-            return TransportType.ANY  # Wait for wake-up
-        
-        return TransportType.CELLULAR  # Default to cost-effective
-
-Implementation Notes:
-    - Message state transitions are one-way and final for completion states
-    - Transport selection affects delivery timing and costs
-    - Default transport (ANY) lets gateway optimize delivery
-    - Some states are network-specific (e.g. DELAYED_SEND for IDP only)
-    - Timeout handling varies by network and message size
-    - Error recovery strategy depends on error type
-    - Cross-network routing considers multiple factors
-    - Network selection impacts delivery guarantees
+Implementation Notes from OGWS-1.txt:
+    - Message states indicate delivery progress
+    - Transport type affects delivery path and timing
+    - State transitions are one-way
+    - Some states are network-specific
+    - Error states include error codes
+    - Timeout periods vary by network
+    - Status updates available via fw_statuses endpoint
+    - Transport selection may affect message priority
 """
 
-from enum import Enum
+from enum import IntEnum
 
 
-class MessageState(int, Enum):
-    """Message states as defined in OGWS-1.txt.
+class MessageState(IntEnum):
+    """Message states as defined in OGWS-1.txt section 4.3.
 
-    Tracks the lifecycle of messages through the system:
-    - ACCEPTED: Initial state after Gateway accepts message
-    - RECEIVED: Successfully delivered to destination
-    - ERROR: Failed with submission error (check error code)
-    - DELIVERY_FAILED: Failed to deliver (check error code)
-    - TIMED_OUT: Exceeded delivery timeout (10 days)
-    - CANCELLED: Manually cancelled by user
-    - DELAYED_SEND: Queued for delayed delivery (IDP only)
-    - BROADCAST_SUBMITTED: Broadcast message sent
-    - SENDING_IN_PROGRESS: Currently being transmitted (OGx only)
+    Attributes:
+        ACCEPTED (0): Message accepted by OGWS/IGWS
+        RECEIVED (1): Message acknowledged by destination
+        ERROR (2): Submission error (check error code)
+        DELIVERY_FAILED (3): Message failed to deliver
+        TIMED_OUT (4): Message timed out
+        CANCELLED (5): Message cancelled
+        WAITING (6): Queued for delayed send (IDP only)
+        BROADCAST_SUBMITTED (7): Broadcast message transmitted
+        SENDING_IN_PROGRESS (8): Sending in progress (OGx only)
 
-    Usage:
-        # Handle message completion
-        def on_message_state_change(message_id: int, state: MessageState) -> None:
-            if state == MessageState.RECEIVED:
-                mark_delivered(message_id)
-            elif state in (MessageState.ERROR, MessageState.DELIVERY_FAILED):
-                handle_failure(message_id)
-            elif state == MessageState.TIMED_OUT:
-                notify_timeout(message_id)
-
-        # Check if message needs retry
-        def should_retry_message(state: MessageState) -> bool:
-            return state in (
-                MessageState.ERROR,
-                MessageState.DELIVERY_FAILED,
-                MessageState.TIMED_OUT
-            )
-
-        # Get user-friendly status
-        def get_status_description(state: MessageState) -> str:
-            status_map = {
-                MessageState.ACCEPTED: "Message accepted by gateway",
-                MessageState.RECEIVED: "Successfully delivered",
-                MessageState.ERROR: "Submission error occurred",
-                MessageState.DELIVERY_FAILED: "Delivery attempt failed",
-                MessageState.TIMED_OUT: "Message timed out",
-                MessageState.CANCELLED: "Cancelled by user",
-                MessageState.DELAYED_SEND: "Queued for delayed delivery",
-                MessageState.BROADCAST_SUBMITTED: "Broadcast submitted",
-                MessageState.SENDING_IN_PROGRESS: "Transmission in progress"
-            }
-            return status_map.get(state, "Unknown state")
-
-    Implementation Notes:
-        - States are terminal once reaching a completion state
-        - Error states include additional error codes
-        - Timeout period is 10 days for offline terminals
-        - State changes trigger notifications to client
-        - Some states are specific to IDP or OGx networks
-        - State transitions are one-way and cannot be reversed
-        - Check error codes when in ERROR or DELIVERY_FAILED states
-        - DELAYED_SEND is only valid for IDP network messages
-        - SENDING_IN_PROGRESS is only valid for OGx network messages
+    API Response Example:
+        # Status response from fw_statuses endpoint
+        {
+            "ErrorID": 0,
+            "Statuses": [{
+                "ID": 10844864715,
+                "State": MessageState.RECEIVED,
+                "IsClosed": True,
+                "Transport": 1,
+                "CreateUTC": "2022-11-25 12:00:20"
+            }]
+        }
     """
 
     ACCEPTED = 0
@@ -183,58 +120,6 @@ class MessageState(int, Enum):
     DELIVERY_FAILED = 3
     TIMED_OUT = 4
     CANCELLED = 5
-    DELAYED_SEND = 6  # IDP network only
+    WAITING = 6  # IDP network only
     BROADCAST_SUBMITTED = 7
     SENDING_IN_PROGRESS = 8  # OGx network only
-
-
-class TransportType(int, Enum):
-    """Transport types as defined in OGWS-1.txt.
-
-    Specifies the communication channel for message delivery:
-    - ANY: Use any available transport (default)
-    - SATELLITE: Restrict to satellite network only
-    - CELLULAR: Restrict to cellular network only
-
-    Usage:
-        # Select transport based on message priority
-        def submit_message(message: dict, priority: str) -> None:
-            transport = TransportType.ANY
-            if priority == "high":
-                transport = TransportType.SATELLITE  # Most reliable
-            elif priority == "low":
-                transport = TransportType.CELLULAR  # Cost-effective
-
-            submit_to_gateway(message, transport=transport)
-
-        # Check if message can use cellular
-        def can_use_cellular(message: dict) -> bool:
-            return (
-                message.get("transport") in (TransportType.ANY, TransportType.CELLULAR)
-                and is_cellular_available()
-            )
-
-        # Get transport cost factor
-        def get_cost_factor(transport: TransportType) -> float:
-            cost_map = {
-                TransportType.ANY: 1.0,  # Base cost
-                TransportType.SATELLITE: 1.5,  # 50% premium
-                TransportType.CELLULAR: 0.7,  # 30% discount
-            }
-            return cost_map.get(transport, 1.0)
-
-    Implementation Notes:
-        - ANY allows gateway to optimize delivery path
-        - SATELLITE provides most reliable delivery
-        - CELLULAR offers cost-effective delivery
-        - Transport affects timing and delivery guarantees
-        - Some features only available on specific transports
-        - Gateway may override ANY based on conditions
-        - SATELLITE has highest priority but costs more
-        - CELLULAR may not be available in all regions
-        - Transport selection impacts message timing
-    """
-
-    ANY = 0  # Default - any transport
-    SATELLITE = 1
-    CELLULAR = 2

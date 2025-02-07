@@ -1,147 +1,152 @@
-"""Field types as defined in OGWS-1.txt.
+"""Field types as defined in OGWS-1.txt section 5.1.
 
-This module defines the supported field types for messages:
-- Basic types (string, boolean, integers)
-- Complex types (enum, array, message)
-- Special types (data, dynamic, property)
+This module defines the field types for OGWS message payloads.
 
-Each field type has specific:
-- Encoding/decoding rules
-- Validation requirements
-- Value constraints
-- Usage patterns
+Field Types (from OGWS-1.txt Table 3):
+- Enum: Enumeration value
+- Boolean: True or False
+- Unsigned Int: Decimal number (non-negative)
+- Signed Int: Decimal number (including negative)
+- String: Text string
+- Data: Base64 encoded data
+- Array: List of elements
+- Message: Nested message
+- Dynamic: Runtime resolved type
+- Property: Configuration property
 
-Usage:
-    from protocols.ogx.constants import FieldType
+OGWS API Usage Examples:
 
-    # Validate field value based on type
-    def validate_field_value(field_type: FieldType, value: Any) -> None:
-        if field_type == FieldType.STRING:
-            if not isinstance(value, str):
-                raise ValidationError("String value required")
-        elif field_type == FieldType.BOOLEAN:
-            if not isinstance(value, bool) and value not in ("0", "1", "True", "False"):
-                raise ValidationError("Boolean value required")
-        elif field_type == FieldType.UNSIGNED_INT:
-            try:
-                val = int(value)
-                if val < 0:
-                    raise ValidationError("Non-negative integer required")
-            except (ValueError, TypeError):
-                raise ValidationError("Integer value required")
-
-    # Create field with type-specific validation
-    def create_field(name: str, type: FieldType, value: Any) -> dict:
-        validate_field_value(type, value)
-        return {
-            "Name": name,
-            "Type": type,
-            "Value": value
+    # Example 1: Submit message with various field types
+    # POST https://ogws.orbcomm.com/api/v1.0/submit/messages
+    submit_request = {
+        "DestinationID": "01008988SKY5909",
+        "Payload": {
+            "Name": "sensorReadings",
+            "SIN": 128,
+            "MIN": 1,
+            "Fields": [
+                {
+                    "Name": "temperature",
+                    "Type": FieldType.SIGNED_INT,
+                    "Value": "-15"
+                },
+                {
+                    "Name": "doorOpen",
+                    "Type": FieldType.BOOLEAN,
+                    "Value": "True"
+                },
+                {
+                    "Name": "status",
+                    "Type": FieldType.ENUM,
+                    "Value": "active"
+                }
+            ]
         }
+    }
+    
+    # Example 2: Message with array elements
+    # GET https://ogws.orbcomm.com/api/v1.0/get/re_messages
+    message_response = {
+        "ID": 10844864715,
+        "Payload": {
+            "Name": "locationHistory",
+            "SIN": 128,
+            "MIN": 2,
+            "Fields": [{
+                "Name": "positions",
+                "Type": FieldType.ARRAY,
+                "Elements": [
+                    {
+                        "Index": 0,
+                        "Fields": [
+                            {
+                                "Name": "latitude",
+                                "Type": FieldType.SIGNED_INT,
+                                "Value": "4534590"
+                            }
+                        ]
+                    }
+                ]
+            }]
+        }
+    }
+    
+    # Example 3: Raw binary data field
+    raw_message = {
+        "Name": "firmware",
+        "SIN": 128,
+        "MIN": 3,
+        "Fields": [{
+            "Name": "data",
+            "Type": FieldType.DATA,
+            "Value": "YQECAxY="  # Base64 encoded
+        }]
+    }
 
-    # Check if type supports arrays
-    def supports_array(field_type: FieldType) -> bool:
-        return field_type in (
-            FieldType.STRING,
-            FieldType.UNSIGNED_INT,
-            FieldType.SIGNED_INT,
-            FieldType.ENUM
-        )
-
-Implementation Notes:
-    - All values must match their declared type
-    - String values are UTF-8 encoded
-    - Integer ranges are enforced
+Implementation Notes from OGWS-1.txt:
+    - Field types determine payload encoding/decoding
+    - String values must be UTF-8 encoded
+    - Boolean accepts "True"/"False" or "1"/"0"
+    - Integer ranges are enforced by network
     - Enum values must be predefined
-    - Arrays have element-level validation
+    - Data fields must be base64 encoded
+    - Array elements must have sequential indices
+    - Message fields support nested structures
     - Dynamic types resolved at runtime
     - Property fields require type attribute
-    - Binary data must be base64 encoded
-    - Message types support nesting
 """
 
 from enum import Enum
 
 
 class FieldType(str, Enum):
-    """Field types for message fields.
+    """Field types as defined in OGWS-1.txt Table 3.
 
-    Defines the allowed data types and their validation rules:
-    - STRING: Text data, UTF-8 encoded
-    - BOOLEAN: True/False values ("True"/"False" or "1"/"0")
-    - UNSIGNED_INT: Non-negative integers (0 to 2^32-1)
-    - SIGNED_INT: Integers including negatives (-2^31 to 2^31-1)
-    - ENUM: Enumerated values from a predefined set
-    - DATA: Binary/raw data (Base64 encoded)
-    - ARRAY: Sequence of elements
-    - MESSAGE: Nested message structure
-    - DYNAMIC: Type determined at runtime
-    - PROPERTY: Configuration property field
+    Attributes:
+        ENUM: Enumeration value from predefined set
+        BOOLEAN: True/False value ("True"/"False" or "1"/"0")
+        UNSIGNED_INT: Non-negative decimal number
+        SIGNED_INT: Decimal number (including negative)
+        STRING: UTF-8 encoded text string
+        DATA: Base64 encoded binary data
+        ARRAY: Sequence of elements
+        MESSAGE: Nested message structure
+        DYNAMIC: Type determined at runtime
+        PROPERTY: Configuration property field
 
-    Usage:
-        # Validate field value
-        def validate_value(field_type: FieldType, value: Any) -> None:
-            validators = {
-                FieldType.STRING: validate_string,
-                FieldType.BOOLEAN: validate_boolean,
-                FieldType.UNSIGNED_INT: validate_unsigned,
-                FieldType.SIGNED_INT: validate_signed,
-                FieldType.ENUM: validate_enum,
-                FieldType.DATA: validate_data,
-                FieldType.ARRAY: validate_array,
-                FieldType.MESSAGE: validate_message,
-                FieldType.DYNAMIC: validate_dynamic,
-                FieldType.PROPERTY: validate_property
-            }
-            validator = validators.get(field_type)
-            if validator:
-                validator(value)
-
-        # Get type constraints
-        def get_type_constraints(field_type: FieldType) -> dict:
-            constraints = {
-                FieldType.STRING: {"encoding": "UTF-8"},
-                FieldType.UNSIGNED_INT: {"min": 0, "max": 2**32-1},
-                FieldType.SIGNED_INT: {"min": -2**31, "max": 2**31-1},
-                FieldType.DATA: {"encoding": "base64"},
-                FieldType.ARRAY: {"max_elements": 100}
-            }
-            return constraints.get(field_type, {})
-
-        # Check if type needs special handling
-        def needs_special_handling(field_type: FieldType) -> bool:
-            return field_type in (
-                FieldType.DYNAMIC,
-                FieldType.PROPERTY,
-                FieldType.MESSAGE
-            )
-
-    Implementation Notes:
-        - STRING: Must be valid UTF-8 text
-        - BOOLEAN: Accepts "True"/"False" or "1"/"0"
-        - UNSIGNED_INT: 0 to 4,294,967,295
-        - SIGNED_INT: -2,147,483,648 to 2,147,483,647
-        - ENUM: Must match predefined values
-        - DATA: Must be valid base64 string
-        - ARRAY: Contains sequence of elements
-        - MESSAGE: Contains nested message structure
-        - DYNAMIC: Runtime type resolution
-        - PROPERTY: Requires type attribute
-        - Type validation is strict
-        - No implicit type conversion
-        - Case sensitivity varies by type
-        - Some types have size limits
-        - Array types support indexing
-        - Message types support nesting
+    API Usage Example:
+        # Message payload with multiple field types
+        {
+            "Name": "deviceStatus",
+            "SIN": 128,
+            "MIN": 1,
+            "Fields": [
+                {
+                    "Name": "batteryLevel",
+                    "Type": FieldType.UNSIGNED_INT,
+                    "Value": "95"
+                },
+                {
+                    "Name": "temperature",
+                    "Type": FieldType.SIGNED_INT,
+                    "Value": "-10"
+                },
+                {
+                    "Name": "mode",
+                    "Type": FieldType.ENUM,
+                    "Value": "active"
+                }
+            ]
+        }
     """
 
-    STRING = "string"  # Text data
-    BOOLEAN = "boolean"  # True/False values
-    UNSIGNED_INT = "unsignedint"  # Non-negative integers
-    SIGNED_INT = "signedint"  # Integers including negatives
-    ENUM = "enum"  # Enumerated values
-    DATA = "data"  # Binary/raw data
-    ARRAY = "array"  # Sequence of elements
-    MESSAGE = "message"  # Nested message
-    DYNAMIC = "dynamic"  # Runtime type
-    PROPERTY = "property"  # Configuration property
+    ENUM = "enum"
+    BOOLEAN = "boolean"
+    UNSIGNED_INT = "unsignedint"
+    SIGNED_INT = "signedint"
+    STRING = "string"
+    DATA = "data"
+    ARRAY = "array"
+    MESSAGE = "message"
+    DYNAMIC = "dynamic"
+    PROPERTY = "property"
