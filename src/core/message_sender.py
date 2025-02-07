@@ -12,14 +12,10 @@ For detailed specifications, see:
 - protocols.ogx.constants.transport_types: Transport options
 """
 
-from typing import Dict, Any, Optional, List
 from datetime import datetime
-from protocols.ogx.constants import (
-    TransportType,
-    DEFAULT_CALLS_PER_MINUTE,
-    ERR_SUBMIT_MESSAGE_RATE_EXCEEDED,
-    MAX_SUBMIT_MESSAGES,
-)
+from typing import Any, Dict, List, Optional
+
+from protocols.ogx.constants import TransportType
 
 
 class MessageSender:

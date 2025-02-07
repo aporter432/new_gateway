@@ -17,7 +17,9 @@ OGWS API Usage Examples:
 
     # Example 1: Check message retention
     # GET https://ogws.orbcomm.com/api/v1.0/get/re_messages
-    from_utc = (datetime.now() - timedelta(days=MESSAGE_RETENTION_DAYS)).strftime("%Y-%m-%d %H:%M:%S")
+    from_utc = (
+        datetime.now() - timedelta(days=MESSAGE_RETENTION_DAYS)
+    ).strftime("%Y-%m-%d %H:%M:%S")
     response = {
         "ErrorID": 0,
         "Messages": [

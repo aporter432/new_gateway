@@ -10,13 +10,13 @@ This module implements:
 
 from typing import Any, Dict, List, Optional
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from core.config import Settings
+from core.config import Settings, get_settings
 from core.security import OGWSAuthManager, get_auth_manager
-from protocols.ogx.constants.auth import AuthRole, ThrottleGroup
-from protocols.ogx.constants.message_states import TransportType
+from protocols.ogx.services.ogws import get_ogws_message_status, get_ogws_messages
 
 router = APIRouter()
 
@@ -56,7 +56,7 @@ async def submit_message(
     request: MessageRequest,
     auth: OGWSAuthManager = Depends(get_auth_manager),
     settings: Settings = Depends(get_settings),
-):
+) -> MessageResponse:
     """Submit To-Mobile message via OGWS."""
     try:
         headers = await auth.get_auth_header()
@@ -94,13 +94,19 @@ async def get_from_mobile_messages(
     include_raw_payload: bool = False,
     auth: OGWSAuthManager = Depends(get_auth_manager),
     settings: Settings = Depends(get_settings),
-):
+) -> dict[str, Any]:
     """Retrieve From-Mobile messages from OGWS.
 
     Implements:
     - High-watermark tracking
     - Automatic message decoding
     - Transport type handling
+
+    Returns:
+        A dictionary containing:
+        - ErrorID: Error code (0 for success)
+        - Messages: List of message dictionaries
+        - NextFromUTC: Next high-watermark timestamp
     """
     try:
         headers = await auth.get_auth_header()
@@ -112,7 +118,11 @@ async def get_from_mobile_messages(
             include_raw_payload=include_raw_payload,
             base_url=settings.OGWS_BASE_URL,
         )
-        return messages
+        return {
+            "ErrorID": 0,
+            "Messages": messages.get("Messages", []),
+            "NextFromUTC": messages.get("NextFromUTC", from_utc),
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve messages: {str(e)}")
 
@@ -122,13 +132,18 @@ async def get_message_status(
     message_id: int,
     auth: OGWSAuthManager = Depends(get_auth_manager),
     settings: Settings = Depends(get_settings),
-):
+) -> dict[str, Any]:
     """Get status of submitted To-Mobile message.
 
     Tracks:
     - Message delivery state
     - Transport information
     - Error conditions
+
+    Returns:
+        A dictionary containing:
+        - ErrorID: Error code (0 for success)
+        - Status: Message status dictionary
     """
     try:
         headers = await auth.get_auth_header()
@@ -136,6 +151,6 @@ async def get_message_status(
         status = await get_ogws_message_status(
             headers=headers, message_id=message_id, base_url=settings.OGWS_BASE_URL
         )
-        return status
+        return {"ErrorID": 0, "Status": status}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get message status: {str(e)}")

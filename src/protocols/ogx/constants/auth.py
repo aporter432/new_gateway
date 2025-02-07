@@ -86,3 +86,25 @@ class GrantType(str, Enum):
     """
 
     CLIENT_CREDENTIALS = "client_credentials"  # Only supported grant type
+
+
+class ThrottleGroup(str, Enum):
+    """Message throttling groups as defined in OGWS-1.txt section 4.4.
+
+    Attributes:
+        DEFAULT: Standard message throttling
+        PRIORITY: Higher priority, less throttling
+        BULK: Lower priority, more throttling
+        BROADCAST: Broadcast message throttling
+
+    Notes:
+        - Throttling affects message delivery timing
+        - Priority messages get preferential treatment
+        - Bulk messages may be delayed during high load
+        - Broadcast messages have special throttling rules
+    """
+
+    DEFAULT = "default"
+    PRIORITY = "priority"
+    BULK = "bulk"
+    BROADCAST = "broadcast"

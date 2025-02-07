@@ -1,13 +1,13 @@
-"""Tests for OGx field validation edge cases"""
+"""Tests for OGx field validation"""
 
 from base64 import b64encode
 
 import pytest
 
+from protocols.ogx.constants import FieldType
 from protocols.ogx.validation.json.field_validator import OGxFieldValidator
-from src.protocols.ogx.constants import FieldType
-from src.protocols.ogx.exceptions import ValidationError
-from src.protocols.ogx.models.fields import (
+from protocols.ogx.exceptions import ValidationError
+from protocols.ogx.models.fields import (
     ArrayField,
     DynamicField,
     Element,

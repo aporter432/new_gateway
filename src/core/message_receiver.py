@@ -11,13 +11,8 @@ For detailed specifications, see:
 - protocols.ogx.constants.message_states: Message format examples
 """
 
-from typing import Dict, Any, Optional, List
 from datetime import datetime
-from protocols.ogx.constants import (
-    MESSAGE_RETENTION_DAYS,
-    MAX_MESSAGES_PER_RESPONSE,
-    ERR_RETRIEVE_STATUS_RATE_EXCEEDED,
-)
+from typing import Any, Dict, List, Optional
 
 
 class MessageReceiver:

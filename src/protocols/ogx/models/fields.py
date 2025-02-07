@@ -80,7 +80,7 @@ class ArrayField(Field):
 
     elements: List["Element"] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Ensure type is set correctly"""
         self.type = FieldType.ARRAY
         self.value = None  # Arrays use elements instead of value
@@ -110,7 +110,7 @@ class DynamicField(Field):
 
     type_attribute: str = ""  # One of the base field types
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Ensure type is set correctly"""
         self.type = FieldType.DYNAMIC
 
@@ -127,7 +127,7 @@ class PropertyField(Field):
 
     type_attribute: str = ""  # One of the base field types
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Ensure type is set correctly"""
         self.type = FieldType.PROPERTY
 

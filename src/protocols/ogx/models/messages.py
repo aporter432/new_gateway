@@ -5,7 +5,7 @@ Implements message format definitions from the Common Message Format.
 
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, Sequence
+from typing import Any, List, Sequence, Union
 
 from ..constants import FieldType
 from .fields import ArrayField, Element, Field
@@ -20,7 +20,7 @@ class OGxMessage:
     name: str
     sin: int
     min: int
-    fields: Sequence[Field] = dataclass_field(default_factory=list)
+    fields: Sequence[Union[Field, ArrayField]] = dataclass_field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "OGxMessage":
@@ -34,7 +34,7 @@ class OGxMessage:
             OGxMessage instance
         """
         fields_data = data.get("Fields", [])
-        message_fields = []
+        message_fields: List[Union[Field, ArrayField]] = []
 
         for field_data in fields_data:
             field_type = field_data.get("Type")

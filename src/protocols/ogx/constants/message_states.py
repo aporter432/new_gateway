@@ -123,3 +123,23 @@ class MessageState(IntEnum):
     WAITING = 6  # IDP network only
     BROADCAST_SUBMITTED = 7
     SENDING_IN_PROGRESS = 8  # OGx network only
+
+
+class TransportType(IntEnum):
+    """Transport types as defined in OGWS-1.txt section 4.2.
+
+    Attributes:
+        ANY (0): Use any available transport
+        SATELLITE (1): Use satellite transport only
+        CELLULAR (2): Use cellular transport only
+
+    Notes:
+        - Transport selection affects message routing
+        - ANY allows automatic failover between transports
+        - Specific transport types may have different costs
+        - Network availability affects transport selection
+    """
+
+    ANY = 0
+    SATELLITE = 1
+    CELLULAR = 2

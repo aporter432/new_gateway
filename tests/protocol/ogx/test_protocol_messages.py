@@ -6,7 +6,7 @@ import pytest
 
 from protocols.ogx.encoding.json.json_codec import OGxJsonCodec
 from protocols.ogx.validation.json.message_validator import OGxMessageValidator
-from src.protocols.ogx.models.messages import OGxMessage
+from protocols.ogx.models.messages import OGxMessage
 
 
 class TestProtocolMessages:

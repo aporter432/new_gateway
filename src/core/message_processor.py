@@ -12,7 +12,8 @@ For detailed message format and validation rules, see:
 - protocols.ogx.constants.limits: Size and rate limits
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from protocols.ogx.constants import MessageState, TransportType
 
 

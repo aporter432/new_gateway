@@ -6,15 +6,12 @@ This module handles:
 - Authentication header management
 """
 
-from datetime import datetime, timedelta
 from typing import Optional
 
-import jwt
 from redis import Redis
 
-from core.config import Settings
+from core.config import Settings, get_settings
 from infrastructure.redis import get_redis_client
-from protocols.ogx.constants.auth import AuthRole, GrantType
 
 
 class OGWSAuthManager:
@@ -54,3 +51,10 @@ class OGWSAuthManager:
         """Check if token needs refresh."""
         # TODO: Implement token expiry check
         return False
+
+
+async def get_auth_manager() -> OGWSAuthManager:
+    """Get configured auth manager instance."""
+    settings = get_settings()
+    redis = await get_redis_client()
+    return OGWSAuthManager(settings=settings, redis=redis)

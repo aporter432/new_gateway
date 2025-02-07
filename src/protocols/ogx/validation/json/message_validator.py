@@ -21,7 +21,8 @@ from .field_validator import OGxFieldValidator
 class OGxMessageValidator:
     """Validates OGx messages according to N214 specification section 5"""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the validator with a field validator instance."""
         self.field_validator = OGxFieldValidator()
 
     def validate_message(self, message: Dict[str, Any]) -> None:

@@ -4,10 +4,7 @@ version = "0.1.0"
 description = "orbcomm_gateway"
 authors = ["Aaron Porter <aaron.porter12@yahoo.com>"]
 readme = "README.md"
-packages = [
-    {include = "protocols", from = "src"},
-    {include = "core", from = "src"}
-]
+packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.11.6"
@@ -31,6 +28,7 @@ httpx = ">=0.24.0"  # For HTTP client
 types-python-jose = ">=3.3.0"  # Type stubs for python-jose
 types-redis = ">=4.5.0"  # Type stubs for redis
 types-pyjwt = ">=1.7.1"  # Type stubs for PyJWT
+PyJWT = ">=2.0.0"  # JWT handling
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.3.0"
@@ -61,18 +59,19 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 check_untyped_defs = true
 namespace_packages = true
-explicit_package_bases = false
-mypy_path = ["src"]
-exclude = ["tests/"]
+explicit_package_bases = true
+mypy_path = "src"
+exclude = ["tests/*"]
+plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 module = ["jwt.*", "redis.*", "pydantic.*", "fastapi.*", "sqlalchemy.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-testpaths = ["src/tests"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --cov=protocols --cov-report=term-missing"
+addopts = "-v --cov=src --cov-report=term-missing"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
