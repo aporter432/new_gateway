@@ -1,307 +1,126 @@
-"""Operation modes and network types as defined in OGWS-1.txt.
+"""Operation modes for OGWS terminals.
 
-This module defines:
-- Network types supported by terminals (IDP/OGx)
-- Operation modes that control terminal behavior and power management
+This module defines the operation modes that control terminal behavior and power management
+as specified in OGWS-1.txt.
 
-These constants determine:
+Operation modes determine:
 - How terminals handle message reception and transmission
 - Power consumption and wake/sleep cycles
-- Message size limits and delivery options
 - Network-specific capabilities and restrictions
+- Message delivery timing and batching
 
-Usage:
-    from protocols.ogx.constants import NetworkType, OperationMode
+Usage Examples:
 
-    # Validate message size for network
-    def validate_payload_size(network: NetworkType, payload: bytes) -> bool:
-        max_size = {
-            NetworkType.IDP: 10000,  # IDP supports larger payloads
-            NetworkType.OGX: 1023,   # OGx has smaller payload limit
-        }
-        return len(payload) <= max_size.get(network, 0)
+    from protocols.ogx.constants import OperationMode, NetworkType
 
-    # Configure terminal power mode
-    def configure_terminal(terminal_id: str, battery_level: float) -> None:
+    def select_power_mode(
+        battery_level: float,
+        is_time_critical: bool,
+        network: NetworkType
+    ) -> OperationMode:
+        '''Select appropriate operation mode based on conditions.'''
         if battery_level < 0.2:  # Critical battery
-            set_mode(terminal_id, OperationMode.WAKE_UP)  # Lowest power
-        elif battery_level < 0.5:  # Low battery
-            set_mode(terminal_id, OperationMode.SEND_ON_RECEIVE)  # Medium power
-        else:
-            set_mode(terminal_id, OperationMode.ALWAYS_ON)  # Best responsiveness
-
-Implementation Notes:
-    - Network type affects message size limits and features
-    - Operation mode impacts power consumption and latency
-    - Mode changes require terminal reboot
-    - Some modes only available on specific networks
-    - Consider power budget when selecting mode
-    - Network determines available features
-
-Network Types:
-    IDP Network:
-    - High latency, high reliability
-    - Global coverage
-    - Large message support
-    - Higher cost per message
-
-    OGx Network:
-    - Low latency, variable reliability
-    - Regional coverage
-    - Small message optimization
-    - Lower cost per message
-
-Operation Modes:
-    1. ALWAYS_ON:
-       - Continuous network connection
-       - Immediate message delivery
-       - Higher power consumption
-       - Best for time-critical data
-
-    2. POWER_SAVE:
-       - Periodic network checks
-       - Delayed message delivery
-       - Optimized power usage
-       - Best for battery life
-
-    3. HYBRID:
-       - Dynamic power management
-       - Priority-based activation
-       - Balanced power/delivery
-       - Best for mixed workloads
-
-Cross-Network Message Routing Rules:
-
-    1. Network Selection Criteria:
-       Primary Factors:
-       - Message size and priority
-       - Network availability
-       - Terminal capabilities
-       - Cost considerations
-
-       Secondary Factors:
-       - Historical performance
-       - Current network load
-       - Time of day patterns
-       - Geographic location
-
-    2. Routing Decision Matrix:
-       High Priority Messages:
-       - Size <= 400B: OGx preferred
-       - Size > 400B: IDP preferred
-       - Fallback: Any available network
-
-       Normal Priority Messages:
-       - Size <= 1KB: Network availability
-       - Size > 1KB: IDP only
-       - Fallback: Queue for retry
-
-       Low Priority Messages:
-       - Size <= 2KB: Cost optimization
-       - Size > 2KB: IDP off-peak
-       - Fallback: Store and forward
-
-    3. Terminal State Impact:
-       Active Mode:
-       - Use optimal network
-       - Immediate delivery attempt
-       - Dynamic network switching
-
-       Power Save Mode:
-       - Queue until wake window
-       - Batch similar messages
-       - Prefer scheduled delivery
-
-       Hybrid Mode:
-       - Priority determines timing
-       - Network cost optimization
-       - Adaptive scheduling
-
-    4. Error Handling Strategy:
-       Network Unavailable:
-       - Queue for retry
-       - Try alternate network
-       - Notify if urgent
-
-       Delivery Failure:
-       - Retry on same network
-       - Switch networks if persistent
-       - Escalate if critical
-
-       Resource Constraints:
-       - Throttle submissions
-       - Prioritize queue
-       - Drop lowest priority
-
-Usage:
-    from protocols.ogx.constants import NetworkType, OperationMode
-
-    def select_network(message: dict, terminal: dict) -> NetworkType:
-        # Get message characteristics
-        size = len(message["payload"])
-        priority = message.get("priority", "normal")
+            return OperationMode.WAKE_UP  # Lowest power consumption
         
-        # Get terminal state
-        mode = terminal.get("operation_mode", OperationMode.ALWAYS_ON)
-        location = terminal.get("location")
-        battery = terminal.get("battery_level", 100)
-
-        # Apply routing rules
-        if priority == "high":
-            if size <= 400:
-                return NetworkType.OGX
-            return NetworkType.IDP
-
-        if mode == OperationMode.POWER_SAVE:
-            if battery < 20:
-                return NetworkType.IDP  # More efficient
-            return NetworkType.ANY  # Let gateway optimize
-
-        if size > 1024:
-            return NetworkType.IDP
-
-        # Default to cost-effective option
-        return NetworkType.OGX
-
-    def handle_delivery_failure(message: dict, attempt: int) -> dict:
-        if attempt < 3:
-            return {"action": "retry", "delay": 300}  # 5 min
-        
-        if message["priority"] == "high":
-            return {"action": "alternate_network"}
+        if is_time_critical:
+            return OperationMode.ALWAYS_ON  # Best responsiveness
             
-        return {"action": "queue", "delay": 3600}  # 1 hour
+        if network == NetworkType.OGX:
+            return OperationMode.HYBRID  # Balanced for OGx
+            
+        return OperationMode.WAKE_UP  # Default to power saving
+
+    def estimate_daily_power_mah(mode: OperationMode) -> float:
+        '''Estimate daily power consumption in mAh.'''
+        consumption = {
+            OperationMode.ALWAYS_ON: 240.0,        # 10mA continuous
+            OperationMode.WAKE_UP: 24.0,           # 1mA average
+            OperationMode.MOBILE_RECEIVE_ON_SEND: 120.0,  # 5mA average
+            OperationMode.HYBRID: 180.0            # 7.5mA average
+        }
+        return consumption.get(mode, 240.0)
+
+    def is_mode_supported(mode: OperationMode, network: NetworkType) -> bool:
+        '''Check if operation mode is supported on network.'''
+        if network == NetworkType.ISAT_DATA_PRO:
+            # IDP only supports ALWAYS_ON and WAKE_UP
+            return mode in (OperationMode.ALWAYS_ON, OperationMode.WAKE_UP)
+        # OGx supports all modes
+        return True
 
 Implementation Notes:
-    Network Selection:
-    - Consider message characteristics
-    - Check terminal capabilities
-    - Evaluate network conditions
-    - Apply cost optimization
-
-    Operation Modes:
-    - Mode changes affect routing
-    - Power state impacts timing
-    - Priority overrides defaults
-    - Batch processing allowed
-
-    Error Recovery:
-    - Progressive retry delays
-    - Network switching logic
-    - Priority escalation
-    - Queue management
-
-    Performance Optimization:
-    - Cache routing decisions
-    - Batch similar messages
-    - Predict network availability
-    - Learn from history
-
-    Monitoring Requirements:
-    - Track delivery success
-    - Measure network performance
-    - Log routing decisions
-    - Report anomalies
+    - ALWAYS_ON provides lowest latency but highest power use
+    - WAKE_UP uses least power but has highest latency
+    - MOBILE_RECEIVE_ON_SEND and HYBRID only available on OGx network
+    - Mode changes require terminal reboot
+    - Wake-up intervals are configurable per terminal
+    - Power consumption varies by network type
+    - Consider power budget when selecting mode
+    - Some features only available in specific modes
+    - Network type affects available modes
 """
 
-from enum import Enum
+from enum import IntEnum
 
 
-class NetworkType(int, Enum):
-    """Network types as defined in OGWS-1.txt.
-
-    Specifies the satellite network type:
-    - IDP: IsatData Pro network (up to 10000 bytes payload)
-    - OGX: OG2 network (up to 1023 bytes payload)
-
-    Usage:
-        # Format message based on network
-        def format_message(data: dict, network: NetworkType) -> dict:
-            if network == NetworkType.IDP:
-                return format_idp_message(data, max_size=10000)
-            elif network == NetworkType.OGX:
-                return format_ogx_message(data, max_size=1023)
-            raise ValueError(f"Unsupported network: {network}")
-
-        # Check network capabilities
-        def supports_large_messages(network: NetworkType) -> bool:
-            return network == NetworkType.IDP
-
-        # Get network-specific timeout
-        def get_message_timeout(network: NetworkType) -> int:
-            timeouts = {
-                NetworkType.IDP: 86400,  # 24 hours for IDP
-                NetworkType.OGX: 43200   # 12 hours for OGx
-            }
-            return timeouts.get(network, 43200)
-
-    Implementation Notes:
-        - IDP optimized for larger messages (up to 10000 bytes)
-        - OGX optimized for efficient delivery (up to 1023 bytes)
-        - Network determines available features
-        - Message size limits strictly enforced
-        - Each network has specific timing characteristics
-        - Network affects power consumption
-        - Consider network capabilities when designing messages
-        - Some features only available on specific networks
-    """
-
-    IDP = 0  # IsatData Pro network
-    OGX = 1  # OG2 network
-
-
-class OperationMode(int, Enum):
+class OperationMode(IntEnum):
     """Operation modes as defined in OGWS-1.txt.
 
-    Controls how terminals handle messages:
+    Controls how terminals handle messages and power management:
     - ALWAYS_ON: Continuous connection (highest power, lowest latency)
     - WAKE_UP: Periodic wake-up (lowest power, highest latency)
-    - SEND_ON_RECEIVE: Only receives when sending (medium power/latency)
+    - MOBILE_RECEIVE_ON_SEND: Only receives when sending (medium power/latency)
     - HYBRID: Mixed mode operation (balanced power/latency)
 
+    Network Support:
+    - ALWAYS_ON: Supported on both OGx and IsatData Pro
+    - WAKE_UP: Supported on both OGx and IsatData Pro
+    - MOBILE_RECEIVE_ON_SEND: OGx only
+    - HYBRID: OGx only
+
+    Power Consumption (relative):
+    - ALWAYS_ON: Highest (~10mA continuous)
+    - WAKE_UP: Lowest (~1mA average)
+    - MOBILE_RECEIVE_ON_SEND: Medium (~5mA average)
+    - HYBRID: Medium-High (~7.5mA average)
+
     Usage:
-        # Select mode based on requirements
-        def select_operation_mode(
-            battery_powered: bool,
-            latency_sensitive: bool,
+        def configure_terminal(
+            terminal_id: str,
+            battery_level: float,
             network: NetworkType
-        ) -> OperationMode:
-            if not battery_powered:
-                return OperationMode.ALWAYS_ON
-            if latency_sensitive:
-                return OperationMode.HYBRID if network == NetworkType.OGX else OperationMode.ALWAYS_ON
-            return OperationMode.WAKE_UP
+        ) -> None:
+            '''Configure terminal operation mode based on conditions.'''
+            if battery_level < 0.2:  # Critical battery
+                if network == NetworkType.OGX:
+                    set_mode(terminal_id, OperationMode.MOBILE_RECEIVE_ON_SEND)
+                else:
+                    set_mode(terminal_id, OperationMode.WAKE_UP)
+            else:
+                set_mode(terminal_id, OperationMode.ALWAYS_ON)
 
-        # Calculate power consumption
-        def estimate_daily_power_mah(mode: OperationMode) -> float:
-            consumption = {
-                OperationMode.ALWAYS_ON: 240.0,        # 10mA continuous
-                OperationMode.WAKE_UP: 24.0,          # 1mA average
-                OperationMode.SEND_ON_RECEIVE: 120.0, # 5mA average
-                OperationMode.HYBRID: 180.0           # 7.5mA average
+        def get_mode_description(mode: OperationMode) -> str:
+            '''Get human-readable mode description.'''
+            descriptions = {
+                OperationMode.ALWAYS_ON: "Continuous connection, immediate delivery",
+                OperationMode.WAKE_UP: "Periodic wake-up, delayed delivery",
+                OperationMode.MOBILE_RECEIVE_ON_SEND: "Receive only when sending",
+                OperationMode.HYBRID: "Dynamic power/delivery balance"
             }
-            return consumption.get(mode, 240.0)
-
-        # Check mode compatibility
-        def is_mode_supported(mode: OperationMode, network: NetworkType) -> bool:
-            if network == NetworkType.IDP:
-                return mode in (OperationMode.ALWAYS_ON, OperationMode.WAKE_UP)
-            return True  # All modes supported on OGx
+            return descriptions.get(mode, "Unknown mode")
 
     Implementation Notes:
-        - Mode affects power consumption significantly
-        - WAKE_UP uses least power but has highest latency
-        - ALWAYS_ON provides lowest latency but highest power use
-        - Some modes restricted by network type
-        - Consider power budget when selecting mode
         - Mode changes require terminal reboot
-        - SEND_ON_RECEIVE and HYBRID only available on OGx
-        - Wake-up intervals configurable per terminal
-        - Power consumption varies by network type
-        - Latency varies by mode and network
+        - Consider network capabilities when setting mode
+        - Monitor power consumption in each mode
+        - Test message delivery timing in each mode
+        - Implement appropriate retry logic
+        - Handle mode change failures gracefully
+        - Log mode changes for diagnostics
+        - Consider environmental conditions
     """
 
     ALWAYS_ON = 0  # Continuous connection (IDP/OGx)
     WAKE_UP = 1  # Periodic wake-up (IDP/OGx)
-    SEND_ON_RECEIVE = 2  # Receive on send (OGx only)
+    MOBILE_RECEIVE_ON_SEND = 2  # Receive on send (OGx only)
     HYBRID = 3  # Mixed mode (OGx only)

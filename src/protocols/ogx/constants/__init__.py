@@ -6,9 +6,11 @@ from .message_format import (
     REQUIRED_FIELD_PROPERTIES,
     REQUIRED_ELEMENT_PROPERTIES,
 )
-from .transport_types import MessageState, TransportType
-from .operation_modes import NetworkType, OperationMode
+from .message_states import MessageState, TransportType
+from .network_types import NetworkType
+from .operation_modes import OperationMode
 from .auth import AuthRole, ThrottleGroup, GrantType
+from .message_types import MessageType
 from .limits import (
     MESSAGE_RETENTION_DAYS,
     MAX_SIMULTANEOUS_CONNECTIONS,
@@ -38,6 +40,7 @@ __all__ = [
     "TransportType",
     "NetworkType",
     "OperationMode",
+    "MessageType",
     # Auth and authorization
     "AuthRole",
     "ThrottleGroup",
