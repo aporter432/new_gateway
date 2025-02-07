@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.protocols.ogx.exceptions import ValidationError
 from protocols.ogx.validation.json.message_validator import OGxMessageValidator
+from src.protocols.ogx.exceptions import ValidationError
 
 
 class TestOGxMessageValidator:

@@ -12,7 +12,7 @@ Message Type Characteristics (from OGWS-1.txt):
     - Can include UserMessageID for client tracking
     - Supports delayed send options (IDP only)
     - Message states: ACCEPTED, RECEIVED, ERROR, etc.
-    
+
 - From-mobile (RE):
     - Includes source terminal's prime ID
     - Retrieved using high-watermark tracking
@@ -52,7 +52,7 @@ OGWS API Interaction Examples:
             "State": MessageType.FW_ACCEPTED
         }]
     }
-    
+
     # Example 2: Retrieve from-mobile messages
     # GET https://ogws.orbcomm.com/api/v1.0/get/re_messages?FromUTC=2022-11-25+12:00:00
     get_messages_params = {
@@ -71,7 +71,7 @@ OGWS API Interaction Examples:
             "SIN": 128
         }]
     }
-    
+
     # Example 3: Get message status
     # GET https://ogws.orbcomm.com/api/v1.0/get/fw_statuses?IDList=10844864715
     status_response = {

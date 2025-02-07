@@ -28,14 +28,14 @@ OGWS API Usage Examples:
             }
         ]
     }
-    
+
     # Example 2: Handle rate limiting
     # HTTP 429 response when exceeding DEFAULT_CALLS_PER_MINUTE
     {
         "ErrorID": 24579,  # ERR_SUBMIT_MESSAGE_RATE_EXCEEDED
         "Message": "Rate limit exceeded. Wait 60 seconds before retrying."
     }
-    
+
     # Example 3: Submit batch of messages
     # POST https://ogws.orbcomm.com/api/v1.0/submit/messages
     if len(messages) > MAX_SUBMIT_MESSAGES:
@@ -65,7 +65,6 @@ Implementation Notes from OGWS-1.txt:
 
 from datetime import timedelta
 from typing import Final
-
 
 # Section 2.3 - Message Retention and Limitations
 MESSAGE_RETENTION_DAYS: Final[int] = 5

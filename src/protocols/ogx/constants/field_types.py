@@ -43,7 +43,7 @@ OGWS API Usage Examples:
             ]
         }
     }
-    
+
     # Example 2: Message with array elements
     # GET https://ogws.orbcomm.com/api/v1.0/get/re_messages
     message_response = {
@@ -70,7 +70,7 @@ OGWS API Usage Examples:
             }]
         }
     }
-    
+
     # Example 3: Raw binary data field
     raw_message = {
         "Name": "firmware",

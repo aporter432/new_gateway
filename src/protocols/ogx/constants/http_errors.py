@@ -17,14 +17,14 @@ OGWS API Usage Examples:
         "status_code": HTTPError.UNAUTHORIZED,
         "error": "Invalid credentials"
     }
-    
+
     # Example 2: Rate limit exceeded
     # GET https://ogws.orbcomm.com/api/v1.0/get/re_messages
     response = {
         "status_code": HTTPError.TOO_MANY_REQUESTS,
         "error": "Rate limit exceeded. Wait 60 seconds before retrying."
     }
-    
+
     # Example 3: Subaccount access denied
     # GET https://ogws.orbcomm.com/api/v1.0/get/subaccount/re_messages
     response = {

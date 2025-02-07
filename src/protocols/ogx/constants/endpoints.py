@@ -30,7 +30,7 @@ Usage Examples:
             "IncludeTypes": True
         }
         url = f"{base_url}{APIEndpoint.GET_RE_MESSAGES}"
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 url,
@@ -57,7 +57,7 @@ Usage Examples:
             "Payload": payload
         }
         url = f"{base_url}{APIEndpoint.SUBMIT_MESSAGE}"
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 url,

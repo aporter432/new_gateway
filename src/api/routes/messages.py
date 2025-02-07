@@ -9,13 +9,14 @@ This module implements:
 """
 
 from typing import Any, Dict, List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from core.config import Settings
+from core.security import OGWSAuthManager, get_auth_manager
 from protocols.ogx.constants.auth import AuthRole, ThrottleGroup
 from protocols.ogx.constants.message_states import TransportType
-from core.security import OGWSAuthManager, get_auth_manager
-from core.config import Settings
 
 router = APIRouter()
 
@@ -59,39 +60,31 @@ async def submit_message(
     """Submit To-Mobile message via OGWS."""
     try:
         headers = await auth.get_auth_header()
-        
+
         # Construct the OGWS endpoint URL
         ogws_endpoint = f"{settings.OGWS_BASE_URL}/submit/messages"
-        
+
         # Transform our request to match OGWS format
         ogws_request = {
             "DestinationID": request.DestinationID,
             "UserMessageID": request.UserMessageID,
             "Payload": request.Payload.dict(),
-            "TransportType": request.TransportType
+            "TransportType": request.TransportType,
         }
-        
+
         # Make the actual OGWS API call
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                ogws_endpoint,
-                headers=headers,
-                json=ogws_request
-            )
-            
+            response = await client.post(ogws_endpoint, headers=headers, json=ogws_request)
+
         if response.status_code != 200:
             raise HTTPException(
-                status_code=response.status_code,
-                detail=f"OGWS error: {response.text}"
+                status_code=response.status_code, detail=f"OGWS error: {response.text}"
             )
-            
+
         return MessageResponse(**response.json())
-        
+
     except Exception as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to submit message: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to submit message: {str(e)}")
 
 
 @router.get("/messages/from-mobile")

@@ -27,7 +27,7 @@ Usage Examples:
             "grant_type": GrantType.CLIENT_CREDENTIALS
         }
         url = f"{base_url}/auth/token"
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 url,

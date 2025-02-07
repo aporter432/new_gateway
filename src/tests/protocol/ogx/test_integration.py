@@ -2,12 +2,12 @@
 
 import pytest
 
-from src.protocols.ogx.constants import FieldType
 from protocols.ogx.encoding.json.json_codec import OGxJsonCodec
+from protocols.ogx.validation.json.message_validator import OGxMessageValidator
+from src.protocols.ogx.constants import FieldType
 from src.protocols.ogx.exceptions import EncodingError, ValidationError
 from src.protocols.ogx.models.fields import ArrayField, Element, Field
 from src.protocols.ogx.models.messages import OGxMessage
-from protocols.ogx.validation.json.message_validator import OGxMessageValidator
 
 
 class TestOGxProtocolIntegration:

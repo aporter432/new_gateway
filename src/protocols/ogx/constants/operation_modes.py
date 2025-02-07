@@ -21,13 +21,13 @@ Usage Examples:
         '''Select appropriate operation mode based on conditions.'''
         if battery_level < 0.2:  # Critical battery
             return OperationMode.WAKE_UP  # Lowest power consumption
-        
+
         if is_time_critical:
             return OperationMode.ALWAYS_ON  # Best responsiveness
-            
+
         if network == NetworkType.OGX:
             return OperationMode.HYBRID  # Balanced for OGx
-            
+
         return OperationMode.WAKE_UP  # Default to power saving
 
     def estimate_daily_power_mah(mode: OperationMode) -> float:

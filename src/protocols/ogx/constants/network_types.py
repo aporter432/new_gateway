@@ -6,7 +6,7 @@ and operational capabilities.
 
 Network Characteristics (from OGWS-1.txt):
 - IsatData Pro (0):
-    - Payload limits: 
+    - Payload limits:
         - Small messages: up to 400 bytes
         - Medium messages: up to 2000 bytes
         - Large messages: up to 10,000 bytes
@@ -14,7 +14,7 @@ Network Characteristics (from OGWS-1.txt):
     - Message timeout: 120 minutes
     - Supports broadcast messaging
     - Supports ALWAYS_ON and WAKE_UP operation modes
-    
+
 - OGx (1):
     - Fixed payload limit: up to 1,023 bytes
     - Message timeout: 10 days
@@ -24,7 +24,7 @@ Network Characteristics (from OGWS-1.txt):
 API Usage Examples:
 
     from protocols.ogx.constants import NetworkType
-    
+
     # Example 1: Checking network in message status response
     status_response = {
         "ID": 10844864715,
@@ -32,13 +32,13 @@ API Usage Examples:
         "State": 1,
         "Transport": 1
     }
-    
+
     # Network-specific timeout handling
     if status_response["Network"] == NetworkType.ISAT_DATA_PRO:
         timeout_minutes = 120  # IDP timeout
     else:
         timeout_minutes = 14400  # OGx 10-day timeout
-    
+
     # Example 2: Network-specific payload validation
     def validate_payload(network: NetworkType, payload_size: int) -> bool:
         '''Validate payload size per OGWS spec.'''
@@ -47,7 +47,7 @@ API Usage Examples:
             return payload_size <= 10000  # Max IDP size
         # OGx has fixed limit
         return payload_size <= 1023
-    
+
     # Example 3: Network in terminal info response
     terminal_info = {
         "PrimeID": "01000005SKYCD96",

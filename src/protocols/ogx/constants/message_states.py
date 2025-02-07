@@ -42,7 +42,7 @@ OGWS API Usage Examples:
             "Fields": []
         }
     }
-    
+
     # Example 2: Check message status response
     # GET https://ogws.orbcomm.com/api/v1.0/get/fw_statuses?IDList=10844864715
     status_response = {
@@ -54,7 +54,7 @@ OGWS API Usage Examples:
             "Transport": TransportType.SATELLITE
         }]
     }
-    
+
     # Example 3: Submit with delayed send (IDP only)
     # POST https://ogws.orbcomm.com/api/v1.0/submit/messages
     delayed_request = {

@@ -8,13 +8,13 @@ Common Message Format (from OGWS-1.txt):
     - SIN: Service identification number (integer 16-255)
     - MIN: Message identification number (integer 1-255)
     - Fields: Array of field objects
-    
+
 - Field Properties:
     - Name: Field identifier
     - Type: Data type (see FieldType enum)
     - Value: Field content
     - Elements: Optional array of indexed elements
-    
+
 - Element Properties:
     - Index: Zero-based position in array
     - Fields: Container for element fields
@@ -34,7 +34,7 @@ OGWS API Usage Examples:
             "Fields": []
         }
     }
-    
+
     # Example 2: From-mobile message response
     # GET https://ogws.orbcomm.com/api/v1.0/get/re_messages
     message_response = {
@@ -52,7 +52,7 @@ OGWS API Usage Examples:
             }]
         }
     }
-    
+
     # Example 3: Message with array elements
     array_message = {
         "Name": "sensorReadings",

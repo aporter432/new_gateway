@@ -7,13 +7,15 @@ This module handles:
 """
 
 from datetime import datetime, timedelta
-import jwt
-from redis import Redis
 from typing import Optional
 
-from protocols.ogx.constants.auth import AuthRole, GrantType
+import jwt
+from redis import Redis
+
 from core.config import Settings
 from infrastructure.redis import get_redis_client
+from protocols.ogx.constants.auth import AuthRole, GrantType
+
 
 class OGWSAuthManager:
     """Manages OGWS authentication and token lifecycle."""
@@ -40,9 +42,15 @@ class OGWSAuthManager:
     # Private methods for token management
     async def _get_stored_token(self) -> Optional[str]:
         """Retrieve stored token if available."""
+        # TODO: Implement token retrieval from Redis
+        return None
 
     async def _acquire_new_token(self) -> str:
         """Acquire new token from OGWS."""
+        # TODO: Implement token acquisition from OGWS
+        return "dummy_token"
 
     def _is_token_expiring_soon(self, token: str) -> bool:
         """Check if token needs refresh."""
+        # TODO: Implement token expiry check
+        return False
