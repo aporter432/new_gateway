@@ -1,17 +1,63 @@
-"""OGx Protocol Constants."""
+"""Constants for OGx protocol"""
 
-from .constants import (
-    REQUIRED_ELEMENT_PROPERTIES,
-    REQUIRED_FIELD_PROPERTIES,
+from .field_types import FieldType
+from .message_format import (
     REQUIRED_MESSAGE_FIELDS,
-    FieldType,
-    MessageDirection,
+    REQUIRED_FIELD_PROPERTIES,
+    REQUIRED_ELEMENT_PROPERTIES,
+)
+from .transport_types import MessageState, TransportType
+from .operation_modes import NetworkType, OperationMode
+from .auth import AuthRole, ThrottleGroup, GrantType
+from .limits import (
+    MESSAGE_RETENTION_DAYS,
+    MAX_SIMULTANEOUS_CONNECTIONS,
+    MAX_MESSAGES_PER_RESPONSE,
+    MAX_STATUSES_PER_RESPONSE,
+    MAX_STATUS_IDS_PER_REQUEST,
+    MAX_SUBMIT_MESSAGES,
+    DEFAULT_CALLS_PER_MINUTE,
+    DEFAULT_WINDOW_SECONDS,
+    MAX_CONCURRENT_REQUESTS,
+    MAX_TOKEN_EXPIRE_DAYS,
+    MAX_OGX_PAYLOAD_BYTES,
+    MAX_IDP_SMALL_PAYLOAD_BYTES,
+    MAX_IDP_MEDIUM_PAYLOAD_BYTES,
+    MAX_IDP_LARGE_PAYLOAD_BYTES,
+    MAX_OUTSTANDING_MESSAGES_PER_SIZE,
+    MESSAGE_TIMEOUT_DAYS,
+    DEFAULT_TOKEN_EXPIRY,
 )
 
 __all__ = [
-    "MessageDirection",
     "FieldType",
     "REQUIRED_MESSAGE_FIELDS",
     "REQUIRED_FIELD_PROPERTIES",
     "REQUIRED_ELEMENT_PROPERTIES",
+    "MessageState",
+    "TransportType",
+    "NetworkType",
+    "OperationMode",
+    # Auth and authorization
+    "AuthRole",
+    "ThrottleGroup",
+    "GrantType",
+    # Service limits
+    "MESSAGE_RETENTION_DAYS",
+    "MAX_SIMULTANEOUS_CONNECTIONS",
+    "MAX_MESSAGES_PER_RESPONSE",
+    "MAX_STATUSES_PER_RESPONSE",
+    "MAX_STATUS_IDS_PER_REQUEST",
+    "MAX_SUBMIT_MESSAGES",
+    "DEFAULT_CALLS_PER_MINUTE",
+    "DEFAULT_WINDOW_SECONDS",
+    "MAX_CONCURRENT_REQUESTS",
+    "MAX_TOKEN_EXPIRE_DAYS",
+    "MAX_OGX_PAYLOAD_BYTES",
+    "MAX_IDP_SMALL_PAYLOAD_BYTES",
+    "MAX_IDP_MEDIUM_PAYLOAD_BYTES",
+    "MAX_IDP_LARGE_PAYLOAD_BYTES",
+    "MAX_OUTSTANDING_MESSAGES_PER_SIZE",
+    "MESSAGE_TIMEOUT_DAYS",
+    "DEFAULT_TOKEN_EXPIRY",
 ]

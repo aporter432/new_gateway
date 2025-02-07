@@ -13,7 +13,7 @@ from src.protocols.ogx.models.fields import (
     Field,
     PropertyField,
 )
-from src.protocols.ogx.validation.field_validator import OGxFieldValidator
+from protocols.ogx.validation.json.field_validator import OGxFieldValidator
 
 
 class TestField:

@@ -11,8 +11,8 @@ from datetime import datetime
 from typing import Any, Dict
 
 # Local imports
-from ..constants import FieldType
-from ..exceptions import ValidationError
+from ...constants import FieldType
+from ...exceptions import ValidationError
 
 
 class OGxFieldValidator:

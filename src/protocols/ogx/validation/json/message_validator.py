@@ -7,12 +7,12 @@ Implements message-level validation rules for the Common Message Format.
 from typing import Any, Dict
 
 # Local imports
-from ..constants import (
+from ...constants import (
     REQUIRED_ELEMENT_PROPERTIES,
     REQUIRED_FIELD_PROPERTIES,
     REQUIRED_MESSAGE_FIELDS,
 )
-from ..exceptions import ValidationError
+from ...exceptions import ValidationError
 from .field_validator import OGxFieldValidator
 
 # Third-party imports

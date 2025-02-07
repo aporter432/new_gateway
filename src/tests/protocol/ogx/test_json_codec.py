@@ -5,7 +5,7 @@ import json
 import pytest
 
 from src.protocols.ogx.constants import FieldType
-from src.protocols.ogx.encoding.json_codec import OGxJsonCodec
+from protocols.ogx.encoding.json.json_codec import OGxJsonCodec
 from src.protocols.ogx.exceptions import EncodingError
 from src.protocols.ogx.models.fields import Field
 from src.protocols.ogx.models.messages import OGxMessage

@@ -6,7 +6,7 @@ from src.protocols.ogx.constants import FieldType
 from src.protocols.ogx.exceptions import ValidationError
 from src.protocols.ogx.models.fields import ArrayField, Element, Field
 from src.protocols.ogx.models.messages import OGxMessage
-from src.protocols.ogx.validation.message_validator import OGxMessageValidator
+from protocols.ogx.validation.json.message_validator import OGxMessageValidator
 
 
 class TestMessage:
