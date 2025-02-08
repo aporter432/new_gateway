@@ -1,129 +1,455 @@
-Look at the volume mount configurations in more detail?
-Continue investigating other potential issues?# SMART-GATEWAY
+# SMART-GATEWAY
 
-A comprehensive gateway implementation for managing ORBCOMM ISAT (MTWS/MTBP) and OGx protocols, supporting device configuration, customer hierarchy, and notifications.
+A comprehensive enterprise gateway implementation for managing ORBCOMM ISAT (MTWS/MTBP) and OGx protocols, with production-grade security, monitoring, and scalability features.
 
-## Features
+## Overview
 
-- **Protocol Support**
-  - ISAT MTWS/MTBP protocol implementation
-  - OGx protocol implementation
-  - Message state tracking and queue management
+Smart Gateway provides a robust, production-ready interface for ORBCOMM's OGWS (OGx Gateway Web Service), supporting:
 
-- **Device Management**
-  - Support for ST6100 and ST9100 devices
-  - Hardware and modem control
+- **High Availability**: Containerized microservices architecture with health monitoring
+- **Security**: Token-based authentication with automatic rotation
+- **Scalability**: Redis-backed caching and DynamoDB for production workloads
+- **Monitoring**: Prometheus metrics and Grafana dashboards
+- **Compliance**: Adherence to OGWS-1.txt specifications
+
+## OGWS Integration Details
+
+### Authentication & Security
+- **Token Management**:
+  - Automatic token acquisition and rotation
+  - Redis-based token storage with metadata
+  - Token validation and refresh logic
+  - Production credential management
+  - Rate limiting and throttling
+
+### Message Processing Pipeline
+- **Validation**:
+  - Message format and size constraints
+  - Field-level validation
+  - Network-specific payload limits
+  - Terminal ID verification
+
+- **State Management**:
+  - Redis (Development) / DynamoDB (Production) state tracking
+  - State transition validation
+  - Error state handling
+  - Message history tracking
+
+- **Transport Selection**:
+  - Smart routing between Satellite/Cellular
+  - Network optimization
+  - Cost-based routing decisions
+  - Failover handling
+
+### Device Support
+- **Terminal Types**:
+  - ST6100 devices
+  - ST9100 devices
+  - Hardware control interface
+  - Modem management
+
+- **Configuration**:
   - LSF (Lua Service Framework) integration
-  - Configuration template management
+  - Template-based configuration
+  - Remote updates
+  - Status monitoring
 
-- **Customer Management**
-  - Hierarchical customer structure
-  - Custom terminology support
-  - Asset tracking and management
+## Deployment Configuration
 
-- **Notification System**
-  - Multi-channel alert delivery (Email, SMS, Webhook)
-  - Configurable alert triggers
-  - Template-based notifications
-
-## Project Structure
-
-```
-new_gateway/
-├── src/
-│   └── new_gateway/    # Main package directory
-├── api/                  # API endpoints and routes
-├── core/                 # Core protocol and device implementations
-├── services/             # Business logic services
-├── infrastructure/       # Data persistence and external integrations
-└── tests/               # Unit, integration, and performance tests
+### Development Environment
+```yaml
+services:
+  app:
+    build: .
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OGWS_BASE_URL=http://proxy:8080/api/v1.0
+      - OGWS_CLIENT_ID=70000934
+      - OGWS_TEST_MODE=true
+    depends_on:
+      - redis
+      - proxy
 ```
 
-## Requirements
+### Production Environment
+```yaml
+services:
+  app:
+    image: smart-gateway:${VERSION}
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_HOST=${REDIS_CLUSTER_URL}
+      - DYNAMODB_TABLE_NAME=${MESSAGE_STATE_TABLE}
+      - OGWS_BASE_URL=${OGWS_PROD_URL}
+      - OGWS_CLIENT_ID=${OGWS_PROD_CLIENT_ID}
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /smart-gateway/production
+```
+
+### Infrastructure Requirements
+
+#### Development
+- Redis (Message state, caching)
+- PostgreSQL (Customer data)
+- LocalStack (AWS emulation)
+- Nginx (OGWS proxy)
+
+#### Production
+- Redis Enterprise/ElastiCache
+  - Multi-AZ deployment
+  - Automatic failover
+  - Encryption at rest
+
+- DynamoDB
+  - Auto-scaling enabled
+  - Point-in-time recovery
+  - Global tables for DR
+
+- Load Balancer
+  - SSL termination
+  - Health checks
+  - Rate limiting
+
+## Monitoring & Metrics
+
+### Message Processing
+- **Rate Metrics**:
+  - Messages processed per second
+  - Success/failure rates
+  - Processing latency
+  - Queue depth
+
+- **State Transitions**:
+  - State change rates
+  - Time in each state
+  - Error state frequency
+  - Recovery times
+
+### Authentication
+- **Token Metrics**:
+  - Token refresh rates
+  - Validation success/failure
+  - Token lifetime stats
+  - Auth errors by type
+
+### Network Performance
+- **Transport Metrics**:
+  - Satellite vs Cellular usage
+  - Network latency
+  - Payload sizes
+  - Bandwidth utilization
+
+### System Health
+- **Resource Usage**:
+  - CPU/Memory utilization
+  - Redis connection pool
+  - DynamoDB capacity
+  - API response times
+
+### Alerting Rules
+```yaml
+rules:
+  - alert: HighMessageProcessingLatency
+    expr: message_processing_latency_seconds > 5
+    for: 5m
+    labels:
+      severity: warning
+  
+  - alert: TokenRefreshFailure
+    expr: token_refresh_failures_total > 0
+    for: 5m
+    labels:
+      severity: critical
+
+  - alert: MessageQueueBacklog
+    expr: message_queue_size > 1000
+    for: 10m
+    labels:
+      severity: warning
+```
+
+## Operational Procedures
+
+### Deployment
+1. **Pre-deployment**:
+   - Validate configuration
+   - Run integration tests
+   - Check dependencies
+
+2. **Deployment Steps**:
+   - Update environment variables
+   - Deploy infrastructure changes
+   - Rolling update of services
+   - Verify health checks
+
+3. **Post-deployment**:
+   - Monitor error rates
+   - Verify metrics
+   - Check log patterns
+
+### Troubleshooting
+
+#### Common Issues
+1. **Token Errors**:
+   - Check OGWS credentials
+   - Verify Redis connectivity
+   - Check token rotation logs
+
+2. **Message Processing**:
+   - Verify message format
+   - Check rate limits
+   - Monitor state transitions
+
+3. **Performance Issues**:
+   - Review Redis metrics
+   - Check DynamoDB capacity
+   - Monitor API latencies
+
+## Architecture
+
+### Core Components
+
+- **API Layer** (`src/api/`)
+  - FastAPI-based REST endpoints
+  - Authentication middleware
+  - Rate limiting
+  - Request validation
+
+- **Protocol Layer** (`src/protocols/`)
+  - OGWS message processing
+  - State management
+  - Transport selection
+  - Error handling
+
+- **Infrastructure** (`src/infrastructure/`)
+  - Redis caching
+  - DynamoDB integration
+  - AWS service clients
+  - Metrics collection
+
+### Service Dependencies
+
+- **Development**
+  - Redis (Message state, caching)
+  - PostgreSQL (Customer data)
+  - LocalStack (AWS service emulation)
+  - Nginx (OGWS proxy)
+
+- **Production**
+  - AWS DynamoDB
+  - AWS CloudWatch
+  - Redis Enterprise/ElastiCache
+  - Production-grade PostgreSQL
+
+## Getting Started
+
+### Prerequisites
 
 - Python 3.11.6+
-- Poetry (Python package manager)
-- Redis
-- AWS credentials (for boto3)
+- Docker and Docker Compose
+- AWS credentials
+- Poetry 1.7.1+
 
-## Installation
+### Development Setup
 
-1. Clone the repository
-
-2. Install Poetry if you haven't already:
+1. **Clone and Configure**
    ```bash
-   curl -sSL https://install.python-poetry.org | python3 -
+   git clone [repository-url]
+   cd new_gateway
+   cp .env.example .env
+   # Edit .env with your settings
    ```
 
-3. Install project dependencies:
+2. **Install Dependencies**
    ```bash
    poetry install
+   poetry install --with dev  # Include development tools
    ```
 
-## Development Setup
-
-1. Activate the Poetry virtual environment:
+3. **Start Development Services**
    ```bash
-   poetry shell
+   docker-compose up -d
    ```
 
-2. Install development dependencies:
+4. **Initialize Development Environment**
    ```bash
-   poetry install --with dev
+   poetry run python -m scripts.auth.setup_token  # Set up initial OGWS token
+   poetry run pytest  # Verify setup with tests
    ```
 
-3. Run tests:
+### Production Deployment
+
+1. **Environment Configuration**
+   - Set required environment variables:
+     ```
+     ENVIRONMENT=production
+     OGWS_CLIENT_ID=<production-id>
+     OGWS_CLIENT_SECRET=<production-secret>
+     CUSTOMER_ID=<customer-id>
+     ```
+   - Configure AWS credentials
+   - Set up monitoring endpoints
+
+2. **Infrastructure Requirements**
+   - DynamoDB table for message state
+   - Redis cluster for caching
+   - Load balancer configuration
+   - Network security groups
+
+3. **Deployment Process**
    ```bash
-   poetry run pytest
+   # Build production image
+   docker build -t smart-gateway:latest .
+   
+   # Deploy with production compose file
+   docker-compose -f docker-compose.prod.yml up -d
    ```
 
-4. Start the development server:
+4. **Health Verification**
    ```bash
-   poetry run uvicorn smart_gateway.main:app --reload
+   curl http://localhost:8000/health
    ```
 
-## Code Quality Tools
+## Development Workflow
 
-The project includes several code quality tools configured in pyproject.toml:
+### Code Quality
 
-- **Black**: Code formatting
-  ```bash
-  poetry run black .
-  ```
+The project enforces strict quality standards through automated tools:
 
-- **isort**: Import sorting
-  ```bash
-  poetry run isort .
-  ```
-
-- **flake8**: Code linting
-  ```bash
-  poetry run flake8
-  ```
-
-- **mypy**: Static type checking
-  ```bash
-  poetry run mypy .
-  ```
-
-## Configuration
-
-1. Copy the example environment file:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Configure environment variables in `.env`
-3. Set up AWS credentials
-4. Configure database connections
-
-## Performance Testing
-
-The project includes Locust for performance testing:
 ```bash
-poetry run locust -f tests/performance/locustfile.py
+# Format code
+poetry run black .
+poetry run isort .
+
+# Static analysis
+poetry run mypy .
+poetry run flake8
+
+# Run tests with coverage
+poetry run pytest --cov=src tests/
 ```
+
+### Testing Strategy
+
+1. **Unit Tests**
+   ```bash
+   poetry run pytest tests/unit
+   ```
+
+2. **Integration Tests**
+   ```bash
+   poetry run pytest tests/integration
+   ```
+
+3. **Performance Tests**
+   ```bash
+   poetry run locust -f tests/performance/locustfile.py
+   ```
+
+### Monitoring and Metrics
+
+- **Prometheus Metrics**
+  - Message processing rates
+  - Error rates
+  - Token refresh metrics
+  - API latencies
+
+- **Grafana Dashboards**
+  - System health
+  - Message throughput
+  - Error tracking
+  - Performance metrics
+
+## API Documentation
+
+- **OpenAPI Documentation**: Available at `/docs` when running
+- **Authentication**: Bearer token using OGWS credentials
+- **Rate Limiting**: Configurable per endpoint
+- **Error Handling**: Standardized error responses
+
+## Production Considerations
+
+### Security
+
+- Credentials management via environment variables
+- Token rotation and validation
+- Request authentication
+- Rate limiting and throttling
+
+### Scaling
+
+- Horizontal scaling of API nodes
+- Redis cluster configuration
+- DynamoDB capacity planning
+- Load balancer setup
+
+### Monitoring
+
+- CloudWatch integration
+- Prometheus metrics
+- Grafana dashboards
+- Error tracking and alerting
+
+### Backup and Recovery
+
+- DynamoDB point-in-time recovery
+- Redis persistence configuration
+- Regular state backups
+- Disaster recovery procedures
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Token Errors**
+   - Check OGWS credentials
+   - Verify token storage in Redis
+   - Check token rotation logs
+
+2. **Message Processing**
+   - Verify message format
+   - Check rate limits
+   - Monitor state transitions
+
+3. **Performance Issues**
+   - Review Redis metrics
+   - Check DynamoDB capacity
+   - Monitor API latencies
+
+### Logging
+
+- Structured JSON logging
+- Component-specific loggers
+- Error tracking with context
+- Performance monitoring
+
+## Contributing
+
+1. Branch naming: `feature/`, `bugfix/`, `hotfix/`
+2. Commit message format: `type(scope): description`
+3. Required checks before PR:
+   - All tests passing
+   - Code formatting
+   - Type checking
+   - No security vulnerabilities
 
 ## License
 
 Proprietary - All rights reserved
+
+## Support
+
+For production support:
+- Email: [support-email]
+- Documentation: [docs-url]
+- Emergency: [emergency-contact]
