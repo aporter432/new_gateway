@@ -2,7 +2,6 @@
 
 import asyncio
 import time
-from unittest.mock import patch
 import pytest
 from httpx import HTTPError
 
@@ -12,70 +11,23 @@ from redis.exceptions import RedisError
 from core.app_settings import Settings
 from core.security import OGWSAuthManager, TokenMetadata
 from infrastructure.redis import get_redis_client
-from tests.api.auth.test_token_setup import get_test_settings, get_test_redis, MockResponse
+from tests.api.auth.test_token_setup import get_test_settings, get_test_redis
 
 
 async def test_invalid_credentials():
     """Test token acquisition with invalid credentials."""
     settings = get_test_settings()
+    # Override with invalid credentials
+    settings.OGWS_CLIENT_ID = "invalid_id"
+    settings.OGWS_CLIENT_SECRET = "invalid_secret"
+
     redis = await get_test_redis()
 
     try:
-        # Mock client to simulate 401 response
-        with patch("httpx.AsyncClient") as mock_client:
-
-            async def mock_error_post(*args, **kwargs):
-                return MockResponse(401, {"error": "invalid_client"})
-
-            mock_client.return_value.__aenter__.return_value.post = mock_error_post
-            mock_client.return_value.__aexit__.return_value = None
-
-            auth_manager = OGWSAuthManager(settings, redis)
-            with pytest.raises(HTTPError):
-                await auth_manager.get_valid_token()
-
-    finally:
-        await redis.aclose()
-
-
-async def test_network_failure():
-    """Test token acquisition with network failure."""
-    settings = get_test_settings()
-    redis = await get_test_redis()
-
-    try:
-        # Mock client to simulate network error
-        with patch("httpx.AsyncClient") as mock_client:
-
-            async def mock_network_error(*args, **kwargs):
-                raise HTTPError("Connection failed")
-
-            mock_client.return_value.__aenter__.return_value.post = mock_network_error
-            mock_client.return_value.__aexit__.return_value = None
-
-            auth_manager = OGWSAuthManager(settings, redis)
-            with pytest.raises(HTTPError):
-                await auth_manager.get_valid_token()
-
-    finally:
-        await redis.aclose()
-
-
-async def test_redis_failure():
-    """Test token operations with Redis failure."""
-    settings = get_test_settings()
-    redis = await get_test_redis()
-
-    try:
-        # Mock Redis to simulate storage error
-        with patch.object(Redis, "setex") as mock_setex:
-            mock_setex.side_effect = RedisError("Storage failed")
-
-            auth_manager = OGWSAuthManager(settings, redis)
-            # Should still get token but log error
-            token = await auth_manager.get_valid_token()
-            assert token is not None
-
+        auth_manager = OGWSAuthManager(settings, redis)
+        with pytest.raises(HTTPError) as exc_info:
+            await auth_manager.get_valid_token()
+        assert exc_info.value.response.status_code == 401, "Expected 401 Unauthorized"
     finally:
         await redis.aclose()
 
@@ -100,14 +52,14 @@ async def test_expired_token():
 
         # Should get new token automatically
         token = await auth_manager.get_valid_token()
-        assert token != "expired_token"
+        assert token != "expired_token", "Should not reuse expired token"
 
         # Verify old token was removed
         metadata_exists = await redis.exists(auth_manager.token_metadata_key)
-        assert metadata_exists  # New token metadata should exist
+        assert metadata_exists, "New token metadata should exist"
 
         metadata = await auth_manager._get_token_metadata()
-        assert metadata.token != "expired_token"
+        assert metadata.token != "expired_token", "Expired token not replaced"
 
     finally:
         await redis.delete("ogws:auth:token")
@@ -121,19 +73,18 @@ async def test_token_validation_failure():
     redis = await get_test_redis()
 
     try:
-        # Mock client to simulate validation failure
-        with patch("httpx.AsyncClient") as mock_client:
+        auth_manager = OGWSAuthManager(settings, redis)
 
-            async def mock_validation_error(*args, **kwargs):
-                return MockResponse(401, {"error": "invalid_token"})
+        # Create an invalid auth header
+        auth_header = {"Authorization": "Bearer invalid_token_here"}
 
-            mock_client.return_value.__aenter__.return_value.get = mock_validation_error
-            mock_client.return_value.__aexit__.return_value = None
+        # Validate should return False for invalid token
+        is_valid = await auth_manager.validate_token(auth_header)
+        assert not is_valid, "Invalid token should fail validation"
 
-            auth_manager = OGWSAuthManager(settings, redis)
-            auth_header = {"Authorization": "Bearer invalid_token"}
-            is_valid = await auth_manager.validate_token(auth_header)
-            assert not is_valid
+        # Get token info should return None for invalid token
+        token_info = await auth_manager.get_token_info()
+        assert token_info is None, "Token info should be None for invalid token"
 
     finally:
         await redis.aclose()

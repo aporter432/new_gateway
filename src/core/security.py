@@ -97,11 +97,10 @@ class OGWSAuthManager:
         """Validate token by calling the info/service endpoint."""
         try:
             transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0")
-            async with httpx.AsyncClient(transport=transport) as client:
+            async with httpx.AsyncClient(transport=transport, verify=False) as client:
                 response = await client.get(
                     f"{self.settings.OGWS_BASE_URL}/info/service",
                     headers=auth_header,
-                    verify=False,  # Skip SSL verification for localhost
                 )
                 # If we get a 401, the token is invalid
                 if response.status_code == 401:
@@ -244,12 +243,11 @@ class OGWSAuthManager:
 
         # Don't use proxy for localhost
         transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0")
-        async with httpx.AsyncClient(transport=transport) as client:
+        async with httpx.AsyncClient(transport=transport, verify=False) as client:
             response = await client.post(
                 url,
                 headers=headers,
                 content=data,
-                verify=False,  # Skip SSL verification for localhost
             )
             if response.status_code >= 400:
                 response.raise_for_status()

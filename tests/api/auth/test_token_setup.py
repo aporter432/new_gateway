@@ -3,8 +3,6 @@
 import asyncio
 import time
 from typing import Optional
-import json
-from unittest.mock import patch
 
 from redis.asyncio import Redis
 
@@ -18,7 +16,7 @@ def get_test_settings() -> Settings:
     return Settings(
         OGWS_CLIENT_ID="70000934",  # Test superuser account
         OGWS_CLIENT_SECRET="password",
-        OGWS_BASE_URL="http://localhost:8888/api/v1.0",  # Mock URL
+        OGWS_BASE_URL="http://proxy:8080/api/v1.0",  # Use Docker service name and port
         OGWS_TEST_MODE=True,
         CUSTOMER_ID="test_customer",  # Required for logging
     )
@@ -35,33 +33,6 @@ async def get_test_redis() -> Redis:
         db=15,  # Use test DB
         decode_responses=True,
     )
-
-
-class MockResponse:
-    def __init__(self, status_code=200, data=None):
-        self.status_code = status_code
-        self._data = data or {}
-
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            raise Exception(f"HTTP {self.status_code}")
-
-    def json(self):
-        return self._data
-
-
-async def mock_post(*args, **kwargs):
-    response = MockResponse(
-        200, {"access_token": "test_token", "token_type": "Bearer", "expires_in": 3600}
-    )
-    response.raise_for_status()
-    return response
-
-
-async def mock_get(*args, **kwargs):
-    response = MockResponse(200, {"status": "ok"})
-    response.raise_for_status()
-    return response
 
 
 async def test_token_lifecycle():
@@ -82,80 +53,84 @@ async def test_token_lifecycle():
         await redis.delete("ogws:auth:token")
         await redis.delete("ogws:auth:token:metadata")
 
-        # Create auth manager with mocked client
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.post = mock_post
-            mock_client.return_value.__aenter__.return_value.get = mock_get
-            mock_client.return_value.__aexit__.return_value = None
+        auth_manager = OGWSAuthManager(settings, redis)
 
-            auth_manager = OGWSAuthManager(settings, redis)
+        print("\n=== Initial Token Acquisition ===")
+        # Get initial token
+        token = await auth_manager.get_valid_token()
+        print(f"Token acquired: {bool(token)}")
+        assert token is not None, "Failed to acquire token"
 
-            print("\n=== Initial Token Acquisition ===")
-            # Get initial token
-            token = await auth_manager.get_valid_token()
-            print(f"Token acquired: {bool(token)}")
-            if not token:
-                print("Failed to acquire token")
-                return
+        # Get initial metadata
+        initial_info = await auth_manager.get_token_info()
+        print(f"Initial token info: {initial_info}")
+        assert initial_info is not None, "Failed to get token metadata"
+        assert initial_info["token"] == token[-8:], "Token mismatch in metadata"
 
-            # Get initial metadata
-            initial_info = await auth_manager.get_token_info()
-            print(f"Initial token info: {initial_info}")
-            if not initial_info:
-                print("Failed to get token metadata")
-                return
+        print("\n=== Token Validation ===")
+        # Validate token
+        auth_header = await auth_manager.get_auth_header()
+        is_valid = await auth_manager.validate_token(auth_header)
+        print(f"Token valid: {is_valid}")
+        assert is_valid, "Token validation failed"
 
-            print("\n=== Token Validation ===")
-            # Validate token
-            auth_header = await auth_manager.get_auth_header()
-            is_valid = await auth_manager.validate_token(auth_header)
-            print(f"Token valid: {is_valid}")
+        # Check metadata after validation
+        validation_info = await auth_manager.get_token_info()
+        assert validation_info is not None, "Missing validation metadata"
+        print(f"Validation count: {validation_info['validation_count']}")
+        print(f"Last validated: {validation_info['last_validated']}")
+        assert validation_info["validation_count"] > 0, "Validation count not updated"
+        assert validation_info["last_validated"] is not None, "Last validated timestamp missing"
 
-            # Check metadata after validation
-            validation_info = await auth_manager.get_token_info()
-            if validation_info:
-                print(f"Validation count: {validation_info['validation_count']}")
-                print(f"Last validated: {validation_info['last_validated']}")
-            else:
-                print("No validation metadata available")
+        print("\n=== Token Reuse ===")
+        # Get token again (should reuse existing)
+        reused_token = await auth_manager.get_valid_token()
+        print(f"Token reused: {reused_token == token}")
+        assert reused_token == token, "Token not reused as expected"
 
-            print("\n=== Token Reuse ===")
-            # Get token again (should reuse existing)
-            reused_token = await auth_manager.get_valid_token()
-            print(f"Token reused: {reused_token == token}")
+        # Check usage metadata
+        usage_info = await auth_manager.get_token_info()
+        assert usage_info is not None, "Missing usage metadata"
+        print(f"Last used: {usage_info['last_used']}")
+        assert (
+            usage_info["last_used"] > initial_info["last_used"]
+        ), "Last used timestamp not updated"
 
-            # Check usage metadata
-            usage_info = await auth_manager.get_token_info()
-            if usage_info:
-                print(f"Last used: {usage_info['last_used']}")
-            else:
-                print("No usage metadata available")
+        print("\n=== Force Token Refresh ===")
+        # Force token refresh
+        new_token = await auth_manager.get_valid_token(force_refresh=True)
+        print(f"Token still valid after force refresh: {new_token == token}")
+        assert new_token is not None, "Failed to get valid token after force refresh"
 
-            print("\n=== Force Token Refresh ===")
-            # Force token refresh
-            new_token = await auth_manager.get_valid_token(force_refresh=True)
-            print(f"New token different from original: {new_token != token}")
+        # Verify token is still valid
+        auth_header = await auth_manager.get_auth_header()
+        is_valid = await auth_manager.validate_token(auth_header)
+        print(f"Token valid after refresh: {is_valid}")
+        assert is_valid, "Token should still be valid after refresh"
 
-            print("\n=== Token Invalidation ===")
-            # Invalidate token
-            await auth_manager.invalidate_token()
+        print("\n=== Token Invalidation ===")
+        # Invalidate token
+        await auth_manager.invalidate_token()
 
-            # Verify token was removed
-            metadata_exists = await redis.exists("ogws:auth:token:metadata")
-            token_exists = await redis.exists("ogws:auth:token")
-            print(f"Token metadata removed: {not metadata_exists}")
-            print(f"Token removed: {not token_exists}")
+        # Verify token was removed
+        metadata_exists = await redis.exists("ogws:auth:token:metadata")
+        token_exists = await redis.exists("ogws:auth:token")
+        print(f"Token metadata removed: {not metadata_exists}")
+        print(f"Token removed: {not token_exists}")
+        assert not metadata_exists, "Token metadata not removed"
+        assert not token_exists, "Token not removed"
 
-            # Get new token after invalidation
-            final_token = await auth_manager.get_valid_token()
-            print(f"New token acquired after invalidation: {bool(final_token)}")
-            print(f"Final token different from original: {final_token != token}")
+        # Get new token after invalidation
+        final_token = await auth_manager.get_valid_token()
+        print(f"New token acquired after invalidation: {bool(final_token)}")
+        print(f"Final token different from original: {final_token != token}")
+        assert final_token != token, "New token matches invalidated token"
 
     finally:
         # Clean up
         await redis.delete("ogws:auth:token")
         await redis.delete("ogws:auth:token:metadata")
-        await redis.aclose()  # Use aclose() instead of close()
+        await redis.aclose()
 
 
 if __name__ == "__main__":
