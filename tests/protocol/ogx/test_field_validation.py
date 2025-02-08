@@ -5,7 +5,6 @@ from base64 import b64encode
 import pytest
 
 from protocols.ogx.constants import FieldType
-from protocols.ogx.validation.json.field_validator import OGxFieldValidator
 from protocols.ogx.exceptions import ValidationError
 from protocols.ogx.models.fields import (
     ArrayField,
@@ -14,6 +13,7 @@ from protocols.ogx.models.fields import (
     Field,
     PropertyField,
 )
+from protocols.ogx.validation.json.field_validator import OGxFieldValidator
 
 
 class TestField:

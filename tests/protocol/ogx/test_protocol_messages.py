@@ -4,9 +4,12 @@ import time
 
 import pytest
 
-from protocols.ogx.encoding.json.json_codec import OGxJsonCodec
-from protocols.ogx.validation.json.message_validator import OGxMessageValidator
+from protocols.ogx.constants import FieldType
+from protocols.ogx.encoding.json.decoder import decode_message
+from protocols.ogx.encoding.json.encoder import encode_message
+from protocols.ogx.exceptions import EncodingError, ValidationError
 from protocols.ogx.models.messages import OGxMessage
+from protocols.ogx.validation.json.message_validator import OGxMessageValidator
 
 
 class TestProtocolMessages:

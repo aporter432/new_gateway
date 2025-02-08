@@ -1,14 +1,11 @@
-"""Message queue management for reliable message delivery.
+"""Message queue implementation for OGWS message processing.
 
-This module provides a robust message queuing system for OGWS message handling with the following features:
-- Message queue persistence in Redis for durability
-- Automatic retry handling with configurable retry policies
+This module provides a Redis-based message queue implementation that handles:
+- Message state tracking and transitions
 - Dead letter queue (DLQ) for failed messages after max retries
-- Message state tracking throughout lifecycle
-- Atomic operations for state transitions
-- Error tracking and logging
+- Message retry logic and backoff
 
-The module follows these key principles:
+SOLID Principles:
 1. Single Responsibility: Each class handles one aspect of message management
 2. Open/Closed: Extensible for different queue types while maintaining core logic
 3. Interface Segregation: Clean separation between queue operations
@@ -23,9 +20,11 @@ import time
 from typing import Dict, List, Optional
 
 from redis.asyncio import Redis
+from redis.exceptions import RedisError
 
 from core.app_settings import Settings
-from core.logging.loggers import get_infra_logger
+from core.logging.loggers import get_protocol_logger
+from protocols.ogx.constants import MessageState
 from protocols.ogx.constants.limits import (
     DEFAULT_CALLS_PER_MINUTE,
     DEFAULT_WINDOW_SECONDS,
@@ -33,7 +32,6 @@ from protocols.ogx.constants.limits import (
     MAX_SUBMIT_MESSAGES,
     MESSAGE_RETENTION_DAYS,
 )
-from protocols.ogx.constants.message_states import MessageState
 
 
 class QueuedMessage:
@@ -56,7 +54,7 @@ class QueuedMessage:
         self,
         message_id: str,
         payload: Dict,
-        state: MessageState = MessageState.PENDING,
+        state: MessageState = MessageState.ACCEPTED,
         retry_count: int = 0,
         last_attempt: Optional[float] = None,
         error: Optional[str] = None,
@@ -138,7 +136,7 @@ class MessageQueue:
         """
         self.redis = redis
         self.settings = settings
-        self.logger = get_infra_logger("message_queue")
+        self.logger = get_protocol_logger("message_queue")
 
         # Redis keys
         self.pending_queue = "ogws:messages:pending"
@@ -182,11 +180,13 @@ class MessageQueue:
             await self.redis.hset(self.pending_queue, message_id, json.dumps(message.to_dict()))
 
             self.logger.info(
-                f"Message {message_id} enqueued",
+                "Enqueued message %s",
+                message_id,
                 extra={
-                    "msg_id": message_id,
-                    "queue": "pending",
-                    "pending_count": pending_count + 1,
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
+                    "message_id": message_id,
+                    "action": "enqueue",
                 },
             )
         except ValueError as e:
@@ -201,10 +201,15 @@ class MessageQueue:
             raise
         except Exception as e:
             self.logger.error(
-                f"Failed to enqueue message {message_id}: {str(e)}",
+                "Failed to enqueue message %s: %s",
+                message_id,
+                str(e),
                 extra={
-                    "msg_id": message_id,
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
+                    "message_id": message_id,
                     "error": str(e),
+                    "action": "enqueue",
                 },
             )
             raise
@@ -212,55 +217,43 @@ class MessageQueue:
     async def get_pending_messages(self, batch_size: Optional[int] = None) -> List[QueuedMessage]:
         """Get batch of pending messages ready for processing.
 
-        Retrieves messages that are ready for processing based on:
-        1. Message state is PENDING
-        2. Retry delay has elapsed since last attempt
-        3. Maximum batch size not exceeded (uses MAX_MESSAGES_PER_RESPONSE)
-
         Args:
-            batch_size: Optional override for batch size. If not provided, uses MAX_MESSAGES_PER_RESPONSE
-
-        Returns:
-            List[QueuedMessage]: List of messages ready for processing
-
-        Note:
-            Messages are not removed from pending queue until marked in_progress
-            to prevent message loss in case of crashes.
+            batch_size: Optional override for default batch size
         """
         try:
-            # Use configured max if no batch_size provided
-            effective_batch_size = min(batch_size or self.max_batch_size, self.max_batch_size)
-
-            # Get all pending messages
-            pending = await self.redis.hgetall(self.pending_queue)
+            effective_batch_size = batch_size or self.max_batch_size
+            message_data = await self.redis.hgetall(self.pending_queue)
             messages = []
-            processed_ids = set()  # Track processed message IDs
 
-            for message_data in pending.values():
-                if len(messages) >= effective_batch_size:
-                    break
-
-                message = QueuedMessage.from_dict(json.loads(message_data))
-
-                # Skip if we've already processed this message
-                if message.message_id in processed_ids:
-                    continue
-
-                # Check if message is ready for retry based on window
-                if (
-                    message.last_attempt is None
-                    or time.time() - message.last_attempt >= self.retry_delay
-                ):
+            for message_id, data in list(message_data.items())[:effective_batch_size]:
+                try:
+                    message = QueuedMessage.from_dict(json.loads(data))
                     messages.append(message)
-                    processed_ids.add(message.message_id)
+                except (json.JSONDecodeError, KeyError) as e:
+                    self.logger.error(
+                        "Failed to decode message %s: %s",
+                        message_id,
+                        str(e),
+                        extra={
+                            "customer_id": self.settings.CUSTOMER_ID,
+                            "asset_id": "message_queue",
+                            "message_id": message_id,
+                            "error": str(e),
+                            "action": "get_pending",
+                        },
+                    )
 
             return messages
-        except Exception as e:
+
+        except RedisError as e:
             self.logger.error(
-                f"Failed to get pending messages: {str(e)}",
+                "Failed to get pending messages: %s",
+                str(e),
                 extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
                     "error": str(e),
-                    "batch_size": effective_batch_size,
+                    "action": "get_pending",
                 },
             )
             return []
@@ -292,7 +285,7 @@ class MessageQueue:
 
             # Update state and move to in progress queue
             message = QueuedMessage.from_dict(json.loads(message_data))
-            message.state = MessageState.IN_PROGRESS
+            message.state = MessageState.SENDING_IN_PROGRESS
             message.last_attempt = time.time()
             message.retry_count += 1
 
@@ -303,18 +296,26 @@ class MessageQueue:
                 await pipe.execute()
 
             self.logger.info(
-                f"Message {message_id} marked in progress",
+                "Message %s marked in progress",
+                message_id,
                 extra={
-                    "msg_id": message_id,
-                    "retry_count": message.retry_count,
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
+                    "message_id": message_id,
+                    "action": "mark_in_progress",
                 },
             )
         except Exception as e:
             self.logger.error(
-                f"Failed to mark message {message_id} in progress: {str(e)}",
+                "Failed to mark message %s in progress: %s",
+                message_id,
+                str(e),
                 extra={
-                    "msg_id": message_id,
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
+                    "message_id": message_id,
                     "error": str(e),
+                    "action": "mark_in_progress",
                 },
             )
             raise
@@ -343,7 +344,7 @@ class MessageQueue:
 
             # Update state and move to delivered queue
             message = QueuedMessage.from_dict(json.loads(message_data))
-            message.state = MessageState.DELIVERED
+            message.state = MessageState.RECEIVED
 
             # Atomic operation: remove from in progress, add to delivered
             async with self.redis.pipeline() as pipe:
@@ -352,18 +353,26 @@ class MessageQueue:
                 await pipe.execute()
 
             self.logger.info(
-                f"Message {message_id} marked delivered",
+                "Message %s marked delivered",
+                message_id,
                 extra={
-                    "msg_id": message_id,
-                    "retry_count": message.retry_count,
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
+                    "message_id": message_id,
+                    "action": "mark_delivered",
                 },
             )
         except Exception as e:
             self.logger.error(
-                f"Failed to mark message {message_id} delivered: {str(e)}",
+                "Failed to mark message %s delivered: %s",
+                message_id,
+                str(e),
                 extra={
-                    "msg_id": message_id,
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
+                    "message_id": message_id,
                     "error": str(e),
+                    "action": "mark_delivered",
                 },
             )
             raise
@@ -400,11 +409,11 @@ class MessageQueue:
             # Check retry count
             if message.retry_count >= self.max_retries:
                 # Move to dead letter queue
-                message.state = MessageState.DEAD_LETTER
+                message.state = MessageState.TIMED_OUT
                 target_queue = self.dead_letter_queue
             else:
                 # Move back to pending for retry
-                message.state = MessageState.FAILED
+                message.state = MessageState.DELIVERY_FAILED
                 target_queue = self.pending_queue
 
             # Atomic operation: remove from in progress, add to target queue
@@ -413,54 +422,85 @@ class MessageQueue:
                 await pipe.hset(target_queue, message_id, json.dumps(message.to_dict()))
                 await pipe.execute()
 
-            self.logger.warning(
-                f"Message {message_id} marked failed",
+            self.logger.info(
+                "Message %s marked failed",
+                message_id,
                 extra={
-                    "msg_id": message_id,
-                    "error": error,
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
+                    "message_id": message_id,
                     "retry_count": message.retry_count,
-                    "state": message.state.value,
+                    "max_retries": self.max_retries,
+                    "error": error,
+                    "action": "mark_failed",
                 },
             )
         except Exception as e:
             self.logger.error(
-                f"Failed to mark message {message_id} failed: {str(e)}",
+                "Failed to mark message %s failed: %s",
+                message_id,
+                str(e),
                 extra={
-                    "msg_id": message_id,
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
+                    "message_id": message_id,
                     "error": str(e),
+                    "action": "mark_failed",
                 },
             )
             raise
 
     async def cleanup_expired_messages(self) -> None:
-        """Remove messages older than MESSAGE_RETENTION_DAYS.
-
-        This implements the message retention policy from OGWS-1.txt section 2.3.
-        Messages older than MESSAGE_RETENTION_DAYS are removed from delivered and
-        dead letter queues.
-        """
+        """Clean up expired messages from all queues."""
         try:
             cutoff = time.time() - (self.message_retention_days * 24 * 60 * 60)
+            queues = [
+                self.pending_queue,
+                self.in_progress_queue,
+                self.delivered_queue,
+                self.dead_letter_queue,
+            ]
 
-            for queue in [self.delivered_queue, self.dead_letter_queue]:
-                messages = await self.redis.hgetall(queue)
-                for msg_id, msg_data in messages.items():
-                    message = QueuedMessage.from_dict(json.loads(msg_data))
-                    if message.created_at < cutoff:
-                        await self.redis.hdel(queue, msg_id)
-                        self.logger.info(
-                            f"Removed expired message {msg_id}",
+            for queue in queues:
+                message_data = await self.redis.hgetall(queue)
+                for message_id, data in message_data.items():
+                    try:
+                        message = QueuedMessage.from_dict(json.loads(data))
+                        if message.created_at < cutoff:
+                            await self.redis.hdel(queue, message_id)
+                            self.logger.debug(
+                                "Cleaned up expired message",
+                                extra={
+                                    "customer_id": self.settings.CUSTOMER_ID,
+                                    "asset_id": "message_queue",
+                                    "message_id": message_id,
+                                    "queue": queue,
+                                    "age_days": (time.time() - message.created_at) / (24 * 60 * 60),
+                                    "action": "cleanup",
+                                },
+                            )
+                    except (json.JSONDecodeError, KeyError) as e:
+                        self.logger.warning(
+                            "Failed to process message %s during cleanup: %s",
+                            message_id,
+                            str(e),
                             extra={
-                                "msg_id": msg_id,
-                                "queue": queue,
-                                "age_days": (time.time() - message.created_at) / (24 * 60 * 60),
+                                "customer_id": self.settings.CUSTOMER_ID,
+                                "asset_id": "message_queue",
+                                "message_id": message_id,
+                                "error": str(e),
+                                "action": "cleanup",
                             },
                         )
-        except Exception as e:
+
+        except RedisError as e:
             self.logger.error(
-                f"Failed to cleanup expired messages: {str(e)}",
+                "Failed to cleanup expired messages: %s",
+                str(e),
                 extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_queue",
                     "error": str(e),
-                    "retention_days": self.message_retention_days,
+                    "action": "cleanup",
                 },
             )

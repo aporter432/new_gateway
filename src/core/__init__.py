@@ -1,9 +1,16 @@
 """Core functionality for the application."""
 
-from ..protocols.ogx.services.ogws_message_processor import MessageProcessor
-from ..protocols.ogx.services.ogws_message_receiver import MessageReceiver
-from .app_settings import Settings
-from .message_sender import MessageSender
-from .security import OGWSAuthManager
+from core.app_settings import Settings, get_settings
+from core.message_sender import MessageSender
+from core.security import OGWSAuthManager
+from protocols.ogx.services.ogws_message_processor import MessageProcessor
+from protocols.ogx.services.ogws_message_receiver import MessageReceiver
 
-__all__ = ["Settings", "OGWSAuthManager", "MessageProcessor", "MessageSender", "MessageReceiver"]
+__all__ = [
+    "Settings",
+    "get_settings",
+    "OGWSAuthManager",
+    "MessageProcessor",
+    "MessageSender",
+    "MessageReceiver",
+]

@@ -9,7 +9,7 @@ Shows:
 """
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from .formatters import GatewayFormatter, MetricsFormatter, SecurityFormatter
 from .handlers.batch import BatchHandler

@@ -16,7 +16,7 @@ Usage:
 
 References:
     OGWS-1.txt section 4.1.1 - Authentication Flow
-    
+
 Raises:
     ValidationError: If token acquisition fails due to invalid credentials
     OGxProtocolError: If OGWS protocol-level errors occur

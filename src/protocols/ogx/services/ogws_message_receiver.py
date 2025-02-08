@@ -14,6 +14,14 @@ For detailed specifications, see:
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from core.app_settings import get_settings
+from core.logging.loggers import get_protocol_logger
+from protocols.ogx.constants.limits import (
+    DEFAULT_CALLS_PER_MINUTE,
+    MAX_MESSAGES_PER_RESPONSE,
+    MESSAGE_RETENTION_DAYS,
+)
+from protocols.ogx.constants.http_errors import HTTPError
 
 class MessageReceiver:
     """Handles message receiving from OGWS.
@@ -27,10 +35,12 @@ class MessageReceiver:
         """Initialize message receiver."""
         self._high_watermarks: Dict[str, str] = {}  # Track high-watermarks per account
         self._last_poll: Dict[str, datetime] = {}  # Track last poll times per account
+        self.logger = get_protocol_logger("message_receiver")
+        self.settings = get_settings()
 
     async def get_messages(
         self,
-        from_utc: Optional[datetime] = None,
+        from_iso_timestamp: Optional[str] = None,
         include_types: bool = False,
         include_raw: bool = False,
     ) -> List[Dict[str, Any]]:
@@ -42,7 +52,7 @@ class MessageReceiver:
         - Uses high-watermark for continuous retrieval
 
         Args:
-            from_utc: Starting time for message retrieval
+            from_iso_timestamp: Starting time for message retrieval
             include_types: Include field types in response
             include_raw: Include raw payloads
 
@@ -64,8 +74,50 @@ class MessageReceiver:
             RateLimitExceeded: If ERR_RETRIEVE_STATUS_RATE_EXCEEDED received
             MessageRetrievalError: If retrieval fails
         """
-        # TODO: Implement retrieval logic
-        return []
+        try:
+            params = {
+                "FromUTC": from_iso_timestamp or datetime.utcnow().isoformat(),
+                "IncludeTypes": include_types,
+                "IncludeRawPayload": include_raw,
+            }
+
+            self.logger.info(
+                "Retrieving messages",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "from_utc": params["FromUTC"],
+                    "action": "get_messages",
+                },
+            )
+
+            # TODO: Make actual API call to OGWS here
+            # For now, return empty list to satisfy interface
+            return []
+
+        except HTTPError.TOO_MANY_REQUESTS as e:
+            self.logger.warning(
+                "Rate limit exceeded during message retrieval",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "error": str(e),
+                    "action": "get_messages",
+                },
+            )
+            raise
+
+        except Exception as e:
+            self.logger.error(
+                "Failed to retrieve messages",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "error": str(e),
+                    "action": "get_messages",
+                },
+            )
+            raise MessageRetrievalError(f"Failed to retrieve messages: {str(e)}") from e
 
     async def update_high_watermark(self, account_id: str, new_mark: str) -> None:
         """Update high-watermark for account.
@@ -79,8 +131,29 @@ class MessageReceiver:
             account_id: Account to update
             new_mark: New high-watermark value from OGWS response
         """
-        # TODO: Implement high-watermark management
-        return None
+        try:
+            self._high_watermarks[account_id] = new_mark
+            self.logger.debug(
+                "Updated high watermark",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "account_id": account_id,
+                    "new_mark": new_mark,
+                    "action": "update_watermark",
+                },
+            )
+        except Exception as e:
+            self.logger.error(
+                "Failed to update high watermark",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "account_id": account_id,
+                    "error": str(e),
+                    "action": "update_watermark",
+                },
+            )
 
     async def get_message_status(self, message_ids: List[int]) -> List[Dict[str, Any]]:
         """Get status of submitted messages.
@@ -102,8 +175,33 @@ class MessageReceiver:
                 "CreateUTC": "2022-11-25 12:00:20"
             }]
         """
-        # TODO: Implement status retrieval
-        return []
+        try:
+            self.logger.info(
+                "Retrieving message status",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "message_ids": message_ids,
+                    "action": "get_status",
+                },
+            )
+
+            # TODO: Make actual API call to OGWS here
+            # For now, return empty list to satisfy interface
+            return []
+
+        except Exception as e:
+            self.logger.error(
+                "Failed to retrieve message status",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "message_ids": message_ids,
+                    "error": str(e),
+                    "action": "get_status",
+                },
+            )
+            raise MessageRetrievalError(f"Failed to retrieve message status: {str(e)}") from e
 
     async def poll_messages(self, interval_seconds: int = 60) -> None:
         """Poll OGWS for new messages.
@@ -119,5 +217,25 @@ class MessageReceiver:
         Note:
             This is a long-running task that should be run in the background
         """
-        # TODO: Implement polling logic
-        return None
+        try:
+            now = datetime.utcnow()
+            for account_id, last_poll in self._last_poll.items():
+                # Check if enough time has elapsed since last poll
+                if (now - last_poll).total_seconds() < interval_seconds:
+                    continue
+
+                # Get messages using high watermark
+                high_mark = self._high_watermarks.get(account_id)
+                await self.get_messages(from_iso_timestamp=high_mark)
+                self._last_poll[account_id] = now
+
+        except Exception as e:
+            self.logger.error(
+                "Error during message polling",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "error": str(e),
+                    "action": "poll_messages",
+                },
+            )

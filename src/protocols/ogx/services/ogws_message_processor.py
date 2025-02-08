@@ -33,7 +33,7 @@ Environment Handling:
         - Allows local testing with minimal setup
         - Provides detailed logging for debugging
         - Uses test credentials from app_settings
-    
+
     Production:
         - Uses DynamoDB for state persistence
         - Implements strict validation rules
@@ -51,9 +51,9 @@ Note:
 
 from typing import Any, Dict, Optional
 
+from core.app_settings import get_settings
 from core.logging.loggers import get_protocol_logger
-from core.redis import get_redis_client
-from core.settings import get_settings
+from infrastructure.redis import get_redis_client
 from protocols.ogx.constants import MessageState, TransportType
 from protocols.ogx.exceptions import OGxProtocolError, ValidationError
 from protocols.ogx.validation.json.field_validator import OGxFieldValidator
@@ -105,6 +105,7 @@ class MessageProcessor:
         self.field_validator = OGxFieldValidator()
         self.state_store = state_store or self._get_default_state_store()
         self.logger = get_protocol_logger("message_processor")
+        self.settings = get_settings()
 
     def _get_default_state_store(self) -> MessageStateStore:
         """Get default state store based on environment.
@@ -117,9 +118,8 @@ class MessageProcessor:
         Note:
             Production requires DYNAMODB_TABLE_NAME in environment
         """
-        settings = get_settings()
-        if settings.ENVIRONMENT == "production":
-            return DynamoDBMessageStateStore(settings.DYNAMODB_TABLE_NAME)
+        if self.settings.ENVIRONMENT == "production":
+            return DynamoDBMessageStateStore(self.settings.DYNAMODB_TABLE_NAME)
         return RedisMessageStateStore(get_redis_client())
 
     async def validate_outbound_message(self, message: Dict[str, Any]) -> Optional[Dict[str, str]]:
@@ -162,22 +162,48 @@ class MessageProcessor:
             }
         """
         try:
-            # Validate required fields and structure
-            self.message_validator.validate_message(message.get("Payload", {}))
+            self.logger.debug(
+                "Validating outbound message",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_processor",
+                    "destination_id": message.get("DestinationID"),
+                    "action": "validate_outbound",
+                },
+            )
 
-            # Validate destination ID format
+            # Validate message
+            self.message_validator.validate_message(message.get("Payload", {}))
             self.field_validator.validate_terminal_id(message.get("DestinationID", ""))
 
-            # Validate transport type if specified
             if "TransportType" in message:
                 try:
                     TransportType(message["TransportType"])
                 except ValueError as e:
+                    self.logger.warning(
+                        "Invalid transport type",
+                        extra={
+                            "customer_id": self.settings.CUSTOMER_ID,
+                            "asset_id": "message_processor",
+                            "transport_type": message["TransportType"],
+                            "error": str(e),
+                            "action": "validate_transport",
+                        },
+                    )
                     return {"error": f"Invalid transport type: {str(e)}"}
 
             return None
 
         except ValidationError as e:
+            self.logger.warning(
+                "Message validation failed",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_processor",
+                    "error": str(e),
+                    "action": "validate_outbound",
+                },
+            )
             return {"error": str(e)}
 
     async def transform_inbound_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
@@ -306,47 +332,47 @@ class MessageProcessor:
                 message_id=message_id, new_state=validated_state, metadata=metadata
             )
 
-            # Log successful state transition
             self.logger.info(
-                f"Message {message_id} state updated",
+                "Message state updated",
                 extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_processor",
                     "message_id": message_id,
                     "new_state": validated_state.name,
-                    "component": "message_processor",
                     "action": "state_update",
                     "metadata": metadata,
                 },
             )
 
         except ValueError as e:
-            # Log and raise validation error with proper error code
             self.logger.warning(
-                f"Invalid message state transition attempted",
+                "Invalid message state transition",
                 extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_processor",
                     "message_id": message_id,
                     "attempted_state": new_state,
                     "error": str(e),
-                    "component": "message_processor",
                     "action": "state_validation",
                     "error_code": ValidationError.INVALID_MESSAGE_FORMAT,
                 },
             )
             raise ValidationError(
-                f"Invalid message state: {str(e)}",
+                "Invalid message state",
                 error_code=ValidationError.INVALID_MESSAGE_FORMAT,
-            )
+            ) from e
 
         except Exception as e:
-            # Log and raise protocol error for other failures
             self.logger.error(
-                f"Failed to update message state",
+                "Failed to update message state",
                 extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_processor",
                     "message_id": message_id,
                     "attempted_state": new_state,
                     "error": str(e),
-                    "component": "message_processor",
                     "action": "state_update",
                     "metadata": metadata,
                 },
             )
-            raise OGxProtocolError(f"Failed to update message {message_id} state: {str(e)}")
+            raise OGxProtocolError("Failed to update message state") from e

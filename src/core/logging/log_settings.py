@@ -12,7 +12,6 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Optional
 
 # Base paths with clear structure
 LOG_DIR = Path("/var/log/gateway")  # Production logs

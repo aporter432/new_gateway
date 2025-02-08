@@ -24,7 +24,7 @@ Environment Handling:
         - Uses default test credentials if env vars not set
         - Allows local development without env setup
         - Matches docker-compose.yml test configuration
-    
+
     Production:
         - Requires all credentials via environment variables
         - No default values permitted
@@ -34,9 +34,6 @@ Environment Handling:
 """
 
 from functools import lru_cache
-from os import environ
-from typing import Optional
-
 from pydantic_settings import BaseSettings
 
 
@@ -84,6 +81,9 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: str = ""  # TODO: Production - Set via secure environment
+
+    # DynamoDB settings
+    DYNAMODB_TABLE_NAME: str = "ogws_message_states"  # Table for message state storage
 
     # Test settings - Development only, defined in OGWS-1.txt Section 6.1
     OGWS_TEST_MOBILE_ID: str = "OGx-00002000SKY9307"  # Test terminal ID
