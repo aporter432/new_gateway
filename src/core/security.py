@@ -96,16 +96,20 @@ class OGWSAuthManager:
     async def validate_token(self, auth_header: dict) -> bool:
         """Validate token by calling the info/service endpoint."""
         try:
-            async with httpx.AsyncClient() as client:
+            transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0")
+            async with httpx.AsyncClient(transport=transport) as client:
                 response = await client.get(
-                    "https://ogws.swlab.ca/api/v1.0/info/service", headers=auth_header
+                    f"{self.settings.OGWS_BASE_URL}/info/service",
+                    headers=auth_header,
+                    verify=False,  # Skip SSL verification for localhost
                 )
                 # If we get a 401, the token is invalid
                 if response.status_code == 401:
                     return False
 
                 # Any other error status code indicates a server/network issue
-                response.raise_for_status()
+                if response.status_code >= 400:
+                    response.raise_for_status()
 
                 # If we get here, the token is valid
                 # Update validation metadata
@@ -234,13 +238,21 @@ class OGWSAuthManager:
 
     async def _acquire_new_token(self) -> str:
         """Acquire new token from OGWS using client credentials flow."""
-        url = "https://ogws.swlab.ca/api/v1.0/auth/token"
+        url = f"{self.settings.OGWS_BASE_URL}/auth/token"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = "client_id=70000934&client_secret=password&grant_type=client_credentials"
+        data = f"client_id={self.settings.OGWS_CLIENT_ID}&client_secret={self.settings.OGWS_CLIENT_SECRET}&grant_type=client_credentials"
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url, headers=headers, content=data)
-            response.raise_for_status()
+        # Don't use proxy for localhost
+        transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0")
+        async with httpx.AsyncClient(transport=transport) as client:
+            response = await client.post(
+                url,
+                headers=headers,
+                content=data,
+                verify=False,  # Skip SSL verification for localhost
+            )
+            if response.status_code >= 400:
+                response.raise_for_status()
             token_data = response.json()
 
             # Store metadata
@@ -248,7 +260,7 @@ class OGWSAuthManager:
             metadata = TokenMetadata(
                 token=token_data["access_token"],
                 created_at=now,
-                expires_at=now + int(token_data["expires_in"]),
+                expires_at=now + token_data["expires_in"],
                 last_used=now,
             )
             await self._store_token_metadata(metadata)

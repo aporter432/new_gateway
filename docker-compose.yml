@@ -1,18 +1,37 @@
 version: '3.8'
 
 services:
+  # API Proxy for OGWS
+  proxy:
+    image: nginx:alpine
+    container_name: new_gateway-proxy
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - gateway_net
+
   # Main Gateway Application
   app:
     build: .
+    container_name: new_gateway-app
     ports:
       - "8000:8000"
     volumes:
-      - ./src:/app/src:ro # Read-only mount of source code for development
-      - ./tests:/app/tests:ro # Read-only mount of tests for development
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/new_gateway
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_DB=0
+      - OGWS_BASE_URL=http://proxy:8080/api/v1.0
+      - OGWS_CLIENT_ID=70000934
+      - OGWS_CLIENT_SECRET=password
+      - CUSTOMER_ID=test_customer
+      - HTTP_PROXY=http://proxy:8888
+      - HTTPS_PROXY=http://proxy:8888
     depends_on:
       db:
         condition: service_healthy
@@ -20,6 +39,8 @@ services:
         condition: service_healthy
       localstack:
         condition: service_healthy
+    networks:
+      - gateway_net
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
@@ -28,9 +49,36 @@ services:
       retries: 3
       start_period: 10s
 
+  # Test Runner Service
+  test:
+    build: .
+    container_name: new_gateway-test
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=15
+      - OGWS_BASE_URL=http://proxy:8080/api/v1.0
+      - OGWS_CLIENT_ID=70000934
+      - OGWS_CLIENT_SECRET=password
+      - CUSTOMER_ID=test_customer
+      - HTTP_PROXY=http://proxy:8888
+      - HTTPS_PROXY=http://proxy:8888
+    command: python -m tests.api.auth.test_token_setup
+    depends_on:
+      redis:
+        condition: service_healthy
+      proxy:
+        condition: service_started
+    networks:
+      - gateway_net
+
   # PostgreSQL Database
   db:
     image: postgres:14-alpine
+    container_name: new_gateway-db
     ports:
       - "5432:5432"
     environment:
@@ -50,10 +98,15 @@ services:
   # Redis for Caching
   redis:
     image: redis:7-alpine
+    container_name: new_gateway-redis
     ports:
       - "6379:6379"
+    command: redis-server --loglevel debug --notify-keyspace-events AKE --save 60 1 --appendonly yes --set-proc-title yes
     volumes:
       - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - gateway_net
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
@@ -65,6 +118,7 @@ services:
   # LocalStack for AWS Services
   localstack:
     image: localstack/localstack:1.4
+    container_name: new_gateway-localstack
     ports:
       - "4566:4566"
     environment:
@@ -91,6 +145,7 @@ services:
   # Prometheus for Metrics
   prometheus:
     image: prom/prometheus:latest
+    container_name: new_gateway-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -107,6 +162,7 @@ services:
   # Grafana for Monitoring
   grafana:
     image: grafana/grafana:latest
+    container_name: new_gateway-grafana
     ports:
       - "3000:3000"
     environment:
@@ -123,6 +179,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+networks:
+  gateway_net:
+    driver: bridge
 
 volumes:
   postgres_data:
