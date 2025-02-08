@@ -3,10 +3,10 @@
 import logging
 from typing import Optional
 
-from ..log_settings import LogComponent
-from . import get_file_handler, get_metrics_handler, get_stream_handler, get_syslog_handler
 from ..handlers.metrics import MetricsBackend
-from ..log_settings import LoggingConfig
+from ..log_settings import LogComponent, LoggingConfig
+from . import get_file_handler, get_metrics_handler, get_stream_handler, get_syslog_handler
+
 
 class LoggerFactory:
     """Factory for creating and configuring loggers."""

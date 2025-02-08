@@ -7,6 +7,7 @@ This module provides:
 """
 
 from typing import Callable
+
 import httpx
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse

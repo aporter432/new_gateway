@@ -31,12 +31,13 @@ from typing import Optional
 
 import httpx
 from httpx import HTTPError
+
 from core.app_settings import get_settings
-from core.security import OGWSAuthManager
 from core.logging.loggers import get_auth_logger
+from core.security import OGWSAuthManager
 from infrastructure.redis import get_redis_client
 from protocols.ogx.constants import DEFAULT_TOKEN_EXPIRY
-from protocols.ogx.exceptions import ValidationError, OGxProtocolError
+from protocols.ogx.exceptions import OGxProtocolError, ValidationError
 
 
 async def send_test_message(auth_header: dict, base_url: str, test_mobile_id: str) -> Optional[str]:

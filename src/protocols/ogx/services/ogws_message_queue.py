@@ -27,11 +27,11 @@ from redis.asyncio import Redis
 from core.app_settings import Settings
 from core.logging.loggers import get_infra_logger
 from protocols.ogx.constants.limits import (
+    DEFAULT_CALLS_PER_MINUTE,
+    DEFAULT_WINDOW_SECONDS,
     MAX_MESSAGES_PER_RESPONSE,
     MAX_SUBMIT_MESSAGES,
     MESSAGE_RETENTION_DAYS,
-    DEFAULT_WINDOW_SECONDS,
-    DEFAULT_CALLS_PER_MINUTE,
 )
 from protocols.ogx.constants.message_states import MessageState
 

@@ -12,9 +12,9 @@ from typing import Optional
 
 from core.app_settings import Settings, get_settings
 from core.logging.loggers import get_infra_logger
-from core.message_queue import MessageQueue
 from infrastructure.redis import get_redis_client
 from protocols.ogx.services.ogws import submit_ogws_message
+from protocols.ogx.services.ogws_message_queue import MessageQueue
 
 
 class MessageWorker:

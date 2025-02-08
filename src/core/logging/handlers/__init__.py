@@ -7,7 +7,6 @@ for all specialized handlers (file, stream, syslog, metrics).
 import logging
 from typing import Optional
 
-from ..log_settings import LogComponent, LoggingConfig
 from ..formatters import (
     APIFormatter,
     BaseFormatter,
@@ -15,6 +14,7 @@ from ..formatters import (
     ProtocolFormatter,
     SecurityFormatter,
 )
+from ..log_settings import LogComponent, LoggingConfig
 
 
 def get_formatter(component: LogComponent) -> BaseFormatter:

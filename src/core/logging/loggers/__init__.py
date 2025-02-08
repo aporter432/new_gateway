@@ -6,14 +6,14 @@ This module provides:
 - Handler management
 """
 
-from ..log_settings import LogComponent, LoggingConfig
 from ..handlers.file import get_file_handler
-from ..handlers.metrics import get_metrics_handler, MetricsBackend
+from ..handlers.metrics import MetricsBackend, get_metrics_handler
 from ..handlers.stream import get_stream_handler
 from ..handlers.syslog import get_syslog_handler
-from .factory import LoggerFactory, get_logger_factory
+from ..log_settings import LogComponent, LoggingConfig
 from .api import get_api_logger
 from .auth import get_auth_logger
+from .factory import LoggerFactory, get_logger_factory
 from .infra import get_infra_logger
 from .protocol import get_protocol_logger
 from .system import get_system_logger

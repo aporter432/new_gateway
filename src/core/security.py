@@ -9,7 +9,7 @@ This module handles:
 
 import json
 import time
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import httpx
 from httpx import HTTPError

@@ -11,7 +11,7 @@ import atexit
 import logging
 import threading
 import time
-from queue import Queue, Full
+from queue import Full, Queue
 from typing import List
 
 

@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.middleware.auth import add_auth_middleware
 from api.routes import messages
-from core.message_worker import get_message_worker
+from protocols.ogx.services.ogws_message_worker import get_message_worker
 
 # Create FastAPI app
 app = FastAPI(
