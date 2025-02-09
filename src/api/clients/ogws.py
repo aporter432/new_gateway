@@ -28,14 +28,14 @@ class OGWSClient(BaseAPIClient):
         Returns:
             Submission response data
         """
-        data = {
+        data: Dict[str, Any] = {
             "DestinationID": destination_id,
             "Payload": payload,
         }
         if user_message_id is not None:
-            data["UserMessageID"] = user_message_id
+            data["UserMessageID"] = str(user_message_id)
         if transport_type is not None:
-            data["TransportType"] = transport_type
+            data["TransportType"] = str(transport_type.value)
 
         response = await self.post(APIEndpoint.SUBMIT_MESSAGE, json_data=data)
         return await self.handle_response(response)
@@ -58,8 +58,8 @@ class OGWSClient(BaseAPIClient):
         """
         params = {
             "FromUTC": from_utc,
-            "IncludeTypes": include_types,
-            "IncludeRawPayload": include_raw_payload,
+            "IncludeTypes": str(include_types).lower(),
+            "IncludeRawPayload": str(include_raw_payload).lower(),
         }
         response = await self.get(APIEndpoint.GET_RE_MESSAGES, params=params)
         return await self.handle_response(response)

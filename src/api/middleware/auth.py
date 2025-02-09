@@ -9,7 +9,7 @@ This module provides:
 from typing import Callable
 
 import httpx
-from fastapi import Request, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
@@ -31,10 +31,17 @@ class AuthMiddleware(BaseHTTPMiddleware):
         2. If auth fails, tries to refresh token
         3. Retries request with new token
         4. Returns error if all attempts fail
+
+        Args:
+            request: The incoming request
+            call_next: Function to call next middleware
+
+        Returns:
+            Response: The response from the next middleware or error response
         """
         try:
             # First attempt
-            response = await call_next(request)
+            response: Response = await call_next(request)
 
             # Check if auth failed
             if response.status_code == 401:
@@ -58,13 +65,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=500, content={"detail": "Request failed", "error": str(e)}
             )
-        except Exception as e:
+        except (ConnectionError, TimeoutError, IOError) as e:
             return JSONResponse(
                 status_code=500, content={"detail": "Internal server error", "error": str(e)}
             )
 
 
-# Helper function to add middleware to FastAPI app
-def add_auth_middleware(app):
-    """Add authentication middleware to FastAPI app."""
+def add_auth_middleware(app: FastAPI) -> None:
+    """Add authentication middleware to FastAPI app.
+
+    Args:
+        app: The FastAPI application instance
+    """
     app.add_middleware(AuthMiddleware)

@@ -1,8 +1,53 @@
-"""Constants for OGx protocol"""
+"""Constants for OGx protocol.
 
+This module serves as the central point for all OGWS protocol constants
+as defined in OGWS-1.txt. It provides type-safe enums and constants
+for network types, transport types, and various service limits.
+
+The constants defined here should be treated as the source of truth
+for the OGWS implementation, ensuring consistency across the codebase.
+
+Spec Compliance:
+- All constants align with OGWS-1.txt specifications 
+- Network types follow section 1.1 definitions
+- Transport types implement section 5.4 requirements
+- Message limits comply with section 2.3
+- Error codes match section 3.4 definitions
+
+Usage:
+    from protocols.ogx.constants import (
+        NetworkType, TransportType,
+        NETWORK_TYPE_OGX, TRANSPORT_TYPE_SATELLITE,
+        MAX_OGX_PAYLOAD_BYTES
+    )
+
+    # Network type checking
+    if network_type == NETWORK_TYPE_OGX:
+        # OGx specific handling
+        max_size = MAX_OGX_PAYLOAD_BYTES
+
+    # Transport selection
+    available_transports = [
+        TRANSPORT_TYPE_SATELLITE,
+        TRANSPORT_TYPE_CELLULAR
+    ]
+"""
+
+from enum import Enum, auto
+
+# Import all module components first
 from .auth import AuthRole, GrantType, ThrottleGroup
 from .endpoints import APIEndpoint
 from .field_types import FieldType
+from .network_types import (
+    NetworkType,
+    NETWORK_TYPE_OGX,
+)
+from .transport_types import (
+    TransportType,
+    TRANSPORT_TYPE_SATELLITE,
+    TRANSPORT_TYPE_CELLULAR,
+)
 from .limits import (
     DEFAULT_CALLS_PER_MINUTE,
     DEFAULT_TOKEN_EXPIRY,
@@ -10,11 +55,8 @@ from .limits import (
     ERR_RETRIEVE_STATUS_RATE_EXCEEDED,
     ERR_SUBMIT_MESSAGE_RATE_EXCEEDED,
     MAX_CONCURRENT_REQUESTS,
-    MAX_IDP_LARGE_PAYLOAD_BYTES,
-    MAX_IDP_MEDIUM_PAYLOAD_BYTES,
-    MAX_IDP_SMALL_PAYLOAD_BYTES,
-    MAX_MESSAGES_PER_RESPONSE,
     MAX_OGX_PAYLOAD_BYTES,
+    MAX_MESSAGES_PER_RESPONSE,
     MAX_OUTSTANDING_MESSAGES_PER_SIZE,
     MAX_SIMULTANEOUS_CONNECTIONS,
     MAX_STATUS_IDS_PER_REQUEST,
@@ -31,9 +73,7 @@ from .message_format import (
 )
 from .message_states import MessageState
 from .message_types import MessageType
-from .network_types import NetworkType
 from .operation_modes import OperationMode
-from .transport_types import TransportType
 
 __all__ = [
     "FieldType",
@@ -62,13 +102,13 @@ __all__ = [
     "MAX_CONCURRENT_REQUESTS",
     "MAX_TOKEN_EXPIRE_DAYS",
     "MAX_OGX_PAYLOAD_BYTES",
-    "MAX_IDP_SMALL_PAYLOAD_BYTES",
-    "MAX_IDP_MEDIUM_PAYLOAD_BYTES",
-    "MAX_IDP_LARGE_PAYLOAD_BYTES",
     "MAX_OUTSTANDING_MESSAGES_PER_SIZE",
     "MESSAGE_TIMEOUT_DAYS",
     "DEFAULT_TOKEN_EXPIRY",
     # Error codes
     "ERR_SUBMIT_MESSAGE_RATE_EXCEEDED",
     "ERR_RETRIEVE_STATUS_RATE_EXCEEDED",
+    "NETWORK_TYPE_OGX",
+    "TRANSPORT_TYPE_SATELLITE",
+    "TRANSPORT_TYPE_CELLULAR",
 ]

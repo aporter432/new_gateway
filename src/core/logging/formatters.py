@@ -50,13 +50,17 @@ class MetricInfo(TypedDict):
 class LogData(TypedDict, total=False):
     """Base structure for all log entries."""
 
+    # Required base fields
     level: str
     component: str
     message: str
     timestamp: str
+
+    # Process and thread info
     process: ProcessInfo
     thread: ThreadInfo
-    # Custom fields
+
+    # Custom fields - all optional
     message_id: str
     validation_errors: list[str]
     request_id: str
@@ -67,18 +71,11 @@ class LogData(TypedDict, total=False):
     auth_info: dict[str, Any]
     security_event: str
     metric: MetricInfo
-    extra: Dict[str, Any]
+    extra: dict[str, Any]
 
 
 class BaseFormatter(logging.Formatter):
-    """Base formatter with common functionality.
-
-    Provides basic log formatting with configurable fields:
-    - Timestamp (ISO format with timezone)
-    - Process information
-    - Thread information
-    - Component identification
-    """
+    """Base formatter with common functionality."""
 
     def __init__(
         self,
@@ -93,16 +90,16 @@ class BaseFormatter(logging.Formatter):
         self.include_thread = include_thread
         super().__init__()
 
-    def format(self, record: logging.LogRecord) -> str:
-        """Format log record with component-specific details.
+    def get_log_data(self, record: logging.LogRecord) -> Dict[str, Any]:
+        """Get base log data as dictionary.
 
         Args:
             record: The log record to format
 
         Returns:
-            JSON string representation of the log data
+            Dictionary containing log data
         """
-        data: LogData = {
+        data: Dict[str, Any] = {
             "level": record.levelname,
             "component": self.component.value,
             "message": record.getMessage(),
@@ -111,36 +108,43 @@ class BaseFormatter(logging.Formatter):
         if self.include_timestamp:
             data["timestamp"] = datetime.fromtimestamp(record.created).isoformat()
         if self.include_process:
-            data["process"] = {"name": record.processName, "id": record.process}  # type: ignore
+            data["process"] = {"name": record.processName, "id": record.process}
         if self.include_thread:
-            data["thread"] = {"name": record.threadName, "id": record.thread}  # type: ignore
+            data["thread"] = {"name": record.threadName, "id": record.thread}
 
         # Handle extra attributes safely
         extra = getattr(record, "extra", {})
         if extra:
             data["extra"] = extra
 
-        return json.dumps(data)  # type: ignore[no-any-return]
-
-
-class ProtocolFormatter(BaseFormatter):
-    """Formatter for protocol-related logs.
-
-    Adds protocol-specific fields:
-    - Message ID for tracking
-    - Validation errors if present
-    """
+        return data
 
     def format(self, record: logging.LogRecord) -> str:
-        """Add protocol-specific fields.
+        """Format log record as JSON string.
 
         Args:
             record: The log record to format
 
         Returns:
-            JSON string with protocol-specific fields
+            JSON string representation of the log data
         """
-        data: LogData = json.loads(super().format(record))  # type: ignore[no-any-return]
+        data = self.get_log_data(record)
+        return json.dumps(data, default=str)
+
+
+class ProtocolFormatter(BaseFormatter):
+    """Formatter for protocol-related logs."""
+
+    def get_log_data(self, record: logging.LogRecord) -> Dict[str, Any]:
+        """Get protocol-specific log data.
+
+        Args:
+            record: The log record to format
+
+        Returns:
+            Dictionary containing log data with protocol fields
+        """
+        data = super().get_log_data(record)
 
         message_id = getattr(record, "message_id", None)
         if message_id:
@@ -150,60 +154,39 @@ class ProtocolFormatter(BaseFormatter):
         if validation_errors:
             data["validation_errors"] = validation_errors
 
-        return json.dumps(data)  # type: ignore[no-any-return]
+        return data
 
 
 class APIFormatter(BaseFormatter):
-    """Formatter for API endpoint logs.
+    """Formatter for API endpoint logs."""
 
-    Adds API-specific fields:
-    - Request ID for tracing
-    - Endpoint information
-    - HTTP method
-    - Status code
-    - Request duration
-    """
-
-    def format(self, record: logging.LogRecord) -> str:
-        """Add API-specific fields.
+    def get_log_data(self, record: logging.LogRecord) -> Dict[str, Any]:
+        """Get API-specific log data.
 
         Args:
             record: The log record to format
 
         Returns:
-            JSON string with API-specific fields
+            Dictionary containing log data with API fields
         """
-        data: LogData = json.loads(super().format(record))  # type: ignore[no-any-return]
+        data = super().get_log_data(record)
 
         # Add API-specific fields if present
         for field in ["request_id", "endpoint", "method", "status_code", "duration_ms"]:
             value = getattr(record, field, None)
             if value is not None:
-                data[field] = value  # type: ignore[literal-required]
+                data[field] = value
 
-        return json.dumps(data)  # type: ignore[no-any-return]
+        return data
 
 
 class SecurityFormatter(BaseFormatter):
-    """Formatter for security and auth logs.
-
-    Features:
-    - Automatic sanitization of sensitive fields
-    - Security event tracking
-    - Auth information logging
-    """
+    """Formatter for security and auth logs."""
 
     SENSITIVE_FIELDS = {"password", "token", "secret", "key"}
 
     def _sanitize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Remove sensitive information from log data.
-
-        Args:
-            data: Dictionary containing potentially sensitive data
-
-        Returns:
-            Sanitized copy of the data
-        """
+        """Remove sensitive information from log data."""
         sanitized = {}
         for key, value in data.items():
             if any(sensitive in key.lower() for sensitive in self.SENSITIVE_FIELDS):
@@ -214,47 +197,55 @@ class SecurityFormatter(BaseFormatter):
                 sanitized[key] = value
         return sanitized
 
-    def format(self, record: logging.LogRecord) -> str:
-        """Add security-specific fields with sanitization.
+    def get_log_data(self, record: logging.LogRecord) -> Dict[str, Any]:
+        """Get security-specific log data.
 
         Args:
             record: The log record to format
 
         Returns:
-            JSON string with sanitized security fields
+            Dictionary containing log data with security fields
         """
-        data: LogData = json.loads(super().format(record))  # type: ignore[no-any-return]
+        data = super().get_log_data(record)
 
+        # Handle auth_info if present
         auth_info = getattr(record, "auth_info", None)
-        if auth_info:
+        if isinstance(auth_info, dict):
             data["auth_info"] = self._sanitize_data(auth_info)
 
+        # Handle security event if present
         security_event = getattr(record, "security_event", None)
-        if security_event:
+        if isinstance(security_event, str):
             data["security_event"] = security_event
 
-        return json.dumps(data)  # type: ignore[no-any-return]
+        return data
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format log record as JSON string with sanitized data.
+
+        Args:
+            record: The log record to format
+
+        Returns:
+            JSON string representation of the sanitized log data
+        """
+        data = self.get_log_data(record)
+        return json.dumps(data, default=str)
 
 
 class MetricsFormatter(BaseFormatter):
-    """Formatter for metrics and monitoring logs.
+    """Formatter for metrics and monitoring logs."""
 
-    Handles:
-    - Metric names and values
-    - Units of measurement
-    - Custom tags
-    """
-
-    def format(self, record: logging.LogRecord) -> str:
-        """Add metrics-specific fields.
+    def get_log_data(self, record: logging.LogRecord) -> Dict[str, Any]:
+        """Get metrics-specific log data.
 
         Args:
             record: The log record to format
 
         Returns:
-            JSON string with metrics information
+            Dictionary containing log data with metrics fields
         """
-        data: LogData = json.loads(super().format(record))  # type: ignore[no-any-return]
+        data = super().get_log_data(record)
 
         metric_name = getattr(record, "metric_name", None)
         if metric_name is not None:
@@ -265,4 +256,4 @@ class MetricsFormatter(BaseFormatter):
                 "tags": getattr(record, "metric_tags", {}),
             }
 
-        return json.dumps(data)  # type: ignore[no-any-return]
+        return data

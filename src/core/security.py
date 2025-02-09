@@ -17,6 +17,7 @@ from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
 from core.app_settings import Settings, get_settings
+from core.exceptions import OGxProtocolError
 from core.logging.loggers import get_auth_logger
 from infrastructure.redis import get_redis_client
 
@@ -89,9 +90,25 @@ class OGWSAuthManager:
         return await self._acquire_new_token()
 
     async def get_auth_header(self) -> dict:
-        """Get authorization header with valid token."""
-        token = await self.get_valid_token()
-        return {"Authorization": f"Bearer {token}"}
+        """Get authorization header with valid token.
+
+        Implementation follows OGWS-1.txt Section 4.1.1:
+        - Bearer token authentication
+        - Automatic token refresh
+        - Token expiration handling
+        - Proper header formatting
+
+        Returns:
+            Dict containing Authorization header with Bearer token
+
+        Raises:
+            OGxProtocolError: If unable to get valid token
+        """
+        try:
+            token = await self.get_valid_token()
+            return {"Authorization": f"Bearer {token}"}
+        except Exception as e:
+            raise OGxProtocolError(f"Failed to get authorization header: {str(e)}") from e
 
     async def validate_token(self, auth_header: dict) -> bool:
         """Validate token by calling the info/service endpoint."""

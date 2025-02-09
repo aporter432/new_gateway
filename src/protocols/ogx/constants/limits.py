@@ -104,17 +104,8 @@ MAX_TOKEN_EXPIRE_DAYS: Final[int] = 365
 MAX_OGX_PAYLOAD_BYTES: Final[int] = 1023
 """OGx network payload limit."""
 
-MAX_IDP_SMALL_PAYLOAD_BYTES: Final[int] = 400
-"""IDP small message limit."""
-
-MAX_IDP_MEDIUM_PAYLOAD_BYTES: Final[int] = 2000
-"""IDP medium message limit."""
-
-MAX_IDP_LARGE_PAYLOAD_BYTES: Final[int] = 10000
-"""IDP large message limit."""
-
 MAX_OUTSTANDING_MESSAGES_PER_SIZE: Final[int] = 10
-"""Maximum outstanding messages per terminal per size class."""
+"""Maximum outstanding messages per terminal."""
 
 # Section 2.1.1 - Message Timeout
 MESSAGE_TIMEOUT_DAYS: Final[int] = 10

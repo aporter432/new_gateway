@@ -1,0 +1,8 @@
+---
+description: truth source
+globs: .py
+---
+
+# Your rule content
+
+[OGWS-1.txt](mdc:src/DOCS/OGWS-1.txt)

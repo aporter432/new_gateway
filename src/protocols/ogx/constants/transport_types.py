@@ -1,35 +1,25 @@
-"""Transport types as defined in OGWS-1.txt.
+"""Transport types as defined in OGWS-1.txt
 
-This module defines the available transport types for OGWS terminals as specified in OGWS-1.txt.
-Each transport type has specific characteristics affecting message handling, payload limits,
-and operational capabilities.
-
-Transport Types (from OGWS-1.txt):
-- ANY (0): Use any available transport
+Transport types specify the delivery method for messages:
+- ANY (0): Use any available transport (default)
 - SATELLITE (1): Use satellite network only
 - CELLULAR (2): Use cellular network only
+
+See OGWS-1.txt Section 4.3.1 for details.
 """
 
 from enum import IntEnum
 
 
 class TransportType(IntEnum):
-    """Transport types as defined in OGWS-1.txt section 4.3.1.
+    """Transport types as defined in OGWS-1.txt Section 4.3.1"""
 
-    Attributes:
-        ANY (0): Use any available transport (default)
-        SATELLITE (1): Use satellite network only
-        CELLULAR (2): Use cellular network only
+    ANY = 0  # Default - use any available transport
+    SATELLITE = 1  # Satellite network only
+    CELLULAR = 2  # Cellular network only
 
-    API Usage Example:
-        # Submit message with transport type
-        {
-            "DestinationID": "01008988SKY5909",
-            "TransportType": TransportType.SATELLITE,
-            "Payload": {...}
-        }
-    """
 
-    ANY = 0
-    SATELLITE = 1
-    CELLULAR = 2
+# Constants for comparison
+TRANSPORT_TYPE_ANY = TransportType.ANY
+TRANSPORT_TYPE_SATELLITE = TransportType.SATELLITE
+TRANSPORT_TYPE_CELLULAR = TransportType.CELLULAR

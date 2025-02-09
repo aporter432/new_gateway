@@ -14,7 +14,8 @@ from httpx import Response
 
 from core.app_settings import Settings
 from core.security import OGWSAuthManager
-from protocols.ogx.constants import HTTPError
+from protocols.ogx.constants.http_errors import HTTPError as OGWSHTTPError
+from protocols.ogx.exceptions import OGxProtocolError
 
 
 class BaseAPIClient:
@@ -42,7 +43,7 @@ class BaseAPIClient:
             Response from the API
 
         Raises:
-            HTTPError: If request fails
+            httpx.HTTPError: If request fails
         """
         headers = await self.auth_manager.get_auth_header()
         async with httpx.AsyncClient() as client:
@@ -69,7 +70,7 @@ class BaseAPIClient:
             Response from the API
 
         Raises:
-            HTTPError: If request fails
+            httpx.HTTPError: If request fails
         """
         headers = await self.auth_manager.get_auth_header()
         if json_data:
@@ -91,15 +92,18 @@ class BaseAPIClient:
             response: Response from the API
 
         Returns:
-            Parsed response data
+            Dict[str, Any]: Parsed response data
 
         Raises:
-            HTTPError: If response contains an error
+            OGxProtocolError: If response contains an API-level error
         """
-        data = response.json()
+        data: Dict[str, Any] = response.json()
 
         # Check for API-level errors even with 200 status
         if "ErrorID" in data and data["ErrorID"] != 0:
-            raise HTTPError(f"API error: {data.get('ErrorMessage', 'Unknown error')}")
+            if response.status_code == OGWSHTTPError.TOO_MANY_REQUESTS:
+                retry_after = data.get("RetryAfter", 60)
+                raise OGxProtocolError(f"Rate limit exceeded. Retry after {retry_after} seconds.")
+            raise OGxProtocolError(f"API error: {data.get('ErrorMessage', 'Unknown error')}")
 
         return data

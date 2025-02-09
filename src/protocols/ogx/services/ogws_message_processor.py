@@ -54,12 +54,13 @@ from typing import Any, Dict, Optional
 from core.app_settings import get_settings
 from core.logging.loggers import get_protocol_logger
 from infrastructure.redis import get_redis_client
-from protocols.ogx.constants import MessageState, TransportType
+from protocols.ogx.constants import MessageState
+from protocols.ogx.constants.transport_types import TransportType
 from protocols.ogx.exceptions import OGxProtocolError, ValidationError
 from protocols.ogx.validation.json.field_validator import OGxFieldValidator
 from protocols.ogx.validation.json.message_validator import OGxMessageValidator
 
-from .state_store import DynamoDBMessageStateStore, MessageStateStore, RedisMessageStateStore
+from .ogws_state_store import DynamoDBMessageStateStore, MessageStateStore, RedisMessageStateStore
 
 
 class MessageProcessor:

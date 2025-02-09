@@ -95,7 +95,7 @@ class QueuedMessage:
 class MessageQueue:
     """Manages message queuing and retry logic with Redis persistence.
 
-    This class provides a robust implementation of message queue management with the following features:
+    This provides robust implementation of message queue management with the following features:
     - Atomic operations for state transitions using Redis transactions
     - Configurable retry policies with exponential backoff
     - Dead letter queue (DLQ) for messages that exceed retry limits

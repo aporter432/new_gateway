@@ -1,12 +1,15 @@
 """Metrics handlers for monitoring system integration."""
 
+import asyncio
 import logging
-from abc import abstractmethod
-from typing import Optional, Protocol, TypedDict, Union
+from typing import Any, Optional, Protocol, TypedDict, Union, runtime_checkable
+
+from metrics.backends.base import MetricsBackend as BaseMetricsBackend
 
 from ..log_settings import LogComponent, LoggingConfig
-from ..records import GatewayLogRecord
 from . import get_formatter
+
+__all__ = ["MetricsHandler", "get_metrics_handler"]
 
 
 class MetricData(TypedDict, total=False):
@@ -18,26 +21,20 @@ class MetricData(TypedDict, total=False):
     tags: dict[str, Union[str, int, float]]
 
 
-class MetricsBackend(Protocol):
-    """Protocol for metrics backend implementations."""
+@runtime_checkable
+class GatewayLogRecord(Protocol):
+    """Protocol for log records with metric data."""
 
-    @abstractmethod
-    def increment(self, name: str, value: float = 1, tags: Optional[dict] = None) -> None:
-        """Increment a counter metric."""
-
-    @abstractmethod
-    def gauge(self, name: str, value: float, tags: Optional[dict] = None) -> None:
-        """Set a gauge metric value."""
-
-    @abstractmethod
-    def timing(self, name: str, value: float, tags: Optional[dict] = None) -> None:
-        """Record a timing metric."""
+    metric_name: str
+    metric_value: Any
+    metric_type: str
+    metric_tags: dict[str, str]
 
 
 class MetricsHandler(logging.Handler):
-    """Handler that forwards metrics to monitoring system."""
+    """Handler for forwarding metrics to collection backend."""
 
-    def __init__(self, backend: MetricsBackend):
+    def __init__(self, backend: BaseMetricsBackend):
         """Initialize with metrics backend.
 
         Args:
@@ -45,37 +42,47 @@ class MetricsHandler(logging.Handler):
         """
         super().__init__()
         self.backend = backend
+        self.loop = asyncio.get_event_loop()
 
-    def emit(self, record: GatewayLogRecord) -> None:
+    def emit(self, record: logging.LogRecord) -> None:
         """Forward metric to backend system.
 
         Args:
             record: Log record containing metric data
         """
         try:
-            if not hasattr(record, "metric_name") or record.metric_name is None:
+            # Check if record has metric data using Protocol
+            if not isinstance(record, GatewayLogRecord):
                 return
 
-            metric_name: str = record.metric_name  # Type assertion after None check
-            metric_value = getattr(record, "metric_value", 1)
-            metric_type = getattr(record, "metric_type", "counter")
-            tags = getattr(record, "metric_tags", {})
+            metric_name: str = record.metric_name
+            metric_value = record.metric_value
+            metric_type = record.metric_type
+            metric_tags = record.metric_tags
 
+            # Create coroutine based on metric type
+            coro = None
             if metric_type == "counter":
-                self.backend.increment(metric_name, metric_value, tags)
+                coro = self.backend.increment(metric_name, metric_value, metric_tags)
             elif metric_type == "gauge":
-                self.backend.gauge(metric_name, metric_value, tags)
-            elif metric_type == "timing":
-                self.backend.timing(metric_name, metric_value, tags)
+                coro = self.backend.gauge(metric_name, metric_value, metric_tags)
+            elif metric_type == "histogram":
+                coro = self.backend.histogram(metric_name, metric_value, metric_tags)
+            elif metric_type == "summary":
+                coro = self.backend.summary(metric_name, metric_value, metric_tags)
 
-        except (AttributeError, ValueError, TypeError):
+            # Schedule coroutine if we have one
+            if coro is not None:
+                self.loop.create_task(coro)
+
+        except Exception:
             self.handleError(record)
 
 
 def get_metrics_handler(
     component: LogComponent,
     _config: LoggingConfig,  # Prefix with _ to indicate intentionally unused
-    backend: MetricsBackend,
+    backend: BaseMetricsBackend,
 ) -> logging.Handler:
     """Create a metrics handler.
 

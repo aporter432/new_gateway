@@ -1,6 +1,7 @@
 """Factory functions for creating API clients."""
 
 from functools import lru_cache
+from typing import Optional
 
 from core.app_settings import Settings, get_settings
 from core.security import OGWSAuthManager
@@ -10,7 +11,7 @@ from .ogws import OGWSClient
 
 
 @lru_cache
-async def get_ogws_client(settings: Settings = None) -> OGWSClient:
+async def get_ogws_client(settings: Optional[Settings] = None) -> OGWSClient:
     """Get configured OGWS client instance.
 
     Args:

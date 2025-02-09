@@ -11,7 +11,7 @@ Shows:
 import logging
 from typing import Any, Optional
 
-from .formatters import GatewayFormatter, MetricsFormatter, SecurityFormatter
+from .formatters import BaseFormatter, MetricsFormatter, SecurityFormatter
 from .handlers.batch import BatchHandler
 from .log_settings import LogComponent, LoggingConfig
 
@@ -19,16 +19,16 @@ from .log_settings import LogComponent, LoggingConfig
 def setup_basic_logging() -> None:
     """Basic logging setup example."""
     # Create and configure handler
-    handler = logging.StreamHandler()
-    handler.setFormatter(GatewayFormatter())
+    basic_handler = logging.StreamHandler()
+    basic_handler.setFormatter(BaseFormatter(component=LogComponent.API))
 
     # Add handler to root logger
-    logging.root.addHandler(handler)
+    logging.root.addHandler(basic_handler)
     logging.root.setLevel(logging.INFO)
 
 
 def log_with_context(
-    logger: logging.Logger,
+    log_instance: logging.Logger,
     message: str,
     customer_id: str,
     asset_id: Optional[str] = None,
@@ -37,9 +37,9 @@ def log_with_context(
     """Log with customer/asset context.
 
     Example:
-        logger = logging.getLogger("gateway.api")
+        api_logger = logging.getLogger("gateway.api")
         log_with_context(
-            logger,
+            api_logger,
             "API request processed",
             customer_id="cust123",
             asset_id="asset456",
@@ -49,64 +49,64 @@ def log_with_context(
     """
     extra_fields = {"customer_id": customer_id, "asset_id": asset_id or "unknown", **extra}
 
-    logger.info(message, extra=extra_fields)
+    log_instance.info(message, extra=extra_fields)
 
 
-def setup_high_volume_logging(config: LoggingConfig) -> None:
+def setup_high_volume_logging(settings: LoggingConfig) -> None:
     """Setup logging for high-volume components."""
     # Create base handler
-    base_handler = logging.FileHandler(config.get_log_path(LogComponent.PROTOCOL))
-    base_handler.setFormatter(GatewayFormatter())
+    protocol_handler = logging.FileHandler(settings.get_log_path(LogComponent.PROTOCOL))
+    protocol_handler.setFormatter(BaseFormatter(component=LogComponent.PROTOCOL))
 
     # Wrap with batch handler
     batch_handler = BatchHandler(
-        base_handler, batch_size=config.batch_size, flush_interval=1.0, max_buffer=10000
+        protocol_handler, batch_size=settings.batch_size, flush_interval=1.0, max_buffer=10000
     )
 
     # Configure logger
-    logger = logging.getLogger("gateway.protocol")
-    logger.addHandler(batch_handler)
-    logger.setLevel(logging.INFO)
+    protocol_logger = logging.getLogger("gateway.protocol")
+    protocol_logger.addHandler(batch_handler)
+    protocol_logger.setLevel(logging.INFO)
 
 
-def setup_security_logging(config: LoggingConfig) -> None:
+def setup_security_logging(settings: LoggingConfig) -> None:
     """Setup logging for security events."""
-    handler = logging.FileHandler(config.get_log_path(LogComponent.AUTH))
-    handler.setFormatter(SecurityFormatter())
+    auth_handler = logging.FileHandler(settings.get_log_path(LogComponent.AUTH))
+    auth_handler.setFormatter(SecurityFormatter(component=LogComponent.AUTH))
 
-    logger = logging.getLogger("gateway.auth")
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    auth_logger = logging.getLogger("gateway.auth")
+    auth_logger.addHandler(auth_handler)
+    auth_logger.setLevel(logging.INFO)
 
 
-def setup_metrics_logging(config: LoggingConfig) -> None:
+def setup_metrics_logging(settings: LoggingConfig) -> None:
     """Setup logging for metrics collection."""
     # Create base handler
-    base_handler = logging.FileHandler(config.get_log_path(LogComponent.METRICS))
-    base_handler.setFormatter(MetricsFormatter())
+    metrics_file_handler = logging.FileHandler(settings.get_log_path(LogComponent.METRICS))
+    metrics_file_handler.setFormatter(MetricsFormatter(component=LogComponent.METRICS))
 
     # Wrap with batch handler for performance
-    metrics_handler = BatchHandler(
-        base_handler,
+    metrics_batch_handler = BatchHandler(
+        metrics_file_handler,
         batch_size=5000,  # Larger batches for metrics
         flush_interval=0.5,  # More frequent flushes
         max_buffer=50000,  # Larger buffer for spikes
     )
 
-    logger = logging.getLogger("gateway.metrics")
-    logger.addHandler(metrics_handler)
-    logger.setLevel(logging.INFO)
+    metrics_logger = logging.getLogger("gateway.metrics")
+    metrics_logger.addHandler(metrics_batch_handler)
+    metrics_logger.setLevel(logging.INFO)
 
 
 # Usage examples
 if __name__ == "__main__":
     # Basic setup
     setup_basic_logging()
-    logger = logging.getLogger("example")
+    example_logger = logging.getLogger("example")
 
     # Log with context
     log_with_context(
-        logger,
+        example_logger,
         "Processing asset update",
         customer_id="cust123",
         asset_id="asset456",
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     )
 
     # Setup for high volume
-    config = LoggingConfig(is_production=True)
-    setup_high_volume_logging(config)
-    setup_security_logging(config)
-    setup_metrics_logging(config)
+    app_settings = LoggingConfig(is_production=True)
+    setup_high_volume_logging(app_settings)
+    setup_security_logging(app_settings)
+    setup_metrics_logging(app_settings)

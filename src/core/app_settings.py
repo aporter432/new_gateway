@@ -34,6 +34,8 @@ Environment Handling:
 """
 
 from functools import lru_cache
+from typing import Any
+
 from pydantic_settings import BaseSettings
 
 
@@ -89,10 +91,26 @@ class Settings(BaseSettings):
     OGWS_TEST_MOBILE_ID: str = "OGx-00002000SKY9307"  # Test terminal ID
     OGWS_TEST_MODE: bool = True  # Enables test endpoints and validation
 
+    def __hash__(self) -> int:
+        """Make Settings hashable for lru_cache compatibility.
+
+        Returns:
+            Hash of the settings instance based on its model fields
+        """
+        return hash(tuple(sorted(self.model_dump().items())))
+
     class Config:
         env_file = ".env"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
+        """Initialize settings with validation.
+
+        Args:
+            **kwargs: Keyword arguments to override default settings
+
+        Raises:
+            ValueError: If production environment uses development defaults
+        """
         super().__init__(**kwargs)
         if self.ENVIRONMENT == "production":
             # In production, ensure no development defaults are used

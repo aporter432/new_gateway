@@ -7,7 +7,7 @@ This module provides:
 """
 
 from ..handlers.file import get_file_handler
-from ..handlers.metrics import MetricsBackend, get_metrics_handler
+from ..handlers.metrics import get_metrics_handler
 from ..handlers.stream import get_stream_handler
 from ..handlers.syslog import get_syslog_handler
 from ..log_settings import LogComponent, LoggingConfig
@@ -30,4 +30,6 @@ __all__ = [
     "get_metrics_handler",
     "get_stream_handler",
     "get_syslog_handler",
+    "LogComponent",
+    "LoggingConfig",
 ]

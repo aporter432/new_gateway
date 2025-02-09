@@ -1,156 +1,189 @@
 """
 Routes for OGWS message handling.
 
-This module implements:
-- Message submission (To-Mobile)
-- Message retrieval (From-Mobile)
+This module implements message handling as defined in OGWS-1.txt:
+- Message submission (To-Mobile/FW)
+- Message retrieval (From-Mobile/RE)
 - Message status tracking
 - Transport-aware message routing
+
+State Transitions (OGWS-1.txt Section 4.3):
+- Forward (FW) Messages:
+    ACCEPTED -> SENDING_IN_PROGRESS -> RECEIVED/ERROR/DELIVERY_FAILED
+    - SATELLITE: May timeout after 10 days
+    - CELLULAR: May timeout after 120 minutes
+    - Delayed send (IDP only): ACCEPTED -> WAITING -> SENDING_IN_PROGRESS
+
+- Return (RE) Messages:
+    Always in RECEIVED state when retrieved
+
+Transport Types (OGWS-1.txt Section 4.3.1):
+- ANY (0): Use any available transport
+- SATELLITE (1): Use satellite network only
+- CELLULAR (2): Use cellular network only
 """
 
 from typing import Any, Dict, List, Optional
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from httpx import HTTPError
 
+from api.clients.factory import get_ogws_client
 from core.app_settings import Settings, get_settings
 from core.security import OGWSAuthManager, get_auth_manager
-from protocols.ogx.services.ogws import get_ogws_message_status, get_ogws_messages
+from protocols.ogx.constants import APIEndpoint, TransportType
+from protocols.ogx.constants.message_states import MessageState
+from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.exceptions import OGxProtocolError, ValidationError
 
 router = APIRouter()
 
 
 # Enhanced Pydantic models based on OGWS spec
 class OGWSMessagePayload(BaseModel):
-    """OGWS message payload structure."""
+    """OGWS message payload structure as defined in OGWS-1.txt Section 5.1."""
 
     Name: str
     SIN: int
     MIN: int
     Fields: List[Dict[str, Any]]
-    IsForward: Optional[bool] = None
 
 
 class MessageRequest(BaseModel):
-    """Enhanced message request matching OGWS format."""
+    """Enhanced message request matching OGWS format (OGWS-1.txt Section 5.2)."""
 
     DestinationID: str = Field(..., description="Terminal or broadcast ID")
     UserMessageID: Optional[int] = Field(None, description="Client's message ID")
     Payload: OGWSMessagePayload
-    TransportType: Optional[int] = Field(None, description="0=Any, 1=Satellite, 2=Cellular")
+    TransportType: Optional[int] = Field(
+        None, description="0=Any, 1=Satellite, 2=Cellular (OGWS-1.txt Section 4.3.1)", ge=0, le=2
+    )
 
 
 class MessageResponse(BaseModel):
-    """Enhanced response matching OGWS format."""
+    """Enhanced response matching OGWS format (OGWS-1.txt Section 5.3)."""
 
     ID: Optional[int] = None
     ErrorID: Optional[int] = None
+    State: MessageState = Field(
+        ..., description="Message state from MessageState enum (OGWS-1.txt Section 4.3)"
+    )
+    Type: MessageType = Field(..., description="Message type (FW_ACCEPTED, FW_RECEIVED, etc.)")
     DestinationID: str
     UserMessageID: Optional[int] = None
     OTAMessageSize: Optional[int] = None
+    MessageUTC: Optional[str] = None
 
 
-@router.post("/messages/submit", response_model=MessageResponse)
+@router.post(APIEndpoint.SUBMIT_MESSAGE, response_model=MessageResponse)
 async def submit_message(
     request: MessageRequest,
-    auth: OGWSAuthManager = Depends(get_auth_manager),
+    _auth: OGWSAuthManager = Depends(get_auth_manager),
     settings: Settings = Depends(get_settings),
 ) -> MessageResponse:
-    """Submit To-Mobile message via OGWS."""
+    """Submit To-mobile message via OGWS (OGWS-1.txt Section 5.2)."""
     try:
-        headers = await auth.get_auth_header()
+        client = await get_ogws_client(settings)
 
-        # Construct the OGWS endpoint URL
-        ogws_endpoint = f"{settings.OGWS_BASE_URL}/submit/messages"
+        transport_type: Optional[TransportType] = None
+        if request.TransportType is not None:
+            try:
+                transport_type = TransportType(request.TransportType)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid transport type: {str(e)}"
+                ) from e
 
-        # Transform our request to match OGWS format
-        ogws_request = {
-            "DestinationID": request.DestinationID,
-            "UserMessageID": request.UserMessageID,
-            "Payload": request.Payload.dict(),
-            "TransportType": request.TransportType,
-        }
-
-        # Make the actual OGWS API call
-        async with httpx.AsyncClient() as client:
-            response = await client.post(ogws_endpoint, headers=headers, json=ogws_request)
-
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=response.status_code, detail=f"OGWS error: {response.text}"
+        try:
+            response = await client.submit_message(
+                destination_id=request.DestinationID,
+                payload=request.Payload.dict(),
+                user_message_id=request.UserMessageID,
+                transport_type=transport_type,
             )
 
-        return MessageResponse(**response.json())
+            return MessageResponse(
+                Type=MessageType.FW_ACCEPTED,  # Initial state for forward messages
+                State=MessageState.ACCEPTED,
+                **response,
+            )
+        except (HTTPError, OGxProtocolError) as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to submit message: {str(e)}"
+            ) from e
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to submit message: {str(e)}")
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except (HTTPError, OGxProtocolError) as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/messages/from-mobile")
-async def get_from_mobile_messages(
+@router.get(APIEndpoint.GET_RE_MESSAGES, response_model=List[MessageResponse])
+async def retrieve_messages(
     from_utc: str,
-    include_types: bool = False,
-    include_raw_payload: bool = False,
-    auth: OGWSAuthManager = Depends(get_auth_manager),
+    _auth: OGWSAuthManager = Depends(get_auth_manager),
     settings: Settings = Depends(get_settings),
-) -> dict[str, Any]:
-    """Retrieve From-Mobile messages from OGWS.
-
-    Implements:
-    - High-watermark tracking
-    - Automatic message decoding
-    - Transport type handling
-
-    Returns:
-        A dictionary containing:
-        - ErrorID: Error code (0 for success)
-        - Messages: List of message dictionaries
-        - NextFromUTC: Next high-watermark timestamp
-    """
+) -> List[MessageResponse]:
+    """Retrieve From-Mobile messages from OGWS (OGWS-1.txt Section 5.4)."""
     try:
-        headers = await auth.get_auth_header()
-        # Call OGWS get messages endpoint
-        messages = await get_ogws_messages(
-            headers=headers,
-            from_utc=from_utc,
-            include_types=include_types,
-            include_raw_payload=include_raw_payload,
-            base_url=settings.OGWS_BASE_URL,
-        )
-        return {
-            "ErrorID": 0,
-            "Messages": messages.get("Messages", []),
-            "NextFromUTC": messages.get("NextFromUTC", from_utc),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve messages: {str(e)}")
+        client = await get_ogws_client(settings)
+        try:
+            messages = await client.get_messages(from_utc=from_utc)
+            return [
+                MessageResponse(
+                    Type=MessageType.FW_RECEIVED,  # Return messages are always RECEIVED
+                    State=MessageState.RECEIVED,
+                    DestinationID=msg.get("SourceID", ""),
+                    MessageUTC=msg.get("MessageUTC"),
+                    **msg,
+                )
+                for msg in messages.get("Messages", [])
+            ]
+        except (HTTPError, OGxProtocolError) as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to retrieve messages: {str(e)}"
+            ) from e
+
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except (HTTPError, OGxProtocolError) as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/messages/status/{message_id}")
+@router.get(APIEndpoint.GET_FW_STATUSES + "/{message_id}", response_model=MessageResponse)
 async def get_message_status(
     message_id: int,
-    auth: OGWSAuthManager = Depends(get_auth_manager),
+    _auth: OGWSAuthManager = Depends(get_auth_manager),
     settings: Settings = Depends(get_settings),
-) -> dict[str, Any]:
-    """Get status of submitted To-Mobile message.
+) -> MessageResponse:
+    """Get status of a specific message (OGWS-1.txt Section 5.5).
 
-    Tracks:
-    - Message delivery state
-    - Transport information
-    - Error conditions
-
-    Returns:
-        A dictionary containing:
-        - ErrorID: Error code (0 for success)
-        - Status: Message status dictionary
+    Message States (OGWS-1.txt Section 4.3):
+    - FW_ACCEPTED: Message accepted by OGWS
+    - FW_SENDING: Message sending in progress
+    - FW_RECEIVED: Message acknowledged by destination
+    - FW_ERROR: Submission error
+    - FW_DELIVERY_FAILED: Message failed to deliver
+    - FW_TIMED_OUT: Message timed out
+    - FW_CANCELLED: Message cancelled
+    - FW_WAITING: Queued for delayed send (IDP only)
+    - FW_BROADCAST_SUBMITTED: Broadcast message transmitted
     """
     try:
-        headers = await auth.get_auth_header()
-        # Call OGWS status endpoint
-        status = await get_ogws_message_status(
-            headers=headers, message_id=message_id, base_url=settings.OGWS_BASE_URL
-        )
-        return {"ErrorID": 0, "Status": status}
+        # Get OGWS client
+        client = await get_ogws_client(settings)
+
+        # Get message status
+        try:
+            status = await client.get_message_status([message_id])
+            return MessageResponse(**status)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get message status: {str(e)}"
+            ) from e
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get message status: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get message status: {str(e)}"
+        ) from e

@@ -39,7 +39,7 @@ app.include_router(messages.router, prefix="/api/v1", tags=["messages"])
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Start background workers on application startup."""
     # Start message worker
     worker = await get_message_worker()
@@ -48,7 +48,7 @@ async def startup_event():
 
 
 @app.on_event("shutdown")
-async def shutdown_event():
+async def shutdown_event() -> None:
     """Stop background workers on application shutdown."""
     # Stop message worker
     if hasattr(app.state, "message_worker"):
@@ -56,7 +56,7 @@ async def shutdown_event():
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> Dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy"}
 
