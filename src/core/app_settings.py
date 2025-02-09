@@ -119,7 +119,14 @@ class Settings(BaseSettings):
             missing = [
                 var
                 for var in required_vars
-                if getattr(self, var) in (None, "", "70000934", "password", "test_customer")
+                if getattr(self, var)
+                in (
+                    None,
+                    "",
+                    "70000934",
+                    "password",
+                    "test_customer",
+                )
             ]
             if missing:
                 raise ValueError(

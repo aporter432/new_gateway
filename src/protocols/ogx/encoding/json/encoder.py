@@ -21,21 +21,24 @@ Environment Handling:
         - Security constraints
 
 Usage:
-    from protocols.ogx.encoding.json import encode_state
+    from protocols.ogx.encoding.json import encode_state, encode_message
 
     state_json = encode_state({
         "state": MessageState.ACCEPTED,
         "timestamp": "2024-01-01T00:00:00Z",
         "metadata": {"key": "value"}
     })
+    
+    message_json = encode_message(message_obj)
 """
 
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from protocols.ogx.constants import MessageState
 from protocols.ogx.exceptions import EncodingError
+from protocols.ogx.models.messages import OGxMessage
 from protocols.ogx.validation.json.message_validator import OGxMessageValidator
 
 
@@ -139,3 +142,41 @@ def encode_metadata(metadata: Optional[Dict[str, Any]] = None) -> str:
         return json.dumps(metadata, separators=(",", ":"))
     except TypeError as e:
         raise EncodingError("Failed to encode metadata") from e
+
+
+def encode_message(message: Union[OGxMessage, Dict[str, Any]], validate: bool = True) -> str:
+    """Encode OGxMessage object or dictionary to JSON string.
+
+    Implements message encoding as defined in OGWS-1.txt Section 5.1.
+    Validates message data before encoding if validate=True.
+
+    Args:
+        message: OGxMessage object or dictionary to encode
+        validate: Whether to validate message before encoding
+
+    Returns:
+        JSON encoded string representation of the message
+
+    Raises:
+        EncodingError: If encoding fails or message format invalid
+    """
+    validator = OGxMessageValidator()
+
+    # Convert OGxMessage to dict if needed
+    if isinstance(message, OGxMessage):
+        message_data = message.to_dict()
+    else:
+        message_data = message
+
+    # Validate message format if requested
+    if validate:
+        try:
+            validator.validate_message(message_data)
+        except Exception as e:
+            raise EncodingError(f"Invalid message format: {str(e)}") from e
+
+    # Encode to JSON
+    try:
+        return json.dumps(message_data, separators=(",", ":"))
+    except TypeError as e:
+        raise EncodingError(f"Failed to encode message: {str(e)}") from e

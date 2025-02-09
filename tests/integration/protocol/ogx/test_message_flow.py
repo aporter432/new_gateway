@@ -19,12 +19,7 @@ class TestOGxProtocolIntegration:
         """Create a message validator instance"""
         return OGxMessageValidator()
 
-    @pytest.fixture
-    def codec(self):
-        """Create a JSON codec instance"""
-        return OGxJsonCodec()
-
-    def test_complete_message_lifecycle(self, validator, codec):
+    def test_complete_message_lifecycle(self, validator):
         """Test complete message lifecycle: create -> validate -> encode -> decode -> validate"""
         # Create a complex message with various field types
         fields = [
@@ -49,10 +44,10 @@ class TestOGxProtocolIntegration:
         validator.validate_message(dict_message)
 
         # Step 2: Encode to JSON
-        json_str = codec.encode(original_message)
+        json_str = encode_message(original_message)
 
         # Step 3: Decode from JSON
-        decoded_message = codec.decode(json_str)
+        decoded_message = decode_message(json_str)
 
         # Step 4: Validate decoded message
         dict_message = decoded_message.to_dict()
@@ -64,7 +59,7 @@ class TestOGxProtocolIntegration:
         assert decoded_message.min == original_message.min
         assert len(decoded_message.fields) == len(original_message.fields)
 
-    def test_error_propagation(self, validator, codec):
+    def test_error_propagation(self, validator):
         """Test error handling and propagation through the stack"""
         # Create an invalid message (missing required fields)
         invalid_message = {
@@ -91,11 +86,11 @@ class TestOGxProtocolIntegration:
                 raise ValueError("Invalid message")
 
         with pytest.raises(EncodingError):
-            codec.encode(InvalidMessage())
+            encode_message(InvalidMessage())
 
         # Test decoding error propagation
         with pytest.raises(EncodingError):
-            codec.decode("invalid json")
+            decode_message("invalid json")
 
     def test_complex_nested_structure(self):
         """Test handling of complex nested message structures"""
@@ -153,7 +148,7 @@ class TestOGxProtocolIntegration:
         assert len(message.fields[0].elements) == 1
         assert len(message.fields[0].elements[0].fields) == 2
 
-    def test_field_type_conversion(self, codec):
+    def test_field_type_conversion(self):
         """Test field type conversion and preservation through encode/decode cycle"""
         # Create fields with different types and edge case values
         fields = [
@@ -168,8 +163,8 @@ class TestOGxProtocolIntegration:
         message = OGxMessage(name="type_test", sin=16, min=1, fields=fields)
 
         # Encode and decode
-        json_str = codec.encode(message)
-        decoded = codec.decode(json_str)
+        json_str = encode_message(message)
+        decoded = decode_message(json_str)
 
         # Verify type and value preservation
         for original, decoded_field in zip(message.fields, decoded.fields):
@@ -177,8 +172,8 @@ class TestOGxProtocolIntegration:
             assert decoded_field.value == original.value
             assert isinstance(decoded_field.value, type(original.value))
 
-    def test_validation_codec_interaction(self, validator):
-        """Test interaction between validation and codec components"""
+    def test_validation_and_encoding_interaction(self, validator):
+        """Test interaction between validation and encoding/decoding"""
         # Test that validation errors are caught before encoding
         invalid_message = OGxMessage(
             name="invalid", sin=-1, min=1, fields=[]

@@ -29,15 +29,6 @@ class TestProtocolMessages:
         """
         return OGxMessageValidator()
 
-    @pytest.fixture
-    def codec(self):
-        """Create a JSON codec instance for testing.
-
-        Returns:
-            OGxJsonCodec: A fresh codec instance for each test.
-        """
-        return OGxJsonCodec()
-
     def test_position_message(self, validator):
         """Test validation of a position message"""
         message = {
@@ -98,7 +89,7 @@ class TestProtocolMessages:
         }
         validator.validate_message(message)  # Should not raise
 
-    def test_large_message_performance(self, validator, codec):
+    def test_large_message_performance(self, validator):
         """Test performance with large messages"""
         # Create a large message with many fields
         fields = []
@@ -122,18 +113,18 @@ class TestProtocolMessages:
         # Test encoding performance
         message_obj = OGxMessage.from_dict(large_message)
         start_time = time.time()
-        json_str = codec.encode(message_obj)
+        json_str = encode_message(message_obj)
         encoding_time = time.time() - start_time
         assert encoding_time < 1.0  # Should encode in under 1 second
 
         # Test decoding performance
         start_time = time.time()
-        decoded = codec.decode(json_str)
+        decoded = decode_message(json_str)
         decoding_time = time.time() - start_time
         assert decoding_time < 1.0  # Should decode in under 1 second
         assert len(decoded.fields) == 1000  # Verify all fields were preserved
 
-    def test_deeply_nested_message_performance(self, validator, codec):
+    def test_deeply_nested_message_performance(self, validator):
         """Test performance with deeply nested message structures"""
 
         def create_nested_element(depth, width):
@@ -179,8 +170,8 @@ class TestProtocolMessages:
         # Test encoding/decoding performance
         message_obj = OGxMessage.from_dict(nested_message)
         start_time = time.time()
-        json_str = codec.encode(message_obj)
-        decoded = codec.decode(json_str)
+        json_str = encode_message(message_obj)
+        decoded = decode_message(json_str)
         total_time = time.time() - start_time
         assert total_time < 2.0  # Should complete full cycle in under 2 seconds
         assert len(decoded.fields) > 0  # Verify structure was preserved

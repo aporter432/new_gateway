@@ -1,7 +1,7 @@
 """Logger factory for creating component-specific loggers."""
 
 import logging
-from typing import Dict, Optional
+from typing import Optional
 
 from metrics.backends.base import MetricsBackend
 

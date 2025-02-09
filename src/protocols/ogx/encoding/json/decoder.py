@@ -21,9 +21,10 @@ Environment Handling:
         - Security constraints
 
 Usage:
-    from protocols.ogx.encoding.json import decode_state
+    from protocols.ogx.encoding.json import decode_state, decode_message
 
     state_data = decode_state(state_json)
+    message_data = decode_message(message_json)
     # Returns:
     # {
     #     "state": MessageState.ACCEPTED,
@@ -34,10 +35,11 @@ Usage:
 
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Union
 
 from protocols.ogx.constants import MessageState
 from protocols.ogx.exceptions import EncodingError
+from protocols.ogx.models.messages import OGxMessage
 from protocols.ogx.validation.json.message_validator import OGxMessageValidator
 
 
@@ -140,3 +142,46 @@ def decode_metadata(data: str) -> Dict[str, Any]:
             raise EncodingError("Invalid message metadata format") from e
 
     return metadata
+
+
+def decode_message(data: Union[str, Dict[str, Any]]) -> OGxMessage:
+    """Decode JSON string or dictionary to OGxMessage object.
+
+    Implements message decoding as defined in OGWS-1.txt Section 5.1.
+    Validates message data against message schema.
+
+    Args:
+        data: JSON encoded message string or dictionary
+
+    Returns:
+        OGxMessage object representing the decoded message
+
+    Raises:
+        EncodingError: If decoding fails or message format invalid
+    """
+    validator = OGxMessageValidator()
+
+    # Convert string to dict if needed
+    if isinstance(data, str):
+        try:
+            message_data = json.loads(data)
+        except json.JSONDecodeError as e:
+            raise EncodingError("Failed to decode message data") from e
+    else:
+        message_data = data
+
+    # Validate basic structure
+    if not isinstance(message_data, dict):
+        raise EncodingError("Message data must be a JSON object")
+
+    # Validate message format
+    try:
+        validator.validate_message(message_data)
+    except Exception as e:
+        raise EncodingError(f"Invalid message format: {str(e)}") from e
+
+    # Convert to OGxMessage object
+    try:
+        return OGxMessage.from_dict(message_data)
+    except Exception as e:
+        raise EncodingError(f"Failed to create message object: {str(e)}") from e

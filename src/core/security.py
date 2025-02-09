@@ -256,7 +256,11 @@ class OGWSAuthManager:
         """Acquire new token from OGWS using client credentials flow."""
         url = f"{self.settings.OGWS_BASE_URL}/auth/token"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = f"client_id={self.settings.OGWS_CLIENT_ID}&client_secret={self.settings.OGWS_CLIENT_SECRET}&grant_type=client_credentials"
+        data = (
+            f"client_id={self.settings.OGWS_CLIENT_ID}"
+            f"&client_secret={self.settings.OGWS_CLIENT_SECRET}"
+            "&grant_type=client_credentials"
+        )
 
         # Don't use proxy for localhost
         transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0")

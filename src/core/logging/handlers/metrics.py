@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, Optional, Protocol, TypedDict, Union, runtime_checkable
+from typing import Any, Protocol, TypedDict, Union, runtime_checkable
 
 from metrics.backends.base import MetricsBackend as BaseMetricsBackend
 
