@@ -6,8 +6,6 @@ from typing import Optional
 
 import psutil
 
-from core.logging.loggers import get_system_logger
-
 from ..backends.base import MetricsBackend
 from ..exceptions import SystemMetricsError
 
@@ -32,6 +30,8 @@ class SystemMetrics:
             SystemMetricsError: If initialization fails
         """
         try:
+            from core.logging.loggers import get_system_logger
+
             self.backend = backend
             self.collection_interval = collection_interval
             self.process = psutil.Process(process_id or os.getpid())

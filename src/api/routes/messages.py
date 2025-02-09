@@ -26,8 +26,8 @@ Transport Types (OGWS-1.txt Section 4.3.1):
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
 from httpx import HTTPError
+from pydantic import BaseModel, Field
 
 from api.clients.factory import get_ogws_client
 from core.app_settings import Settings, get_settings

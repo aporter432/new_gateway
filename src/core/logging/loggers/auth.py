@@ -4,7 +4,6 @@ import logging
 from typing import Optional
 
 from ..log_settings import LogComponent
-from . import get_logger_factory
 
 
 def get_auth_logger(
@@ -20,6 +19,8 @@ def get_auth_logger(
     Returns:
         Configured logger instance
     """
+    from . import get_logger_factory
+
     factory = get_logger_factory()
     logger = factory.get_logger(
         LogComponent.AUTH,

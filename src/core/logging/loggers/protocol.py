@@ -4,7 +4,6 @@ import logging
 from typing import Optional
 
 from ..log_settings import LogComponent
-from . import get_logger_factory
 
 
 def get_protocol_logger(
@@ -20,10 +19,12 @@ def get_protocol_logger(
     Returns:
         Configured logger instance
     """
+    from . import get_logger_factory
+
     factory = get_logger_factory()
     logger = factory.get_logger(
         LogComponent.PROTOCOL,
-        use_syslog=True,  # Protocol logs should go to syslog for monitoring
+        use_syslog=True,  # Protocol logs should go to syslog
     )
 
     if name:

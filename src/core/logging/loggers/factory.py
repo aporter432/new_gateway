@@ -10,13 +10,6 @@ from ..handlers.metrics import get_metrics_handler
 from ..handlers.stream import get_stream_handler
 from ..handlers.syslog import get_syslog_handler
 from ..log_settings import LogComponent, LoggingConfig
-from . import (
-    get_api_logger,
-    get_auth_logger,
-    get_infra_logger,
-    get_protocol_logger,
-    get_system_logger,
-)
 
 
 class LoggerFactory:

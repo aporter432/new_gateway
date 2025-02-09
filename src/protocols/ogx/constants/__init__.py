@@ -8,7 +8,7 @@ The constants defined here should be treated as the source of truth
 for the OGWS implementation, ensuring consistency across the codebase.
 
 Spec Compliance:
-- All constants align with OGWS-1.txt specifications 
+- All constants align with OGWS-1.txt specifications
 - Network types follow section 1.1 definitions
 - Transport types implement section 5.4 requirements
 - Message limits comply with section 2.3
@@ -39,15 +39,6 @@ from enum import Enum, auto
 from .auth import AuthRole, GrantType, ThrottleGroup
 from .endpoints import APIEndpoint
 from .field_types import FieldType
-from .network_types import (
-    NetworkType,
-    NETWORK_TYPE_OGX,
-)
-from .transport_types import (
-    TransportType,
-    TRANSPORT_TYPE_SATELLITE,
-    TRANSPORT_TYPE_CELLULAR,
-)
 from .limits import (
     DEFAULT_CALLS_PER_MINUTE,
     DEFAULT_TOKEN_EXPIRY,
@@ -55,8 +46,8 @@ from .limits import (
     ERR_RETRIEVE_STATUS_RATE_EXCEEDED,
     ERR_SUBMIT_MESSAGE_RATE_EXCEEDED,
     MAX_CONCURRENT_REQUESTS,
-    MAX_OGX_PAYLOAD_BYTES,
     MAX_MESSAGES_PER_RESPONSE,
+    MAX_OGX_PAYLOAD_BYTES,
     MAX_OUTSTANDING_MESSAGES_PER_SIZE,
     MAX_SIMULTANEOUS_CONNECTIONS,
     MAX_STATUS_IDS_PER_REQUEST,
@@ -73,7 +64,16 @@ from .message_format import (
 )
 from .message_states import MessageState
 from .message_types import MessageType
+from .network_types import (
+    NETWORK_TYPE_OGX,
+    NetworkType,
+)
 from .operation_modes import OperationMode
+from .transport_types import (
+    TRANSPORT_TYPE_CELLULAR,
+    TRANSPORT_TYPE_SATELLITE,
+    TransportType,
+)
 
 __all__ = [
     "FieldType",

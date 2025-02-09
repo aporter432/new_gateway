@@ -17,9 +17,9 @@ from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
 from core.app_settings import Settings, get_settings
-from core.exceptions import OGxProtocolError
 from core.logging.loggers import get_auth_logger
 from infrastructure.redis import get_redis_client
+from protocols.ogx.exceptions import OGxProtocolError
 
 
 class TokenMetadata:

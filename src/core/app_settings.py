@@ -36,6 +36,7 @@ Environment Handling:
 from functools import lru_cache
 from typing import Any
 
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -64,6 +65,8 @@ class Settings(BaseSettings):
     - [ ] Implement credential rotation mechanism
     - [ ] Add production configuration validation
     """
+
+    model_config = ConfigDict(env_file=".env")
 
     # Environment detection
     ENVIRONMENT: str = "development"  # TODO: Document production environment setup
@@ -98,9 +101,6 @@ class Settings(BaseSettings):
             Hash of the settings instance based on its model fields
         """
         return hash(tuple(sorted(self.model_dump().items())))
-
-    class Config:
-        env_file = ".env"
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialize settings with validation.

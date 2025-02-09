@@ -115,36 +115,20 @@ class MessageSender:
             if transport is not None:
                 message_data["TransportType"] = transport.value
 
+            # Get auth header
+            auth_header = await self.auth_manager.get_auth_header()
+
+            # Send message
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.settings.OGWS_BASE_URL}/submit/messages",
-                    headers=await self.auth_manager.get_auth_header(),
+                    headers={**auth_header, "Content-Type": "application/json"},
                     json=message_data,
                 )
-                response.raise_for_status()
-                data: Dict[str, Any] = response.json()
+                await response.raise_for_status()
+                return response.json()
 
-                self.logger.info(
-                    "Message sent successfully",
-                    extra={
-                        "customer_id": self.settings.CUSTOMER_ID,
-                        "asset_id": "message_sender",
-                        "destination_id": message.get("DestinationID"),
-                        "action": "send_message",
-                    },
-                )
-
-                return data
-        except httpx.HTTPStatusError as e:
-            self.logger.error(
-                "Failed to send message",
-                extra={
-                    "customer_id": self.settings.CUSTOMER_ID,
-                    "asset_id": "message_sender",
-                    "error": str(e),
-                    "action": "send_message",
-                },
-            )
+        except httpx.HTTPError as e:
             raise OGxProtocolError(f"Failed to send message: {str(e)}") from e
 
     async def submit_batch(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

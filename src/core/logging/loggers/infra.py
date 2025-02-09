@@ -1,6 +1,9 @@
 """Infrastructure logging for database, cache, and other infrastructure components."""
 
 import logging
+from typing import Optional
+
+from ..log_settings import LogComponent
 
 # Basic logging configuration
 logging.basicConfig(
@@ -13,19 +16,29 @@ logging.basicConfig(
 )
 
 
-def get_infra_logger(component: str = "") -> logging.Logger:
-    """Get a logger for infrastructure components.
-
-    Example:
-        logger = get_infra_logger("redis")
-        logger.info("Connected to Redis")
-        logger.error("Failed to connect to database", exc_info=True)
+def get_infra_logger(
+    name: Optional[str] = None,
+    include_metrics: bool = True,
+) -> logging.Logger:
+    """Get logger for infrastructure components.
 
     Args:
-        component: The infrastructure component (e.g. "redis", "database")
-    """
-    name = "infra"
-    if component:
-        name = f"infra.{component}"
+        name: Optional sub-component name
+        include_metrics: Whether to include metrics handler
 
-    return logging.getLogger(name)
+    Returns:
+        Configured logger instance
+    """
+    from . import get_logger_factory
+
+    factory = get_logger_factory()
+    logger = factory.get_logger(
+        LogComponent.INFRA,
+        use_syslog=True,  # Infrastructure logs should go to syslog
+    )
+
+    if name:
+        logger = logging.getLogger(f"{logger.name}.{name}")
+        logger.parent = logger
+
+    return logger

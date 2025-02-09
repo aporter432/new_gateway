@@ -50,10 +50,10 @@ from typing import Dict, List, Optional, Tuple
 from core.app_settings import get_settings
 from core.logging.loggers import get_protocol_logger
 from protocols.ogx.constants import (
+    TRANSPORT_TYPE_CELLULAR,
+    TRANSPORT_TYPE_SATELLITE,
     NetworkType,
     TransportType,
-    TRANSPORT_TYPE_SATELLITE,
-    TRANSPORT_TYPE_CELLULAR,
 )
 from protocols.ogx.constants.limits import MAX_OGX_PAYLOAD_BYTES
 from protocols.ogx.exceptions import ValidationError

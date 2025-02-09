@@ -39,9 +39,12 @@ Implementation Notes from OGWS-1.txt:
 
 from enum import Enum, auto
 
+
 class NetworkType(Enum):
     """Network types as defined in OGWS-1.txt"""
+
     OGX = auto()  # OGx network
+
 
 # Constants for comparison
 NETWORK_TYPE_OGX = NetworkType.OGX
