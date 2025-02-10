@@ -28,7 +28,7 @@ Usage:
         "timestamp": "2024-01-01T00:00:00Z",
         "metadata": {"key": "value"}
     })
-    
+
     message_json = encode_message(message_obj)
 """
 
@@ -40,6 +40,22 @@ from protocols.ogx.constants import MessageState
 from protocols.ogx.exceptions import EncodingError
 from protocols.ogx.models.messages import OGxMessage
 from protocols.ogx.validation.json.message_validator import OGxMessageValidator
+
+
+class OGxJsonEncoder:
+    """JSON encoder for OGx protocol messages."""
+
+    def encode(self, obj: Dict[str, Any]) -> str:
+        """
+        Encode a dictionary to JSON string.
+
+        Args:
+            obj: Dictionary to encode
+
+        Returns:
+            JSON formatted string
+        """
+        return json.dumps(obj, default=str)
 
 
 def encode_state(data: Dict[str, Any]) -> str:

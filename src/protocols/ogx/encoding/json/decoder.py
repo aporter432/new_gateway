@@ -43,6 +43,31 @@ from protocols.ogx.models.messages import OGxMessage
 from protocols.ogx.validation.json.message_validator import OGxMessageValidator
 
 
+class OGxJsonDecoder:
+    """JSON decoder for OGx protocol messages."""
+
+    def decode(self, data: str) -> Dict[str, Any]:
+        """
+        Decode a JSON string to a dictionary.
+
+        Args:
+            data: JSON formatted string
+
+        Returns:
+            Dict[str, Any]: Decoded dictionary
+
+        Raises:
+            EncodingError: If data cannot be decoded to a dictionary
+        """
+        try:
+            decoded = json.loads(data)
+            if not isinstance(decoded, dict):
+                raise EncodingError("Decoded data must be a JSON object")
+            return decoded
+        except json.JSONDecodeError as e:
+            raise EncodingError(f"Failed to decode JSON: {str(e)}") from e
+
+
 def decode_state(data: str) -> Dict[str, Any]:
     """Decode JSON string to message state dictionary.
 

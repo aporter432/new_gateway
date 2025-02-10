@@ -43,7 +43,7 @@ For detailed specifications, see:
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import httpx
 
@@ -125,8 +125,8 @@ class MessageSender:
                     headers={**auth_header, "Content-Type": "application/json"},
                     json=message_data,
                 )
-                await response.raise_for_status()
-                return response.json()
+                response.raise_for_status()
+                return cast(Dict[str, Any], response.json())
 
         except httpx.HTTPError as e:
             raise OGxProtocolError(f"Failed to send message: {str(e)}") from e

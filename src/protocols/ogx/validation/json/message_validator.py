@@ -4,7 +4,7 @@ Implements message-level validation rules for the Common Message Format.
 """
 
 # Standard library imports
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
 
 # Local imports
 from ...constants.field_types import FieldType
@@ -14,66 +14,92 @@ from ...constants.message_format import (
     REQUIRED_MESSAGE_FIELDS,
 )
 from ...exceptions import ValidationError
+from ...models.messages import OGxMessage
 from .field_validator import OGxFieldValidator
 
 # Third-party imports
 
 
 class OGxMessageValidator:
-    """Validates OGx messages according to N214 specification section 5"""
+    """Validates OGx messages according to OGWS-1.txt specifications."""
 
     def __init__(self) -> None:
         """Initialize the validator with a field validator instance."""
         self.field_validator = OGxFieldValidator()
 
-    def validate_message(self, message: Dict[str, Any] | "OGxMessage") -> None:
+    def validate_message(self, message: Union[Dict[str, Any], OGxMessage]) -> Optional[OGxMessage]:
         """
-        Validates a complete message structure according to N214 section 5.
+        Validate message format and field values.
 
         Args:
-            message: Dictionary or OGxMessage containing the message data
+            message: Dictionary or OGxMessage instance containing message data
+
+        Returns:
+            OGxMessage if validation passes
 
         Raises:
-            ValidationError: If message structure is invalid
+            ValidationError: If message format is invalid
         """
         # Convert OGxMessage to dict if needed
-        if hasattr(message, "to_dict"):
-            message = message.to_dict()
+        message_dict: Dict[str, Any]
+        if isinstance(message, OGxMessage):
+            message_dict = message.to_dict()
+        elif isinstance(message, dict):
+            message_dict = message
+        else:
+            raise ValidationError(
+                f"Message must be dictionary or OGxMessage, got {type(message)}",
+                ValidationError.INVALID_MESSAGE_FORMAT,
+            )
 
         # Validate required message fields
-        self._validate_required_fields(message, REQUIRED_MESSAGE_FIELDS, "message")
-
-        # Validate message field types and values
-        self._validate_message_field_types(message)
-
-        # Validate Fields is a list
-        if not isinstance(message["Fields"], list):
-            raise ValidationError(
-                "Message Fields must be a list", ValidationError.INVALID_MESSAGE_FORMAT
-            )
-
-        # Validate each field's required properties first
-        for field in message["Fields"]:
-            self._validate_field(field)
-
-        # Check for duplicate field names after validating required properties
-        field_names = set()
-        for field in message["Fields"]:
-            if field["Name"] in field_names:
+        for field in REQUIRED_MESSAGE_FIELDS:
+            if field not in message_dict:
                 raise ValidationError(
-                    f"Duplicate field name: {field['Name']}", ValidationError.INVALID_MESSAGE_FORMAT
+                    f"Missing required message field: {field}",
+                    ValidationError.INVALID_MESSAGE_FORMAT,
                 )
-            field_names.add(field["Name"])
 
-        # Validate Name is a string and not empty
-        if not isinstance(message["Name"], str):
-            raise ValidationError(
-                "Message Name must be a string", ValidationError.INVALID_MESSAGE_FORMAT
+        # Validate fields array if present
+        fields = message_dict.get("Fields", [])
+        if not isinstance(fields, list):
+            raise ValidationError("Fields must be an array", ValidationError.INVALID_MESSAGE_FORMAT)
+
+        # Validate each field
+        for field in fields:
+            if not isinstance(field, dict):
+                raise ValidationError(
+                    "Field must be an object", ValidationError.INVALID_FIELD_FORMAT
+                )
+
+            # Validate required field properties
+            for prop in REQUIRED_FIELD_PROPERTIES:
+                if prop not in field:
+                    raise ValidationError(
+                        f"Missing required field property: {prop}",
+                        ValidationError.INVALID_FIELD_FORMAT,
+                    )
+
+            # Convert field type to FieldType enum
+            try:
+                field_type = FieldType(field["Type"].lower())
+            except (ValueError, AttributeError) as e:
+                raise ValidationError(
+                    f"Invalid field type: {field.get('Type')}", ValidationError.INVALID_FIELD_TYPE
+                ) from e
+
+            # Validate field value using converted FieldType
+            self.field_validator.validate_field_value(
+                field_type, field.get("Value"), field.get("TypeAttribute")
             )
-        if not message["Name"]:
+
+        # If validation passes, create and return OGxMessage object
+        try:
+            return OGxMessage.from_dict(message_dict)
+        except Exception as e:
             raise ValidationError(
-                "Message Name cannot be empty", ValidationError.INVALID_MESSAGE_FORMAT
-            )
+                f"Failed to create message object: {str(e)}", ValidationError.INVALID_MESSAGE_FORMAT
+            ) from e
 
     def _validate_field(self, field: Dict[str, Any]) -> None:
         """
@@ -86,10 +112,17 @@ class OGxMessageValidator:
             ValidationError: If field structure is invalid
         """
         # For array fields, Elements is required instead of Value
-        field_type = field.get("Type")
-        if field_type == "array":
+        field_type_str = field.get("Type", "").lower()
+        try:
+            field_type = FieldType(field_type_str)
+        except (ValueError, AttributeError) as e:
+            raise ValidationError(
+                f"Invalid field type: {field_type_str}", ValidationError.INVALID_FIELD_TYPE
+            ) from e
+
+        if field_type == FieldType.ARRAY:
             required_fields = {"Name", "Type", "Elements"}
-        elif field_type in ("dynamic", "property"):
+        elif field_type in (FieldType.DYNAMIC, FieldType.PROPERTY):
             required_fields = {"Name", "Type", "Value", "TypeAttribute"}
         else:
             required_fields = REQUIRED_FIELD_PROPERTIES
@@ -98,9 +131,9 @@ class OGxMessageValidator:
         self._validate_required_fields(field, required_fields, "field")
 
         # Validate field value against its type
-        if field_type == "array":
+        if field_type == FieldType.ARRAY:
             # Validate Elements is a list
-            if not isinstance(field["Elements"], list):
+            if not isinstance(field.get("Elements"), list):
                 raise ValidationError(
                     "Field Elements must be a list", ValidationError.INVALID_FIELD_FORMAT
                 )

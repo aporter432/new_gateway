@@ -6,7 +6,7 @@ Implements field-level validation rules for the Common Message Format.
 import base64
 import re
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Callable, Union
 
 from ...constants.field_types import FieldType
 from ...constants.limits import (
@@ -25,8 +25,8 @@ from ...exceptions import ValidationError
 class OGxFieldValidator:
     """Validates individual OGx fields according to N214 specification section 5"""
 
-    # Field type mappings from Table 3 of N214 spec - using FieldType enum
-    TYPE_ATTRIBUTES = {
+    # Update TYPE_ATTRIBUTES to use proper typing
+    TYPE_ATTRIBUTES: Dict[FieldType, Union[FieldType, str]] = {
         FieldType.ENUM: FieldType.ENUM,
         FieldType.BOOLEAN: FieldType.BOOLEAN,
         FieldType.UNSIGNED_INT: FieldType.UNSIGNED_INT,
@@ -48,8 +48,63 @@ class OGxFieldValidator:
     # UTC timestamp format from Section 2.1
     TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
 
+    _TYPE_VALIDATORS: Dict[FieldType, str] = {
+        FieldType.ENUM: "validate_enum",
+        FieldType.BOOLEAN: "validate_boolean",
+        FieldType.UNSIGNED_INT: "validate_unsigned_int",
+        FieldType.SIGNED_INT: "validate_signed_int",
+        FieldType.STRING: "validate_string",
+        FieldType.DATA: "validate_data",
+        FieldType.ARRAY: "validate_array",
+        FieldType.MESSAGE: "validate_message",
+        FieldType.DYNAMIC: "validate_dynamic",
+        FieldType.PROPERTY: "validate_property",
+    }
+
+    def validate_field(self, field: Dict[str, Any]) -> bool:
+        """
+        Validate a field based on its type.
+
+        Args:
+            field: Dictionary containing field data
+
+        Returns:
+            bool: True if validation passes
+
+        Raises:
+            ValidationError: If validation fails
+        """
+        try:
+            field_type_str = field.get("Type", "").lower()
+            field_type = FieldType(field_type_str)
+
+            validator_name = self._TYPE_VALIDATORS.get(field_type)
+            if not validator_name:
+                raise ValidationError(
+                    f"Invalid field type: {field_type}", ValidationError.INVALID_FIELD_TYPE
+                )
+
+            validator = getattr(self, validator_name)
+            validator(field)  # Will raise ValidationError if validation fails
+            return True
+
+        except (ValueError, AttributeError) as e:
+            raise ValidationError(
+                f"Field validation failed: {str(e)}", ValidationError.INVALID_FIELD_TYPE
+            )
+
+    def validate_enum(self, field: Dict[str, Any]) -> bool:
+        # Implement enum validation
+        self.validate_field_value(FieldType.ENUM, field.get("Value"))
+        return True
+
+    def validate_boolean(self, field: Dict[str, Any]) -> bool:
+        # Implement boolean validation
+        self.validate_field_value(FieldType.BOOLEAN, field.get("Value"))
+        return True
+
     def validate_field_value(
-        self, field_type: FieldType, value: Any, type_attribute: str | None = None
+        self, field_type: FieldType, value: Any, type_attribute: Union[str, FieldType, None] = None
     ) -> None:
         """
         Validates a field value against its declared type per Table 3 of N214 spec.
@@ -70,15 +125,33 @@ class OGxFieldValidator:
                         "Type attribute required for dynamic/property fields",
                         ValidationError.INVALID_FIELD_TYPE,
                     )
+
+                # Convert string type_attribute to FieldType if needed
+                if isinstance(type_attribute, str):
+                    try:
+                        type_attribute = FieldType(type_attribute.lower())
+                    except ValueError as e:
+                        raise ValidationError(
+                            f"Invalid type attribute: {type_attribute}",
+                            ValidationError.INVALID_FIELD_TYPE,
+                        ) from e
+
                 if type_attribute not in self.TYPE_ATTRIBUTES:
                     raise ValidationError(
                         f"Invalid type attribute: {type_attribute}",
                         ValidationError.INVALID_FIELD_TYPE,
                     )
-                # Validate against the specified type
-                return self.validate_field_value(
-                    FieldType(self.TYPE_ATTRIBUTES[type_attribute]), value
-                )
+
+                # Get the resolved type from TYPE_ATTRIBUTES
+                resolved_type = self.TYPE_ATTRIBUTES[type_attribute]
+                if isinstance(resolved_type, str):
+                    raise ValidationError(
+                        f"Cannot resolve type attribute: {type_attribute}",
+                        ValidationError.INVALID_FIELD_TYPE,
+                    )
+
+                # Validate against the resolved type
+                return self.validate_field_value(resolved_type, value)
 
             if field_type == FieldType.BOOLEAN:
                 if not isinstance(value, bool):

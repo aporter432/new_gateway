@@ -22,6 +22,7 @@ from datetime import datetime
 from typing import Any, Dict, NotRequired, TypedDict, Union
 
 from .log_settings import LogComponent
+from protocols.ogx.encoding.json.encoder import OGxJsonEncoder
 
 
 class ProcessInfo(TypedDict):
@@ -84,11 +85,12 @@ class BaseFormatter(logging.Formatter):
         include_process: bool = True,
         include_thread: bool = True,
     ):
+        super().__init__()
         self.component = component
         self.include_timestamp = include_timestamp
         self.include_process = include_process
         self.include_thread = include_thread
-        super().__init__()
+        self.encoder = OGxJsonEncoder()  # Initialize encoder
 
     def get_log_data(self, record: logging.LogRecord) -> Dict[str, Any]:
         """Get base log data as dictionary.
@@ -119,6 +121,18 @@ class BaseFormatter(logging.Formatter):
 
         return data
 
+    def formatTime(self, record: logging.LogRecord, datefmt: str | None = None) -> str:
+        """Format the time of the log record.
+
+        Args:
+            record: The log record to format
+            datefmt: Optional datetime format string
+
+        Returns:
+            Formatted timestamp string
+        """
+        return datetime.fromtimestamp(record.created).isoformat()
+
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON string.
 
@@ -128,8 +142,17 @@ class BaseFormatter(logging.Formatter):
         Returns:
             JSON string representation of the log data
         """
-        data = self.get_log_data(record)
-        return json.dumps(data, default=str)
+        data: Dict[str, Any] = self.get_log_data(record)
+        try:
+            return self.encoder.encode(data)
+        except Exception as e:
+            return json.dumps(
+                {
+                    "error": f"Failed to serialize log message: {str(e)}",
+                    "original_message": str(data),
+                },
+                default=str,
+            )
 
 
 class ProtocolFormatter(BaseFormatter):
@@ -192,7 +215,7 @@ class SecurityFormatter(BaseFormatter):
             if any(sensitive in key.lower() for sensitive in self.SENSITIVE_FIELDS):
                 sanitized[key] = "[REDACTED]"
             elif isinstance(value, dict):
-                sanitized[key] = self._sanitize_data(value)
+                sanitized[key] = json.dumps(self._sanitize_data(value))
             else:
                 sanitized[key] = value
         return sanitized
@@ -229,8 +252,16 @@ class SecurityFormatter(BaseFormatter):
         Returns:
             JSON string representation of the sanitized log data
         """
-        data = self.get_log_data(record)
-        return json.dumps(data, default=str)
+        try:
+            data = self.get_log_data(record)
+            return self.encoder.encode(data)
+        except Exception as e:
+            return self.encoder.encode(
+                {
+                    "error": f"Failed to serialize log message: {str(e)}",
+                    "original_message": str(data),
+                }
+            )
 
 
 class MetricsFormatter(BaseFormatter):
@@ -257,3 +288,50 @@ class MetricsFormatter(BaseFormatter):
             }
 
         return data
+
+
+class JsonFormatter(logging.Formatter):
+    """Formatter for JSON logs using OGx JSON encoder."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the JSON formatter.
+
+        Args:
+            *args: Positional arguments for Formatter
+            **kwargs: Keyword arguments for Formatter
+        """
+        super().__init__(*args, **kwargs)
+        self.encoder = OGxJsonEncoder()
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format the log record using OGx JSON encoder.
+
+        Args:
+            record: LogRecord instance to format
+
+        Returns:
+            str: JSON formatted log string using OGx encoding
+        """
+        message_dict: Dict[str, Any] = {
+            "timestamp": self.formatTime(record),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "logger": record.name,
+        }
+
+        # Safely get extra fields if they exist
+        extra = getattr(record, "extra", {})
+        if extra:
+            message_dict["extra"] = extra
+
+        try:
+            return self.encoder.encode(message_dict)
+        except Exception as e:
+            return self.encoder.encode(
+                {
+                    "error": f"Failed to serialize log message: {str(e)}",
+                    "original_message": str(message_dict),
+                }
+            )
+

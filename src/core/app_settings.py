@@ -34,10 +34,20 @@ Environment Handling:
 """
 
 from functools import lru_cache
-from typing import Any
+from typing import Any, Dict, Optional
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+
+class AppSettings(BaseModel):
+    """Application configuration model."""
+
+    app_name: str
+    version: str
+    debug: bool
+    env_file: Optional[str] = None
+    log_level: Optional[str] = None
+    api_key: Optional[str] = None
 
 
 class Settings(BaseSettings):
@@ -66,7 +76,9 @@ class Settings(BaseSettings):
     - [ ] Add production configuration validation
     """
 
-    model_config = ConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="allow"
+    )
 
     # Environment detection
     ENVIRONMENT: str = "development"  # TODO: Document production environment setup
