@@ -101,6 +101,7 @@ class OGxElementValidator(BaseValidator):
         Validates that an element:
         1. Has the minimum required structure (Index and Fields)
         2. Has Fields as an array (as specified in OGWS-1.txt)
+        3. Each field in Fields array is valid
 
         Implementation Note:
             While OGWS-1.txt only specifies elements as "indexed structures
@@ -123,6 +124,17 @@ class OGxElementValidator(BaseValidator):
             fields = element.get("Fields")
             if not isinstance(fields, list):
                 raise ValidationError("Element Fields must be an array")
+
+            # Validate each field in the element
+            if self.context is not None:
+                from .field_validator import OGxFieldValidator
+
+                field_validator = OGxFieldValidator()
+                for field in fields:
+                    result = field_validator.validate(field, self.context)
+                    if not result.is_valid:
+                        for error in result.errors:
+                            self._add_error(f"In field: {error}")
 
             return self._get_validation_result()
 

@@ -125,3 +125,21 @@ class TestOGxMessageValidator:
         result = validator.validate(valid_message, context)
         assert result.is_valid  # Empty arrays are valid according to spec
         assert not result.errors
+
+    def test_validate_with_field_validation_error(self, validator, context, valid_message):
+        """Test validation when field validation fails."""
+        message = {
+            "Name": "test_message",
+            "SIN": 16,
+            "MIN": 1,
+            "Fields": [
+                {
+                    "Name": "test_field",
+                    "Type": "unsignedint",
+                    "Value": -1,  # Invalid value for unsigned int
+                }
+            ],
+        }
+        result = validator.validate(message, context)
+        assert not result.is_valid
+        assert any("Field validation error" in error for error in result.errors)

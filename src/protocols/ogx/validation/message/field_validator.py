@@ -131,10 +131,16 @@ class OGxFieldValidator(BaseValidator):
                     "Validation context is required for array validation",
                     GatewayErrorCode.INVALID_FIELD_FORMAT,
                 )
-            result = self.element_validator.validate_array(data["Elements"], self.context)
+            # Create a new context with array flag set
+            array_context = ValidationContext(
+                network_type=self.context.network_type,
+                direction=self.context.direction,
+                is_array=True,
+            )
+            result = self.element_validator.validate_array(data["Elements"], array_context)
             if not result.is_valid:
                 for error in result.errors:
-                    self._add_error(error)
+                    self._add_error(f"In array element: {error}")
 
     def _validate_message_field(self, data: Dict[str, Any]) -> None:
         """Validate a message field.
@@ -155,6 +161,16 @@ class OGxFieldValidator(BaseValidator):
                 "Message fields must have Message attribute",
                 GatewayErrorCode.INVALID_FIELD_FORMAT,
             )
+
+        # Validate nested message using message validator
+        from .message_validator import OGxMessageValidator
+
+        message_validator = OGxMessageValidator()
+        if self.context is not None:
+            result = message_validator.validate(data["Message"], self.context)
+            if not result.is_valid:
+                for error in result.errors:
+                    self._add_error(f"In nested message: {error}")
 
     def _validate_basic_field(self, field_type: FieldType, data: Dict[str, Any]) -> None:
         """Validate a basic field type (enum, boolean, etc.).
