@@ -34,7 +34,7 @@ Environment Handling:
 """
 
 from functools import lru_cache
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -131,18 +131,12 @@ class Settings(BaseSettings):
             missing = [
                 var
                 for var in required_vars
-                if getattr(self, var)
-                in (
-                    None,
-                    "",
-                    "70000934",
-                    "password",
-                    "test_customer",
-                )
+                if getattr(self, var) in (None, "", "70000934", "password", "test_customer")
             ]
             if missing:
                 raise ValueError(
-                    f"Production environment requires {', '.join(missing)} to be set via environment variables"
+                    f"Production environment requires {', '.join(missing)} "
+                    "via environment variables"
                 )
 
 

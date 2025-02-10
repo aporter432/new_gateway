@@ -6,18 +6,10 @@ Implements field-level validation rules for the Common Message Format.
 import base64
 import re
 from datetime import datetime
-from typing import Any, Dict, Callable, Union
+from typing import Any, Dict, Union
 
 from ...constants.field_types import FieldType
-from ...constants.limits import (
-    MAX_OGX_PAYLOAD_BYTES,
-    MAX_OUTSTANDING_MESSAGES_PER_SIZE,
-)
-from ...constants.message_format import (
-    REQUIRED_ELEMENT_PROPERTIES,
-    REQUIRED_FIELD_PROPERTIES,
-    REQUIRED_MESSAGE_FIELDS,
-)
+from ...constants.limits import MAX_OGX_PAYLOAD_BYTES
 from ...constants.network_types import NetworkType
 from ...exceptions import ValidationError
 

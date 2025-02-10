@@ -334,4 +334,3 @@ class JsonFormatter(logging.Formatter):
                     "original_message": str(message_dict),
                 }
             )
-

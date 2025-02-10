@@ -35,7 +35,7 @@ Usage:
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Union
 
 from protocols.ogx.constants import MessageState
 from protocols.ogx.exceptions import EncodingError
