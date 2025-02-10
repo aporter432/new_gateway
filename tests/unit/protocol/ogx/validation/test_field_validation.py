@@ -5,7 +5,7 @@ from base64 import b64encode
 import pytest
 
 from protocols.ogx.constants import FieldType
-from protocols.ogx.exceptions import ValidationError
+from protocols.ogx.validation.common.exceptions import ValidationError
 from protocols.ogx.models.fields import (
     ArrayField,
     DynamicField,

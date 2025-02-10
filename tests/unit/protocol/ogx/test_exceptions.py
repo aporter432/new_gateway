@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.protocols.ogx.exceptions import (
+from protocols.ogx.validation.common.exceptions import (
     ElementFormatError,
     EncodingError,
     FieldFormatError,

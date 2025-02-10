@@ -1,85 +1,108 @@
+"""OGx Message Models according to OGWS-1.txt Section 4.3.
+
+Message directions (Section 4.3):
+- To-mobile (forward/FW): Messages sent to terminals from gateway
+- From-mobile (return/RE): Messages sent from terminals to gateway
 """
-OGx message models according to N214 specification section 5.
-Implements message format definitions from the Common Message Format.
-"""
 
-from dataclasses import dataclass
-from dataclasses import field as dataclass_field
-from typing import Any, List, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, cast
 
-from ..constants import FieldType
-from .fields import ArrayField, Element, Field
+from pydantic import BaseModel, Field, root_validator
 
-__all__ = ["OGxMessage"]
+from protocols.ogx.constants import FieldType
+from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.validation.common.exceptions import ValidationError
+from protocols.ogx.models.fields import Element, Field as OGxField, Message
 
 
-@dataclass
-class OGxMessage:
-    """Message structure as defined in N214 section 5"""
+class OGxMessage(Message):
+    """Message structure as defined in OGWS-1.txt Section 4.3.
 
-    name: str
-    sin: int
-    min: int
-    fields: Sequence[Union[Field, ArrayField]] = dataclass_field(default_factory=list)
+    According to Section 4.3, every message MUST have:
+    - name: Message name
+    - sin: Service ID (0-255)
+    - min: Message ID
+    - message_type: FORWARD (FW) or RETURN (RE) - Required
+    - fields: Array of fields
+    """
 
+    name: str = Field(..., description="Message name")
+    sin: int = Field(..., description="Service identification number (0-255)", ge=0, le=255)
+    min: int = Field(..., description="Message identification number")
+    message_type: MessageType = Field(
+        ..., description="Message direction: FW (to-mobile) or RE (from-mobile)"
+    )
+    fields: Sequence[OGxField] = Field(
+        default_factory=list, description="Array of Field instances per Section 5"
+    )
+
+    class Config:
+        """Message model configuration."""
+
+        frozen = True
+        arbitrary_types_allowed = True
+
+    @root_validator(pre=True)
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "OGxMessage":
-        """
-        Create message instance from dictionary data.
+    def validate_message_structure(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate message according to OGWS-1.txt Section 5 rules."""
+        sin = values.get("sin")
+        fields = values.get("fields", [])
+        message_type = values.get("message_type")
 
-        Args:
-            data: Dictionary containing message data
+        # Validate SIN range per Section 5
+        if sin is not None and not (0 <= sin <= 255):
+            raise ValidationError("SIN must be between 0 and 255")
 
-        Returns:
-            OGxMessage instance
-        """
-        fields_data = data.get("Fields", [])
-        message_fields: List[Union[Field, ArrayField]] = []
+        # Validate field directions per Section 5
+        for field in fields:
+            if hasattr(field, "message") and field.message:
+                if field.message.message_type != message_type:
+                    raise ValidationError("Cannot mix to-mobile and from-mobile messages")
 
-        for field_data in fields_data:
-            field_type = field_data.get("Type")
-            if field_type == "array":
-                elements = []
-                for element_data in field_data.get("Elements", []):
-                    element_fields = [
-                        Field(name=f["Name"], type=FieldType(f["Type"]), value=f.get("Value"))
-                        for f in element_data.get("Fields", [])
-                    ]
-                    elements.append(Element(index=element_data["Index"], fields=element_fields))
-                message_fields.append(
-                    ArrayField(name=field_data["Name"], type=FieldType.ARRAY, elements=elements)
-                )
-            else:
-                message_fields.append(
-                    Field(
-                        name=field_data["Name"],
-                        type=FieldType(field_data["Type"]),
-                        value=field_data.get("Value"),
-                    )
-                )
+        return values
 
-        return cls(name=data["Name"], sin=data["SIN"], min=data["MIN"], fields=message_fields)
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Convert message to dictionary format.
-
-        Returns:
-            Dictionary representation of the message
-        """
-        return {
+    def dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format per OGWS-1.txt Section 5.1.1."""
+        data = {
             "Name": self.name,
             "SIN": self.sin,
             "MIN": self.min,
-            "Fields": [message_field.to_dict() for message_field in self.fields],
         }
+        if self.message_type is not None:
+            data["MessageType"] = str(self.message_type)
+        if self.fields:
+            data["Fields"] = [field.dict() for field in self.fields]
+        return data
 
-    def validate(self) -> None:
-        """
-        Validate message structure and field values.
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "OGxMessage":
+        """Create message from dictionary per OGWS-1.txt Section 5.1.1."""
+        fields = []
+        for f in data.get("Fields", []):
+            field_args = {
+                "name": f["Name"],
+                "type": FieldType(f["Type"]),
+            }
 
-        Raises:
-            ValidationError: If validation fails
-        """
-        for message_field in self.fields:
-            message_field.validate()
+            if "Value" in f:
+                field_args["value"] = f["Value"]
+
+            if "Elements" in f:
+                field_args["elements"] = [
+                    Element(index=e["Index"], fields=e["Fields"]) for e in f["Elements"]
+                ]
+
+            if "Message" in f:
+                # Properly cast the nested message to Message type
+                field_args["message"] = cast(Message, cls.from_dict(f["Message"]))
+
+            fields.append(OGxField(**field_args))
+
+        return cls(
+            name=data["Name"],
+            sin=data["SIN"],
+            min=data["MIN"],
+            message_type=MessageType(data["MessageType"]),  # Required - no None check
+            fields=fields,
+        )

@@ -22,7 +22,7 @@ from core.app_settings import Settings, get_settings
 from core.logging.loggers import get_infra_logger
 from infrastructure.redis import get_redis_client
 from protocols.ogx.constants.limits import DEFAULT_WINDOW_SECONDS
-from protocols.ogx.exceptions import OGxProtocolError, ProtocolError
+from protocols.ogx.validation.common.exceptions import OGxProtocolError, ProtocolError
 from protocols.ogx.services.ogws import submit_ogws_message
 from protocols.ogx.services.ogws_message_queue import MessageQueue
 

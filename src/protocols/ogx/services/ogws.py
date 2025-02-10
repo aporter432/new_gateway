@@ -21,7 +21,7 @@ from typing import Dict
 from api.clients.factory import get_ogws_client
 from core.app_settings import get_settings
 from core.logging.loggers import get_protocol_logger
-from protocols.ogx.exceptions import OGxProtocolError, ValidationError
+from protocols.ogx.validation.common.exceptions import OGxProtocolError, ValidationError
 
 logger = get_protocol_logger("ogws_client")
 settings = get_settings()

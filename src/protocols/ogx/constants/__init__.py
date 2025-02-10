@@ -1,37 +1,4 @@
-"""Constants for OGx protocol.
-
-This module serves as the central point for all OGWS protocol constants
-as defined in OGWS-1.txt. It provides type-safe enums and constants
-for network types, transport types, and various service limits.
-
-The constants defined here should be treated as the source of truth
-for the OGWS implementation, ensuring consistency across the codebase.
-
-Spec Compliance:
-- All constants align with OGWS-1.txt specifications
-- Network types follow section 1.1 definitions
-- Transport types implement section 5.4 requirements
-- Message limits comply with section 2.3
-- Error codes match section 3.4 definitions
-
-Usage:
-    from protocols.ogx.constants import (
-        NetworkType, TransportType,
-        NETWORK_TYPE_OGX, TRANSPORT_TYPE_SATELLITE,
-        MAX_OGX_PAYLOAD_BYTES
-    )
-
-    # Network type checking
-    if network_type == NETWORK_TYPE_OGX:
-        # OGx specific handling
-        max_size = MAX_OGX_PAYLOAD_BYTES
-
-    # Transport selection
-    available_transports = [
-        TRANSPORT_TYPE_SATELLITE,
-        TRANSPORT_TYPE_CELLULAR
-    ]
-"""
+"""Constants for OGx protocol according to OGWS-1.txt specification."""
 
 from enum import Enum, auto
 
@@ -69,11 +36,8 @@ from .network_types import (
     NetworkType,
 )
 from .operation_modes import OperationMode
-from .transport_types import (
-    TRANSPORT_TYPE_CELLULAR,
-    TRANSPORT_TYPE_SATELLITE,
-    TransportType,
-)
+from .transport_types import TransportType
+from .error_codes import GatewayErrorCode, HTTPErrorCode
 
 __all__ = [
     "FieldType",
@@ -111,4 +75,11 @@ __all__ = [
     "NETWORK_TYPE_OGX",
     "TRANSPORT_TYPE_SATELLITE",
     "TRANSPORT_TYPE_CELLULAR",
+    "GatewayErrorCode",
+    "HTTPErrorCode",
 ]
+
+# Constants defined in OGWS-1.txt section 4.3.1
+TRANSPORT_TYPE_ANY = 0  # Default if not specified
+TRANSPORT_TYPE_SATELLITE = 1  # Satellite transport only
+TRANSPORT_TYPE_CELLULAR = 2  # Cellular transport only

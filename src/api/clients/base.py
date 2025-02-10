@@ -14,8 +14,8 @@ from httpx import Response
 
 from core.app_settings import Settings
 from core.security import OGWSAuthManager
-from protocols.ogx.constants.http_errors import HTTPError as OGWSHTTPError
-from protocols.ogx.exceptions import OGxProtocolError
+from protocols.ogx.constants.error_codes import HTTPErrorCode
+from protocols.ogx.validation.common.exceptions import OGxProtocolError
 
 
 class BaseAPIClient:
@@ -101,7 +101,7 @@ class BaseAPIClient:
 
         # Check for API-level errors even with 200 status
         if "ErrorID" in data and data["ErrorID"] != 0:
-            if response.status_code == OGWSHTTPError.TOO_MANY_REQUESTS:
+            if response.status_code == HTTPErrorCode.TOO_MANY_REQUESTS:
                 retry_after = data.get("RetryAfter", 60)
                 raise OGxProtocolError(f"Rate limit exceeded. Retry after {retry_after} seconds.")
             raise OGxProtocolError(f"API error: {data.get('ErrorMessage', 'Unknown error')}")

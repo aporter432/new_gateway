@@ -1,10 +1,11 @@
-"""
-OGx models module
+"""OGx protocol message and field models according to OGWS-1.txt Section 5."""
 
-This module provides data models for the OGx protocol.
-"""
-
-from .fields import ArrayField, DynamicField, Element, Field, PropertyField
+from .fields import Element, Field, Message
 from .messages import OGxMessage
 
-__all__ = ["OGxMessage", "Field", "Element", "DynamicField", "PropertyField", "ArrayField"]
+__all__ = [
+    "Element",
+    "Field",
+    "Message",
+    "OGxMessage",  # The single message type defined in OGWS-1.txt Section 5
+]
