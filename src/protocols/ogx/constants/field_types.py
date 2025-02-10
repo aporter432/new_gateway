@@ -1,20 +1,50 @@
-"""Field types as defined in OGWS-1.txt section 5.1 Table 3."""
+"""Field types as defined in OGWS-1.txt section 5.1 Table 3.
+
+Field Types from Table 3:
+Basic field types:
+- enum: Enumeration values
+- boolean: True/False values
+- unsignedint: Non-negative decimal numbers
+- signedint: Signed decimal numbers
+- string: String values
+- data: Base64 encoded data
+- array: Array of elements (no Value attribute)
+- message: Embedded message (no Value attribute)
+- dynamic: Uses another basic type's attributes
+- property: Uses another basic type's attributes
+
+Note: DYNAMIC and PROPERTY fields must specify their Type Attribute
+as one of the basic field types above. Their Value Attribute
+will match whatever type they reference.
+"""
 
 from enum import Enum
 
 
 class FieldType(str, Enum):
-    """Basic field types from OGWS-1.txt Table 3.
+    """Field types from OGWS-1.txt Table 3."""
 
-    Note: According to OGWS-1.txt, Dynamic and Property fields use these
-    types in their Type Attribute rather than being types themselves.
-    """
-
+    # Basic field types
     ENUM = "enum"
     BOOLEAN = "boolean"
     UNSIGNED_INT = "unsignedint"
     SIGNED_INT = "signedint"
     STRING = "string"
     DATA = "data"
-    ARRAY = "array"  # Can only use Elements, not Value
-    MESSAGE = "message"  # Can only use Message, not Value
+    ARRAY = "array"
+    MESSAGE = "message"
+    DYNAMIC = "dynamic"
+    PROPERTY = "property"
+
+
+# Valid type attributes (excludes dynamic and property since they can't be used as attributes)
+BASIC_TYPE_ATTRIBUTES = {
+    FieldType.ENUM.value,
+    FieldType.BOOLEAN.value,
+    FieldType.UNSIGNED_INT.value,
+    FieldType.SIGNED_INT.value,
+    FieldType.STRING.value,
+    FieldType.DATA.value,
+    FieldType.ARRAY.value,
+    FieldType.MESSAGE.value,
+}

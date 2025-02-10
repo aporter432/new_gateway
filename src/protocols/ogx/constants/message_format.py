@@ -92,27 +92,6 @@ from enum import Enum
 from typing import Final, Set
 
 
-class MessageDirection(str, Enum):
-    """Message direction as defined in OGWS-1.txt.
-
-    Attributes:
-        TO_MOBILE: Forward message sent to terminal
-        FROM_MOBILE: Return message from terminal
-
-    API Usage Example:
-        # Message direction in status response
-        {
-            "ID": 10844864715,
-            "Direction": MessageDirection.TO_MOBILE,
-            "State": 1,
-            "IsClosed": True
-        }
-    """
-
-    TO_MOBILE = "to-mobile"  # Forward message
-    FROM_MOBILE = "from-mobile"  # Return message
-
-
 # Required fields for every message per OGWS-1.txt
 REQUIRED_MESSAGE_FIELDS: Final[Set[str]] = {
     "Name",  # Message name
