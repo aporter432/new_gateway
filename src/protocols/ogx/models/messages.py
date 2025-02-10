@@ -1,108 +1,96 @@
-"""OGx Message Models according to OGWS-1.txt Section 4.3.
+"""Message models for OGx protocol.
 
-Message directions (Section 4.3):
-- To-mobile (forward/FW): Messages sent to terminals from gateway
-- From-mobile (return/RE): Messages sent from terminals to gateway
+This module provides message models and conversion utilities for the OGx protocol.
 """
 
-from typing import Any, Dict, List, Optional, Sequence, cast
-
-from pydantic import BaseModel, Field, root_validator
-
-from protocols.ogx.constants import FieldType
-from protocols.ogx.constants.message_types import MessageType
-from protocols.ogx.validation.common.exceptions import ValidationError
-from protocols.ogx.models.fields import Element, Field as OGxField, Message
+from typing import Any, Dict, Optional, ClassVar
 
 
-class OGxMessage(Message):
-    """Message structure as defined in OGWS-1.txt Section 4.3.
+class OGxMessage:
+    """Base class for OGx protocol messages."""
 
-    According to Section 4.3, every message MUST have:
-    - name: Message name
-    - sin: Service ID (0-255)
-    - min: Message ID
-    - message_type: FORWARD (FW) or RETURN (RE) - Required
-    - fields: Array of fields
-    """
+    # Message field names
+    NAME_FIELD: ClassVar[str] = "Name"
+    SIN_FIELD: ClassVar[str] = "SIN"
+    MIN_FIELD: ClassVar[str] = "MIN"
+    IS_FORWARD_FIELD: ClassVar[str] = "IsForward"
+    FIELDS_FIELD: ClassVar[str] = "Fields"
 
-    name: str = Field(..., description="Message name")
-    sin: int = Field(..., description="Service identification number (0-255)", ge=0, le=255)
-    min: int = Field(..., description="Message identification number")
-    message_type: MessageType = Field(
-        ..., description="Message direction: FW (to-mobile) or RE (from-mobile)"
-    )
-    fields: Sequence[OGxField] = Field(
-        default_factory=list, description="Array of Field instances per Section 5"
-    )
+    def __init__(
+        self,
+        name: str,
+        sin: int,
+        min_value: int,
+        is_forward: Optional[bool] = None,
+        fields: Optional[list] = None,
+    ):
+        """Initialize an OGxMessage.
 
-    class Config:
-        """Message model configuration."""
-
-        frozen = True
-        arbitrary_types_allowed = True
-
-    @root_validator(pre=True)
-    @classmethod
-    def validate_message_structure(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate message according to OGWS-1.txt Section 5 rules."""
-        sin = values.get("sin")
-        fields = values.get("fields", [])
-        message_type = values.get("message_type")
-
-        # Validate SIN range per Section 5
-        if sin is not None and not (0 <= sin <= 255):
-            raise ValidationError("SIN must be between 0 and 255")
-
-        # Validate field directions per Section 5
-        for field in fields:
-            if hasattr(field, "message") and field.message:
-                if field.message.message_type != message_type:
-                    raise ValidationError("Cannot mix to-mobile and from-mobile messages")
-
-        return values
-
-    def dict(self) -> Dict[str, Any]:
-        """Convert to dictionary format per OGWS-1.txt Section 5.1.1."""
-        data = {
-            "Name": self.name,
-            "SIN": self.sin,
-            "MIN": self.min,
-        }
-        if self.message_type is not None:
-            data["MessageType"] = str(self.message_type)
-        if self.fields:
-            data["Fields"] = [field.dict() for field in self.fields]
-        return data
+        Args:
+            name: Message name
+            sin: Service Identification Number
+            min_value: Message Identification Number
+            is_forward: Whether message is forward direction
+            fields: List of message fields
+        """
+        self.name = name
+        self.sin = sin
+        self.min = min_value
+        self.is_forward = is_forward
+        self.fields = fields or []
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "OGxMessage":
-        """Create message from dictionary per OGWS-1.txt Section 5.1.1."""
-        fields = []
-        for f in data.get("Fields", []):
-            field_args = {
-                "name": f["Name"],
-                "type": FieldType(f["Type"]),
-            }
+        """Create an OGxMessage from a dictionary.
 
-            if "Value" in f:
-                field_args["value"] = f["Value"]
+        Args:
+            data: Dictionary containing message data
 
-            if "Elements" in f:
-                field_args["elements"] = [
-                    Element(index=e["Index"], fields=e["Fields"]) for e in f["Elements"]
-                ]
+        Returns:
+            OGxMessage instance
 
-            if "Message" in f:
-                # Properly cast the nested message to Message type
-                field_args["message"] = cast(Message, cls.from_dict(f["Message"]))
+        Raises:
+            ValueError: If required fields are missing or invalid
+        """
+        if not isinstance(data, dict):
+            raise ValueError("Data must be a dictionary")
 
-            fields.append(OGxField(**field_args))
+        required_fields = {cls.NAME_FIELD, cls.SIN_FIELD, cls.MIN_FIELD}
+        if not all(field in data for field in required_fields):
+            raise ValueError(f"Missing required fields: {required_fields - data.keys()}")
 
         return cls(
-            name=data["Name"],
-            sin=data["SIN"],
-            min=data["MIN"],
-            message_type=MessageType(data["MessageType"]),  # Required - no None check
-            fields=fields,
+            name=data[cls.NAME_FIELD],
+            sin=int(data[cls.SIN_FIELD]),
+            min_value=int(data[cls.MIN_FIELD]),
+            is_forward=data.get(cls.IS_FORWARD_FIELD),
+            fields=data.get(cls.FIELDS_FIELD, []),
         )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert message to dictionary format.
+
+        Returns:
+            Dictionary representation of the message
+        """
+        data = {
+            self.NAME_FIELD: self.name,
+            self.SIN_FIELD: self.sin,
+            self.MIN_FIELD: self.min,
+        }
+
+        if self.is_forward is not None:
+            data[self.IS_FORWARD_FIELD] = self.is_forward
+
+        if self.fields:
+            data[self.FIELDS_FIELD] = self.fields
+
+        return data
+
+    def __repr__(self) -> str:
+        """Get string representation of the message.
+
+        Returns:
+            String representation
+        """
+        return f"OGxMessage(name={self.name}, sin={self.sin}, min={self.min})"

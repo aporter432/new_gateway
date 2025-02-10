@@ -39,8 +39,7 @@ from typing import Any, Dict, Optional, Union
 from protocols.ogx.constants import MessageState
 from protocols.ogx.validation.common.exceptions import EncodingError
 from protocols.ogx.models.messages import OGxMessage
-from protocols.ogx.validation.json.message_validator import OGxMessageValidator
-
+from protocols.ogx.validation.format.json.json_validator import OGxJsonValidator
 
 class OGxJsonEncoder:
     """JSON encoder for OGx protocol messages."""
@@ -76,7 +75,7 @@ def encode_state(data: Dict[str, Any]) -> str:
     Raises:
         EncodingError: If encoding fails or data invalid
     """
-    validator = OGxMessageValidator()
+    validator = OGxJsonValidator()
 
     # Validate data is a dictionary
     if not isinstance(data, dict):
@@ -104,7 +103,7 @@ def encode_state(data: Dict[str, Any]) -> str:
     # Validate payload if present
     if "payload" in data:
         try:
-            validator.validate_message(data["payload"])
+            validator.validate_message_payload(data["payload"])
         except Exception as e:
             raise EncodingError("Invalid message payload format") from e
 
@@ -130,7 +129,7 @@ def encode_metadata(metadata: Optional[Dict[str, Any]] = None) -> str:
     Raises:
         EncodingError: If encoding fails or format invalid
     """
-    validator = OGxMessageValidator()
+    validator = OGxJsonValidator()
 
     if metadata is None:
         return "{}"
@@ -149,7 +148,7 @@ def encode_metadata(metadata: Optional[Dict[str, Any]] = None) -> str:
     # Validate metadata format if it contains message-related fields
     if any(field in metadata for field in ["Name", "SIN", "MIN", "Fields"]):
         try:
-            validator.validate_message(metadata)
+            validator.validate_message_payload(metadata)
         except Exception as e:
             raise EncodingError("Invalid message metadata format") from e
 
@@ -176,7 +175,7 @@ def encode_message(message: Union[OGxMessage, Dict[str, Any]], validate: bool = 
     Raises:
         EncodingError: If encoding fails or message format invalid
     """
-    validator = OGxMessageValidator()
+    validator = OGxJsonValidator()
 
     # Convert OGxMessage to dict if needed
     if isinstance(message, OGxMessage):
@@ -187,7 +186,7 @@ def encode_message(message: Union[OGxMessage, Dict[str, Any]], validate: bool = 
     # Validate message format if requested
     if validate:
         try:
-            validator.validate_message(message_data)
+            validator.validate_message_payload(message_data)
         except Exception as e:
             raise EncodingError(f"Invalid message format: {str(e)}") from e
 
