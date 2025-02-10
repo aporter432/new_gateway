@@ -114,8 +114,11 @@ REQUIRED_VALUE_FIELD_PROPERTIES: Final[Set[str]] = {
 }
 
 
-# Required properties for array elements per OGWS-1.txt
+# Required properties for array elements
+# Implementation Note: While OGWS-1.txt defines elements as indexed structures
+# containing fields, these specific property requirements are implementation
+# details to ensure consistent validation across the codebase.
 REQUIRED_ELEMENT_PROPERTIES: Final[Set[str]] = {
-    "Index",  # Zero-based array position
-    "Fields",  # Element field container
+    "Index",  # Element's index
+    "Fields",  # Element's fields container
 }
