@@ -310,3 +310,90 @@ class TestFieldValidator:
         result = field_validator.validate(field_data, validation_context)
         assert not result.is_valid
         assert any("Invalid TypeAttribute" in error for error in result.errors)
+
+    def test_array_field_with_missing_elements(
+        self, field_validator: OGxFieldValidator, validation_context: ValidationContext
+    ):
+        """Test array field validation with missing Elements attribute."""
+        field_data = {
+            "Name": "test_array",
+            "Type": "array",
+        }
+
+        result = field_validator.validate(field_data, validation_context)
+        assert result.is_valid  # Elements is optional
+
+    def test_message_field_with_missing_message(
+        self, field_validator: OGxFieldValidator, validation_context: ValidationContext
+    ):
+        """Test message field validation with missing Message attribute."""
+        field_data = {
+            "Name": "test_message",
+            "Type": "message",
+        }
+
+        result = field_validator.validate(field_data, validation_context)
+        assert not result.is_valid
+        assert any("must have Message attribute" in error for error in result.errors)
+
+    def test_field_validation_with_unknown_type(
+        self, field_validator: OGxFieldValidator, validation_context: ValidationContext
+    ):
+        """Test field validation with unknown field type."""
+        field_data = {
+            "Name": "test_field",
+            "Type": "unknown",
+            "Value": "test",
+        }
+
+        result = field_validator.validate(field_data, validation_context)
+        assert not result.is_valid
+        assert any("Invalid field type" in error for error in result.errors)
+
+    def test_array_field_validation_error_handling(
+        self, field_validator: OGxFieldValidator, validation_context: ValidationContext
+    ):
+        """Test array field validation error handling."""
+        field_data = {
+            "Name": "test_array",
+            "Type": "array",
+            "Elements": [
+                {
+                    "Index": 0,
+                    "Fields": [
+                        {
+                            "Name": "test_field",
+                            "Type": "unsignedint",
+                            "Value": "not_a_number",  # Will cause ValueError
+                        }
+                    ],
+                }
+            ],
+        }
+        result = field_validator.validate(field_data, validation_context)
+        assert not result.is_valid
+        assert any("Invalid value for type" in error for error in result.errors)
+
+    def test_message_field_validation_error_handling(
+        self, field_validator: OGxFieldValidator, validation_context: ValidationContext
+    ):
+        """Test message field validation error handling."""
+        field_data = {
+            "Name": "test_message",
+            "Type": "message",
+            "Message": {
+                "Name": "test_submessage",
+                "SIN": 16,
+                "MIN": 1,
+                "Fields": [
+                    {
+                        "Name": "test_field",
+                        "Type": "unsignedint",
+                        "Value": "not_a_number",  # Will cause ValueError
+                    }
+                ],
+            },
+        }
+        result = field_validator.validate(field_data, validation_context)
+        assert not result.is_valid
+        assert any("Invalid value for type" in error for error in result.errors)

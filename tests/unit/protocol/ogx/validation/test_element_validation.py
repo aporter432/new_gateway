@@ -4,11 +4,9 @@ Tests validation of elements according to OGWS-1.txt requirements and
 implementation standards.
 """
 
-from unittest.mock import Mock
-
 import pytest
 
-from src.protocols.ogx.validation.common.types import ValidationContext
+from src.protocols.ogx.validation.common.types import ValidationContext, MessageType
 from src.protocols.ogx.validation.message.element_validator import OGxElementValidator
 
 
@@ -22,18 +20,17 @@ class TestOGxElementValidator:
 
     @pytest.fixture
     def context(self):
-        """Create a mock validation context for tests."""
-        mock_context = Mock(spec=ValidationContext)
-        return mock_context
+        """Provide validation context."""
+        return ValidationContext(network_type="OGX", direction=MessageType.FORWARD)
 
     @pytest.fixture
     def valid_element(self):
-        """Create a valid element fixture."""
-        return {"Index": 0, "Fields": []}  # Empty fields array is valid for element validation
+        """Provide valid element data."""
+        return {"Index": 0, "Fields": []}
 
     @pytest.fixture
     def valid_element_array(self, valid_element):
-        """Create a valid array of elements fixture."""
+        """Provide valid array of elements."""
         return [valid_element, {"Index": 1, "Fields": []}]
 
     def test_validate_valid_element(self, validator, context, valid_element):
@@ -100,3 +97,60 @@ class TestOGxElementValidator:
         result = validator.validate([], context)
         assert result.is_valid  # Empty arrays are valid according to spec
         assert not result.errors
+
+    def test_validate_element_with_invalid_field(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation of element with invalid field."""
+        element = {
+            "Index": 0,
+            "Fields": [
+                {
+                    "Name": "test_field",
+                    "Type": "unsignedint",
+                    "Value": -1,  # Invalid value for unsigned int
+                }
+            ],
+        }
+        validator.context = context  # Set context before validation
+        result = validator.validate(element, context)
+        assert not result.is_valid
+        assert any("Invalid value for type" in error for error in result.errors)
+
+    def test_validate_element_with_no_context(self, validator: OGxElementValidator):
+        """Test validation of element without context."""
+        element = {
+            "Index": 0,
+            "Fields": [
+                {
+                    "Name": "test_field",
+                    "Type": "string",
+                    "Value": "test",
+                }
+            ],
+        }
+        result = validator.validate(element, None)
+        assert result.is_valid  # Should pass basic structure validation without context
+
+    def test_validate_element_with_field_validation_error(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation when field validation raises an error."""
+        element = {
+            "Index": 0,
+            "Fields": [
+                {
+                    "Name": "test_field",
+                    "Type": "unsignedint",
+                    "Value": "not_a_number",  # Will cause ValueError in field validation
+                }
+            ],
+        }
+        validator.context = context
+        result = validator.validate(element, context)
+        assert not result.is_valid
+        print("Actual errors:", result.errors)  # Print actual errors for debugging
+        assert any(
+            "In field: Invalid value for type FieldType.UNSIGNED_INT" in error
+            for error in result.errors
+        )

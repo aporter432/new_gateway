@@ -143,3 +143,37 @@ class TestOGxMessageValidator:
         result = validator.validate(message, context)
         assert not result.is_valid
         assert any("Field validation error" in error for error in result.errors)
+
+    def test_validate_with_empty_fields(
+        self, validator: OGxMessageValidator, context: ValidationContext, valid_message
+    ):
+        """Test validation with empty fields array."""
+        valid_message["Fields"] = []
+        result = validator.validate(valid_message, context)
+        assert result.is_valid
+        assert not result.errors
+
+    def test_validate_with_invalid_fields_array(
+        self, validator: OGxMessageValidator, context: ValidationContext, valid_message
+    ):
+        """Test validation when Fields is not an array."""
+        valid_message["Fields"] = "not_an_array"
+        result = validator.validate(valid_message, context)
+        assert not result.is_valid
+        assert any("must be an array" in error for error in result.errors)
+
+    def test_validate_with_field_validation_error_handling(
+        self, validator: OGxMessageValidator, context: ValidationContext, valid_message
+    ):
+        """Test validation error handling when field validation fails."""
+        valid_message["Fields"] = [
+            {
+                "Name": "test_field",
+                "Type": "unsignedint",
+                "Value": "not_a_number",  # Will cause ValueError in field validation
+            }
+        ]
+        result = validator.validate(valid_message, context)
+        assert not result.is_valid
+        assert any("Field validation error" in error for error in result.errors)
+        assert any("Invalid value for type" in error for error in result.errors)

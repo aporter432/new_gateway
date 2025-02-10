@@ -130,6 +130,7 @@ class OGxElementValidator(BaseValidator):
                 from .field_validator import OGxFieldValidator
 
                 field_validator = OGxFieldValidator()
+                field_validator.context = self.context  # Set context on field validator
                 for field in fields:
                     result = field_validator.validate(field, self.context)
                     if not result.is_valid:
