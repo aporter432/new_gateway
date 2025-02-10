@@ -37,7 +37,7 @@ import boto3
 from core.logging.loggers import get_protocol_logger
 from protocols.ogx.constants import MessageState
 from protocols.ogx.encoding.json import decode_metadata, decode_state, encode_metadata, encode_state
-from protocols.ogx.validation.common.exceptions import EncodingError, OGxProtocolError
+from protocols.ogx.validation.common.validation_exceptions import EncodingError, OGxProtocolError
 
 
 class MessageStateStore(ABC):

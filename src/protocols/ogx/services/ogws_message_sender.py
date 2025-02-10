@@ -58,7 +58,7 @@ from protocols.ogx.constants.limits import (
     ERR_SUBMIT_MESSAGE_RATE_EXCEEDED,
     MAX_SUBMIT_MESSAGES,
 )
-from protocols.ogx.validation.common.exceptions import OGxProtocolError, ValidationError
+from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError, ValidationError
 
 
 class MessageSender:

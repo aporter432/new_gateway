@@ -1,6 +1,6 @@
 """OGx protocol implementation"""
 
-from .exceptions import (
+from .validation_exceptions import (
     AuthenticationError,
     EncodingError,
     OGxProtocolError,

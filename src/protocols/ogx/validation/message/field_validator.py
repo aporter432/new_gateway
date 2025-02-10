@@ -18,7 +18,7 @@ from ...constants.message_format import (
     REQUIRED_VALUE_FIELD_PROPERTIES,
 )
 from ..common.base_validator import BaseValidator
-from ..common.exceptions import ValidationError
+from ..common.validation_exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
 from .element_validator import OGxElementValidator
 

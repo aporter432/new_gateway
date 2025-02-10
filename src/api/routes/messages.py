@@ -35,7 +35,7 @@ from core.security import OGWSAuthManager, get_auth_manager
 from protocols.ogx.constants import APIEndpoint, TransportType
 from protocols.ogx.constants.message_states import MessageState
 from protocols.ogx.constants.message_types import MessageType
-from protocols.ogx.validation.common.exceptions import OGxProtocolError, ValidationError
+from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError, ValidationError
 
 router = APIRouter()
 

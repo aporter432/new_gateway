@@ -12,8 +12,8 @@ from typing import Any, Dict
 import pytest
 
 from protocols.ogx.constants.message_types import MessageType
-from protocols.ogx.validation.message.field_validator import OGxFieldValidator
 from protocols.ogx.validation.common.types import ValidationContext
+from protocols.ogx.validation.message.field_validator import OGxFieldValidator
 
 
 @pytest.fixture

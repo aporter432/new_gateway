@@ -56,7 +56,7 @@ from core.logging.loggers import get_protocol_logger
 from infrastructure.redis import get_redis_client
 from protocols.ogx.constants import MessageState
 from protocols.ogx.constants.transport_types import TransportType
-from protocols.ogx.validation.common.exceptions import OGxProtocolError, ValidationError
+from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError, ValidationError
 from protocols.ogx.validation.json.field_validator import OGxFieldValidator
 from protocols.ogx.validation.json.message_validator import OGxMessageValidator
 

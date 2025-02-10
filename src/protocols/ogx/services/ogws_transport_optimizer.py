@@ -56,7 +56,7 @@ from protocols.ogx.constants import (
     TransportType,
 )
 from protocols.ogx.constants.limits import MAX_OGX_PAYLOAD_BYTES
-from protocols.ogx.validation.common.exceptions import ValidationError
+from protocols.ogx.validation.common.validation_exceptions import ValidationError
 
 from .ogws_network_monitor import NetworkMetrics, NetworkMonitor
 

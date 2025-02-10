@@ -3,19 +3,27 @@
 Implements validation for the Common Message Format as shown in Figure 10:
 
 Message Structure:
-- Name (string)
-- SIN (Service Identification Number)
-- MIN (Message Identification Number)
+- Name (string): Message identifier
+- SIN (Service Identification Number, 16-255)
+- MIN (Message Identification Number, 1-255)
 - IsForward (boolean, optional)
 - Fields (array of Field objects)
+
+Implementation Notes:
+    This validator ensures:
+    1. Required fields presence (Name, SIN, MIN, Fields)
+    2. SIN range validation (16-255)
+    3. MIN range validation (1-255)
+    4. Fields array structure
+    5. Individual field validation via OGxFieldValidator
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
+from ...constants.error_codes import GatewayErrorCode
 from ...constants.message_format import REQUIRED_MESSAGE_FIELDS
-from ...constants.message_types import MessageType
 from ..common.base_validator import BaseValidator
-from ..common.exceptions import ValidationError
+from ..common.validation_exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
 from .field_validator import OGxFieldValidator
 
@@ -28,11 +36,11 @@ class OGxMessageValidator(BaseValidator):
         super().__init__()
         self.field_validator = OGxFieldValidator()
 
-    def validate(self, message: Dict[str, Any], context: ValidationContext) -> ValidationResult:
+    def validate(self, data: Dict[str, Any], context: ValidationContext) -> ValidationResult:
         """Validate message structure and content per OGWS-1.txt Section 5.
 
         Args:
-            message: The message dictionary to validate
+            data: The message dictionary to validate
             context: Validation context including network type and direction
 
         Returns:
@@ -43,22 +51,37 @@ class OGxMessageValidator(BaseValidator):
 
         try:
             # Validate required fields from Section 5
-            self._validate_required_fields(message, REQUIRED_MESSAGE_FIELDS, "message")
+            self._validate_required_fields(data, REQUIRED_MESSAGE_FIELDS, "message")
 
             # Validate SIN range (16-255) per Section 5.1
-            sin = message.get("SIN")
+            sin = data.get("SIN")
             if not isinstance(sin, int) or not 16 <= sin <= 255:
-                raise ValidationError("SIN must be between 16 and 255")
+                raise ValidationError(
+                    f"SIN must be between 16 and 255 (got {sin})",
+                    GatewayErrorCode.INVALID_MESSAGE_FORMAT,
+                )
 
             # Validate MIN range (1-255) per Section 5.1
-            min_val = message.get("MIN")
+            min_val = data.get("MIN")
             if not isinstance(min_val, int) or not 1 <= min_val <= 255:
-                raise ValidationError("MIN must be between 1 and 255")
+                raise ValidationError(
+                    f"MIN must be between 1 and 255 (got {min_val})",
+                    GatewayErrorCode.INVALID_MESSAGE_FORMAT,
+                )
 
-            # Validate Fields array
-            fields = message.get("Fields", [])
+            # Validate Name is a string
+            name = data.get("Name")
+            if not isinstance(name, str):
+                raise ValidationError(
+                    "Name must be a string", GatewayErrorCode.INVALID_MESSAGE_FORMAT
+                )
+
+            # Validate Fields array structure
+            fields = data.get("Fields", [])
             if not isinstance(fields, list):
-                raise ValidationError("Fields must be an array")
+                raise ValidationError(
+                    "Fields must be an array", GatewayErrorCode.INVALID_MESSAGE_FORMAT
+                )
 
             # Validate each field using field validator
             for field in fields:

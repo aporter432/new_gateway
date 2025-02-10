@@ -4,11 +4,13 @@ Tests validation of elements according to OGWS-1.txt requirements and
 implementation standards.
 """
 
-import pytest
 from unittest.mock import Mock
 
-from src.protocols.ogx.validation.message.element_validator import OGxElementValidator
+import pytest
+
 from src.protocols.ogx.validation.common.types import ValidationContext
+from src.protocols.ogx.validation.message.element_validator import OGxElementValidator
+
 
 class TestOGxElementValidator:
     """Test cases for OGxElementValidator."""

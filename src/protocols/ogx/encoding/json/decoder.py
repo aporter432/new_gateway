@@ -38,7 +38,7 @@ from datetime import datetime
 from typing import Any, Dict, Union
 
 from protocols.ogx.constants import MessageState
-from protocols.ogx.validation.common.exceptions import EncodingError
+from protocols.ogx.validation.common.validation_exceptions import EncodingError
 from protocols.ogx.models.messages import OGxMessage
 from protocols.ogx.validation.format.json.json_validator import OGxJsonValidator
 

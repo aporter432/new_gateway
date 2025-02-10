@@ -75,7 +75,7 @@ from protocols.ogx.constants.limits import (
     ERR_RETRIEVE_STATUS_RATE_EXCEEDED,
     MAX_MESSAGES_PER_RESPONSE,
 )
-from protocols.ogx.validation.common.exceptions import OGxProtocolError, ValidationError
+from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError, ValidationError
 
 
 class MessageReceiver:

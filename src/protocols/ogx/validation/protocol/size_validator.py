@@ -5,7 +5,7 @@ from typing import Any, Dict
 from ...constants.limits import MAX_OGX_PAYLOAD_BYTES
 from ...constants.network_types import NetworkType
 from ..common.base_validator import BaseValidator
-from ..common.exceptions import ValidationError
+from ..common.validation_exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
 
 

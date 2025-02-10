@@ -15,7 +15,7 @@ from httpx import Response
 from core.app_settings import Settings
 from core.security import OGWSAuthManager
 from protocols.ogx.constants.error_codes import HTTPErrorCode
-from protocols.ogx.validation.common.exceptions import OGxProtocolError
+from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
 
 
 class BaseAPIClient:

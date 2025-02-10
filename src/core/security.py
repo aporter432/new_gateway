@@ -19,7 +19,7 @@ from redis.exceptions import RedisError
 from core.app_settings import Settings, get_settings
 from core.logging.loggers import get_auth_logger
 from infrastructure.redis import get_redis_client
-from protocols.ogx.validation.common.exceptions import OGxProtocolError
+from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
 
 
 class TokenMetadata:

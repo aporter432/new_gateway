@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 
 from protocols.ogx.constants import MessageState
-from protocols.ogx.validation.common.exceptions import ValidationError
+from protocols.ogx.validation.common.validation_exceptions import ValidationError
 
 
 class OGxJsonValidator:

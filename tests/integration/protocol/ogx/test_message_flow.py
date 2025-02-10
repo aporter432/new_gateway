@@ -5,8 +5,8 @@ import pytest
 from protocols.ogx.constants import FieldType
 from protocols.ogx.encoding.json.decoder import decode_message
 from protocols.ogx.encoding.json.encoder import encode_message
+from protocols.ogx.validation.common.validation_exceptions import EncodingError, ValidationError
 from protocols.ogx.validation.json.message_validator import OGxMessageValidator
-from protocols.ogx.validation.common.exceptions import EncodingError, ValidationError
 from src.protocols.ogx.models.fields import ArrayField, Element, Field
 from src.protocols.ogx.models.messages import OGxMessage
 

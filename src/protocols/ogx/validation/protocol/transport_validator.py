@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 from ...constants.transport_types import TransportType
 from ..common.base_validator import BaseValidator
-from ..common.exceptions import ValidationError
+from ..common.validation_exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
 
 

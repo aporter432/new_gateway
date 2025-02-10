@@ -3,7 +3,8 @@
 import pytest
 
 from protocols.ogx.constants import FieldType
-from protocols.ogx.validation.common.exceptions import ValidationError
+from protocols.ogx.validation.common.validation_exceptions import ValidationError
+
 
 class TestField:
     """Test cases for basic field types and validation"""

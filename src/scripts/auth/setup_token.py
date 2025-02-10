@@ -37,7 +37,7 @@ from core.logging.loggers import get_auth_logger
 from core.security import OGWSAuthManager
 from infrastructure.redis import get_redis_client
 from protocols.ogx.constants import DEFAULT_TOKEN_EXPIRY
-from protocols.ogx.validation.common.exceptions import OGxProtocolError, ValidationError
+from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError, ValidationError
 
 
 async def send_test_message(auth_header: dict, base_url: str, test_mobile_id: str) -> Optional[str]:

@@ -9,8 +9,8 @@ from httpx import HTTPStatusError, Response
 
 from core.app_settings import Settings
 from protocols.ogx.constants import TransportType
-from protocols.ogx.validation.common.exceptions import OGxProtocolError
 from protocols.ogx.services.ogws_message_sender import MessageSender
+from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
 
 
 @pytest.fixture
