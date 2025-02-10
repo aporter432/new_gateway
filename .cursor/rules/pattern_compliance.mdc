@@ -1,0 +1,138 @@
+---
+name: "Pattern Compliance"
+description: "Strict enforcement of code patterns and reuse"
+priority: "REQUIRED"
+globs: ["*.py"]
+
+compliance_checks:
+  pre_coding:
+    - command: |
+        # Store existing patterns
+        echo "=== Storing Existing Patterns ==="
+        grep -r "class|def" src/protocols/ogx/ | sort > existing_patterns.txt
+        
+        # Store method signatures
+        echo "=== Storing Method Signatures ==="
+        grep -r "def.*:" src/protocols/ogx/ | sort > existing_methods.txt
+        
+        # Store inheritance patterns
+        echo "=== Storing Class Patterns ==="
+        grep -r "class.*(" src/protocols/ogx/ | sort > existing_classes.txt
+
+  pattern_matching:
+    - command: |
+        # Check if new code matches existing patterns
+        echo "=== Checking New Against Existing ==="
+        diff existing_patterns.txt <(grep -r "class|def" {new_file})
+        
+        # Verify inheritance
+        echo "=== Verifying Inheritance ==="
+        grep "class.*:" {new_file} | grep -v "("
+        
+        # Check method signatures
+        echo "=== Checking Method Signatures ==="
+        for method in $(grep "def" {new_file} | cut -d' ' -f2); do
+          grep "$method" existing_methods.txt
+        done
+
+  blocking_conditions:
+    - standalone_class:
+        pattern: "class [A-Z][a-zA-Z]*:"
+        message: "BLOCKED: Must extend existing class"
+        fail_build: true
+    
+    - method_exists:
+        pattern: "def ([a-z_]+)"
+        action: "check_existing"
+        command: "grep '{match}' existing_methods.txt"
+        message: "BLOCKED: Method already exists - must reuse"
+        fail_build: true
+    
+    - pattern_mismatch:
+        pattern: "def [a-z_]+\\([^)]*\\):"
+        action: "verify_signature"
+        command: "grep '{match}' existing_patterns.txt"
+        message: "BLOCKED: Must match existing pattern"
+        fail_build: true
+
+examples:
+  correct:
+    - pattern: |
+        class NewValidator(OGxFieldValidator):
+            def validate_field_value(self, field_type: FieldType, value: Any) -> None:
+                super().validate_field_value(field_type, value)
+    - pattern: |
+        class SpecificHandler(BaseHandler):
+            def process(self, message: Dict[str, Any]) -> None:
+                super().process(message)
+
+  incorrect:
+    - pattern: |
+        # BLOCKED: Standalone class
+        class NewValidator:
+            def validate(self):
+                pass
+    - pattern: |
+        # BLOCKED: Different signature
+        def validate_field(self, field):
+            pass
+    - pattern: |
+        # BLOCKED: Existing method
+        def validate_field_value(self):
+            pass
+
+enforcement:
+  strict: true
+  fail_build: true
+  require_pattern_match: true
+  block_on_violation: true
+  no_exceptions: true
+
+source_of_truth:
+  - "src/protocols/ogx/"
+  - "existing_patterns.txt"
+  - "existing_methods.txt"
+  - "existing_classes.txt"
+---
+
+# Pattern Compliance Rule
+
+## Overview
+This rule enforces STRICT pattern matching and code reuse.
+NO new patterns allowed.
+MUST extend existing classes.
+MUST reuse existing methods.
+
+## Blocking Conditions
+1. Standalone classes BLOCKED
+2. Existing methods BLOCKED
+3. Pattern mismatches BLOCKED
+
+## Pattern Requirements
+1. Class Extension:
+   ```python
+   # REQUIRED: Extend existing class
+   class NewClass(ExistingClass):
+       pass
+   ```
+
+2. Method Signatures:
+   ```python
+   # MUST match existing pattern
+   def method_name(self, param: Type) -> ReturnType:
+       super().method_name(param)
+   ```
+
+3. Implementation Patterns:
+   ```python
+   # MUST follow established pattern
+   class SpecificValidator(OGxFieldValidator):
+       def validate_field_value(self, field_type: FieldType, value: Any) -> None:
+           super().validate_field_value(field_type, value)
+   ```
+
+## Enforcement
+- Build FAILS on violation
+- NO exceptions allowed
+- MUST match existing patterns
+- MUST reuse existing code 

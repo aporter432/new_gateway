@@ -1,0 +1,69 @@
+---
+description: "Strict enforcement of uniform implementation patterns"
+globs: ["*.py"]
+---
+
+# Implementation Logic Rule
+
+## Overview
+This rule enforces consistent implementation patterns across the codebase.
+All implementations MUST follow the same patterns for similar functionality.
+NO ad-hoc implementations or deviations from established patterns.
+
+## Pre-Implementation Requirements
+1. Search for similar implementations:
+   ```bash
+   grep -r "class.*:" src/protocols/ogx/
+   ```
+2. Document implementation pattern
+3. Follow existing patterns
+4. Get approval for new patterns
+
+## Implementation Requirements
+1. Proper docstrings:
+   ```python
+   def method(self, arg: str) -> bool:
+       """
+       Method description.
+
+       Args:
+           arg: Argument description
+
+       Returns:
+           bool: Return value description
+
+       Raises:
+           ValueError: Error condition
+       """
+   ```
+2. Type hints:
+   ```python
+   from typing import Dict, List, Optional
+
+   def process(data: Dict[str, Any]) -> Optional[List[str]]:
+       ...
+   ```
+3. Error handling:
+   ```python
+   try:
+       result = process()
+   except ValueError as exc:
+       raise ValidationError("Specific error") from exc
+   ```
+
+## Validation Checks
+1. Pre-implementation:
+   - Must check existing patterns
+   - Must have proper docstrings
+2. Implementation:
+   - Must use type hints
+   - Must handle errors properly
+   - Must follow patterns
+3. Post-implementation:
+   - Must pass type checking
+   - Must pass code style
+
+## Enforcement
+- All checks MUST pass
+- Build fails if violations found
+- No exceptions to patterns 

@@ -6,36 +6,44 @@ Implements field-level validation rules for the Common Message Format.
 import base64
 import re
 from datetime import datetime
-
-# Standard library imports
 from typing import Any, Dict
 
-# Local imports
-from ...constants import FieldType
+from ...constants.field_types import FieldType
+from ...constants.limits import (
+    MAX_OGX_PAYLOAD_BYTES,
+    MAX_OUTSTANDING_MESSAGES_PER_SIZE,
+)
+from ...constants.message_format import (
+    REQUIRED_ELEMENT_PROPERTIES,
+    REQUIRED_FIELD_PROPERTIES,
+    REQUIRED_MESSAGE_FIELDS,
+)
+from ...constants.network_types import NetworkType
 from ...exceptions import ValidationError
 
 
 class OGxFieldValidator:
     """Validates individual OGx fields according to N214 specification section 5"""
 
-    # Field type mappings from Table 3 of N214 spec
-    TYPE_ATTRIBUTES: Dict[str, str] = {
-        "enum": "enum",
-        "boolean": "boolean",
-        "unsignedint": "unsignedint",
-        "signedint": "signedint",
-        "string": "string",
-        "data": "data",
-        "array": "array",
-        "message": "message",
-        "dynamic": "(one of above)",
-        "property": "(one of above)",
+    # Field type mappings from Table 3 of N214 spec - using FieldType enum
+    TYPE_ATTRIBUTES = {
+        FieldType.ENUM: FieldType.ENUM,
+        FieldType.BOOLEAN: FieldType.BOOLEAN,
+        FieldType.UNSIGNED_INT: FieldType.UNSIGNED_INT,
+        FieldType.SIGNED_INT: FieldType.SIGNED_INT,
+        FieldType.STRING: FieldType.STRING,
+        FieldType.DATA: FieldType.DATA,
+        FieldType.ARRAY: FieldType.ARRAY,
+        FieldType.MESSAGE: FieldType.MESSAGE,
+        FieldType.DYNAMIC: "(one of above)",
+        FieldType.PROPERTY: "(one of above)",
     }
 
-    # Message size limits from Section 2.1
-    MAX_SMALL_MESSAGE_SIZE = 100
-    MAX_REGULAR_MESSAGE_SIZE = 2000
-    MAX_LARGE_MESSAGE_SIZE = 10000
+    # Message size limits from Section 2.1 of N214 spec
+    MAX_SMALL_MESSAGE_SIZE = 400  # IsatData Pro small messages
+    MAX_REGULAR_MESSAGE_SIZE = 2000  # IsatData Pro medium messages
+    MAX_LARGE_MESSAGE_SIZE = 10000  # IsatData Pro large messages
+    OGX_MESSAGE_SIZE_LIMIT = MAX_OGX_PAYLOAD_BYTES  # OGx network message limit
 
     # UTC timestamp format from Section 2.1
     TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -77,16 +85,35 @@ class OGxFieldValidator:
                     raise ValueError("Boolean value must be true or false")
 
             elif field_type == FieldType.UNSIGNED_INT:
-                int_val = int(value)
+                # Handle numeric types that can be converted to int
+                if isinstance(value, (int, float)):
+                    int_val = int(value)
+                elif isinstance(value, str):
+                    try:
+                        int_val = int(float(value))
+                    except ValueError:
+                        raise ValueError("String value must be a valid number")
+                else:
+                    raise ValueError(f"Value must be a number, got {type(value).__name__}")
+
                 if int_val < 0:
                     raise ValueError("Decimal number must be non-negative")
 
             elif field_type == FieldType.SIGNED_INT:
-                int(value)  # Validate it's a decimal number
+                # Handle numeric types that can be converted to int
+                if isinstance(value, (int, float)):
+                    int(value)
+                elif isinstance(value, str):
+                    try:
+                        int(float(value))
+                    except ValueError:
+                        raise ValueError("String value must be a valid number")
+                else:
+                    raise ValueError(f"Value must be a number, got {type(value).__name__}")
 
             elif field_type == FieldType.STRING:
                 if not isinstance(value, str):
-                    raise ValueError("Value must be a string")
+                    raise ValueError(f"Value must be a string, got {type(value).__name__}")
 
             elif field_type == FieldType.DATA:
                 if isinstance(value, str):
@@ -102,6 +129,14 @@ class OGxFieldValidator:
                 if value is not None:  # Array can be None per Table 3
                     if not isinstance(value, list):
                         raise ValueError("Array value must be a list or None")
+                    # Validate array elements
+                    for element in value:
+                        if not isinstance(element, dict):
+                            raise ValueError("Array elements must be dictionaries")
+                        if "Index" not in element:
+                            raise ValueError("Array elements must have an Index")
+                        if "Fields" not in element:
+                            raise ValueError("Array elements must have Fields")
 
             elif field_type == FieldType.MESSAGE:
                 if value is not None:  # Message can be None per Table 3
@@ -119,31 +154,53 @@ class OGxFieldValidator:
                 ValidationError.INVALID_FIELD_VALUE,
             ) from exc
 
-    def validate_message_size(self, message_data: bytes, message_class: str) -> None:
+    def validate_message_size(
+        self, message_data: bytes, network_type: NetworkType, message_class: str | None = None
+    ) -> None:
         """
         Validates message size limits according to Section 2.1 of N214 spec.
 
         Args:
             message_data: Raw message data in bytes
-            message_class: Message size class ('small', 'regular', or 'large')
+            network_type: Network type from NetworkType enum
+            message_class: Message size class for IsatData Pro ('small', 'regular', or 'large')
 
         Raises:
-            ValidationError: If message size exceeds limit for its class
+            ValidationError: If message size exceeds limit for its network/class
         """
         size = len(message_data)
-        if message_class == "small" and size > self.MAX_SMALL_MESSAGE_SIZE:
+
+        if network_type == NetworkType.OGX:
+            if size > self.OGX_MESSAGE_SIZE_LIMIT:
+                raise ValidationError(
+                    f"OGx message exceeds {self.OGX_MESSAGE_SIZE_LIMIT} byte limit",
+                    ValidationError.INVALID_MESSAGE_FORMAT,
+                )
+        elif network_type == NetworkType.ISATDATA_PRO:
+            if not message_class:
+                raise ValidationError(
+                    "Message class required for IsatData Pro messages",
+                    ValidationError.INVALID_MESSAGE_FORMAT,
+                )
+
+            if message_class == "small" and size > self.MAX_SMALL_MESSAGE_SIZE:
+                raise ValidationError(
+                    f"Small IsatData Pro message exceeds {self.MAX_SMALL_MESSAGE_SIZE} byte limit",
+                    ValidationError.INVALID_MESSAGE_FORMAT,
+                )
+            elif message_class == "regular" and size > self.MAX_REGULAR_MESSAGE_SIZE:
+                raise ValidationError(
+                    f"Regular IsatData Pro message exceeds {self.MAX_REGULAR_MESSAGE_SIZE} byte limit",
+                    ValidationError.INVALID_MESSAGE_FORMAT,
+                )
+            elif message_class == "large" and size > self.MAX_LARGE_MESSAGE_SIZE:
+                raise ValidationError(
+                    f"Large IsatData Pro message exceeds {self.MAX_LARGE_MESSAGE_SIZE} byte limit",
+                    ValidationError.INVALID_MESSAGE_FORMAT,
+                )
+        else:
             raise ValidationError(
-                f"Small message exceeds {self.MAX_SMALL_MESSAGE_SIZE} byte limit",
-                ValidationError.INVALID_MESSAGE_FORMAT,
-            )
-        elif message_class == "regular" and size > self.MAX_REGULAR_MESSAGE_SIZE:
-            raise ValidationError(
-                f"Regular message exceeds {self.MAX_REGULAR_MESSAGE_SIZE} byte limit",
-                ValidationError.INVALID_MESSAGE_FORMAT,
-            )
-        elif message_class == "large" and size > self.MAX_LARGE_MESSAGE_SIZE:
-            raise ValidationError(
-                f"Large message exceeds {self.MAX_LARGE_MESSAGE_SIZE} byte limit",
+                f"Invalid network type: {network_type}",
                 ValidationError.INVALID_MESSAGE_FORMAT,
             )
 

@@ -1,8 +1,326 @@
 ---
-description: truth source
-globs: .py
+description: Implementation Standards and OGWS-1 Compliance
+globs: 
 ---
+---
+name: "Implementation Standards and OGWS-1 Compliance"
+description: "Strict enforcement of implementation standards, code reuse, and OGWS-1.txt compliance"
+priority: "REQUIRED"
+globs: ["*.py"]
+validation:
+  pre_implementation:
+    - check: "mandatory_search_results"
+      command: |
+        # Must show ALL matches
+        echo "=== Classes ===" 
+        grep -r "class.*" src/protocols/ogx/ --include="*.py" -B 2 -A 10
+        echo "=== Functions ==="
+        grep -r "def.*" src/protocols/ogx/ --include="*.py" -B 2 -A 5
+        echo "=== Tests ==="
+        grep -r "test_.*" tests/unit/protocol/ogx/ --include="*.py" -B 1 -A 3
+      store_results: true
+      require_review: true
+      fail_if_empty: true
+      error_message: "Must present ALL existing implementations for review before proceeding"
 
-# Your rule content
+    - check: "alternative_implementation_review"
+      command: |
+        # Must document why each alternative was not used
+        echo "Found implementations that may be relevant:"
+        cat {stored_results}
+        echo "REQUIRED: Document why each cannot be used/extended"
+      require_response: true
+      fail_if_skipped: true
+      error_message: "Must justify why existing implementations cannot be used"
 
-[OGWS-1.txt](mdc:src/DOCS/OGWS-1.txt)
+    - check: "test_coverage_report"
+      command: |
+        pytest --cov=src/protocols/ogx tests/unit/protocol/ogx/ --cov-report=term-missing > coverage.txt
+        echo "=== Existing Test Coverage ==="
+        cat coverage.txt
+      store_results: true
+      require_review: true
+      error_message: "Must review existing test coverage before modifications"
+
+  implementation:
+    - prohibited:
+        - pattern: "(?<!# Justified: )(?:class|def).*:"
+          message: "New implementation without explicit justification comment"
+        
+        - pattern: "(?<!# Reuse: )(?:class|def).*:"
+          message: "Must document what was considered for reuse"
+        
+        - pattern: "(?<!# Extends: )class.*\\(.*\\):"
+          message: "Must document what is being extended"
+
+    - required:
+        - pattern: "# Justified: .*\\n# Alternatives: .*\\n# Reuse: .*\\n# Extends: .*\\n"
+          message: "Missing complete implementation justification block"
+        
+        - pattern: "@pytest\\.mark\\.dependency\\(depends=\\[.*\\]\\)\\n@pytest\\.mark\\.relationship\\(['\"].*['\"]\\)"
+          message: "Tests must declare both dependencies and relationships"
+
+  post_implementation:
+    - verify:
+        - command: |
+            echo "=== Implementation Changes ==="
+            git diff {file}
+            echo "=== Test Changes ==="
+            git diff tests/unit/protocol/ogx/test_{file}.py
+          require_review: true
+          fail_if_empty: true
+          error_message: "Must review ALL changes together"
+        
+        - command: |
+            echo "=== Coverage Impact ==="
+            pytest --cov=src/protocols/ogx tests/unit/protocol/ogx/ --cov-report=term-missing > new_coverage.txt
+            diff coverage.txt new_coverage.txt
+          require_review: true
+          error_message: "Must verify no negative impact on test coverage"
+
+# Adding mandatory verification section
+verification:
+  search_integrity:
+    - command: |
+        # Show EVERYTHING that could be relevant
+        echo "=== ALL Python Files ==="
+        find src/protocols/ogx/ -name "*.py" -type f
+        echo "=== ALL Test Files ==="
+        find tests/unit/protocol/ogx/ -name "*.py" -type f
+        echo "=== ALL Implementation Patterns ==="
+        grep -r "class\|def\|@" src/protocols/ogx/ --include="*.py"
+      store_results: true
+      require_user_review: true
+      error_message: "User MUST see ALL potential implementations"
+
+    - command: |
+        # Force showing similar names/patterns
+        echo "=== Similar Names ==="
+        for file in $(find src/protocols/ogx/ -name "*.py"); do
+          echo "=== $file ==="
+          grep -A 5 -B 5 "validator\|handler\|processor" "$file"
+        done
+      store_results: true
+      require_user_review: true
+      error_message: "User MUST see ALL similar patterns"
+
+  implementation_proof:
+    - command: |
+        # Must PROVE technical necessity
+        echo "=== Technical Constraints ==="
+        for file in {stored_alternatives}; do
+          echo "=== Trying to extend $file ==="
+          python3 -c "
+            import ast
+            with open('$file') as f:
+              node = ast.parse(f.read())
+            # Show why extension impossible
+            print(ast.dump(node, indent=2))
+          "
+        done
+      store_results: true
+      require_user_approval: true
+      error_message: "Must PROVE why alternatives cannot be used"
+
+  user_verification:
+    - prompt: |
+        VERIFICATION REQUIRED:
+        1. Have you reviewed ALL files shown?
+        2. Have you verified NO similar implementations exist?
+        3. Have you confirmed the technical necessity?
+        4. Are you satisfied with the justification?
+        
+        Type 'YES' only if ALL above are true.
+      require_response: "YES"
+      fail_if_skipped: true
+      error_message: "User MUST explicitly verify all aspects"
+
+documentation:
+  required:
+    - template: |
+        # Implementation Review
+        ## Existing Code Found:
+        {stored_search_results}
+        
+        ## Alternatives Considered:
+        For each existing implementation:
+        - [ ] Why it cannot be reused as-is
+        - [ ] Why it cannot be extended
+        - [ ] What parts ARE being reused
+        
+        ## Implementation Justification:
+        - [ ] Why new code is absolutely necessary
+        - [ ] What existing code is being extended
+        - [ ] What existing code is being reused
+        - [ ] How duplication is prevented
+        
+        ## Test Coverage:
+        {stored_coverage_results}
+        
+        ## Review Checklist:
+        - [ ] All alternatives reviewed
+        - [ ] Reuse maximized
+        - [ ] Duplication eliminated
+        - [ ] Tests comprehensive
+        - [ ] Coverage maintained
+
+enforcement:
+  strict: true
+  fail_build: true
+  require_approval: true
+  require_stored_results: true
+  require_review_responses: true
+  approval_requirements:
+    - All search results reviewed
+    - All alternatives considered
+    - All justifications documented
+    - All changes reviewed together
+    - Coverage impact verified
+
+source_of_truth:
+  - "src/DOCS/OGWS-1.txt"
+  - "src/protocols/ogx/"
+  - "tests/unit/protocol/ogx/"
+
+# Adding strict reuse enforcement
+reuse_enforcement:
+  prohibited_patterns:
+    - new_implementation_without_extension:
+        pattern: "class [A-Z][a-zA-Z]*(?!\\([A-Z][a-zA-Z]*\\)):"
+        message: "MUST extend existing class - standalone implementations prohibited"
+    
+    - duplicate_method_signatures:
+        pattern: "def [a-z_]+\\([^)]*\\):"
+        action: "grep_check"
+        command: "grep -r 'def {match}' src/protocols/ogx/"
+        fail_if_found: true
+        message: "Similar method already exists - MUST reuse or extend"
+    
+    - hardcoded_values:
+        pattern: "\\b\\d+\\b|\"[A-Z_]+\"|'[A-Z_]+'"
+        message: "MUST use constants from constants directory - no hardcoding"
+
+  required_patterns:
+    - inheritance:
+        pattern: "class [A-Z][a-zA-Z]*\\(([A-Z][a-zA-Z]*)+\\):"
+        message: "All classes MUST extend existing base classes"
+    
+    - super_calls:
+        pattern: "super\\(\\)\\.\\w+"
+        message: "MUST call parent implementation when extending"
+    
+    - import_existing:
+        pattern: "from src.protocols.ogx"
+        message: "MUST import and reuse existing implementations"
+
+  verification_steps:
+    - find_similar:
+        command: |
+          # Find similar implementations
+          file_pattern=$(echo "{implementation}" | sed 's/[A-Z]/[a-zA-Z]/g')
+          echo "=== Similar Files ==="
+          find src/protocols/ogx/ -name "*${file_pattern}*.py"
+          echo "=== Similar Classes ==="
+          grep -r "class.*${file_pattern}" src/protocols/ogx/
+        require_review: true
+        fail_if_empty: false
+        error_message: "MUST check for similar implementations"
+    
+    - verify_reuse:
+        command: |
+          # Verify reuse of existing code
+          echo "=== Inherited Methods ==="
+          grep -r "super()" {file}
+          echo "=== Imported Code ==="
+          grep -r "from src.protocols.ogx" {file}
+        require_review: true
+        fail_if_empty: true
+        error_message: "MUST show code reuse"
+    
+    - check_duplication:
+        command: |
+          # Check for potential duplication
+          echo "=== Similar Logic ==="
+          for method in $(grep -o "def [a-z_]\\+" {file}); do
+            echo "=== $method ==="
+            grep -r "$method" src/protocols/ogx/
+          done
+        require_review: true
+        error_message: "MUST verify no duplicate logic"
+
+  approval_requirements:
+    - No standalone implementations
+    - No duplicate methods
+    - No hardcoded values
+    - Must extend existing classes
+    - Must reuse existing logic
+    - Must follow established patterns
+
+# Implementation Standards Rule
+
+## Overview
+This rule enforces ABSOLUTE TRANSPARENCY in implementation decisions.
+ALL existing code MUST be presented and reviewed.
+ALL alternatives MUST be considered and justified.
+NO changes without complete documentation and review.
+
+## Pre-Implementation Requirements
+1. MUST show ALL existing implementations:
+   ```python
+   # Justified: [why new code is needed]
+   # Alternatives: [what existing code was found]
+   # Reuse: [what is being reused]
+   # Extends: [what is being extended]
+   class NewImplementation(BaseClass):
+       """
+       Complete documentation of relationships
+       """
+   ```
+
+2. MUST justify ALL decisions:
+   ```python
+   """
+   Implementation relationship documentation
+   
+   Alternatives Considered:
+   1. [existing class] - [why not used]
+   2. [another class] - [why not used]
+   
+   Reuse:
+   - [what is reused]
+   - [how it's reused]
+   
+   @see [related files]
+   """
+   ```
+
+3. MUST maintain test relationships:
+   ```python
+   @pytest.mark.dependency(depends=["test_existing"])
+   @pytest.mark.relationship("extends BaseValidator")
+   def test_new_feature():
+       """Document test relationships"""
+   ```
+
+## Validation Checks
+1. Pre-implementation:
+   - MUST show ALL matches
+   - MUST justify decisions
+   - MUST review coverage
+
+2. Implementation:
+   - MUST document justification
+   - MUST document alternatives
+   - MUST maximize reuse
+
+3. Post-implementation:
+   - MUST review ALL changes
+   - MUST verify coverage
+   - MUST update docs
+
+## Enforcement
+- ALL results must be stored
+- ALL decisions must be justified
+- ALL changes must be reviewed
+- NO exceptions to process
+- NO hidden implementations

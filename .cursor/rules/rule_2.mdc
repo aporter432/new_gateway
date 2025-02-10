@@ -1,7 +1,0 @@
----
-description: Logging
-globs: .py
----
-ALL loging should source implimentation style here:
-
-@/Users/aaronporter/Desktop/Projects/new_gateway/src/core/logging

@@ -1,0 +1,102 @@
+---
+name: "Constants Usage"
+description: "Strict enforcement of constants usage and definition"
+priority: "REQUIRED"
+globs: ["*.py"]
+validation:
+  pre_implementation:
+    - check: "grep_search"
+      target: "src/protocols/ogx/constants"
+      command: "grep -r 'class|CONSTANT|Enum' src/protocols/ogx/constants/"
+      fail_if_skipped: true
+      error_message: "Must check existing constants before implementation"
+    - check: "constants_exist"
+      fail_if_missing: true
+      error_message: "Required constants not found in constants directory"
+  implementation:
+    - prohibited: 
+        - pattern: "^[A-Z][A-Z_]*\\s*=\\s*"
+          message: "No local constant definitions allowed"
+        - pattern: "\\d{3,}|\"[A-Z_]{3,}\""
+          message: "No magic numbers or string literals"
+        - pattern: "class.*Enum.*:|class.*Constants.*:"
+          message: "No local enum or constants classes"
+    - required:
+        - pattern: "from\\s+\\.\\.\\.constants\\."
+          message: "Must import from constants directory"
+        - pattern: "FieldType\\.|NetworkType\\.|MessageType\\."
+          message: "Must use proper enum types"
+  post_implementation:
+    - verify:
+        - command: "grep -r '^[A-Z][A-Z_]*\\s*=\\s*' {file}"
+          fail_message: "Found local constant definitions"
+        - command: "grep -r 'from\\s\\.\\.\\.constants\\.' {file}"
+          fail_message: "Missing constants imports"
+documentation:
+  required:
+    - template: |
+        # Constants Usage Documentation
+        ## Constants Used:
+        {grep_results}
+        ## New Constants Required:
+        {missing_constants}
+        ## Implementation Verification:
+        {verification_results}
+enforcement:
+  strict: true
+  fail_build: true
+source_of_truth: "src/protocols/ogx/constants"
+---
+
+# Constants Usage Rule
+
+## Overview
+This rule enforces strict usage of constants from the designated constants directory.
+All constants MUST be defined in the constants directory and properly imported.
+NO local constant definitions or magic numbers are allowed.
+
+## Pre-Implementation Requirements
+1. Search constants directory for existing constants:
+   ```bash
+   grep -r "class|CONSTANT|Enum" src/protocols/ogx/constants/
+   ```
+2. Document all required constants
+3. Get approval for any new constants
+4. Create new constants in constants directory if needed
+
+## Implementation Requirements
+1. Import all constants from constants directory:
+   ```python
+   from ...constants.limits import MAX_MESSAGE_SIZE
+   from ...constants.types import MessageType
+   ```
+2. Use enum types where defined:
+   ```python
+   def validate(msg_type: MessageType):
+       # Use enum type
+   ```
+3. NO local definitions:
+   ```python
+   # INCORRECT:
+   MAX_SIZE = 1000  # Local constant
+   
+   # CORRECT:
+   from ...constants.limits import MAX_SIZE
+   ```
+
+## Validation Checks
+1. Pre-implementation:
+   - Must run grep search
+   - Must verify constants exist
+2. Implementation:
+   - No local constant definitions
+   - No magic numbers
+   - Must use imports
+3. Post-implementation:
+   - Verify no local constants
+   - Verify proper imports
+
+## Enforcement
+- All checks MUST pass
+- Build fails if violations found
+- No warnings, only errors 
