@@ -105,7 +105,12 @@ REQUIRED_MESSAGE_FIELDS: Final[Set[str]] = {
 REQUIRED_FIELD_PROPERTIES: Final[Set[str]] = {
     "Name",  # Field identifier
     "Type",  # Data type
-    "Value",  # Field content
+}
+
+
+# Required properties for non-array fields per OGWS-1.txt
+REQUIRED_VALUE_FIELD_PROPERTIES: Final[Set[str]] = {
+    "Value",  # Field content for non-array fields
 }
 
 

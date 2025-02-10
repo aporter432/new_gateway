@@ -10,6 +10,6 @@ from enum import Enum
 
 class MessageType(str, Enum):
     """Message direction types from OGWS-1.txt Section 4.3."""
-    
+
     FORWARD = "FW"  # To-mobile message
     RETURN = "RE"   # From-mobile message

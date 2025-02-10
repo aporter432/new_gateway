@@ -29,7 +29,15 @@ class OGxMessageValidator(BaseValidator):
         self.field_validator = OGxFieldValidator()
 
     def validate(self, message: Dict[str, Any], context: ValidationContext) -> ValidationResult:
-        """Validate message structure and content."""
+        """Validate message structure and content per OGWS-1.txt Section 5.
+
+        Args:
+            message: The message dictionary to validate
+            context: Validation context including network type and direction
+
+        Returns:
+            ValidationResult indicating if the message is valid and any errors
+        """
         self.context = context
         self._errors = []
 

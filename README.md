@@ -28,6 +28,10 @@ Smart Gateway provides a robust, production-ready interface for ORBCOMM's OGWS (
   - Field-level validation
   - Network-specific payload limits
   - Terminal ID verification
+  - Field serialization (OGWS-1.txt compliance):
+    - Capitalized field names required (e.g., "Name", "Value", "Type")
+    - Use `model_dump(by_alias=True)` for proper OGWS field serialization
+    - String representation for numeric and boolean values in output
 
 - **State Management**:
   - Redis (Development) / DynamoDB (Production) state tracking

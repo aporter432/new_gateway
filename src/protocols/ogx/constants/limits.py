@@ -112,11 +112,5 @@ MESSAGE_TIMEOUT_DAYS: Final[int] = 10
 """Days before closing messages for offline terminals."""
 
 # Default token expiry if not specified
-DEFAULT_TOKEN_EXPIRY: Final[timedelta] = timedelta(days=7)
+DEFAULT_TOKEN_EXPIRY: Final[timedelta] = timedelta(days=365)
 """Default token expiry if not specified in request."""
-
-ERR_SUBMIT_MESSAGE_RATE_EXCEEDED: Final[int] = 24579
-"""Error code when to-mobile message submission rate is exceeded (section 3.4.2.3)."""
-
-ERR_RETRIEVE_STATUS_RATE_EXCEEDED: Final[int] = 24581
-"""Error code when to-mobile status retrieval rate is exceeded (section 3.4.2.4)."""

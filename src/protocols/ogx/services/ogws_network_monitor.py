@@ -18,7 +18,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from core.logging.loggers import get_protocol_logger
-from protocols.ogx.constants import TransportType  # Change import to use from package root
+from protocols.ogx.constants import TransportType
 
 
 class NetworkMetrics:

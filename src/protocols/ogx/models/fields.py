@@ -1,77 +1,105 @@
-"""Field models as defined in OGWS-1.txt Table 3."""
+"""Field models as defined in OGWS-1.txt Table 3.
 
-from typing import Any, Dict, List, Optional
+This module implements the field structures required by the OGWS-1.txt specification.
+Key requirements:
+- All field names must be capitalized in serialized output (e.g., "Name", "Value", "Type")
+- Field values must be serialized as strings in the output
+- Fields must have exactly one of: value, elements, or message
 
-from pydantic import BaseModel, root_validator
+For serialization:
+    - Always use model_dump(by_alias=True) to ensure proper OGWS-1.txt compliance
+    - Never use dict() as it won't respect the required field name capitalization
+"""
+
+from typing import Any, List, Optional
+
+from pydantic import BaseModel, Field as PydanticField, ConfigDict
 
 from protocols.ogx.constants import FieldType
-from protocols.ogx.validation.common.exceptions import ValidationError
 
 
 class Element(BaseModel):
-    """Element structure as defined in OGWS-1.txt Section 5."""
+    """Element structure as defined in OGWS-1.txt Section 5.
 
-    index: int
-    fields: List["Field"]
+    Elements are indexed structures containing fields. In serialized form:
+    - 'Index' must be capitalized
+    - 'Fields' must be capitalized and contain a list of Field objects
 
-    class Config:
-        frozen = True
+    Example:
+        {
+            "Index": 0,
+            "Fields": [
+                {"Name": "status", "Type": "enum", "Value": "ACTIVE"}
+            ]
+        }
+    """
+
+    index: int = PydanticField(alias="Index")
+    fields: List["Field"] = PydanticField(alias="Fields")
+
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
 
 
 class Message(BaseModel):
-    """Message structure as defined in OGWS-1.txt Section 5."""
+    """Message structure as defined in OGWS-1.txt Section 5.
 
-    name: str
-    sin: int
-    min: int
-    is_forward: Optional[bool] = None
-    fields: List["Field"]
+    Messages contain metadata and fields. In serialized form:
+    - All field names must be capitalized ("Name", "SIN", "MIN", "IsForward", "Fields")
+    - Field values maintain their types internally but serialize to strings
 
-    class Config:
-        frozen = True
+    Example:
+        {
+            "Name": "status_message",
+            "SIN": 16,
+            "MIN": 1,
+            "IsForward": true,
+            "Fields": [...]
+        }
+    """
+
+    name: str = PydanticField(alias="Name")
+    sin: int = PydanticField(alias="SIN")
+    min: int = PydanticField(alias="MIN")
+    is_forward: Optional[bool] = PydanticField(default=None, alias="IsForward")
+    fields: List["Field"] = PydanticField(alias="Fields")
+
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
 
 
 class Field(BaseModel):
     """Field structure as defined in OGWS-1.txt Section 5 and Table 3.
 
-    According to Table 3, a field must have:
-    - A name
-    - A type (enum, boolean, unsignedint, signedint, string, data, array, or message)
-    - Either a value, elements, or message (but not more than one)
+    According to OGWS-1.txt Table 3, a field must have:
+    - A name (serialized as "Name")
+    - A type (serialized as "Type": enum, boolean, unsignedint, signedint, string, data, array, or message)
+    - Exactly one of: value, elements, or message (serialized as "Value", "Elements", or "Message")
+
+    Serialization Requirements:
+    - Always use model_dump(by_alias=True) for OGWS-1.txt compliant output
+    - Field names must be capitalized in output ("Name", "Type", "Value", etc.)
+    - Numeric and boolean values must be converted to strings in output
+
+    Example:
+        field = Field(name="status", type=FieldType.ENUM, value="ACTIVE")
+        field.model_dump(by_alias=True)
+        # Returns: {"Name": "status", "Type": "enum", "Value": "ACTIVE"}
     """
 
-    name: str
-    type: FieldType
-    value: Optional[Any] = None
-    elements: Optional[List[Element]] = None
-    message: Optional[Message] = None
+    name: str = PydanticField(alias="Name")
+    type: FieldType = PydanticField(alias="Type")
+    value: Optional[Any] = PydanticField(default=None, alias="Value")
+    elements: Optional[List[Element]] = PydanticField(default=None, alias="Elements")
+    message: Optional[Message] = PydanticField(default=None, alias="Message")
 
-    class Config:
-        frozen = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True, populate_by_name=True)
 
-    @root_validator(pre=True)
-    @classmethod
-    def validate_field_structure(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate according to OGWS-1.txt Section 5 and Table 3 rules."""
-        has_value = values.get("value") is not None
-        has_elements = values.get("elements") is not None
-        has_message = values.get("message") is not None
-        field_type = values.get("type")
-
-        # Check for multiple value types
-        if sum([has_value, has_elements, has_message]) > 1:
-            raise ValidationError("Field can only have one of: value, elements, or message")
-
-        # Array type can only have elements
-        if field_type == FieldType.ARRAY and has_value:
-            raise ValidationError("Array type can only have elements, not value")
-
-        # Message type can only have message
-        if field_type == FieldType.MESSAGE and (has_value or has_elements):
-            raise ValidationError("Message type can only have message, not value or elements")
-
-        return values
+    def model_dump(self, **kwargs):
+        """Override model_dump to handle value serialization according to OGWS-1.txt."""
+        data = super().model_dump(**kwargs)
+        if "Value" in data and data["Value"] is not None:
+            if isinstance(data["Value"], (bool, int, float)):
+                data["Value"] = str(data["Value"])
+        return data
 
 
 # Handle forward references
