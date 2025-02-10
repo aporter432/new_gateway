@@ -5,17 +5,17 @@ Implements validation for the Common Message Format as shown in Figure 10:
 Message Structure:
 - Name (string)
 - SIN (Service Identification Number)
-- MIN (Message Identification Number) 
+- MIN (Message Identification Number)
 - IsForward (boolean, optional)
 - Fields (array of Field objects)
 """
 
 from typing import Any, Dict, List, Optional
 
-from ...constants.message_types import MessageType
 from ...constants.message_format import REQUIRED_MESSAGE_FIELDS
-from ..common.exceptions import ValidationError
+from ...constants.message_types import MessageType
 from ..common.base_validator import BaseValidator
+from ..common.exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
 from .field_validator import OGxFieldValidator
 

@@ -1,4 +1,4 @@
-"""OGx protocol exceptions as defined in OGWS-1.txt specification."""
+"""OGx protocol exceptions using error codes defined in OGWS-1.txt."""
 
 from typing import Optional
 
@@ -14,21 +14,26 @@ class OGxProtocolError(Exception):
 
 
 class ProtocolError(OGxProtocolError):
-    """Protocol-level errors from OGWS-1.txt."""
+    """Protocol errors using codes from OGWS-1.txt."""
 
     def __init__(self, message: str, error_code: Optional[int] = None):
-        if error_code is None and "rate exceeded" in message.lower():
-            error_code = GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
-        super().__init__(f"Protocol error: {message}", error_code)
+        self.error_code = error_code or GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
+        super().__init__(f"Protocol error: {message}")
 
 
-class ValidationError(OGxProtocolError):
+class ValidationError(Exception):
     """Validation errors according to OGWS-1.txt Section 5."""
 
+    # Error code references
+    INVALID_MESSAGE_FORMAT = GatewayErrorCode.INVALID_MESSAGE_FORMAT
+    INVALID_FIELD_TYPE = GatewayErrorCode.INVALID_FIELD_TYPE
+    INVALID_FIELD_VALUE = GatewayErrorCode.INVALID_FIELD_VALUE
+    INVALID_FIELD_FORMAT = GatewayErrorCode.INVALID_FIELD_FORMAT
+    MISSING_REQUIRED_FIELD = GatewayErrorCode.MISSING_REQUIRED_FIELD
+
     def __init__(self, message: str, error_code: Optional[int] = None):
-        if error_code is None:
-            error_code = GatewayErrorCode.INVALID_MESSAGE_FORMAT
-        super().__init__(f"Validation error: {message}", error_code)
+        self.error_code = error_code or self.INVALID_MESSAGE_FORMAT
+        super().__init__(f"Validation error: {message}")
 
 
 class AuthenticationError(OGxProtocolError):

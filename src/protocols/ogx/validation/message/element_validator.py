@@ -3,8 +3,8 @@
 from typing import Any, Dict
 
 from ...constants.message_format import REQUIRED_ELEMENT_PROPERTIES
-from ..common.exceptions import ValidationError
 from ..common.base_validator import BaseValidator
+from ..common.exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
 
 

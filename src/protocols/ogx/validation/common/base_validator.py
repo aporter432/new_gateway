@@ -3,6 +3,15 @@
 This module provides the foundation for all OGx protocol validation,
 implementing the core validation logic defined in the Common Message Format
 specification.
+
+Constants imported here are used by child validator classes:
+- REQUIRED_FIELD_PROPERTIES: Field validation (Table 3)
+- REQUIRED_MESSAGE_FIELDS: Message validation (Section 5.1)
+- REQUIRED_ELEMENT_PROPERTIES: Element validation (Section 5.1)
+
+Child classes should use these constants through the base validator's methods:
+- _validate_required_fields(): For field/message/element validation
+- _validate_field_type(): For type validation per Table 3
 """
 
 from abc import ABC, abstractmethod

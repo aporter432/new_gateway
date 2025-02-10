@@ -4,9 +4,9 @@ from validation.common.exceptions import (
     AuthenticationError,
     EncodingError,
     OGxProtocolError,
+    ProtocolError,
     RateLimitError,
     ValidationError,
-    ProtocolError
 )
 
 __all__ = [
@@ -16,5 +16,5 @@ __all__ = [
     "RateLimitError",
     "EncodingError",
     "ValidationError",
-    "ProtocolError"
+    "ProtocolError",
 ]
