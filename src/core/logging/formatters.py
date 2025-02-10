@@ -21,8 +21,9 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, NotRequired, TypedDict, Union
 
-from .log_settings import LogComponent
 from protocols.ogx.encoding.json.encoder import OGxJsonEncoder
+
+from .log_settings import LogComponent
 
 
 class ProcessInfo(TypedDict):

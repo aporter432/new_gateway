@@ -1,7 +1,13 @@
-"""
-This module contains the rules for the OGx validation.
-"""
+"""Test rules package."""
 
-from .test_violations import *
+from .test_violations import (
+    test_rate_limit_violation,
+    test_token_expiry_violation,
+    test_validation_violation,
+)
 
-__all__ = ["test_violations"]
+__all__ = [
+    "test_rate_limit_violation",
+    "test_token_expiry_violation",
+    "test_validation_violation",
+]

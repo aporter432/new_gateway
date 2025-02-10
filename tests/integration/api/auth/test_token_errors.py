@@ -1,16 +1,12 @@
-"""Test suite for error handling in OGWS token management."""
+"""Test token error handling."""
 
 import asyncio
 import time
 
 import pytest
 from httpx import HTTPError
-from redis.asyncio import Redis
-from redis.exceptions import RedisError
 
-from core.app_settings import Settings
 from core.security import OGWSAuthManager, TokenMetadata
-from infrastructure.redis import get_redis_client
 from tests.unit.api.test_token_setup import get_test_redis, get_test_settings
 
 

@@ -1,14 +1,11 @@
-"""Test suite for OGWS token acquisition, validation, and lifecycle management."""
+"""Test setup utilities for token tests."""
 
 import asyncio
-import time
-from typing import Optional
 
 from redis.asyncio import Redis
 
 from core.app_settings import Settings
 from core.security import OGWSAuthManager
-from infrastructure.redis import get_redis_client
 
 
 def get_test_settings() -> Settings:
