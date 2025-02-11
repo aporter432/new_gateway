@@ -30,7 +30,6 @@ from .message_format import (
 from .message_states import MessageState
 from .message_types import MessageType
 from .network_types import (
-    NETWORK_TYPE_OGX,
     NetworkType,
 )
 from .operation_modes import OperationMode

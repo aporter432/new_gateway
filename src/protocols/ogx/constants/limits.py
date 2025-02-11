@@ -102,7 +102,7 @@ MAX_TOKEN_EXPIRE_DAYS: Final[int] = 365
 
 # Section 4.3 - Message Size Limits
 MAX_OGX_PAYLOAD_BYTES: Final[int] = 1023
-"""OGx network payload limit."""
+"""OGx network raw payload limit in bytes."""
 
 MAX_OUTSTANDING_MESSAGES_PER_SIZE: Final[int] = 10
 """Maximum outstanding messages per terminal."""
@@ -114,3 +114,47 @@ MESSAGE_TIMEOUT_DAYS: Final[int] = 10
 # Default token expiry if not specified
 DEFAULT_TOKEN_EXPIRY: Final[timedelta] = timedelta(days=365)
 """Default token expiry if not specified in request."""
+
+
+# Helper functions for size calculations
+def calculate_base64_size(binary_size: int) -> int:
+    """Calculate size after Base64 encoding.
+
+    Args:
+        binary_size: Size of raw binary data
+
+    Returns:
+        Size after Base64 encoding (includes padding)
+    """
+    # Base64 encoding: 3 bytes -> 4 chars
+    # Plus padding to nearest 4 chars
+    return ((binary_size + 2) // 3) * 4
+
+
+def calculate_json_overhead(base64_size: int) -> int:
+    """Calculate approximate JSON wrapper overhead.
+
+    Args:
+        base64_size: Size of Base64 encoded string
+
+    Returns:
+        Approximate size of complete JSON message
+    """
+    # Rough estimate including:
+    # - JSON field names and syntax
+    # - Base64 string
+    # - Other required fields
+    json_overhead = 50  # Minimum JSON structure overhead
+    return base64_size + json_overhead
+
+
+def validate_payload_size(binary_size: int) -> bool:
+    """Validate raw binary payload size.
+
+    Args:
+        binary_size: Size of raw binary data
+
+    Returns:
+        True if size is within limits
+    """
+    return binary_size <= MAX_OGX_PAYLOAD_BYTES

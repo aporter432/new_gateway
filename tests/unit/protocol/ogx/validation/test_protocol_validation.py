@@ -8,9 +8,10 @@ from protocols.ogx.validation.protocol.transport_validator import TransportValid
 from protocols.ogx.validation.common.types import ValidationContext, MessageType, ValidationResult
 from protocols.ogx.validation.common.validation_exceptions import (
     ValidationError,
-    SizeValidationError,  # Added missing import
+    SizeValidationError,
 )
 from protocols.ogx.constants.network_types import NetworkType
+from protocols.ogx.constants.limits import MAX_OGX_PAYLOAD_BYTES
 
 
 class TestNetworkValidator:
@@ -77,37 +78,104 @@ class TestNetworkValidator:
         assert not result.is_valid
         assert "Invalid network type in context" in result.errors[0]
 
+    def test_validate_with_none_context(self, validator):
+        """Test validation with None context."""
+        result = validator.validate({"network": "OGx"}, None)
+        assert not result.is_valid
+        assert "Missing message direction" in result.errors[0]
+
+    def test_validate_with_none_context_direction(self, validator):
+        """Test validation with None context direction."""
+        context = ValidationContext(network_type="OGx", direction=None)
+        result = validator.validate({"network": "OGx"}, context)
+        assert not result.is_valid
+        assert "Missing message direction" in result.errors[0]
+
+    def test_validate_with_non_string_network_type(self, validator, context):
+        """Test validation with non-string network type."""
+        result = validator.validate({"network": 123}, context)  # Integer instead of string
+        assert not result.is_valid
+        assert "Invalid network type" in result.errors[0]
+
+    def test_validate_with_none_context_network_type(self, validator):
+        """Test validation with None context network type."""
+        context = ValidationContext(network_type=None, direction=MessageType.FORWARD)
+        result = validator.validate({"network": "OGx"}, context)
+        assert not result.is_valid
+        assert "Missing network type in context" in result.errors[0]
+
 
 class TestSizeValidator:
-    """Test size validation."""
+    """Test size validation according to OGWS-1.txt."""
 
     @pytest.fixture
     def validator(self):
-        """Create validator with 1000 byte limit."""
-        return SizeValidator(message_size_limit=1000)  # Fixed parameter name
+        return SizeValidator()
 
     @pytest.fixture
     def context(self):
         return ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
 
-    def test_validate_valid_size(self, validator, context):
-        """Test validation with valid message size."""
-        data = {"payload": "x" * 500}  # Message under size limit
+    def test_validate_raw_payload_valid_size(self, validator, context):
+        """Test validation with valid raw payload size."""
+        data = {"RawPayload": "x" * (MAX_OGX_PAYLOAD_BYTES - 100)}
         result = validator.validate(data, context)
         assert result.is_valid
 
-    def test_validate_oversized(self, validator, context):
-        """Test validation with oversized message."""
-        data = {"payload": "x" * 1500}  # Message over size limit
-        result = validator.validate(data, context)
-        assert not result.is_valid
-        assert "exceeds maximum size" in result.errors[0]
+    def test_validate_raw_payload_oversized(self, validator, context):
+        """Test validation with oversized raw payload."""
+        data = {"RawPayload": "x" * (MAX_OGX_PAYLOAD_BYTES + 1)}
+        with pytest.raises(SizeValidationError) as exc:
+            validator.validate(data, context)
+        assert "Raw payload size" in str(exc.value)
+        assert exc.value.current_size > MAX_OGX_PAYLOAD_BYTES
+        assert exc.value.max_size == MAX_OGX_PAYLOAD_BYTES
 
-    def test_validate_edge_case(self, validator, context):
-        """Test validation at size limit boundary."""
-        data = {"payload": "x" * 1000}  # Message at size limit
+    def test_validate_raw_payload_edge_case(self, validator, context):
+        """Test validation at raw payload size limit boundary."""
+        # Test exactly at limit
+        data = {"RawPayload": "x" * MAX_OGX_PAYLOAD_BYTES}
         result = validator.validate(data, context)
         assert result.is_valid
+
+        # Test one byte over
+        data = {"RawPayload": "x" * (MAX_OGX_PAYLOAD_BYTES + 1)}
+        with pytest.raises(SizeValidationError) as exc:
+            validator.validate(data, context)
+        assert "Raw payload size" in str(exc.value)
+
+    def test_validate_json_payload(self, validator, context):
+        """Test validation with JSON payload."""
+        data = {
+            "DestinationID": "test_id",
+            "Payload": {"Name": "test_message", "SIN": 16, "MIN": 1, "Fields": []},
+        }
+        result = validator.validate(data, context)
+        assert result.is_valid
+
+    def test_validate_invalid_json_payload(self, validator, context):
+        """Test validation with invalid JSON payload."""
+        data = {"DestinationID": "test_id", "Payload": "not a json object"}  # Should be a dict
+        with pytest.raises(ValidationError) as exc:
+            validator.validate(data, context)
+        assert "Payload must be a JSON object" in str(exc.value)
+
+    def test_validate_invalid_raw_payload(self, validator, context):
+        """Test validation with invalid raw payload."""
+        data = {"DestinationID": "test_id", "RawPayload": 123}  # Should be a string
+        with pytest.raises(ValidationError) as exc:
+            validator.validate(data, context)
+        assert "RawPayload must be a string" in str(exc.value)
+
+    def test_validate_missing_payload(self, validator, context):
+        """Test validation with no payload."""
+        data = {
+            "DestinationID": "test_id"
+            # Missing both RawPayload and Payload
+        }
+        with pytest.raises(ValidationError) as exc:
+            validator.validate(data, context)
+        assert "Message must contain either RawPayload or Payload" in str(exc.value)
 
     def test_validate_with_no_data(self, validator, context):
         """Test validation with no data."""
@@ -121,38 +189,9 @@ class TestSizeValidator:
         assert not result.is_valid
         assert "No data to validate" in result.errors[0]
 
-    def test_validate_with_valid_size(self, validator, context):
-        """Test validation with valid message size."""
-        result = validator.validate({"payload": "x" * 500}, context)
-        assert result.is_valid
-
-    def test_validate_with_oversized_data(self, validator, context):
-        """Test validation with oversized message."""
-        with pytest.raises(SizeValidationError) as exc:
-            validator.validate({"payload": "x" * 1500}, context)
-        assert "exceeds maximum size" in str(exc.value)
-        assert exc.value.current_size == len(str({"payload": "x" * 1500}))
-        assert exc.value.max_size == 1000
-
-    def test_validate_empty_message(self, validator, context):
-        """Test validation with empty message."""
-        data = {"payload": ""}
-        result = validator.validate(data, context)
-        assert result.is_valid
-
-    def test_validate_complex_message(self, validator, context):
-        """Test validation with complex nested message."""
-        data = {
-            "header": {"version": "1.0"},
-            "payload": "x" * 500,
-            "metadata": {"timestamp": "2023-01-01"},
-        }
-        result = validator.validate(data, context)
-        assert result.is_valid
-
 
 class TestTransportValidator:
-    """Test transport validation."""
+    """Test transport validation according to OGWS-1.txt."""
 
     @pytest.fixture
     def validator(self):
@@ -227,3 +266,55 @@ class TestTransportValidator:
         """Test validation with mixed case array."""
         result = validator.validate({"transport": ["SATELLITE", "cellular", "Satellite"]}, context)
         assert result.is_valid
+
+    def test_validate_with_none_context(self, validator):
+        """Test validation with None context."""
+        result = validator.validate({"transport": "satellite"}, None)
+        assert not result.is_valid
+        assert "Missing message direction" in result.errors[0]
+
+    def test_validate_with_none_context_direction(self, validator):
+        """Test validation with None context direction."""
+        context = ValidationContext(network_type="OGx", direction=None)
+        result = validator.validate({"transport": "satellite"}, context)
+        assert not result.is_valid
+        assert "Missing message direction" in result.errors[0]
+
+    def test_validate_with_none_context_network_type(self, validator):
+        """Test validation with None context network type."""
+        context = ValidationContext(network_type=None, direction=MessageType.FORWARD)
+        result = validator.validate({"transport": "satellite"}, context)
+        assert not result.is_valid
+        assert "Missing network type in context" in result.errors[0]
+
+    def test_validate_with_invalid_network_type(self, validator):
+        """Test validation with invalid network type."""
+        context = ValidationContext(network_type="INVALID", direction=MessageType.FORWARD)
+        result = validator.validate({"transport": "satellite"}, context)
+        assert not result.is_valid
+        assert "Invalid protocol: Expected OGx network" in result.errors[0]
+
+    def test_validate_with_delayed_send_cellular(self, validator, context):
+        """Test validation with delayed send options on cellular transport."""
+        data = {"transport": "cellular", "DelayedSendOptions": {"DelayedSend": True}}
+        result = validator.validate(data, context)
+        assert not result.is_valid
+        assert "Delayed send options not supported for cellular transport" in result.errors[0]
+
+    def test_validate_with_non_string_transport(self, validator, context):
+        """Test validation with non-string transport type."""
+        result = validator.validate({"transport": 123}, context)  # Integer instead of string
+        assert not result.is_valid
+        assert "Invalid transport type" in result.errors[0]
+
+    def test_validate_with_none_data(self, validator, context):
+        """Test validation with None data."""
+        result = validator.validate(None, context)
+        assert not result.is_valid
+        assert "Invalid data: None" in result.errors[0]
+
+    def test_validate_with_non_dict_data(self, validator, context):
+        """Test validation with non-dict data."""
+        result = validator.validate("not a dict", context)
+        assert not result.is_valid
+        assert "Invalid data type: expected dictionary" in result.errors[0]
