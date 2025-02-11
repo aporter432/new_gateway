@@ -7,6 +7,7 @@
 # pylint: disable=no-member
 
 import pytest
+from unittest.mock import patch, Mock, call
 from protocols.ogx.constants.error_codes import GatewayErrorCode, HTTPErrorCode
 from protocols.ogx.validation.common.validation_exceptions import (
     OGxProtocolError,
@@ -25,6 +26,113 @@ from protocols.ogx.validation.common.validation_exceptions import (
 
 class TestValidationExceptions:
     """Test validation exception behaviors."""
+
+    def test_ogx_protocol_error_initialization(self):
+        """Test OGxProtocolError initialization paths (lines 17-18)."""
+        # Test path: no error code
+        error = OGxProtocolError("test")
+        assert error.args == ("test",)  # Verify super().__init__ called with message
+        assert error.error_code is None  # Verify error_code set to None
+        assert isinstance(error, Exception)  # Verify inheritance
+
+        # Test path: with error code
+        error = OGxProtocolError("test", 1001)
+        assert error.args == ("test",)  # Verify super().__init__ called with message
+        assert error.error_code == 1001  # Verify error_code set to provided value
+        assert isinstance(error, Exception)  # Verify inheritance
+
+        # Test path: with empty message
+        error = OGxProtocolError("")
+        assert error.args == ("",)  # Verify super().__init__ called with empty message
+        assert error.error_code is None  # Verify error_code set to None
+
+    def test_protocol_error_initialization(self):
+        """Test ProtocolError initialization paths (lines 25-26)."""
+        # Test path: no error code (uses default)
+        error = ProtocolError("test")
+        assert error.args == ("Protocol error: test",)  # Verify message formatting
+        assert (
+            error.error_code == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
+        )  # Verify default code
+        assert isinstance(error, OGxProtocolError)  # Verify inheritance
+
+        # Test path: with error code
+        error = ProtocolError("test", 1001)
+        assert error.args == ("Protocol error: test",)  # Verify message formatting
+        assert error.error_code == 1001  # Verify custom code used
+
+        # Test path: with empty message
+        error = ProtocolError("")
+        assert error.args == ("Protocol error: ",)  # Verify message formatting with empty string
+        assert (
+            error.error_code == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
+        )  # Verify default code
+
+    def test_specific_error_initialization(self):
+        """Test specific error class initialization paths (lines 194-196, 203-205, 212-214)."""
+        test_cases = [
+            # (class, message, custom_code, expected_prefix, default_code)
+            (
+                AuthenticationError,
+                "test",
+                403,
+                "Authentication error: ",
+                HTTPErrorCode.UNAUTHORIZED,
+            ),
+            (
+                EncodingError,
+                "test",
+                1001,
+                "Encoding error: ",
+                GatewayErrorCode.INVALID_MESSAGE_FORMAT,
+            ),
+            (RateLimitError, "test", 503, "Rate limit error: ", HTTPErrorCode.TOO_MANY_REQUESTS),
+        ]
+
+        for error_class, msg, custom_code, prefix, default_code in test_cases:
+            # Test default error code path
+            error = error_class(msg)
+            assert error.args == (f"{prefix}{msg}",)  # Verify message formatting
+            assert error.error_code == default_code  # Verify default code
+            assert isinstance(error, OGxProtocolError)  # Verify inheritance
+
+            # Test custom error code path
+            error = error_class(msg, custom_code)
+            assert error.args == (f"{prefix}{msg}",)  # Verify message formatting
+            assert error.error_code == custom_code  # Verify custom code used
+
+            # Test empty message path
+            error = error_class("")
+            assert error.args == (f"{prefix}",)  # Verify message formatting with empty string
+            assert error.error_code == default_code  # Verify default code
+
+            # Test multiline message path
+            multiline_msg = "line1\nline2\nline3"
+            error = error_class(multiline_msg)
+            assert error.args == (f"{prefix}{multiline_msg}",)  # Verify multiline message handling
+            assert error.error_code == default_code  # Verify default code
+
+            # Test message with special characters
+            special_msg = "test!@#$%^&*()"
+            error = error_class(special_msg)
+            assert error.args == (f"{prefix}{special_msg}",)  # Verify special character handling
+            assert error.error_code == default_code  # Verify default code
+
+    def test_error_inheritance_chain(self):
+        """Test complete error inheritance chain for all error classes."""
+        test_cases = [
+            (AuthenticationError, "test"),
+            (EncodingError, "test"),
+            (RateLimitError, "test"),
+            (ProtocolError, "test"),
+        ]
+
+        for error_class, msg in test_cases:
+            error = error_class(msg)
+            assert isinstance(error, OGxProtocolError)  # Direct parent
+            assert isinstance(error, Exception)  # Root parent
+            assert issubclass(error_class, OGxProtocolError)  # Class inheritance
+            assert issubclass(error_class, Exception)  # Class root inheritance
 
     def test_ogx_protocol_error(self):
         """Test OGxProtocolError creation and attributes."""
@@ -463,32 +571,29 @@ class TestValidationExceptions:
         # Test __init__ of OGxProtocolError (lines 17-18)
         base_error = OGxProtocolError("Base error")
         assert base_error.error_code is None
-        assert str(base_error) == "Base error"
+        assert base_error.args == ("Base error",)
 
         # Test __init__ of ProtocolError (lines 25-26)
         proto_error = ProtocolError("Proto error")
         assert proto_error.error_code == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
-        assert str(proto_error) == "Protocol error: Proto error"
+        assert proto_error.args == ("Protocol error: Proto error",)
 
     def test_auth_encoding_rate_errors(self):
         """Test specific protocol error classes (lines 194-196, 203-205, 212-214)."""
         # Test AuthenticationError __init__ (lines 194-196)
         auth_error = AuthenticationError("Auth failed")
         assert auth_error.error_code == HTTPErrorCode.UNAUTHORIZED
-        assert isinstance(auth_error, OGxProtocolError)
-        assert str(auth_error) == "Authentication error: Auth failed"
+        assert auth_error.args == ("Authentication error: Auth failed",)
 
         # Test EncodingError __init__ (lines 203-205)
         encoding_error = EncodingError("Bad encoding")
         assert encoding_error.error_code == GatewayErrorCode.INVALID_MESSAGE_FORMAT
-        assert isinstance(encoding_error, OGxProtocolError)
-        assert str(encoding_error) == "Encoding error: Bad encoding"
+        assert encoding_error.args == ("Encoding error: Bad encoding",)
 
         # Test RateLimitError __init__ (lines 212-214)
         rate_error = RateLimitError("Too fast")
         assert rate_error.error_code == HTTPErrorCode.TOO_MANY_REQUESTS
-        assert isinstance(rate_error, OGxProtocolError)
-        assert str(rate_error) == "Rate limit error: Too fast"
+        assert rate_error.args == ("Rate limit error: Too fast",)
 
     def test_protocol_base_init_coverage(self):
         """Test base protocol error initialization (lines 17-18, 25-26)."""
@@ -556,3 +661,333 @@ class TestValidationExceptions:
         # Test super() call was made with modified message and default code
         assert error.args == ("Rate limit error: message",)
         assert error.error_code == HTTPErrorCode.TOO_MANY_REQUESTS
+
+    def test_base_protocol_error_super_call(self):
+        """Test OGxProtocolError super() call and initialization (lines 17-18)."""
+        # Test that super().__init__() is called with the message
+        error = OGxProtocolError("test message")
+        assert isinstance(error, Exception)  # Verify inheritance
+        assert error.args == ("test message",)  # Verify message passed to super()
+        assert error.error_code is None  # Verify error_code initialized
+
+        # Test with error code
+        error = OGxProtocolError("test message", 1001)
+        assert error.args == ("test message",)  # Verify message passed to super()
+        assert error.error_code == 1001  # Verify error_code initialized
+
+    def test_protocol_error_super_call(self):
+        """Test ProtocolError super() call and initialization (lines 25-26)."""
+        # Test that super().__init__() is called with formatted message
+        error = ProtocolError("test message")
+        assert isinstance(error, OGxProtocolError)  # Verify inheritance
+        assert error.args == ("Protocol error: test message",)  # Verify formatted message
+        assert (
+            error.error_code == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
+        )  # Verify default code
+
+        # Test with custom error code
+        error = ProtocolError("test message", 1001)
+        assert error.args == ("Protocol error: test message",)  # Verify formatted message
+        assert error.error_code == 1001  # Verify custom code used
+
+    def test_auth_error_super_call(self):
+        """Test AuthenticationError super() call and initialization (lines 194-196)."""
+        # Test default error code path
+        error = AuthenticationError("test message")
+        assert isinstance(error, OGxProtocolError)  # Verify inheritance
+        assert error.args == ("Authentication error: test message",)  # Verify formatted message
+        assert error.error_code == HTTPErrorCode.UNAUTHORIZED  # Verify default code
+
+        # Test custom error code path
+        error = AuthenticationError("test message", 403)
+        assert error.args == ("Authentication error: test message",)  # Verify formatted message
+        assert error.error_code == 403  # Verify custom code used
+
+    def test_encoding_error_super_call(self):
+        """Test EncodingError super() call and initialization (lines 203-205)."""
+        # Test default error code path
+        error = EncodingError("test message")
+        assert isinstance(error, OGxProtocolError)  # Verify inheritance
+        assert error.args == ("Encoding error: test message",)  # Verify formatted message
+        assert error.error_code == GatewayErrorCode.INVALID_MESSAGE_FORMAT  # Verify default code
+
+        # Test custom error code path
+        error = EncodingError("test message", 1001)
+        assert error.args == ("Encoding error: test message",)  # Verify formatted message
+        assert error.error_code == 1001  # Verify custom code used
+
+    def test_rate_limit_error_super_call(self):
+        """Test RateLimitError super() call and initialization (lines 212-214)."""
+        # Test default error code path
+        error = RateLimitError("test message")
+        assert isinstance(error, OGxProtocolError)  # Verify inheritance
+        assert error.args == ("Rate limit error: test message",)  # Verify formatted message
+        assert error.error_code == HTTPErrorCode.TOO_MANY_REQUESTS  # Verify default code
+
+        # Test custom error code path
+        error = RateLimitError("test message", 503)
+        assert error.args == ("Rate limit error: test message",)  # Verify formatted message
+        assert error.error_code == 503  # Verify custom code used
+
+    def test_initialization_order(self):
+        """Test initialization order and attribute setting."""
+        # Test OGxProtocolError (lines 17-18)
+        error = OGxProtocolError("test")
+        assert not hasattr(error, "message")  # Should not have message attribute
+        assert hasattr(error, "args")  # Should have args from Exception
+        assert error.args == ("test",)  # Message should be in args
+        assert hasattr(error, "error_code")  # Should have error_code set first
+        assert error.error_code is None  # Should be None as per line 17
+
+        # Test ProtocolError (lines 25-26)
+        error = ProtocolError("test")
+        assert not hasattr(error, "message")  # Should not have message attribute
+        assert hasattr(error, "args")  # Should have args from Exception
+        assert error.args == ("Protocol error: test",)  # Message should be formatted
+        assert hasattr(error, "error_code")  # Should have error_code set first
+        assert error.error_code == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED  # Default code
+
+        # Test AuthenticationError (lines 194-196)
+        error = AuthenticationError("test")
+        assert not hasattr(error, "message")  # Should not have message attribute
+        assert hasattr(error, "args")  # Should have args from Exception
+        assert error.args == ("Authentication error: test",)  # Message should be formatted
+        assert hasattr(error, "error_code")  # Should have error_code set
+        assert error.error_code == HTTPErrorCode.UNAUTHORIZED  # Default code
+
+        # Test EncodingError (lines 203-205)
+        error = EncodingError("test")
+        assert not hasattr(error, "message")  # Should not have message attribute
+        assert hasattr(error, "args")  # Should have args from Exception
+        assert error.args == ("Encoding error: test",)  # Message should be formatted
+        assert hasattr(error, "error_code")  # Should have error_code set
+        assert error.error_code == GatewayErrorCode.INVALID_MESSAGE_FORMAT  # Default code
+
+        # Test RateLimitError (lines 212-214)
+        error = RateLimitError("test")
+        assert not hasattr(error, "message")  # Should not have message attribute
+        assert hasattr(error, "args")  # Should have args from Exception
+        assert error.args == ("Rate limit error: test",)  # Message should be formatted
+        assert hasattr(error, "error_code")  # Should have error_code set
+        assert error.error_code == HTTPErrorCode.TOO_MANY_REQUESTS  # Default code
+
+    def test_initialization_order_with_custom_codes(self):
+        """Test initialization order with custom error codes."""
+        # Test OGxProtocolError
+        error = OGxProtocolError("test", 1001)
+        assert hasattr(error, "error_code")  # Should have error_code set first
+        assert error.error_code == 1001  # Custom code
+        assert error.args == ("test",)  # Original message
+
+        # Test ProtocolError
+        error = ProtocolError("test", 1002)
+        assert hasattr(error, "error_code")  # Should have error_code set first
+        assert error.error_code == 1002  # Custom code
+        assert error.args == ("Protocol error: test",)  # Formatted message
+
+        # Test specific error classes
+        test_cases = [
+            (AuthenticationError, 403),
+            (EncodingError, 1003),
+            (RateLimitError, 503),
+        ]
+
+        for error_class, code in test_cases:
+            error = error_class("test", code)
+            assert hasattr(error, "error_code")  # Should have error_code set first
+            assert error.error_code == code  # Custom code
+            # Verify the message is formatted after error_code is set
+            assert error.args[0].endswith("test")  # Formatted message
+
+    def test_initialization_sequence(self):
+        """Test the exact sequence of initialization operations."""
+        # Test OGxProtocolError (lines 17-18)
+        with patch("builtins.super") as mock_super:
+            mock_init = Mock()
+            mock_super.return_value.__init__ = mock_init
+
+            error = OGxProtocolError("test", 1001)
+
+            # Verify error_code is set before super().__init__ is called
+            mock_super.assert_called_once()
+            mock_init.assert_called_once_with("test")
+            assert error.error_code == 1001
+
+        # Test ProtocolError (lines 25-26)
+        with patch("builtins.super") as mock_super:
+            mock_init = Mock()
+            mock_super.return_value.__init__ = mock_init
+
+            error = ProtocolError("test", 1001)
+
+            # Verify error_code is set before super().__init__ is called
+            mock_super.assert_called_once()
+            mock_init.assert_called_once_with("Protocol error: test")
+            assert error.error_code == 1001
+
+        # Test AuthenticationError (lines 194-196)
+        with patch("builtins.super") as mock_super:
+            mock_init = Mock()
+            mock_super.return_value.__init__ = mock_init
+
+            error = AuthenticationError("test")
+
+            # Verify error_code is set to default before super().__init__ is called
+            mock_super.assert_called_once()
+            mock_init.assert_called_once_with(
+                "Authentication error: test", HTTPErrorCode.UNAUTHORIZED
+            )
+            assert error.error_code == HTTPErrorCode.UNAUTHORIZED
+
+        # Test EncodingError (lines 203-205)
+        with patch("builtins.super") as mock_super:
+            mock_init = Mock()
+            mock_super.return_value.__init__ = mock_init
+
+            error = EncodingError("test")
+
+            # Verify error_code is set to default before super().__init__ is called
+            mock_super.assert_called_once()
+            mock_init.assert_called_once_with(
+                "Encoding error: test", GatewayErrorCode.INVALID_MESSAGE_FORMAT
+            )
+            assert error.error_code == GatewayErrorCode.INVALID_MESSAGE_FORMAT
+
+        # Test RateLimitError (lines 212-214)
+        with patch("builtins.super") as mock_super:
+            mock_init = Mock()
+            mock_super.return_value.__init__ = mock_init
+
+            error = RateLimitError("test")
+
+            # Verify error_code is set to default before super().__init__ is called
+            mock_super.assert_called_once()
+            mock_init.assert_called_once_with(
+                "Rate limit error: test", HTTPErrorCode.TOO_MANY_REQUESTS
+            )
+            assert error.error_code == HTTPErrorCode.TOO_MANY_REQUESTS
+
+    def test_base_protocol_error_initialization_sequence(self):
+        """Test OGxProtocolError initialization sequence (lines 17-18)."""
+        with patch("builtins.super") as mock_super:
+            mock_init = Mock()
+            mock_super.return_value.__init__ = mock_init
+
+            # Test without error code
+            error = OGxProtocolError("test")
+            mock_super.assert_called_once()
+            mock_init.assert_called_once_with("test")
+            assert error.error_code is None
+
+            # Reset mocks
+            mock_super.reset_mock()
+            mock_init.reset_mock()
+
+            # Test with error code
+            error = OGxProtocolError("test", 1001)
+            mock_super.assert_called_once()
+            mock_init.assert_called_once_with("test")
+            assert error.error_code == 1001
+
+    def test_protocol_error_initialization_sequence(self):
+        """Test ProtocolError initialization sequence (lines 25-26)."""
+        with patch("builtins.super") as mock_super:
+            mock_init = Mock()
+            mock_super.return_value.__init__ = mock_init
+
+            # Test without error code
+            error = ProtocolError("test")
+            mock_super.assert_called_once()
+            mock_init.assert_called_once_with("Protocol error: test")
+            assert error.error_code == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
+
+            # Reset mocks
+            mock_super.reset_mock()
+            mock_init.reset_mock()
+
+            # Test with error code
+            error = ProtocolError("test", 1001)
+            mock_super.assert_called_once()
+            mock_init.assert_called_once_with("Protocol error: test")
+            assert error.error_code == 1001
+
+    def test_specific_error_initialization_sequences(self):
+        """Test specific error class initialization sequences (lines 194-196, 203-205, 212-214)."""
+        test_cases = [
+            (AuthenticationError, "Authentication error: ", HTTPErrorCode.UNAUTHORIZED),
+            (EncodingError, "Encoding error: ", GatewayErrorCode.INVALID_MESSAGE_FORMAT),
+            (RateLimitError, "Rate limit error: ", HTTPErrorCode.TOO_MANY_REQUESTS),
+        ]
+
+        for error_class, prefix, default_code in test_cases:
+            with patch("builtins.super") as mock_super:
+                mock_init = Mock()
+                mock_super.return_value.__init__ = mock_init
+
+                # Test default initialization
+                error = error_class("test")
+                mock_super.assert_called_once()
+                mock_init.assert_called_once_with(f"{prefix}test", default_code)
+                assert error.error_code == default_code
+
+                # Reset mocks
+                mock_super.reset_mock()
+                mock_init.reset_mock()
+
+                # Test with custom error code
+                custom_code = 1001
+                error = error_class("test", custom_code)
+                mock_super.assert_called_once()
+                mock_init.assert_called_once_with(f"{prefix}test", custom_code)
+                assert error.error_code == custom_code
+
+    def test_error_inheritance_chain_verification(self):
+        """Verify complete error inheritance chain."""
+        # Test OGxProtocolError base inheritance
+        assert issubclass(OGxProtocolError, Exception)
+        error = OGxProtocolError("test")
+        assert isinstance(error, Exception)
+        assert isinstance(error, OGxProtocolError)
+
+        # Test ProtocolError inheritance
+        assert issubclass(ProtocolError, OGxProtocolError)
+        error = ProtocolError("test")
+        assert isinstance(error, OGxProtocolError)
+        assert isinstance(error, ProtocolError)
+
+        # Test specific error classes inheritance
+        test_cases = [
+            (AuthenticationError, "auth test"),
+            (EncodingError, "encoding test"),
+            (RateLimitError, "rate limit test"),
+        ]
+
+        for error_class, msg in test_cases:
+            assert issubclass(error_class, OGxProtocolError)
+            error = error_class(msg)
+            assert isinstance(error, OGxProtocolError)
+            assert isinstance(error, error_class)
+
+    def test_error_initialization_with_empty_messages(self):
+        """Test error initialization with empty messages."""
+        # Test OGxProtocolError
+        error = OGxProtocolError("")
+        assert error.args == ("",)
+        assert error.error_code is None
+
+        # Test ProtocolError
+        error = ProtocolError("")
+        assert error.args == ("Protocol error: ",)
+        assert error.error_code == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
+
+        # Test specific error classes
+        test_cases = [
+            (AuthenticationError, "Authentication error: ", HTTPErrorCode.UNAUTHORIZED),
+            (EncodingError, "Encoding error: ", GatewayErrorCode.INVALID_MESSAGE_FORMAT),
+            (RateLimitError, "Rate limit error: ", HTTPErrorCode.TOO_MANY_REQUESTS),
+        ]
+
+        for error_class, prefix, default_code in test_cases:
+            error = error_class("")
+            assert error.args == (prefix,)
+            assert error.error_code == default_code
