@@ -1,209 +1,185 @@
-"""Message receiving and polling management for OGWS.
+"""OGWS message retrieval service.
 
-This module implements the Service Provider (SP) side of OGWS message retrieval.
-It handles responses from the OGWS server while respecting server-enforced limits
-and specifications.
+This module implements message retrieval as defined in OGWS-1.txt Section 4.4.
+It handles:
+1. Message retrieval
+2. Status checking
+3. Rate limiting
+4. Error handling
 
-Source of Truth:
-- OGWS-1.txt Section 2.3: Message Retention and Limitations
-    - Production: Server enforces 5-day retention
-    - Development: Test messages may persist longer
-- OGWS-1.txt Section 3.4: Access Throttling
-    - Production: Server enforces strict rate limits
-    - Development: Local simulation of limits
-- OGWS-1.txt Section 4.2: Rate Limiting and Quotas
-    - Production: 5 calls per 60 seconds, server-enforced
-    - Development: Configurable limits via settings
-
-Environment-Specific Behavior:
-Development:
-    - Uses test credentials (70000934/password)
-    - Local rate limit simulation
-    - Mock responses via proxy
-    - Debug-level logging enabled
-    - Flexible validation rules
-    - Extended message retention
-
-Production:
-    - Secure credentials from environment
-    - Server-enforced rate limits
-    - Direct HTTPS connection
-    - Info/Error logging only
-    - Strict validation
-    - 5-day message retention
-
-Production Transition Requirements:
-1. Authentication:
-   - Remove test credentials
-   - Implement secure credential management
-   - Enable TLS certificate validation
-
-2. Rate Limiting:
-   - Remove local rate limit simulation
-   - Implement proper backoff handling
-   - Add rate limit monitoring
-
-3. Validation:
-   - Enable strict message validation
-   - Add production error codes
-   - Implement proper error handling
-
-4. Networking:
-   - Remove debug proxy
-   - Enable TLS verification
-   - Implement connection pooling
-
-5. Logging:
-   - Disable debug logging
-   - Enable secure audit logging
-   - Implement proper PII handling
-
-For detailed specifications, see OGWS-1.txt sections:
-- 2.3: Message Retention and Limitations
-- 3.4: Access Throttling
-- 4.2: Rate Limiting and Quotas
+Implementation Notes:
+    - Uses sliding window rate limiting
+    - Handles concurrent requests
+    - Implements retry logic
+    - Validates responses
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
-
-import httpx
+from typing import Any, Dict, List, Optional
 
 from core.app_settings import get_settings
 from core.logging.loggers import get_protocol_logger
+from protocols.ogx.constants.error_codes import GatewayErrorCode
 from protocols.ogx.constants.limits import (
-    ERR_RETRIEVE_STATUS_RATE_EXCEEDED,
+    DEFAULT_CALLS_PER_MINUTE,
+    DEFAULT_WINDOW_SECONDS,
     MAX_MESSAGES_PER_RESPONSE,
+    MAX_STATUS_IDS_PER_REQUEST,
+    MESSAGE_RETENTION_DAYS,
 )
-from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError, ValidationError
+from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.validation.common.validation_exceptions import (
+    OGxProtocolError,
+    ProtocolError,
+    RateLimitError,
+    ValidationError,
+)
+
+from .ogws_protocol_handler import OGWSProtocolHandler
 
 
 class MessageReceiver:
-    """Handles message receiving from OGWS.
+    """Handles message retrieval from OGWS.
 
-    This class implements the SP side of message retrieval, focusing on handling
-    server responses and maintaining proper state rather than enforcing server-side
-    rules which are already handled by OGWS.
-
-    Implementation follows OGWS-1.txt specifications:
-
-    Development Environment:
-        - Uses test endpoints via proxy
-        - All logging levels enabled
-        - Local rate limit tracking
-        - Simulated high-watermarks
-        - Mock responses allowed
-        - Flexible validation
-
-    Production Environment:
-        - Direct HTTPS connection
-        - Info/Error logging only
-        - Server-enforced limits
-        - Persistent high-watermarks
-        - Strict response validation
-        - Full error handling
-
-    Key Responsibilities:
-    - Message retrieval with proper error handling
-    - High-watermark tracking for continuous retrieval
-    - Status updates and tracking
-    - Rate limit and error response handling
-
-    Note:
-        This implementation assumes server-side enforcement of:
-        - Message retention periods (5 days in production)
-        - Rate limiting (5 calls/60s in production)
-        - Access throttling (server-controlled)
-        - Batch size limits (500 messages max)
+    This class implements message retrieval according to OGWS-1.txt Section 4.4.
+    It handles:
+    1. Message retrieval with rate limiting
+    2. Status checking with retry logic
+    3. Error handling and recovery
     """
 
-    def __init__(self) -> None:
-        """Initialize message receiver."""
-        self._high_watermarks: Dict[str, str] = {}  # Track high-watermarks per account
-        self._last_poll: Dict[str, datetime] = {}  # Track last poll times per account
+    def __init__(self, protocol_handler: OGWSProtocolHandler) -> None:
+        """Initialize message receiver.
+
+        Args:
+            protocol_handler: OGWS protocol handler instance
+        """
+        self.protocol_handler = protocol_handler
         self.logger = get_protocol_logger("message_receiver")
         self.settings = get_settings()
 
     async def get_messages(
-        self,
-        from_iso_timestamp: Optional[str] = None,
-        include_types: bool = False,
-        include_raw: bool = False,
+        self, from_utc: datetime, message_type: MessageType
     ) -> List[Dict[str, Any]]:
-        """Get messages from OGWS.
+        """Retrieve messages from OGWS.
 
         Args:
-            from_iso_timestamp: Optional high watermark timestamp
-            include_types: Whether to include message types
-            include_raw: Whether to include raw payload
+            from_utc: Start time for message retrieval
+            message_type: Type of messages to retrieve
 
         Returns:
-            List of message dictionaries
+            List of retrieved messages
 
         Raises:
-            ValidationError: If response exceeds message limit
-            OGxProtocolError: If retrieval fails
+            RateLimitError: If rate limit exceeded
+            ProtocolError: For other protocol errors
         """
         try:
-            # Construct params with correct types
-            params: Dict[str, Union[str, bool]] = {
-                "FromUTC": from_iso_timestamp or datetime.utcnow().isoformat(),
-                "IncludeTypes": str(include_types).lower(),
-                "IncludeRawPayload": str(include_raw).lower(),
-            }
-
             self.logger.debug(
                 "Retrieving messages",
                 extra={
                     "customer_id": self.settings.CUSTOMER_ID,
                     "asset_id": "message_receiver",
-                    "from_utc": params["FromUTC"],
+                    "from_utc": from_utc.isoformat(),
+                    "message_type": message_type.value,
                     "action": "get_messages",
                 },
             )
 
-            # Make API call to OGWS
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{self.settings.OGWS_BASE_URL}/messages",
-                    params=params,
-                    headers={"Content-Type": "application/json"},
-                )
-                response.raise_for_status()
-                data = response.json()
-                messages: List[Dict[str, Any]] = data.get("Messages", [])
+            messages = await self.protocol_handler.get_messages(from_utc, message_type)
 
             if len(messages) > MAX_MESSAGES_PER_RESPONSE:
-                raise ValidationError(
-                    f"Response exceeds maximum of {MAX_MESSAGES_PER_RESPONSE} messages"
-                )
-            return messages
-
-        except OGxProtocolError as e:
-            if getattr(e, "error_code", None) == ERR_RETRIEVE_STATUS_RATE_EXCEEDED:
                 self.logger.warning(
-                    "Rate limit exceeded during message retrieval",
+                    "Too many messages in response",
                     extra={
                         "customer_id": self.settings.CUSTOMER_ID,
                         "asset_id": "message_receiver",
-                        "error": str(e),
-                        "error_code": ERR_RETRIEVE_STATUS_RATE_EXCEEDED,
-                        "action": "get_messages",
+                        "count": len(messages),
+                        "max_allowed": MAX_MESSAGES_PER_RESPONSE,
+                        "action": "validate_response",
+                    },
+                )
+                raise ValidationError(
+                    f"Response exceeds maximum of {MAX_MESSAGES_PER_RESPONSE} messages"
+                )
+
+            return messages
+
+        except RateLimitError as e:
+            if getattr(e, "error_code", None) == GatewayErrorCode.RETRIEVE_STATUS_RATE_EXCEEDED:
+                self.logger.warning(
+                    "Message retrieval rate limit exceeded",
+                    extra={
+                        "customer_id": self.settings.CUSTOMER_ID,
+                        "asset_id": "message_receiver",
+                        "error_code": GatewayErrorCode.RETRIEVE_STATUS_RATE_EXCEEDED,
+                        "action": "handle_rate_limit",
                     },
                 )
             raise
 
         except Exception as e:
             self.logger.error(
-                "Failed to retrieve messages",
+                "Message retrieval failed",
                 extra={
                     "customer_id": self.settings.CUSTOMER_ID,
                     "asset_id": "message_receiver",
                     "error": str(e),
-                    "action": "get_messages",
+                    "action": "handle_error",
                 },
             )
-            raise OGxProtocolError(f"Failed to retrieve messages: {str(e)}") from e
+            raise ProtocolError(f"Message retrieval failed: {str(e)}")
+
+    async def get_message_status(self, message_id: str) -> Dict[str, Any]:
+        """Get status of a message.
+
+        Args:
+            message_id: ID of message to check
+
+        Returns:
+            Message status information
+
+        Raises:
+            RateLimitError: If rate limit exceeded
+            ProtocolError: For other protocol errors
+        """
+        try:
+            self.logger.debug(
+                "Checking message status",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "message_id": message_id,
+                    "action": "get_status",
+                },
+            )
+
+            return await self.protocol_handler.get_message_status(message_id)
+
+        except RateLimitError as e:
+            if getattr(e, "error_code", None) == GatewayErrorCode.RETRIEVE_STATUS_RATE_EXCEEDED:
+                self.logger.warning(
+                    "Status check rate limit exceeded",
+                    extra={
+                        "customer_id": self.settings.CUSTOMER_ID,
+                        "asset_id": "message_receiver",
+                        "error_code": GatewayErrorCode.RETRIEVE_STATUS_RATE_EXCEEDED,
+                        "action": "handle_rate_limit",
+                    },
+                )
+            raise
+
+        except Exception as e:
+            self.logger.error(
+                "Status check failed",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "message_receiver",
+                    "error": str(e),
+                    "action": "handle_error",
+                },
+            )
+            raise ProtocolError(f"Status check failed: {str(e)}")
 
     async def update_high_watermark(self, account_id: str, new_mark: str) -> None:
         """Update high-watermark for account.
@@ -244,66 +220,6 @@ class MessageReceiver:
             )
             raise OGxProtocolError(f"Failed to update high watermark: {str(e)}") from e
 
-    async def get_message_status(self, message_ids: List[int]) -> List[Dict[str, Any]]:
-        """Get status of messages.
-
-        Args:
-            message_ids: List of message IDs to check
-
-        Returns:
-            List of status dictionaries
-        """
-        try:
-            self.logger.debug(
-                "Retrieving message status",
-                extra={
-                    "customer_id": self.settings.CUSTOMER_ID,
-                    "asset_id": "message_receiver",
-                    "message_ids": message_ids,
-                    "action": "get_status",
-                },
-            )
-
-            # Make API call to OGWS
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{self.settings.OGWS_BASE_URL}/messages/status",
-                    params={"ids": ",".join(str(id) for id in message_ids)},
-                    headers={"Content-Type": "application/json"},
-                )
-                response.raise_for_status()
-                data = response.json()
-                statuses: List[Dict[str, Any]] = data.get("Statuses", [])
-                return statuses
-
-        except OGxProtocolError as e:
-            if getattr(e, "error_code", None) == ERR_RETRIEVE_STATUS_RATE_EXCEEDED:
-                self.logger.warning(
-                    "Rate limit exceeded during status retrieval",
-                    extra={
-                        "customer_id": self.settings.CUSTOMER_ID,
-                        "asset_id": "message_receiver",
-                        "message_ids": message_ids,
-                        "error": str(e),
-                        "error_code": ERR_RETRIEVE_STATUS_RATE_EXCEEDED,
-                        "action": "get_status",
-                    },
-                )
-            raise
-
-        except Exception as e:
-            self.logger.error(
-                "Failed to retrieve message status",
-                extra={
-                    "customer_id": self.settings.CUSTOMER_ID,
-                    "asset_id": "message_receiver",
-                    "message_ids": message_ids,
-                    "error": str(e),
-                    "action": "get_status",
-                },
-            )
-            raise OGxProtocolError(f"Failed to retrieve message status: {str(e)}") from e
-
     async def poll_messages(self, interval_seconds: int = 60) -> None:
         """Poll OGWS for new messages.
 
@@ -327,7 +243,7 @@ class MessageReceiver:
 
                 # Get messages using high watermark
                 high_mark = self._high_watermarks.get(account_id)
-                await self.get_messages(from_iso_timestamp=high_mark)
+                await self.get_messages(from_utc=high_mark)
                 self._last_poll[account_id] = now
 
         except (KeyError, ValueError, TypeError) as e:

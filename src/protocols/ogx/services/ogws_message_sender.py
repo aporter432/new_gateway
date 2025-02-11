@@ -52,10 +52,10 @@ from core.logging.loggers import get_protocol_logger
 from core.security import OGWSAuthManager
 from infrastructure.redis import get_redis_client
 from protocols.ogx.constants import TransportType
+from protocols.ogx.constants.error_codes import GatewayErrorCode
 from protocols.ogx.constants.limits import (
     DEFAULT_CALLS_PER_MINUTE,
     DEFAULT_WINDOW_SECONDS,
-    ERR_SUBMIT_MESSAGE_RATE_EXCEEDED,
     MAX_SUBMIT_MESSAGES,
 )
 from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError, ValidationError
@@ -158,9 +158,9 @@ class MessageSender:
                 response = await self.send_message(message)
                 responses.append(response)
             except OGxProtocolError as e:
-                if getattr(e, "error_code", None) == ERR_SUBMIT_MESSAGE_RATE_EXCEEDED:
+                if getattr(e, "error_code", None) == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED:
                     # Wait and retry once on rate limit
-                    await self.handle_rate_limit(ERR_SUBMIT_MESSAGE_RATE_EXCEEDED)
+                    await self.handle_rate_limit(GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED)
                     response = await self.send_message(message)
                     responses.append(response)
                 else:
@@ -168,11 +168,11 @@ class MessageSender:
 
         return responses
 
-    async def handle_rate_limit(self, error_code: int) -> None:
+    async def handle_rate_limit(self, error_code: GatewayErrorCode) -> None:
         """Handle rate limit errors.
 
         Handles specific error codes from OGWS-1.txt:
-        - ERR_SUBMIT_MESSAGE_RATE_EXCEEDED (24579)
+        - GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED (24579)
         - HTTP 429 Too Many Requests
         - HTTP 503 Service Unavailable
 
