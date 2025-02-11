@@ -109,8 +109,8 @@ exclude_dirs = ["src/tests", "scripts"]
 targets = ["protocols"]
 
 [tool.coverage.run]
-source = ["protocols"]
-omit = ["src/tests/*", "scripts/*"]
+source = ["src"]
+branch = true
 
 [tool.coverage.report]
 exclude_lines = [

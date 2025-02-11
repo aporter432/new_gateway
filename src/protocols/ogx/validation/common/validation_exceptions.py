@@ -14,16 +14,37 @@ class OGxProtocolError(Exception):
     """Base exception for all OGx protocol errors."""
 
     def __init__(self, message: str, error_code: Optional[int] = None):
-        self.error_code = error_code
+        self._original_message = message  # Store original message before any formatting
         super().__init__(message)
+        self.error_code = error_code
+
+    def __str__(self) -> str:
+        return str(self.args[0])
+
+    def __repr__(self) -> str:
+        args = [repr(self._original_message)]
+        if self.error_code is not None:
+            args.append(str(self.error_code))
+        elif self.__class__ == OGxProtocolError:  # Only include None for base class
+            args.append("None")
+        return f"{self.__class__.__name__}({', '.join(args)})"
+
+    def __reduce__(self):
+        """Support pickling by preserving the original message."""
+        return (self.__class__, (self._original_message, self.error_code))
 
 
 class ProtocolError(OGxProtocolError):
     """Protocol errors using codes from OGWS-1.txt."""
 
     def __init__(self, message: str, error_code: Optional[int] = None):
-        self.error_code = error_code or GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
-        super().__init__(f"Protocol error: {message}")
+        self._original_message = message  # Store original message before formatting
+        error_code = error_code or GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
+        formatted_message = f"Protocol error: {message}"
+        super().__init__(formatted_message, error_code)
+        self._original_message = (
+            message  # Ensure original message is preserved after super().__init__
+        )
 
 
 class ValidationError(Exception):
@@ -60,6 +81,11 @@ class ValidationError(Exception):
             msg = f"{msg} ({details_str})"
         return msg
 
+    def __repr__(self) -> str:
+        args = [repr(self.message)]
+        args.append(str(self.error_code.value))  # Always include error code
+        return f"{self.__class__.__name__}({', '.join(args)})"
+
 
 class MessageValidationError(ValidationError):
     """Validation error for messages."""
@@ -85,6 +111,13 @@ class MessageValidationError(ValidationError):
             return f"{self.message} (Context: {self.context})"
         return self.message
 
+    def __repr__(self) -> str:
+        args = [repr(self.message)]
+        args.append(str(self.error_code.value))  # Always include error code
+        if self.context:
+            args.append(repr(self.context))
+        return f"{self.__class__.__name__}({', '.join(args)})"
+
 
 class ElementValidationError(ValidationError):
     """Validation error for array elements."""
@@ -99,7 +132,7 @@ class ElementValidationError(ValidationError):
 
         Args:
             message: Error message
-            element_index: Index of element that failed validation
+            element_index: Index of the invalid element
             context: Additional context about where error occurred
         """
         super().__init__(message, GatewayErrorCode.INVALID_ELEMENT_FORMAT)
@@ -107,12 +140,20 @@ class ElementValidationError(ValidationError):
         self.context = context
 
     def __str__(self) -> str:
-        msg = self.message
-        if self.context:
-            msg = f"{msg} (Context: {self.context})"
+        parts = [self.message]
         if self.element_index is not None:
-            msg = f"{msg} at index {self.element_index}"
-        return msg
+            parts.append(f"at index {self.element_index}")
+        if self.context:
+            parts.append(f"({self.context})")
+        return " ".join(parts)
+
+    def __repr__(self) -> str:
+        args = [repr(self.message)]
+        if self.element_index is not None:
+            args.append(str(self.element_index))
+        if self.context:
+            args.append(repr(self.context))
+        return f"{self.__class__.__name__}({', '.join(args)})"
 
 
 class FieldValidationError(ValidationError):
@@ -150,7 +191,7 @@ class MessageFilterValidationError(ValidationError):
 
         Args:
             message: Error message
-            filter_details: Additional details about filter validation failure
+            filter_details: Additional details about the filter error
         """
         super().__init__(message, GatewayErrorCode.INVALID_MESSAGE_FILTER)
         self.filter_details = filter_details
@@ -160,9 +201,17 @@ class MessageFilterValidationError(ValidationError):
             return f"{self.message} ({self.filter_details})"
         return self.message
 
+    def __repr__(self) -> str:
+        args = [repr(self.message)]
+        if self.filter_details:
+            # Use single quotes and escape inner single quotes
+            filter_details = self.filter_details.replace("'", "\\'")
+            args.append(f"'{filter_details}'")
+        return f"{self.__class__.__name__}({', '.join(args)})"
+
 
 class SizeValidationError(ValidationError):
-    """Validation error for message size limits."""
+    """Validation error for size limits."""
 
     def __init__(
         self,
@@ -174,7 +223,7 @@ class SizeValidationError(ValidationError):
 
         Args:
             message: Error message
-            current_size: Actual size that exceeded limit
+            current_size: Current size that exceeded limit
             max_size: Maximum allowed size
         """
         super().__init__(message, GatewayErrorCode.MESSAGE_SIZE_EXCEEDED)
@@ -182,33 +231,63 @@ class SizeValidationError(ValidationError):
         self.max_size = max_size
 
     def __str__(self) -> str:
+        msg = self.message
         if self.current_size is not None and self.max_size is not None:
-            return f"{self.message} (Size: {self.current_size}, Max: {self.max_size})"
-        return self.message
+            msg = f"{msg} (size: {self.current_size}, max: {self.max_size})"
+        return msg
+
+    def __repr__(self) -> str:
+        args = [repr(self.message)]
+        if self.current_size is not None:
+            args.append(str(self.current_size))
+        if self.max_size is not None:
+            args.append(str(self.max_size))
+        return f"{self.__class__.__name__}({', '.join(args)})"
 
 
 class AuthenticationError(OGxProtocolError):
-    """Authentication errors as defined in OGWS-1.txt Section 3.1."""
+    """Authentication error with HTTP 401 code."""
 
     def __init__(self, message: str, error_code: Optional[int] = None):
-        if error_code is None:
-            error_code = HTTPErrorCode.UNAUTHORIZED
-        super().__init__(f"Authentication error: {message}", error_code)
+        error_code = error_code or HTTPErrorCode.UNAUTHORIZED
+        formatted_message = f"Authentication error: {message}"
+        super().__init__(formatted_message, error_code)
+        self._original_message = message  # Override the original message after super().__init__
+
+    def __repr__(self) -> str:
+        args = [repr(self._original_message)]
+        if self.error_code is not None:
+            args.append(str(self.error_code))
+        return f"{self.__class__.__name__}({', '.join(args)})"
 
 
 class EncodingError(OGxProtocolError):
-    """Message encoding/decoding errors according to OGWS-1.txt Section 5."""
+    """Encoding error with invalid message format code."""
 
     def __init__(self, message: str, error_code: Optional[int] = None):
-        if error_code is None:
-            error_code = GatewayErrorCode.INVALID_MESSAGE_FORMAT
-        super().__init__(f"Encoding error: {message}", error_code)
+        error_code = error_code or GatewayErrorCode.INVALID_MESSAGE_FORMAT
+        formatted_message = f"Encoding error: {message}"
+        super().__init__(formatted_message, error_code)
+        self._original_message = message  # Override the original message after super().__init__
+
+    def __repr__(self) -> str:
+        args = [repr(self._original_message)]
+        if self.error_code is not None:
+            args.append(str(self.error_code))
+        return f"{self.__class__.__name__}({', '.join(args)})"
 
 
 class RateLimitError(OGxProtocolError):
-    """Rate limiting errors as defined in OGWS-1.txt Section 3.4."""
+    """Rate limit error with HTTP 429 code."""
 
     def __init__(self, message: str, error_code: Optional[int] = None):
-        if error_code is None:
-            error_code = HTTPErrorCode.TOO_MANY_REQUESTS
-        super().__init__(f"Rate limit error: {message}", error_code)
+        error_code = error_code or HTTPErrorCode.TOO_MANY_REQUESTS
+        formatted_message = f"Rate limit error: {message}"
+        super().__init__(formatted_message, error_code)
+        self._original_message = message  # Override the original message after super().__init__
+
+    def __repr__(self) -> str:
+        args = [repr(self._original_message)]
+        if self.error_code is not None:
+            args.append(str(self.error_code))
+        return f"{self.__class__.__name__}({', '.join(args)})"
