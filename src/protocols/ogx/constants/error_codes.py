@@ -80,37 +80,31 @@ class HTTPErrorCode(IntEnum):
 
 
 class GatewayErrorCode(IntEnum):
-    """Gateway-specific error codes from OGWS-1.txt Section 3.4.
+    """Gateway error codes for validation and messaging."""
 
-    These codes provide detailed error information when HTTP status is 200:
-    - 24579: Message submission rate exceeded (Section 3.4.2.3)
-    - 24581: Status retrieval rate exceeded (Section 3.4.2.4)
-    - 24582: Message format invalid
-    - 24583-24585: Token errors
+    # Base validation errors (10000-10099)
+    VALIDATION_ERROR = 10000
+    INVALID_MESSAGE_FORMAT = 10001
+    INVALID_ELEMENT_FORMAT = 10002
+    INVALID_FIELD_FORMAT = 10003
+    INVALID_MESSAGE_FILTER = 10004
+    MESSAGE_SIZE_EXCEEDED = 10005
+    INVALID_FIELD_TYPE = 10006  # Added missing error code
 
-    Usage:
-        def is_rate_limit_error(error_id: GatewayErrorCode) -> bool:
-            '''Check if error is rate limit related.'''
-            return error_id in (
-                GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED,
-                GatewayErrorCode.RETRIEVE_STATUS_RATE_EXCEEDED
-            )
-
-    Rate Limit Notes:
-        - Submit rate limits configurable per account (Section 3.4.2.3)
-        - Status retrieval limits configurable per account (Section 3.4.2.4)
-        - Default window is 60 seconds (Section 3.4.2.1)
-    """
-
-    INVALID_MESSAGE_FORMAT = 24582
-    TOKEN_EXPIRED = 24583
-    TOKEN_INVALID = 24584
-    TOKEN_REVOKED = 24585
-
-    # Validation specific codes
-    INVALID_FIELD_TYPE = 24590
-    INVALID_FIELD_VALUE = 24591
-    INVALID_FIELD_FORMAT = 24592
-    MISSING_REQUIRED_FIELD = 24593
+    # Rate limiting errors (24500-24599)
     SUBMIT_MESSAGE_RATE_EXCEEDED = 24579
     RETRIEVE_STATUS_RATE_EXCEEDED = 24581
+    INVALID_TOKEN = 24582
+    TOKEN_EXPIRED = 24583
+    TOKEN_REVOKED = 24584
+    TOKEN_INVALID_FORMAT = 24585
+
+    # Network errors (25000-25099)
+    NETWORK_ERROR = 25000
+    CONNECTION_ERROR = 25001
+    TIMEOUT_ERROR = 25002
+
+    # Processing errors (26000-26099)
+    PROCESSING_ERROR = 26000
+    DECODE_ERROR = 26001
+    ENCODE_ERROR = 26002

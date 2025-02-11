@@ -1,46 +1,50 @@
 """Message size validation according to OGWS-1.txt Section 2.1."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from ...constants.limits import MAX_OGX_PAYLOAD_BYTES
 from ...constants.network_types import NetworkType
 from ..common.base_validator import BaseValidator
-from ..common.validation_exceptions import ValidationError
+from ..common.validation_exceptions import SizeValidationError  # Changed to use specific exception
 from ..common.types import ValidationContext, ValidationResult
 
 
 class SizeValidator(BaseValidator):
     """Validates message size limits per network type."""
 
-    def validate(self, data: Dict[str, Any], context: ValidationContext) -> ValidationResult:
+    def __init__(self, message_size_limit: int) -> None:
+        """Initialize size validator with maximum message size limit.
+
+        Args:
+            message_size_limit: Maximum allowed message size in bytes
+        """
+        super().__init__()
+        self.message_size_limit = message_size_limit
+
+    def validate(
+        self, data: Dict[str, Any], context: Optional[ValidationContext]
+    ) -> ValidationResult:
         """Validate message size limits.
 
         Args:
             data: Message data to validate
-            context: Validation context
+            context: Optional validation context
 
         Returns:
             ValidationResult with validation status
 
         Raises:
-            ValidationError: If message exceeds size limits
+            SizeValidationError: If message exceeds size limits
         """
-        self.context = context
-        self._errors = []
+        if not data:
+            return ValidationResult(False, ["No data to validate"])
 
-        try:
-            payload_size = len(data.get("RawPayload", ""))
-            network_type = data.get("Network", NetworkType.OGX.value)
+        size = len(str(data))  # Simple size calculation
+        if size > self.message_size_limit:
+            raise SizeValidationError(
+                f"Message size {size} exceeds maximum size {self.message_size_limit}",
+                current_size=size,
+                max_size=self.message_size_limit,
+            )
 
-            # Validate OGx network payload limit
-            if network_type == NetworkType.OGX.value:
-                if payload_size > MAX_OGX_PAYLOAD_BYTES:
-                    raise ValidationError(
-                        f"OGx payload size {payload_size} exceeds limit of {MAX_OGX_PAYLOAD_BYTES} bytes"
-                    )
-
-            return self._get_validation_result()
-
-        except ValidationError as e:
-            self._add_error(str(e))
-            return self._get_validation_result()
+        return ValidationResult(True, [])

@@ -36,3 +36,24 @@ def compute_crc16_ccitt(data: bytes) -> int:
         int: Computed CRC-16 value as an unsigned 16-bit integer.
     """
     return binascii.crc_hqx(data, 0xFFFF)
+
+
+def calculate_crc(data: bytes) -> int:
+    """Calculate CRC-16 for given data.
+
+    Args:
+        data: Bytes to calculate CRC for
+
+    Returns:
+        Calculated CRC-16 value
+    """
+    crc = 0xFFFF
+    for byte in data:
+        crc ^= byte << 8
+        for _ in range(8):
+            if crc & 0x8000:
+                crc = (crc << 1) ^ 0x1021
+            else:
+                crc = crc << 1
+        crc &= 0xFFFF
+    return crc

@@ -20,7 +20,7 @@ Implementation Notes:
     maintaining compliance with OGWS-1.txt's basic requirements.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ...constants.message_format import REQUIRED_ELEMENT_PROPERTIES
 from ..common.base_validator import BaseValidator
@@ -35,7 +35,7 @@ class OGxElementValidator(BaseValidator):
     implementation structure across the codebase.
     """
 
-    def validate(self, data: Any, context: ValidationContext) -> ValidationResult:
+    def validate(self, data: Any, context: Optional[ValidationContext]) -> ValidationResult:
         """Validate element data according to OGWS-1.txt.
 
         This is the abstract method implementation required by BaseValidator.
@@ -44,7 +44,8 @@ class OGxElementValidator(BaseValidator):
 
         Args:
             data: Element or array of elements to validate
-            context: Validation context
+            context: Optional validation context. Basic structure validation
+                    is still performed even without context.
 
         Returns:
             ValidationResult indicating if the data is valid
@@ -57,7 +58,7 @@ class OGxElementValidator(BaseValidator):
             return ValidationResult(False, ["Invalid element data type"])
 
     def validate_array(
-        self, elements: List[Dict[str, Any]], context: ValidationContext
+        self, elements: List[Dict[str, Any]], context: Optional[ValidationContext]
     ) -> ValidationResult:
         """Validate an array of elements.
 
@@ -134,8 +135,7 @@ class OGxElementValidator(BaseValidator):
                 for field in fields:
                     result = field_validator.validate(field, self.context)
                     if not result.is_valid:
-                        for error in result.errors:
-                            self._add_error(f"In field: {error}")
+                        self._errors.extend(f"In field: {error}" for error in result.errors)
 
             return self._get_validation_result()
 

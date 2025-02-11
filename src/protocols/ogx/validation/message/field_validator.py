@@ -10,7 +10,7 @@ Key validation rules:
   - Dynamic/Property types must have TypeAttribute and Value matching that type
 """
 
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
 from ...constants.error_codes import GatewayErrorCode
 from ...constants.field_types import BASIC_TYPE_ATTRIBUTES, FieldType
 from ...constants.message_format import (
@@ -43,12 +43,14 @@ class OGxFieldValidator(BaseValidator):
         self.element_validator = OGxElementValidator()
         self.context: ValidationContext | None = None
 
-    def validate(self, data: Dict[str, Any], context: ValidationContext) -> ValidationResult:
+    def validate(
+        self, data: Optional[Dict[str, Any]], context: Optional[ValidationContext]
+    ) -> ValidationResult:
         """Validate a field's structure and value per OGWS-1.txt Table 3.
 
         Args:
-            data: The field dictionary to validate
-            context: Validation context including network type and direction
+            data: The field dictionary to validate, or None
+            context: Optional validation context
 
         Returns:
             ValidationResult indicating if the field is valid and any errors
@@ -57,6 +59,13 @@ class OGxFieldValidator(BaseValidator):
         self._errors = []
 
         try:
+            # Handle None input data
+            if data is None:
+                self._add_error(
+                    "Required field data missing - Name and Type properties are required"
+                )
+                return self._get_validation_result()
+
             # Validate required properties per OGWS-1.txt Section 5.1
             self._validate_required_fields(data, REQUIRED_FIELD_PROPERTIES, "field")
 
@@ -143,14 +152,7 @@ class OGxFieldValidator(BaseValidator):
                     self._add_error(f"In array element: {error}")
 
     def _validate_message_field(self, data: Dict[str, Any]) -> None:
-        """Validate a message field.
-
-        Args:
-            data: The message field data to validate
-
-        Raises:
-            ValidationError: If validation fails
-        """
+        """Validate a message field."""
         if data.get("Value") is not None:
             raise ValidationError(
                 "Message fields must not have Value attribute",
@@ -162,15 +164,31 @@ class OGxFieldValidator(BaseValidator):
                 GatewayErrorCode.INVALID_FIELD_FORMAT,
             )
 
+        # Check that message content is not empty and has required fields
+        message = data.get("Message", {})
+        if not message or not isinstance(message, dict):
+            self._add_error("Message content must be a non-empty dictionary")
+            return
+
+        # Check for required message fields according to OGWS-1.txt Table 3
+        required_fields = {"SIN", "MIN", "Fields"}
+        missing_fields = [field for field in required_fields if field not in message]
+        if missing_fields:
+            self._add_error(f"Message content missing required fields: {', '.join(missing_fields)}")
+            return
+
+        if self.context is None:
+            self._add_error("Validation context is required for message validation")
+            return
+
         # Validate nested message using message validator
         from .message_validator import OGxMessageValidator
 
         message_validator = OGxMessageValidator()
-        if self.context is not None:
-            result = message_validator.validate(data["Message"], self.context)
-            if not result.is_valid:
-                for error in result.errors:
-                    self._add_error(f"In nested message: {error}")
+        result = message_validator.validate(data["Message"], self.context)
+        if not result.is_valid:
+            for error in result.errors:
+                self._add_error(f"In nested message: {error}")
 
     def _validate_basic_field(self, field_type: FieldType, data: Dict[str, Any]) -> None:
         """Validate a basic field type (enum, boolean, etc.).
@@ -197,8 +215,76 @@ class OGxFieldValidator(BaseValidator):
         """
         type_attr = data.get("TypeAttribute")
         if not type_attr or type_attr.lower() not in BASIC_TYPE_ATTRIBUTES:
-            raise ValidationError(
-                f"Invalid TypeAttribute for {field_type.value} field: {type_attr}",
-                GatewayErrorCode.INVALID_FIELD_TYPE,
-            )
-        self._validate_field_type(FieldType(type_attr.lower()), data.get("Value"))
+            self._add_error(f"Invalid TypeAttribute for {field_type.value} field: {type_attr}")
+            return
+
+        try:
+            inner_type = FieldType(type_attr.lower())
+            self._validate_field_type(inner_type, data.get("Value"))
+        except ValueError:
+            self._add_error(f"Invalid TypeAttribute value: {type_attr}")
+
+    def _validate_field_type(self, field_type: FieldType, value: Any) -> None:
+        """Validate field value against its type."""
+        if field_type == FieldType.UNSIGNED_INT:
+            try:
+                if value is None:
+                    raise ValueError("Value cannot be None")
+                int_value = int(value)
+                if int_value < 0:
+                    self._add_error(
+                        f"Invalid value for type {FieldType.UNSIGNED_INT}. Value must be non-negative"
+                    )
+            except (ValueError, TypeError):
+                self._add_error(
+                    f"Invalid value for type {FieldType.UNSIGNED_INT}. Value must be a valid integer"
+                )
+        elif field_type == FieldType.SIGNED_INT:
+            try:
+                if value is None:
+                    raise ValueError("Value cannot be None")
+                int(value)  # Just validate it's a valid integer
+            except (ValueError, TypeError):
+                self._add_error(
+                    f"Invalid value for type {FieldType.SIGNED_INT}. Value must be a valid integer"
+                )
+        elif field_type == FieldType.BOOLEAN:
+            if not isinstance(value, bool) and value not in (
+                "true",
+                "false",
+                "True",
+                "False",
+                "1",
+                "0",
+            ):
+                self._add_error(
+                    f"Invalid value for type {FieldType.BOOLEAN}. Value must be a valid boolean"
+                )
+        elif field_type == FieldType.STRING:
+            if not isinstance(value, str):
+                self._add_error(
+                    f"Invalid value for type {FieldType.STRING}. Value must be a string"
+                )
+        elif field_type == FieldType.ENUM:
+            if not isinstance(value, str) or not value:
+                self._add_error(
+                    f"Invalid value for type {FieldType.ENUM}. Value must be a non-empty string"
+                )
+        elif field_type == FieldType.DATA:
+            import base64
+
+            if not isinstance(value, str):
+                self._add_error(
+                    f"Invalid value for type {FieldType.DATA}. Value must be a base64 encoded string"
+                )
+            else:
+                try:
+                    # Additional validation for base64 strings
+                    if not value or len(value.strip()) % 4 != 0:
+                        raise ValueError("Invalid base64 padding")
+
+                    base64.b64decode(value)
+                except Exception:
+                    self._add_error(
+                        f"Invalid value for type {FieldType.DATA}. Value must be a valid base64 encoded string"
+                    )
