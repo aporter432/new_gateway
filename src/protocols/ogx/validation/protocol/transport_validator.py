@@ -2,12 +2,12 @@
 
 from typing import Any, Dict, List, Union
 
-from ...constants.transport_types import TransportType
 from ...constants.message_types import MessageType
 from ...constants.network_types import NetworkType
+from ...constants.transport_types import TransportType
 from ..common.base_validator import BaseValidator
-from ..common.validation_exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
+from ..common.validation_exceptions import ValidationError
 
 
 class TransportValidator(BaseValidator):

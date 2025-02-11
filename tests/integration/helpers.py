@@ -7,7 +7,6 @@ This module provides common utilities and helper functions for:
 - Cleanup utilities
 """
 
-import json
 from typing import Any, Dict, List, Optional
 
 import aioredis

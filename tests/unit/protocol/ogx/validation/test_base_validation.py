@@ -8,12 +8,11 @@ from typing import Any
 
 import pytest
 
+from src.protocols.ogx.constants.field_types import FieldType
 from src.protocols.ogx.constants.message_types import MessageType
 from src.protocols.ogx.validation.common.base_validator import BaseValidator
-from src.protocols.ogx.validation.common.validation_exceptions import ValidationError
 from src.protocols.ogx.validation.common.types import ValidationContext, ValidationResult
-from src.protocols.ogx.constants.field_types import FieldType
-
+from src.protocols.ogx.validation.common.validation_exceptions import ValidationError
 
 # pylint: disable=protected-access
 # Accessing protected members is expected in unit tests

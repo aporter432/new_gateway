@@ -5,7 +5,7 @@
 # pylint: disable=too-few-public-methods
 # pylint: disable=invalid-name
 
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
 
 from ...constants.error_codes import GatewayErrorCode, HTTPErrorCode
 

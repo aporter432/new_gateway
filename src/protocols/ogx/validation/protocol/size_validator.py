@@ -19,8 +19,8 @@ from typing import Any, Dict, Optional
 
 from ...constants.limits import MAX_OGX_PAYLOAD_BYTES
 from ..common.base_validator import BaseValidator
-from ..common.validation_exceptions import SizeValidationError, ValidationError
 from ..common.types import ValidationContext, ValidationResult
+from ..common.validation_exceptions import SizeValidationError, ValidationError
 
 
 class SizeValidator(BaseValidator):

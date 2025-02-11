@@ -18,14 +18,13 @@ Implementation Notes:
     5. Individual field validation via OGxFieldValidator
 """
 
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from ...constants.error_codes import GatewayErrorCode
 from ...constants.message_format import REQUIRED_MESSAGE_FIELDS
 from ..common.base_validator import BaseValidator
-from ..common.validation_exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
-from .field_validator import OGxFieldValidator
+from ..common.validation_exceptions import ValidationError
 
 
 class OGxMessageValidator(BaseValidator):
@@ -34,6 +33,9 @@ class OGxMessageValidator(BaseValidator):
     def __init__(self) -> None:
         """Initialize with field validator."""
         super().__init__()
+        # Import here to avoid circular dependency
+        from .field_validator import OGxFieldValidator
+
         self.field_validator = OGxFieldValidator()
 
     def validate(self, data: Dict[str, Any], context: ValidationContext) -> ValidationResult:

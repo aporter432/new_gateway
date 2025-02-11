@@ -3,7 +3,7 @@
 This module provides message models and conversion utilities for the OGx protocol.
 """
 
-from typing import Any, Dict, Optional, ClassVar
+from typing import Any, ClassVar, Dict, Optional
 
 
 class OGxMessage:

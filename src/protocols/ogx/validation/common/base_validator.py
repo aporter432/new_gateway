@@ -23,8 +23,8 @@ from ...constants.message_format import (
     REQUIRED_FIELD_PROPERTIES,
     REQUIRED_MESSAGE_FIELDS,
 )
-from .validation_exceptions import ValidationError
 from .types import ValidationContext, ValidationResult, ValidationType
+from .validation_exceptions import ValidationError
 
 
 class BaseValidator(ABC):

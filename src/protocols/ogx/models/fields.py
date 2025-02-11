@@ -13,7 +13,8 @@ For serialization:
 
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, Field as PydanticField, ConfigDict
+from pydantic import BaseModel, ConfigDict
+from pydantic import Field as PydanticField
 
 from protocols.ogx.constants import FieldType
 

@@ -115,4 +115,91 @@ The test suite currently achieves 100% code coverage with:
 - 0 missing statements
 - 0 partial branches
 
-All validation components are thoroughly tested, ensuring reliable message validation for the OGx protocol implementation. 
+All validation components are thoroughly tested, ensuring reliable message validation for the OGx protocol implementation.
+
+# Field Validation Tests
+
+This directory contains unit tests for field validation according to OGWS-1.txt Section 5.1 Table 3.
+
+## Test Organization
+
+The tests are organized into focused files based on functionality:
+
+### Basic Field Types (`test_field_validation_basic.py`)
+- String fields
+- Integer fields (signed/unsigned)
+- Boolean fields
+- Enum fields
+- Data (base64) fields
+
+### Array Fields (`test_field_validation_array.py`)
+- No Value attribute allowed
+- Optional Elements array
+- Element structure validation
+- Index validation (sequential, unique)
+- Nested field validation
+
+### Message Fields (`test_field_validation_message.py`)
+- No Value attribute allowed
+- Message attribute required
+- Message content validation
+- Required fields (SIN, MIN, Fields)
+- Context requirements
+
+### Dynamic Fields (`test_field_validation_dynamic.py`)
+- TypeAttribute required
+- TypeAttribute must be valid basic type
+- Value must match TypeAttribute type
+- Property fields (same rules as dynamic)
+
+### Edge Cases (`test_field_validation_edge.py`)
+- Required field validation
+- Invalid field types
+- Error propagation
+- Null/empty values
+- Complex error scenarios
+
+## Common Test Fixtures
+
+Each test file uses common fixtures:
+- `field_validator`: Instance of `OGxFieldValidator`
+- `validation_context`: Instance of `ValidationContext` with standard settings
+
+## Test Coverage
+
+The tests cover:
+1. Valid cases for each field type
+2. Invalid cases and error handling
+3. Nested field validation
+4. Error message format and content
+5. Context requirements
+6. Edge cases and complex scenarios
+
+## Running Tests
+
+Run all validation tests:
+```bash
+PYTHONPATH=. python -m pytest tests/unit/protocol/ogx/validation/ -v
+```
+
+Run specific test file:
+```bash
+PYTHONPATH=. python -m pytest tests/unit/protocol/ogx/validation/test_field_validation_basic.py -v
+```
+
+## Adding New Tests
+
+When adding new tests:
+1. Choose the appropriate file based on functionality
+2. Follow the existing test structure
+3. Include both valid and invalid cases
+4. Verify error messages match OGWS-1.txt specifications
+5. Add docstrings explaining test purpose
+
+## Test Design Principles
+
+1. **Single Responsibility**: Each test file focuses on one aspect of validation
+2. **Comprehensive Coverage**: Test both valid and invalid cases
+3. **Clear Organization**: Tests are grouped by functionality
+4. **Maintainable**: Small, focused test files
+5. **Well-Documented**: Clear docstrings and comments 

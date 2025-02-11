@@ -176,4 +176,7 @@ class TestOGxMessageValidator:
         result = validator.validate(valid_message, context)
         assert not result.is_valid
         assert any("Field validation error" in error for error in result.errors)
-        assert any("Invalid value for type" in error for error in result.errors)
+        assert any(
+            "Invalid unsignedint field: Value must be an integer" in error
+            for error in result.errors
+        )

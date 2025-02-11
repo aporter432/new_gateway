@@ -3,8 +3,8 @@
 import pytest
 
 from protocols.ogx.constants import FieldType
-from protocols.ogx.validation.message.message_validator import OGxMessageValidator
 from protocols.ogx.models.fields import Element, Field, Message
+from protocols.ogx.validation.message.message_validator import OGxMessageValidator
 
 
 @pytest.fixture

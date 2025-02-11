@@ -2,11 +2,11 @@
 
 from typing import Any, Dict
 
-from ...constants.network_types import NetworkType
 from ...constants.message_types import MessageType
+from ...constants.network_types import NetworkType
 from ..common.base_validator import BaseValidator
-from ..common.validation_exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
+from ..common.validation_exceptions import ValidationError
 
 
 class NetworkValidator(BaseValidator):

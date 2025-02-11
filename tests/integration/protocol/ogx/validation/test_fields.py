@@ -2,10 +2,9 @@
 
 import pytest
 
-from protocols.ogx.constants.field_types import FieldType
 from protocols.ogx.constants.message_types import MessageType
-from protocols.ogx.validation.common.validation_exceptions import ValidationError
 from protocols.ogx.validation.common.types import ValidationContext
+from protocols.ogx.validation.common.validation_exceptions import ValidationError
 from protocols.ogx.validation.message.field_validator import OGxFieldValidator
 
 

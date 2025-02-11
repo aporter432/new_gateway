@@ -1,23 +1,21 @@
 """Unit tests for validation exceptions.
 
 Tests custom exception types and their behaviors:
-- ValidationError  
+- ValidationError
 - MessageValidationError
 - ElementValidationError
 - FieldValidationError
 """
 
-import pytest
-
+from protocols.ogx.constants.error_codes import GatewayErrorCode
 from protocols.ogx.validation.common.validation_exceptions import (
-    ValidationError,
-    MessageValidationError,
     ElementValidationError,
     FieldValidationError,
     MessageFilterValidationError,
+    MessageValidationError,
     SizeValidationError,
+    ValidationError,
 )
-from protocols.ogx.constants.error_codes import GatewayErrorCode
 
 
 class TestValidationExceptions:

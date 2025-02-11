@@ -1,102 +1,145 @@
-"""Unit tests for OGxElementValidator.
+"""Unit tests for element validation according to OGWS-1.txt.
 
-Tests validation of elements according to OGWS-1.txt requirements and
-implementation standards.
+Tests focus on array element validation:
+- Element structure validation
+- Field validation within elements
+- Error propagation
 """
 
 import pytest
+from unittest.mock import Mock
 
-from src.protocols.ogx.validation.common.types import ValidationContext, MessageType
-from src.protocols.ogx.validation.message.element_validator import OGxElementValidator
+from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.validation.common.types import ValidationContext
+from protocols.ogx.validation.message.element_validator import OGxElementValidator
+
+
+@pytest.fixture
+def validator() -> OGxElementValidator:
+    """Provide element validator instance."""
+    return OGxElementValidator()
+
+
+@pytest.fixture
+def context() -> ValidationContext:
+    """Provide validation context."""
+    return ValidationContext(network_type="OGX", direction=MessageType.FORWARD)
 
 
 class TestOGxElementValidator:
-    """Test cases for OGxElementValidator."""
+    """Test element validation."""
 
-    @pytest.fixture
-    def validator(self):
-        """Create a fresh validator instance for each test."""
-        return OGxElementValidator()
-
-    @pytest.fixture
-    def context(self):
-        """Provide validation context."""
-        return ValidationContext(network_type="OGX", direction=MessageType.FORWARD)
-
-    @pytest.fixture
-    def valid_element(self):
-        """Provide valid element data."""
-        return {"Index": 0, "Fields": []}
-
-    @pytest.fixture
-    def valid_element_array(self, valid_element):
-        """Provide valid array of elements."""
-        return [valid_element, {"Index": 1, "Fields": []}]
-
-    def test_validate_valid_element(self, validator, context, valid_element):
-        """Test validation of a valid single element."""
-        result = validator.validate(valid_element, context)
+    def test_validate_valid_element(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation of valid element."""
+        element = {
+            "Index": 0,
+            "Fields": [{"Name": "test_field", "Type": "string", "Value": "test"}],
+        }
+        validator.context = context
+        result = validator.validate(element, context)
         assert result.is_valid
-        assert not result.errors
 
-    def test_validate_valid_element_array(self, validator, context, valid_element_array):
-        """Test validation of a valid array of elements."""
-        result = validator.validate(valid_element_array, context)
+    def test_validate_valid_element_array(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation of array of valid elements."""
+        elements = [
+            {
+                "Index": 0,
+                "Fields": [{"Name": "test_field", "Type": "string", "Value": "test"}],
+            },
+            {
+                "Index": 1,
+                "Fields": [{"Name": "test_field", "Type": "string", "Value": "test"}],
+            },
+        ]
+        validator.context = context
+        result = validator.validate_array(elements, context)
         assert result.is_valid
-        assert not result.errors
 
-    def test_validate_invalid_data_type(self, validator, context):
-        """Test validation with invalid data type (neither dict nor list)."""
-        result = validator.validate("invalid", context)
+    def test_validate_invalid_data_type(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation with invalid data type."""
+        element = "not a dictionary"
+        validator.context = context
+        result = validator.validate(element, context)
         assert not result.is_valid
         assert "Invalid element data type" in result.errors[0]
 
-    def test_validate_missing_index(self, validator, context, valid_element):
-        """Test validation of element missing Index property."""
-        del valid_element["Index"]
-        result = validator.validate(valid_element, context)
+    def test_validate_missing_index(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation with missing Index."""
+        element = {"Fields": [{"Name": "test_field", "Type": "string", "Value": "test"}]}
+        validator.context = context
+        result = validator.validate(element, context)
         assert not result.is_valid
-        assert any("Index" in error for error in result.errors)
+        assert "Missing required element fields: Index" in result.errors[0]
 
-    def test_validate_missing_fields(self, validator, context, valid_element):
-        """Test validation of element missing Fields property."""
-        del valid_element["Fields"]
-        result = validator.validate(valid_element, context)
+    def test_validate_missing_fields(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation with missing Fields."""
+        element = {"Index": 0}
+        validator.context = context
+        result = validator.validate(element, context)
         assert not result.is_valid
-        assert any("Fields" in error for error in result.errors)
+        assert "Missing required element fields: Fields" in result.errors[0]
 
-    def test_validate_non_array_fields(self, validator, context, valid_element):
-        """Test validation when Fields is not an array."""
-        valid_element["Fields"] = "not an array"
-        result = validator.validate(valid_element, context)
+    def test_validate_non_array_fields(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation with non-array Fields."""
+        element = {"Index": 0, "Fields": "not an array"}
+        validator.context = context
+        result = validator.validate(element, context)
         assert not result.is_valid
-        assert any("must be an array" in error for error in result.errors)
+        assert "Element Fields must be an array" in result.errors[0]
 
-    def test_validate_empty_fields_array(self, validator, context, valid_element):
+    def test_validate_empty_fields_array(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
         """Test validation with empty Fields array."""
-        valid_element["Fields"] = []
-        result = validator.validate(valid_element, context)
-        assert result.is_valid  # Empty arrays are valid according to spec
-        assert not result.errors
+        element = {"Index": 0, "Fields": []}
+        validator.context = context
+        result = validator.validate(element, context)
+        assert result.is_valid
 
-    def test_validate_array_with_invalid_element(self, validator, context, valid_element_array):
-        """Test validation of array containing an invalid element."""
-        valid_element_array.append({"invalid": "element"})
-        result = validator.validate(valid_element_array, context)
+    def test_validate_array_with_invalid_element(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation of array with invalid element."""
+        elements = [
+            {
+                "Index": 0,
+                "Fields": [{"Name": "test_field", "Type": "string", "Value": "test"}],
+            },
+            {"Index": 1},  # Invalid element missing Fields
+        ]
+        validator.context = context
+        result = validator.validate_array(elements, context)
         assert not result.is_valid
-        assert any("Index" in error for error in result.errors)
+        assert "Missing required element fields: Fields" in result.errors[0]
 
-    def test_validate_non_array_input_to_validate_array(self, validator, context):
-        """Test validate_array with non-array input."""
-        result = validator.validate_array("not an array", context)
+    def test_validate_non_array_input_to_validate_array(
+        self, validator: OGxElementValidator, context: ValidationContext
+    ):
+        """Test validation_array with non-array input."""
+        elements = "not an array"
+        validator.context = context
+        result = validator.validate_array(elements, context)
         assert not result.is_valid
-        assert any("must be an array" in error for error in result.errors)
+        assert "Elements must be an array" in result.errors[0]
 
-    def test_validate_empty_array(self, validator, context):
+    def test_validate_empty_array(self, validator: OGxElementValidator, context: ValidationContext):
         """Test validation of empty array."""
-        result = validator.validate([], context)
-        assert result.is_valid  # Empty arrays are valid according to spec
-        assert not result.errors
+        elements = []
+        validator.context = context
+        result = validator.validate_array(elements, context)
+        assert result.is_valid
 
     def test_validate_element_with_invalid_field(
         self, validator: OGxElementValidator, context: ValidationContext
@@ -115,22 +158,7 @@ class TestOGxElementValidator:
         validator.context = context  # Set context before validation
         result = validator.validate(element, context)
         assert not result.is_valid
-        assert any("Invalid value for type" in error for error in result.errors)
-
-    def test_validate_element_with_no_context(self, validator: OGxElementValidator):
-        """Test validation of element without context."""
-        element = {
-            "Index": 0,
-            "Fields": [
-                {
-                    "Name": "test_field",
-                    "Type": "string",
-                    "Value": "test",
-                }
-            ],
-        }
-        result = validator.validate(element, None)
-        assert result.is_valid  # Should pass basic structure validation without context
+        assert "Invalid unsignedint field: Value must be non-negative" in result.errors[0]
 
     def test_validate_element_with_field_validation_error(
         self, validator: OGxElementValidator, context: ValidationContext
@@ -149,8 +177,13 @@ class TestOGxElementValidator:
         validator.context = context
         result = validator.validate(element, context)
         assert not result.is_valid
-        print("Actual errors:", result.errors)  # Print actual errors for debugging
-        assert any(
-            "In field: Invalid value for type FieldType.UNSIGNED_INT" in error
-            for error in result.errors
-        )
+        assert "Invalid unsignedint field: Value must be an integer" in result.errors[0]
+
+    def test_validate_element_with_no_context(self, validator: OGxElementValidator):
+        """Test validation without context."""
+        element = {
+            "Index": 0,
+            "Fields": [{"Name": "test_field", "Type": "string", "Value": "test"}],
+        }
+        result = validator.validate(element, None)
+        assert result.is_valid

@@ -5,6 +5,7 @@ from enum import Enum, auto
 # Import all module components first
 from .auth import AuthRole, GrantType, ThrottleGroup
 from .endpoints import APIEndpoint
+from .error_codes import GatewayErrorCode, HTTPErrorCode
 from .field_types import FieldType
 from .limits import (
     DEFAULT_CALLS_PER_MINUTE,
@@ -34,7 +35,6 @@ from .network_types import (
 )
 from .operation_modes import OperationMode
 from .transport_types import TransportType
-from .error_codes import GatewayErrorCode, HTTPErrorCode
 
 __all__ = [
     "FieldType",

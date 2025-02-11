@@ -21,4 +21,4 @@ from .element_validator import OGxElementValidator
 from .field_validator import OGxFieldValidator
 from .message_validator import OGxMessageValidator
 
-__all__ = ["OGxMessageValidator", "OGxFieldValidator", "OGxElementValidator"]
+__all__ = ["OGxElementValidator", "OGxFieldValidator", "OGxMessageValidator"]

@@ -23,9 +23,9 @@ from core.logging.loggers import get_infra_logger
 from infrastructure.redis import get_redis_client
 from protocols.ogx.constants import GatewayErrorCode
 from protocols.ogx.constants.limits import DEFAULT_WINDOW_SECONDS
-from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
 from protocols.ogx.services.ogws import submit_ogws_message
 from protocols.ogx.services.ogws_message_queue import MessageQueue
+from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
 
 
 class MessageWorker:
@@ -130,10 +130,7 @@ class MessageWorker:
                         response = await submit_ogws_message(message.payload)
 
                         # Handle rate limiting using existing error code
-                        if (
-                            response.get("ErrorID")
-                            == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
-                        ):
+                        if response.get("ErrorID") == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED:
                             retry_after = response.get("RetryAfter", 60)
                             self.logger.warning(
                                 "Rate limited, will retry",

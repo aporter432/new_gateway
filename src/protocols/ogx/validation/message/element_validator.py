@@ -24,8 +24,8 @@ from typing import Any, Dict, List, Optional
 
 from ...constants.message_format import REQUIRED_ELEMENT_PROPERTIES
 from ..common.base_validator import BaseValidator
-from ..common.validation_exceptions import ValidationError
 from ..common.types import ValidationContext, ValidationResult
+from ..common.validation_exceptions import ValidationError
 
 
 class OGxElementValidator(BaseValidator):
