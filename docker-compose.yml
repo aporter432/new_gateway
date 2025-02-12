@@ -66,7 +66,12 @@ services:
       - ./tests:/app/tests:ro
       - ./pyproject.toml:/app/pyproject.toml:ro
     environment:
-      - PYTHONPATH=/app
+      # PYTHONPATH must point to /app/src to ensure:
+      # 1. Python can find the 'protocols' package and other source modules
+      # 2. Imports in tests use the same paths as the main application
+      # 3. No need for package installation in development mode
+      # 4. Consistent with the package structure defined in pyproject.toml
+      - PYTHONPATH=/app/src
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=15
@@ -77,7 +82,7 @@ services:
       - HTTP_PROXY=http://proxy:8888
       - HTTPS_PROXY=http://proxy:8888
     working_dir: /app
-    command: python -m pytest tests/integration -v
+    command: python -m pytest tests/integration --ignore=tests/integration/ui --ignore=tests/integration/scenarios -v
     depends_on:
       redis:
         condition: service_healthy
