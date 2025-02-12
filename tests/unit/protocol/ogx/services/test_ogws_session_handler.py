@@ -21,6 +21,7 @@ Test Dependencies:
 
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch, ANY
+from unittest import mock
 
 import pytest
 from redis.asyncio import Redis
@@ -30,6 +31,7 @@ from protocols.ogx.services.ogws_session_handler import SessionHandler
 from protocols.ogx.validation.common.validation_exceptions import (
     AuthenticationError,
     OGxProtocolError,
+    ValidationError,
 )
 
 
@@ -55,6 +57,7 @@ def mock_redis():
     redis.exists = AsyncMock(return_value=True)
     redis.scard = AsyncMock(return_value=0)
     redis.sadd = AsyncMock()
+    redis.srem = AsyncMock()
     return redis
 
 
@@ -154,6 +157,54 @@ class TestSessionHandlerCreate:
             await handler.create_session({})
         assert "SessionHandler not initialized" in str(exc.value)
 
+    async def test_missing_client_id(self, session_handler, mock_logger):
+        """Test session creation with missing client_id."""
+        with pytest.raises(ValidationError) as exc:
+            await session_handler.create_session({"client_secret": "test_secret"})
+        assert "client_id is required" in str(exc.value)
+        # Verify both error logs are called
+        assert mock_logger.error.call_count == 2
+        mock_logger.error.assert_has_calls(
+            [
+                mock.call(
+                    "Missing client_id in credentials",
+                    extra={
+                        "customer_id": "unknown",
+                        "asset_id": "session_handler",
+                        "action": "create_session",
+                    },
+                ),
+                mock.call(
+                    "Session creation failed",
+                    extra={
+                        "customer_id": "unknown",
+                        "asset_id": "session_handler",
+                        "error": "client_id is required",
+                        "action": "create_session",
+                    },
+                ),
+            ]
+        )
+
+    async def test_unexpected_error_handling(self, session_handler, mock_redis, mock_logger):
+        """Test handling of unexpected errors during session creation."""
+        # Mock get_customer_session_count to raise an unexpected error
+        mock_redis.scard.side_effect = Exception("Unexpected error")
+        with pytest.raises(OGxProtocolError) as exc:
+            await session_handler.create_session(
+                {"client_id": "test_id", "client_secret": "test_secret"}
+            )
+        assert "Failed to get customer session count" in str(exc.value)
+        mock_logger.error.assert_called_with(
+            "Session creation failed",
+            extra={
+                "customer_id": "test_id",
+                "asset_id": "session_handler",
+                "error": "Failed to get customer session count: Unexpected error",
+                "action": "create_session",
+            },
+        )
+
 
 @pytest.mark.asyncio
 class TestSessionHandlerValidate:
@@ -247,8 +298,7 @@ class TestSessionHandlerValidate:
         session_handler.auth_manager.validate_token = AsyncMock(return_value=True)
 
         result = await session_handler.validate_session("test_session")
-        assert result is True  # Should still validate despite update error
-        mock_logger.error.assert_not_called()
+        assert result is False  # Should fail validation if we can't update last activity
         mock_logger.warning.assert_called_once_with(
             "Failed to update last activity",
             extra={
@@ -290,6 +340,44 @@ class TestSessionHandlerValidate:
                 "asset_id": "session_handler",
                 "session_id": "test_session",
                 "error": "Redis error during validation",
+                "action": "validate_session",
+            },
+        )
+
+    async def test_empty_token(self, session_handler, mock_redis, mock_logger):
+        """Test validation with empty token."""
+        session_data = {
+            b"token": b"",  # Empty token
+            b"created_at": str(datetime.now()).encode(),
+            b"last_activity": str(datetime.now()).encode(),
+            b"request_count": b"0",
+        }
+        mock_redis.hgetall.return_value = session_data
+        result = await session_handler.validate_session("test_session")
+        assert result is False
+        mock_logger.error.assert_not_called()
+
+    async def test_validation_unexpected_error(self, session_handler, mock_redis, mock_logger):
+        """Test handling of unexpected errors during validation."""
+        session_data = {
+            b"token": b"test_token",
+            b"created_at": str(datetime.now()).encode(),
+            b"last_activity": str(datetime.now()).encode(),
+            b"request_count": b"0",
+        }
+        mock_redis.hgetall.return_value = session_data
+        # Mock validate_token to raise an unexpected error
+        session_handler.auth_manager.validate_token.side_effect = Exception("Unexpected error")
+
+        result = await session_handler.validate_session("test_session")
+        assert result is False
+        mock_logger.error.assert_called_once_with(
+            "Token validation failed",
+            extra={
+                "customer_id": session_handler.settings.CUSTOMER_ID,
+                "asset_id": "session_handler",
+                "session_id": "test_session",
+                "error": "Unexpected error",
                 "action": "validate_session",
             },
         )
@@ -353,3 +441,135 @@ class TestSessionHandlerRefresh:
         with pytest.raises(RuntimeError) as exc:
             await handler.refresh_session("test_session")
         assert "SessionHandler not initialized" in str(exc.value)
+
+
+@pytest.mark.asyncio
+class TestSessionHandlerCreateSessionRecord:
+    """Test suite for SessionHandler._create_session_record method."""
+
+    async def test_redis_hset_failure(self, session_handler, mock_redis, mock_logger):
+        """Test session record creation with Redis hset failure."""
+        mock_redis.hset.side_effect = Exception("Redis hset error")
+        with pytest.raises(OGxProtocolError) as exc:
+            await session_handler._create_session_record("test_token", "test_customer")
+        assert "Failed to create session record" in str(exc.value)
+        mock_logger.error.assert_not_called()  # Error logged by caller
+
+    async def test_redis_expire_failure(self, session_handler, mock_redis, mock_logger):
+        """Test session record creation with Redis expire failure."""
+        mock_redis.expire.side_effect = Exception("Redis expire error")
+        with pytest.raises(OGxProtocolError) as exc:
+            await session_handler._create_session_record("test_token", "test_customer")
+        assert "Failed to create session record" in str(exc.value)
+        mock_logger.error.assert_not_called()
+
+    async def test_redis_sadd_failure(self, session_handler, mock_redis, mock_logger):
+        """Test session record creation with Redis sadd failure."""
+        mock_redis.sadd.side_effect = Exception("Redis sadd error")
+        with pytest.raises(OGxProtocolError) as exc:
+            await session_handler._create_session_record("test_token", "test_customer")
+        assert "Failed to create session record" in str(exc.value)
+        mock_logger.error.assert_not_called()
+
+
+@pytest.mark.asyncio
+class TestSessionHandlerCustomerSessionCount:
+    """Test suite for SessionHandler._get_customer_session_count method."""
+
+    async def test_redis_scard_failure(self, session_handler, mock_redis, mock_logger):
+        """Test customer session count with Redis scard failure."""
+        mock_redis.scard.side_effect = Exception("Redis scard error")
+        with pytest.raises(OGxProtocolError) as exc:
+            await session_handler._get_customer_session_count("test_customer")
+        assert "Failed to get customer session count" in str(exc.value)
+        mock_logger.error.assert_not_called()
+
+    async def test_uninitialized_redis(self):
+        """Test customer session count with uninitialized Redis."""
+        handler = SessionHandler()
+        count = await handler._get_customer_session_count("test_customer")
+        assert count == 0
+
+
+@pytest.mark.asyncio
+class TestSessionHandlerCleanup:
+    """Test suite for session cleanup functionality."""
+
+    async def test_session_expiration(self, session_handler, mock_redis, mock_logger):
+        """Test session expiration setting."""
+        session_id = await session_handler.create_session(
+            {"client_id": "test_id", "client_secret": "test_secret"}
+        )
+        mock_redis.expire.assert_any_call(
+            f"{session_handler.session_key_prefix}{session_id}", session_handler.session_timeout
+        )
+        mock_redis.expire.assert_any_call(
+            f"{session_handler.session_key_prefix}customer:test_id", session_handler.session_timeout
+        )
+
+    async def test_customer_session_cleanup(self, session_handler, mock_redis, mock_logger):
+        """Test cleanup of customer session set."""
+        # Setup mock Redis to return session data
+        session_data = {
+            b"token": b"test_token",
+            b"customer_id": b"test_id",
+            b"created_at": str(datetime.now()).encode(),
+            b"last_activity": str(datetime.now()).encode(),
+            b"request_count": b"0",
+        }
+        mock_redis.hgetall.return_value = session_data
+
+        # Create session
+        session_id = await session_handler.create_session(
+            {"client_id": "test_id", "client_secret": "test_secret"}
+        )
+
+        # Reset mock to simulate session data retrieval during end_session
+        mock_redis.hgetall.reset_mock()
+        mock_redis.hgetall.return_value = session_data
+
+        # End session
+        await session_handler.end_session(session_id)
+
+        # Verify customer session set is cleaned up
+        customer_sessions_key = f"{session_handler.session_key_prefix}customer:test_id"
+        mock_redis.delete.assert_any_call(f"{session_handler.session_key_prefix}{session_id}")
+        mock_redis.srem.assert_called_once_with(customer_sessions_key, session_id)
+
+    async def test_session_cleanup_with_redis_error(self, session_handler, mock_redis, mock_logger):
+        """Test session cleanup with Redis error."""
+        mock_redis.delete.side_effect = Exception("Redis delete error")
+        mock_redis.srem.side_effect = Exception("Redis srem error")
+
+        with pytest.raises(OGxProtocolError) as exc:
+            await session_handler.end_session("test_session")
+        assert "Failed to end session" in str(exc.value)
+        mock_logger.error.assert_called_once()
+
+    async def test_cleanup_with_missing_customer_id(self, session_handler, mock_redis, mock_logger):
+        """Test session cleanup when customer ID is missing."""
+        # Setup session data without customer_id
+        session_data = {
+            b"token": b"test_token",
+            b"created_at": str(datetime.now()).encode(),
+            b"last_activity": str(datetime.now()).encode(),
+            b"request_count": b"0",
+        }
+        mock_redis.hgetall.return_value = session_data
+
+        # End session
+        await session_handler.end_session("test_session")
+
+        # Verify cleanup behavior
+        mock_redis.delete.assert_called_once()
+        mock_redis.srem.assert_not_called()  # Should not be called without customer_id
+
+    async def test_cleanup_with_redis_hgetall_error(self, session_handler, mock_redis, mock_logger):
+        """Test session cleanup when Redis hgetall fails."""
+        mock_redis.hgetall.side_effect = Exception("Redis error")
+
+        with pytest.raises(OGxProtocolError) as exc:
+            await session_handler.end_session("test_session")
+        assert "Failed to end session" in str(exc.value)
+        mock_logger.error.assert_called_once()
+        mock_redis.srem.assert_not_called()

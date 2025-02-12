@@ -133,6 +133,7 @@ class SessionHandler:
             RuntimeError: If handler not initialized
             AuthenticationError: If authentication fails
             RateLimitError: If session limit exceeded
+            ValidationError: If required credentials are missing
             OGxProtocolError: For other session errors
         """
         if not self.auth_manager or not self.redis:
@@ -142,6 +143,14 @@ class SessionHandler:
             # Get customer ID from credentials
             customer_id = credentials.get("client_id")
             if not customer_id:
+                self.logger.error(
+                    "Missing client_id in credentials",
+                    extra={
+                        "customer_id": "unknown",
+                        "asset_id": "session_handler",
+                        "action": "create_session",
+                    },
+                )
                 raise ValidationError("client_id is required")
 
             # Check concurrent session limit for this customer
@@ -170,7 +179,7 @@ class SessionHandler:
 
             return session_id
 
-        except (AuthenticationError, RateLimitError, OGxProtocolError) as e:
+        except (AuthenticationError, RateLimitError, ValidationError, OGxProtocolError) as e:
             self.logger.error(
                 "Session creation failed",
                 extra={
@@ -244,7 +253,8 @@ class SessionHandler:
                         "action": "validate_session",
                     },
                 )
-                # Don't fail validation just because we couldn't update timestamp
+                # Return False if we can't update last activity
+                return False
 
             # Validate token with auth manager
             try:
@@ -292,8 +302,19 @@ class SessionHandler:
             raise RuntimeError("SessionHandler not initialized")
 
         try:
+            # Get session data to find customer ID
             session_key = f"{self.session_key_prefix}{session_id}"
+            session_data = await self.redis.hgetall(session_key)
+            customer_id = session_data.get(b"customer_id", b"").decode()
+
+            # Delete session
             await self.redis.delete(session_key)
+
+            # Remove from customer's session set if customer ID exists
+            if customer_id:
+                customer_sessions_key = f"{self.session_key_prefix}customer:{customer_id}"
+                await self.redis.srem(customer_sessions_key, session_id)
+
             self.logger.info(
                 "Session ended",
                 extra={
