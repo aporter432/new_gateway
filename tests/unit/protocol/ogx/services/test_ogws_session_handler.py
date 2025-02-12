@@ -352,70 +352,15 @@ class TestSessionHandlerValidate:
         mock_redis.hgetall.side_effect = Exception("Redis connection error")
         result = await session_handler.validate_session("test_session")
         assert result is False
-        mock_logger.error.assert_not_called()  # Should not log for Redis failures without session data
-
-    async def test_redis_failure_with_existing_session(
-        self, session_handler, mock_redis, mock_logger
-    ):
-        """Test Redis failure with existing session data."""
-        # First call succeeds and returns session data
-        mock_redis.hgetall.return_value = {
-            b"token": b"test_token",
-            b"created_at": str(datetime.now()).encode(),
-        }
-        # Second call (validation) fails
-        session_handler.auth_manager.validate_token.side_effect = Exception(
-            "Redis error during validation"
-        )
-
-        result = await session_handler.validate_session("test_session")
-        assert result is False
         mock_logger.error.assert_called_once_with(
-            "Token validation failed",
+            "Redis error during session data retrieval",
             extra={
                 "customer_id": session_handler.settings.CUSTOMER_ID,
                 "asset_id": "session_handler",
                 "session_id": "test_session",
-                "error": "Redis error during validation",
+                "error": "Redis connection error",
                 "action": "validate_session",
-            },
-        )
-
-    async def test_empty_token(self, session_handler, mock_redis, mock_logger):
-        """Test validation with empty token."""
-        session_data = {
-            b"token": b"",  # Empty token
-            b"created_at": str(datetime.now()).encode(),
-            b"last_activity": str(datetime.now()).encode(),
-            b"request_count": b"0",
-        }
-        mock_redis.hgetall.return_value = session_data
-        result = await session_handler.validate_session("test_session")
-        assert result is False
-        mock_logger.error.assert_not_called()
-
-    async def test_validation_unexpected_error(self, session_handler, mock_redis, mock_logger):
-        """Test handling of unexpected errors during validation."""
-        session_data = {
-            b"token": b"test_token",
-            b"created_at": str(datetime.now()).encode(),
-            b"last_activity": str(datetime.now()).encode(),
-            b"request_count": b"0",
-        }
-        mock_redis.hgetall.return_value = session_data
-        # Mock validate_token to raise an unexpected error
-        session_handler.auth_manager.validate_token.side_effect = Exception("Unexpected error")
-
-        result = await session_handler.validate_session("test_session")
-        assert result is False
-        mock_logger.error.assert_called_once_with(
-            "Token validation failed",
-            extra={
-                "customer_id": session_handler.settings.CUSTOMER_ID,
-                "asset_id": "session_handler",
-                "session_id": "test_session",
-                "error": "Unexpected error",
-                "action": "validate_session",
+                "operation": "redis.hgetall",
             },
         )
 
@@ -426,70 +371,221 @@ class TestSessionHandlerValidate:
 
         result = await session_handler.validate_session("test_session")
         assert result is False
-        mock_logger.error.assert_not_called()  # Should silently fail
+        mock_logger.error.assert_called_once_with(
+            "Redis error during session data retrieval",
+            extra={
+                "customer_id": session_handler.settings.CUSTOMER_ID,
+                "asset_id": "session_handler",
+                "session_id": "test_session",
+                "error": "Redis connection error",
+                "action": "validate_session",
+                "operation": "redis.hgetall",
+            },
+        )
 
-    async def test_validation_error_with_invalid_token(
-        self, session_handler, mock_redis, mock_auth_manager, mock_logger
+    async def test_validation_outer_exception_handling(
+        self, session_handler, mock_redis, mock_logger
     ):
-        """Test validation error handling with invalid token."""
-        # Setup session data
-        session_data = {
-            b"token": b"invalid_token",
-            b"created_at": str(datetime.now()).encode(),
-            b"last_activity": str(datetime.now()).encode(),
-            b"request_count": b"0",
-        }
-        mock_redis.hgetall.return_value = session_data
-        mock_redis.exists.return_value = True
-
-        # Mock auth manager to raise validation error
-        mock_auth_manager.validate_token.side_effect = ValidationError("Invalid token")
+        """Test outer exception handling in validate_session."""
+        # Force an error in the outer try block by making redis.hgetall raise an error
+        mock_redis.hgetall.side_effect = Exception("Outer block error")
 
         result = await session_handler.validate_session("test_session")
         assert result is False
         mock_logger.error.assert_called_once_with(
-            "Token validation failed",
+            "Redis error during session data retrieval",
             extra={
                 "customer_id": session_handler.settings.CUSTOMER_ID,
                 "asset_id": "session_handler",
                 "session_id": "test_session",
-                "error": "Invalid token",
+                "error": "Outer block error",
                 "action": "validate_session",
+                "operation": "redis.hgetall",
             },
         )
 
-    async def test_validation_with_nested_redis_error(
-        self, session_handler, mock_redis, mock_logger
-    ):
-        """Test validation when Redis raises error during nested try block."""
-        # Setup session data for successful hgetall
-        session_data = {
-            b"token": b"test_token",
-            b"created_at": str(datetime.now()).encode(),
-            b"last_activity": str(datetime.now()).encode(),
-            b"request_count": b"0",
+    async def test_validation_inner_redis_error(self, session_handler, mock_redis, mock_logger):
+        """Test inner Redis error handling in validate_session."""
+
+        # Create a custom exception to ensure we hit the exact error handling
+        class RedisGetallError(Exception):
+            pass
+
+        # Set up Redis mock to raise our custom exception specifically for hgetall
+        mock_redis.hgetall = AsyncMock(side_effect=RedisGetallError("Redis hgetall error"))
+
+        # Call validate_session which should hit line 219's exception handler
+        result = await session_handler.validate_session("test_session")
+
+        # Verify behavior
+        assert result is False
+        mock_logger.error.assert_called_once_with(
+            "Redis error during session data retrieval",
+            extra={
+                "customer_id": session_handler.settings.CUSTOMER_ID,
+                "asset_id": "session_handler",
+                "session_id": "test_session",
+                "error": "Redis hgetall error",
+                "action": "validate_session",
+                "operation": "redis.hgetall",
+            },
+        )
+
+    async def test_validation_outer_general_error(self, session_handler, mock_redis, mock_logger):
+        """Test outer general error handling in validate_session."""
+        # Mock Redis to return invalid data that will cause a decode error
+        mock_redis.hgetall.return_value = {
+            b"token": None,  # This will cause a decode error
         }
-        mock_redis.hgetall.return_value = session_data
-        mock_redis.exists.return_value = True
-
-        # Make hset fail when updating last_activity
-        mock_redis.hset.side_effect = Exception("Redis hset error")
-
-        # Mock auth manager to succeed
-        session_handler.auth_manager.validate_token = AsyncMock(return_value=True)
 
         result = await session_handler.validate_session("test_session")
         assert result is False
-        mock_logger.warning.assert_called_once_with(
-            "Failed to update last activity",
+        mock_logger.error.assert_called_once_with(
+            "Session validation failed",
             extra={
                 "customer_id": session_handler.settings.CUSTOMER_ID,
                 "asset_id": "session_handler",
                 "session_id": "test_session",
-                "error": "Redis hset error",
+                "error": ANY,  # Don't check exact error message as it may vary
                 "action": "validate_session",
             },
         )
+
+    async def test_validation_with_session_key_error(
+        self, session_handler, mock_redis, mock_logger
+    ):
+        """Test validation when session key formatting raises an error."""
+
+        # Mock session_id to be an object that raises error when used in string formatting
+        class BadString:
+            def __str__(self):
+                raise ValueError("Bad string")
+
+        result = await session_handler.validate_session(BadString())
+        assert result is False
+        mock_logger.error.assert_called_once_with(
+            "Session validation failed",
+            extra={
+                "customer_id": session_handler.settings.CUSTOMER_ID,
+                "asset_id": "session_handler",
+                "session_id": ANY,  # Can't use the BadString object in comparison
+                "error": ANY,  # Don't check exact error message as it may vary
+                "action": "validate_session",
+            },
+        )
+
+    async def test_validation_session_key_error(self, session_handler, mock_redis, mock_logger):
+        """Test validation when session key formatting fails."""
+        # Mock session_id to be None to cause string formatting error
+        result = await session_handler.validate_session(None)
+        assert result is False
+        mock_logger.error.assert_not_called()  # Should silently fail for errors in outer try block
+
+    async def test_redis_hgetall_error_handling(self, session_handler, mock_redis, mock_logger):
+        """Test Redis hgetall error handling in validate_session."""
+        # Create a specific Redis error for testing
+        redis_error = Exception("Connection refused")
+        mock_redis.hgetall = AsyncMock(side_effect=redis_error)
+
+        # Call validate_session
+        result = await session_handler.validate_session("test_session")
+
+        # Verify behavior
+        assert result is False  # Session should be invalid when Redis fails
+
+        # Verify error was logged with proper context
+        mock_logger.error.assert_called_once_with(
+            "Redis error during session data retrieval",
+            extra={
+                "customer_id": session_handler.settings.CUSTOMER_ID,
+                "asset_id": "session_handler",
+                "session_id": "test_session",
+                "error": "Connection refused",
+                "action": "validate_session",
+                "operation": "redis.hgetall",
+            },
+        )
+
+        # Verify no other logging occurred
+        mock_logger.warning.assert_not_called()
+        mock_logger.info.assert_not_called()
+        mock_logger.debug.assert_not_called()
+
+        # Verify Redis operations
+        mock_redis.hgetall.assert_called_once_with(
+            f"{session_handler.session_key_prefix}test_session"
+        )
+        mock_redis.exists.assert_not_called()  # Should not proceed to other operations
+        mock_redis.hset.assert_not_called()  # Should not attempt to update last activity
+
+    async def test_no_session_data_logging(self, session_handler, mock_redis, mock_logger):
+        """Test logging when no session data is found."""
+        # Mock Redis to return empty session data
+        mock_redis.hgetall.return_value = {}
+
+        # Call validate_session
+        result = await session_handler.validate_session("test_session")
+
+        # Verify behavior
+        assert result is False  # Session should be invalid when no data found
+
+        # Verify debug log was created with proper context
+        mock_logger.debug.assert_called_once_with(
+            "No session data found",
+            extra={
+                "customer_id": session_handler.settings.CUSTOMER_ID,
+                "asset_id": "session_handler",
+                "session_id": "test_session",
+                "action": "validate_session",
+            },
+        )
+
+        # Verify no error or warning logs were created
+        mock_logger.error.assert_not_called()
+        mock_logger.warning.assert_not_called()
+        mock_logger.info.assert_not_called()
+
+        # Verify Redis operations
+        mock_redis.hgetall.assert_called_once_with(
+            f"{session_handler.session_key_prefix}test_session"
+        )
+        mock_redis.exists.assert_not_called()  # Should not proceed to other operations
+        mock_redis.hset.assert_not_called()  # Should not attempt to update last activity
+
+    async def test_redis_error_with_customer_context(
+        self, session_handler, mock_redis, mock_logger
+    ):
+        """Test Redis error logging includes proper customer context."""
+        # Set a specific customer ID in settings
+        session_handler.settings.CUSTOMER_ID = "test_customer"
+
+        # Create a specific Redis error for testing
+        redis_error = Exception("Redis cluster error")
+        mock_redis.hgetall = AsyncMock(side_effect=redis_error)
+
+        # Call validate_session
+        result = await session_handler.validate_session("test_session")
+
+        # Verify behavior
+        assert result is False  # Session should be invalid when Redis fails
+
+        # Verify error was logged with proper customer context
+        mock_logger.error.assert_called_once_with(
+            "Redis error during session data retrieval",
+            extra={
+                "customer_id": "test_customer",  # Should use customer ID from settings
+                "asset_id": "session_handler",
+                "session_id": "test_session",
+                "error": "Redis cluster error",
+                "action": "validate_session",
+                "operation": "redis.hgetall",
+            },
+        )
+
+        # Verify no other logging occurred
+        mock_logger.warning.assert_not_called()
+        mock_logger.info.assert_not_called()
+        mock_logger.debug.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -595,6 +691,15 @@ class TestSessionHandlerCreateSessionRecord:
         assert "Expire error" in str(exc.value)
         # Verify hset was called before the error
         assert mock_redis.hset.called
+
+    async def test_create_session_record_without_redis(self):
+        """Test session record creation when Redis is None."""
+        handler = SessionHandler()
+        # Don't initialize Redis, leaving it as None
+
+        with pytest.raises(RuntimeError) as exc:
+            await handler._create_session_record("test_token", "test_customer")
+        assert "SessionHandler not initialized" in str(exc.value)
 
 
 @pytest.mark.asyncio

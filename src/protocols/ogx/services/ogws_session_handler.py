@@ -223,11 +223,31 @@ class SessionHandler:
             session_key = f"{self.session_key_prefix}{session_id}"
             try:
                 session_data = await self.redis.hgetall(session_key)
-            except Exception:
-                # Silently fail for Redis errors during initial retrieval
+            except Exception as e:
+                # Log Redis errors during initial retrieval for troubleshooting
+                self.logger.error(
+                    "Redis error during session data retrieval",
+                    extra={
+                        "customer_id": self.settings.CUSTOMER_ID,
+                        "asset_id": "session_handler",
+                        "session_id": session_id,
+                        "error": str(e),
+                        "action": "validate_session",
+                        "operation": "redis.hgetall",
+                    },
+                )
                 return False
 
             if not session_data:
+                self.logger.debug(
+                    "No session data found",
+                    extra={
+                        "customer_id": self.settings.CUSTOMER_ID,
+                        "asset_id": "session_handler",
+                        "session_id": session_id,
+                        "action": "validate_session",
+                    },
+                )
                 return False
 
             # Extract token and validate
@@ -399,8 +419,12 @@ class SessionHandler:
             New session ID
 
         Raises:
+            RuntimeError: If handler not initialized
             OGxProtocolError: If session record cannot be created
         """
+        if not self.redis:
+            raise RuntimeError("SessionHandler not initialized")
+
         session_id = str(uuid.uuid4())
         session_key = f"{self.session_key_prefix}{session_id}"
         now = datetime.now().isoformat()
@@ -414,15 +438,14 @@ class SessionHandler:
         }
 
         try:
-            if self.redis:  # Type checker hint
-                for key, value in session_data.items():
-                    await self.redis.hset(session_key, key, value)
-                await self.redis.expire(session_key, self.session_timeout)
+            for key, value in session_data.items():
+                await self.redis.hset(session_key, key, value)
+            await self.redis.expire(session_key, self.session_timeout)
 
-                # Add to customer's session set
-                customer_sessions_key = f"{self.session_key_prefix}customer:{customer_id}"
-                await self.redis.sadd(customer_sessions_key, session_id)
-                await self.redis.expire(customer_sessions_key, self.session_timeout)
+            # Add to customer's session set
+            customer_sessions_key = f"{self.session_key_prefix}customer:{customer_id}"
+            await self.redis.sadd(customer_sessions_key, session_id)
+            await self.redis.expire(customer_sessions_key, self.session_timeout)
 
             return session_id
         except Exception as e:

@@ -2,6 +2,41 @@
 
 A comprehensive enterprise gateway implementation for managing ORBCOMM ISAT (MTWS/MTBP) and OGx protocols, with production-grade security, monitoring, and scalability features.
 
+## Documentation Index
+
+This project contains several README files and documentation resources:
+
+### Main Documentation
+- `/README.md` (this file) - Main project documentation
+- `/CONTRIBUTING.md` - Contribution guidelines and standards
+- `/CHANGELOG.md` - Version history and changes
+
+### Test Documentation
+- `/tests/test_setup.md` - Test environment setup guide
+- `/tests/integration/README.md` - Integration testing guide
+- `/tests/e2e/README.md` - End-to-end testing documentation
+- `/tests/unit/protocol/ogx/validation/README.md` - OGx validation test documentation
+- `/tests/rules/cursor_rules_investigation.md` - Rules 
+
+### Component Documentation
+- `/src/core/logging/README.md` - Logging system documentation
+- `/src/protocols/ogx/README.md` - OGx protocol implementation details
+
+### ISAT Documentation
+- `/src/DOCS/ISAT DOCS/INTRO/intro.md` - ISAT introduction
+- `/src/DOCS/ISAT DOCS/SIN_VALUES.md` - SIN values reference
+- `/src/DOCS/ISAT DOCS/Terminal_Software_Architecture/architecture.md` - Terminal architecture
+- `/src/DOCS/ISAT DOCS/LUA_FIRMWARE_EXTENSIONS/systems.md` - LUA systems documentation
+- `/src/DOCS/ISAT DOCS/LUA_FIRMWARE_EXTENSIONS/global_functions.md` - LUA global functions
+
+### Environment Setup
+- `/docs/development.md` - Development environment setup
+- `/docs/production.md` - Production deployment guide
+
+### Additional Resources
+- `.pytest_cache/README.md` - Pytest cache information
+- Various package documentation in `.venv/lib/python3.11/site-packages/`
+
 ## Overview
 
 Smart Gateway provides a robust, production-ready interface for ORBCOMM's OGWS (OGx Gateway Web Service), supporting:
@@ -457,3 +492,72 @@ For production support:
 - Email: [support-email]
 - Documentation: [docs-url]
 - Emergency: [emergency-contact]
+
+## Development vs Production Differences
+
+### Authentication & Security
+- **Development**:
+  - Uses test credentials (OGWS_CLIENT_ID=70000934)
+  - One-year token expiry for extended development
+  - Redis-based token storage (local)
+  - Protected mode disabled for easy access
+  - HTTP proxy for OGWS simulation
+
+- **Production**:
+  - Secure environment variables for credentials
+  - 24-hour token expiry with auto-rotation
+  - Redis Enterprise with encryption
+  - Full SSL/TLS implementation
+  - Direct OGWS connection
+
+### State Management
+- **Development**:
+  - Local Redis instance
+  - Simple persistence (RDB + AOF)
+  - 1GB memory limit
+  - Basic monitoring
+
+- **Production**:
+  - Redis Enterprise/ElastiCache cluster
+  - DynamoDB for message state
+  - Auto-scaling and failover
+  - Cross-AZ replication
+
+### Logging & Monitoring
+- **Development**:
+  - Local log files in `logs/` directory
+  - Debug level logging
+  - All metrics enabled
+  - Basic Prometheus/Grafana setup
+
+- **Production**:
+  - CloudWatch logging
+  - Production log levels (INFO/ERROR)
+  - Aggregated metrics
+  - Advanced alerting rules
+
+### Infrastructure
+- **Development**:
+  - LocalStack for AWS services
+  - Single-node services
+  - Basic health checks
+  - Development proxy settings
+
+- **Production**:
+  - Full AWS service integration
+  - Multi-node deployment
+  - Advanced health monitoring
+  - Load balancer configuration
+
+### Performance Tuning
+- **Development**:
+  - Basic rate limiting
+  - Simple caching
+  - Default timeouts
+  - Flexible validation
+
+- **Production**:
+  - Strict rate limits
+  - Distributed caching
+  - Optimized timeouts
+  - Strict validation
