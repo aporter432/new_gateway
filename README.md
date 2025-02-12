@@ -16,6 +16,7 @@ This project contains several README files and documentation resources:
   - `/development/README.md` - Development environment setup
   - `/production/README.md` - Production deployment and security
   - `/testing/README.md` - Test environment configuration
+  - `/ui/README.md` - UI development and integration
 
 ### Test Documentation
 - `/tests/test_setup.md` - Test environment setup guide
