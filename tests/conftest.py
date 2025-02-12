@@ -5,12 +5,17 @@ from pathlib import Path
 from typing import Any, Dict
 
 import pytest
+import pytest_asyncio
 
 # Add src to Python path for all tests
 root_dir = Path(__file__).parent.parent
 src_path = str(root_dir / "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
+
+
+# Configure pytest-asyncio
+pytest_plugins = ["pytest_asyncio"]
 
 
 @pytest.fixture
