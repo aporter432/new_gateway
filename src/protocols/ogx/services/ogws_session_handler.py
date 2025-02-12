@@ -36,8 +36,10 @@ Implementation Notes:
 """
 
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Optional, cast
 import uuid
+
+from redis.asyncio import Redis
 
 from core.app_settings import get_settings
 from core.logging.loggers import get_protocol_logger
@@ -48,6 +50,7 @@ from protocols.ogx.validation.common.validation_exceptions import (
     AuthenticationError,
     OGxProtocolError,
     RateLimitError,
+    ValidationError,
 )
 
 
@@ -84,7 +87,7 @@ class SessionHandler:
     Attributes:
         auth_manager: Authentication manager for token handling
         session_key_prefix: Redis key prefix for session data
-        max_concurrent_sessions: Maximum allowed concurrent sessions
+        max_concurrent_sessions_per_customer: Maximum allowed concurrent sessions per customer
         session_timeout: Session timeout in seconds
     """
 
@@ -93,9 +96,9 @@ class SessionHandler:
         self.settings = get_settings()
         self.logger = get_protocol_logger("session_handler")
         self.auth_manager: Optional[OGWSAuthManager] = None
-        self.redis = None
+        self.redis: Optional[Redis] = None
         self.session_key_prefix = "ogws:session:"
-        self.max_concurrent_sessions = 3
+        self.max_concurrent_sessions_per_customer = 3  # Per customer limit
         self.session_timeout = 3600  # 1 hour
 
     async def initialize(self) -> None:
@@ -110,7 +113,7 @@ class SessionHandler:
         if not redis:
             raise RuntimeError("Failed to initialize Redis connection")
         self.auth_manager = OGWSAuthManager(self.settings, redis)
-        self.redis = redis
+        self.redis = cast(Redis, redis)  # Cast to help type checker
 
     async def create_session(self, credentials: Dict[str, str]) -> str:
         """Create new session with OGWS.
@@ -127,32 +130,38 @@ class SessionHandler:
             Session ID for the new session
 
         Raises:
+            RuntimeError: If handler not initialized
             AuthenticationError: If authentication fails
             RateLimitError: If session limit exceeded
             OGxProtocolError: For other session errors
         """
-        if not self.auth_manager:
+        if not self.auth_manager or not self.redis:
             raise RuntimeError("SessionHandler not initialized")
 
         try:
-            # Check concurrent session limit
-            active_sessions = await self._get_active_session_count()
-            if active_sessions >= self.max_concurrent_sessions:
+            # Get customer ID from credentials
+            customer_id = credentials.get("client_id")
+            if not customer_id:
+                raise ValidationError("client_id is required")
+
+            # Check concurrent session limit for this customer
+            active_sessions = await self._get_customer_session_count(customer_id)
+            if active_sessions >= self.max_concurrent_sessions_per_customer:
                 raise RateLimitError(
-                    f"Maximum concurrent sessions ({self.max_concurrent_sessions}) exceeded",
+                    f"Maximum concurrent sessions ({self.max_concurrent_sessions_per_customer}) exceeded for customer {customer_id}",
                     error_code=HTTPErrorCode.TOO_MANY_REQUESTS,
                 )
 
-            # Get auth token using provided credentials
+            # Get auth token
             token = await self.auth_manager.get_valid_token()
 
             # Create session
-            session_id = await self._create_session_record(token)
+            session_id = await self._create_session_record(token, customer_id)
 
             self.logger.info(
                 "Session created",
                 extra={
-                    "customer_id": self.settings.CUSTOMER_ID,
+                    "customer_id": customer_id,
                     "asset_id": "session_handler",
                     "session_id": session_id,
                     "action": "create_session",
@@ -161,11 +170,11 @@ class SessionHandler:
 
             return session_id
 
-        except AuthenticationError as e:
+        except (AuthenticationError, RateLimitError, OGxProtocolError) as e:
             self.logger.error(
-                "Session creation failed - authentication error",
+                "Session creation failed",
                 extra={
-                    "customer_id": self.settings.CUSTOMER_ID,
+                    "customer_id": credentials.get("client_id", "unknown"),
                     "asset_id": "session_handler",
                     "error": str(e),
                     "action": "create_session",
@@ -175,9 +184,9 @@ class SessionHandler:
 
         except Exception as e:
             self.logger.error(
-                "Session creation failed",
+                "Unexpected error during session creation",
                 extra={
-                    "customer_id": self.settings.CUSTOMER_ID,
+                    "customer_id": credentials.get("client_id", "unknown"),
                     "asset_id": "session_handler",
                     "error": str(e),
                     "action": "create_session",
@@ -193,24 +202,36 @@ class SessionHandler:
 
         Returns:
             True if session is valid, False otherwise
+
+        Raises:
+            RuntimeError: If handler not initialized
         """
-        if not self.auth_manager:
+        if not self.auth_manager or not self.redis:
             raise RuntimeError("SessionHandler not initialized")
 
-        # Get session data
-        session_key = f"{self.session_key_prefix}{session_id}"
-        session_data = None
         try:
-            session_data = await self.redis.hgetall(session_key)
-            if not session_data or b"token" not in session_data:
+            # Get session data
+            session_key = f"{self.session_key_prefix}{session_id}"
+            try:
+                session_data = await self.redis.hgetall(session_key)
+            except Exception:
+                # Silently fail for Redis errors during initial retrieval
                 return False
 
-            # Update last activity
+            if not session_data:
+                return False
+
+            # Extract token and validate
+            token = session_data.get(b"token", b"").decode()
+            if not token:
+                return False
+
+            # Update last activity timestamp before validation
             try:
                 await self.redis.hset(
                     session_key,
                     "last_activity",
-                    datetime.utcnow().isoformat(),
+                    datetime.now().isoformat(),
                 )
             except Exception as e:
                 self.logger.warning(
@@ -223,13 +244,12 @@ class SessionHandler:
                         "action": "validate_session",
                     },
                 )
-                # Continue with validation even if update fails
+                # Don't fail validation just because we couldn't update timestamp
 
-            # Validate token - Redis returns bytes
-            token = session_data[b"token"].decode()
-            auth_header = {"Authorization": f"Bearer {token}"}
+            # Validate token with auth manager
             try:
-                return await self.auth_manager.validate_token(auth_header)
+                auth_header = {"Authorization": f"Bearer {token}"}
+                await self.auth_manager.validate_token(auth_header)
             except Exception as e:
                 self.logger.error(
                     "Token validation failed",
@@ -243,35 +263,37 @@ class SessionHandler:
                 )
                 return False
 
+            return True
+
         except Exception as e:
-            # Only log errors for unexpected Redis failures, not for missing sessions
-            if session_data is not None:
-                self.logger.error(
-                    "Session validation failed",
-                    extra={
-                        "customer_id": self.settings.CUSTOMER_ID,
-                        "asset_id": "session_handler",
-                        "session_id": session_id,
-                        "error": str(e),
-                        "action": "validate_session",
-                    },
-                )
+            self.logger.error(
+                "Session validation failed",
+                extra={
+                    "customer_id": self.settings.CUSTOMER_ID,
+                    "asset_id": "session_handler",
+                    "session_id": session_id,
+                    "error": str(e),
+                    "action": "validate_session",
+                },
+            )
             return False
 
     async def end_session(self, session_id: str) -> None:
-        """End session and cleanup resources.
+        """End an active session.
 
         Args:
             session_id: Session ID to end
+
+        Raises:
+            RuntimeError: If handler not initialized
+            OGxProtocolError: If session cannot be ended
         """
-        if not self.auth_manager:
+        if not self.auth_manager or not self.redis:
             raise RuntimeError("SessionHandler not initialized")
 
         try:
-            # Delete session data
             session_key = f"{self.session_key_prefix}{session_id}"
             await self.redis.delete(session_key)
-
             self.logger.info(
                 "Session ended",
                 extra={
@@ -281,10 +303,10 @@ class SessionHandler:
                     "action": "end_session",
                 },
             )
-
         except Exception as e:
+            error_msg = f"Failed to end session: {str(e)}"
             self.logger.error(
-                "Session cleanup failed",
+                error_msg,
                 extra={
                     "customer_id": self.settings.CUSTOMER_ID,
                     "asset_id": "session_handler",
@@ -293,7 +315,7 @@ class SessionHandler:
                     "action": "end_session",
                 },
             )
-            raise OGxProtocolError(f"Failed to end session: {str(e)}") from e
+            raise OGxProtocolError(error_msg) from e
 
     async def refresh_session(self, session_id: str) -> None:
         """Refresh session token.
@@ -302,23 +324,23 @@ class SessionHandler:
             session_id: Session ID to refresh
 
         Raises:
-            AuthenticationError: If token refresh fails
-            OGxProtocolError: For other session errors
+            RuntimeError: If handler not initialized
+            OGxProtocolError: If session cannot be refreshed
         """
-        if not self.auth_manager:
+        if not self.auth_manager or not self.redis:
             raise RuntimeError("SessionHandler not initialized")
 
         try:
             # Get new token
-            token = await self.auth_manager.get_valid_token(force_refresh=True)
+            token = await self.auth_manager.get_valid_token()
 
             # Update session data
             session_key = f"{self.session_key_prefix}{session_id}"
             await self.redis.hset(session_key, "token", token)
             await self.redis.hset(
                 session_key,
-                "last_refresh",
-                datetime.utcnow().isoformat(),
+                "last_activity",
+                datetime.now().isoformat(),
             )
 
             self.logger.info(
@@ -332,8 +354,9 @@ class SessionHandler:
             )
 
         except Exception as e:
+            error_msg = f"Failed to refresh session: {str(e)}"
             self.logger.error(
-                "Session refresh failed",
+                error_msg,
                 extra={
                     "customer_id": self.settings.CUSTOMER_ID,
                     "asset_id": "session_handler",
@@ -342,41 +365,64 @@ class SessionHandler:
                     "action": "refresh_session",
                 },
             )
-            raise OGxProtocolError(f"Failed to refresh session: {str(e)}") from e
+            raise OGxProtocolError(error_msg) from e
 
-    async def _create_session_record(self, token: str) -> str:
+    async def _create_session_record(self, token: str, customer_id: str) -> str:
         """Create session record in Redis.
 
         Args:
-            token: Authentication token for the session
+            token: Authentication token for session
+            customer_id: Customer ID for the session
 
         Returns:
-            Session ID
+            New session ID
+
+        Raises:
+            OGxProtocolError: If session record cannot be created
         """
         session_id = str(uuid.uuid4())
         session_key = f"{self.session_key_prefix}{session_id}"
+        now = datetime.now().isoformat()
 
-        # Store session data
         session_data = {
-            "token": token,
-            "created_at": datetime.utcnow().isoformat(),
-            "last_activity": datetime.utcnow().isoformat(),
-            "customer_id": self.settings.CUSTOMER_ID,
+            b"token": token.encode(),
+            b"created_at": now.encode(),
+            b"last_activity": now.encode(),
+            b"request_count": b"0",
+            b"customer_id": customer_id.encode(),
         }
 
-        # Convert all values to strings for Redis storage
-        redis_data = {k: str(v) for k, v in session_data.items()}
-        await self.redis.hmset(session_key, redis_data)
-        await self.redis.expire(session_key, self.session_timeout)
+        try:
+            if self.redis:  # Type checker hint
+                for key, value in session_data.items():
+                    await self.redis.hset(session_key, key, value)
+                await self.redis.expire(session_key, self.session_timeout)
 
-        return session_id
+                # Add to customer's session set
+                customer_sessions_key = f"{self.session_key_prefix}customer:{customer_id}"
+                await self.redis.sadd(customer_sessions_key, session_id)
+                await self.redis.expire(customer_sessions_key, self.session_timeout)
 
-    async def _get_active_session_count(self) -> int:
-        """Get count of active sessions.
+            return session_id
+        except Exception as e:
+            raise OGxProtocolError(f"Failed to create session record: {str(e)}") from e
+
+    async def _get_customer_session_count(self, customer_id: str) -> int:
+        """Get count of active sessions for a specific customer.
+
+        Args:
+            customer_id: Customer ID to check sessions for
 
         Returns:
-            Number of active sessions
+            Number of active sessions for the customer
+
+        Raises:
+            OGxProtocolError: If session count cannot be retrieved
         """
-        pattern = f"{self.session_key_prefix}*"
-        keys = await self.redis.keys(pattern)
-        return len(keys)
+        try:
+            if self.redis:
+                customer_sessions_key = f"{self.session_key_prefix}customer:{customer_id}"
+                return await self.redis.scard(customer_sessions_key)
+            return 0
+        except Exception as e:
+            raise OGxProtocolError(f"Failed to get customer session count: {str(e)}") from e

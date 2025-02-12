@@ -53,6 +53,8 @@ def mock_redis():
     redis.expire = AsyncMock()
     redis.keys = AsyncMock(return_value=[])
     redis.exists = AsyncMock(return_value=True)
+    redis.scard = AsyncMock(return_value=0)
+    redis.sadd = AsyncMock()
     return redis
 
 
@@ -130,7 +132,7 @@ class TestSessionHandlerCreate:
         self, session_handler, valid_credentials, mock_redis, mock_logger
     ):
         """Test session creation when limit is exceeded."""
-        mock_redis.keys.return_value = ["session1", "session2", "session3"]
+        mock_redis.scard.return_value = 3
         with pytest.raises(OGxProtocolError) as exc:
             await session_handler.create_session(valid_credentials)
         assert "Maximum concurrent sessions" in str(exc.value)
