@@ -56,7 +56,9 @@ services:
     volumes:
       - ./src:/app/src:ro
       - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
     environment:
+      - PYTHONPATH=/app/src
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=15
@@ -66,12 +68,13 @@ services:
       - CUSTOMER_ID=test_customer
       - HTTP_PROXY=http://proxy:8888
       - HTTPS_PROXY=http://proxy:8888
-    command: python -m tests.api.auth.test_token_setup
+    working_dir: /app
+    command: python -m pytest tests/integration --ignore=tests/integration/ui --ignore=tests/integration/scenarios -v
     depends_on:
       redis:
         condition: service_healthy
       proxy:
-        condition: service_started
+        condition: service_healthy
     networks:
       - gateway_net
 
