@@ -10,6 +10,7 @@ import pytest
 
 from src.protocols.ogx.constants.field_types import FieldType
 from src.protocols.ogx.constants.message_types import MessageType
+from src.protocols.ogx.constants import NetworkType
 from src.protocols.ogx.validation.common.base_validator import BaseValidator
 from src.protocols.ogx.validation.common.types import ValidationContext, ValidationResult
 from src.protocols.ogx.validation.common.validation_exceptions import ValidationError
@@ -38,12 +39,9 @@ def validator() -> MockBaseValidator:
 
 
 @pytest.fixture
-def validation_context() -> ValidationContext:
-    """Fixture providing standard validation context."""
-    return ValidationContext(
-        network_type="OGX",  # Network type is a string
-        direction=MessageType.FORWARD,  # Direction is from MessageType enum
-    )
+def context():
+    """Provide test validation context."""
+    return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
 
 class TestBaseValidatorEdgeCases:
@@ -165,11 +163,11 @@ class TestBaseValidatorEdgeCases:
         assert not result.is_valid
 
     def test_validation_context_preservation(
-        self, validator: MockBaseValidator, validation_context: ValidationContext
+        self, validator: MockBaseValidator, context: ValidationContext
     ):
         """Test that validation context is preserved."""
-        result = validator.validate({}, validation_context)
-        assert result.context == validation_context
+        result = validator.validate({}, context)
+        assert result.context == context
 
     def test_empty_validation_result(self, validator: MockBaseValidator):
         """Test validation result with no errors."""

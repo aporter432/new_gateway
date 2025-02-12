@@ -4,7 +4,7 @@ Tests the complete forward message flow according to OGWS-1.txt specifications.
 """
 
 import pytest
-from protocols.ogx.constants import FieldType, MessageType
+from protocols.ogx.constants import FieldType, MessageType, NetworkType
 from protocols.ogx.models.fields import Field, Message
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
@@ -22,7 +22,19 @@ class MockOGWSHandler(OGWSProtocolHandler):
 
     async def submit_message(self, message, destination_id, transport_type=None):
         """Mock message submission."""
-        context = ValidationContext(direction=MessageType.FORWARD, network_type="OGX")
+        context = ValidationContext(
+            direction=MessageType.FORWARD,
+            network_type=NetworkType.OGX,  # Use NetworkType enum
+        )
+        # Debug: Print the payload being validated
+        payload = message.get("Payload", {})
+        print("\nValidating payload:")
+        print(f"Name: {payload.get('Name')}")
+        print(f"SIN: {payload.get('SIN')}")
+        print(f"MIN: {payload.get('MIN')}")
+        print(f"Fields: {payload.get('Fields')}")
+
+        # Validate the message content
         result = self._validate_message(message, context)
         if not result.is_valid:
             raise OGxProtocolError(f"Validation failed: {', '.join(result.errors)}")
@@ -41,24 +53,31 @@ class MockOGWSHandler(OGWSProtocolHandler):
 async def test_forward_message_flow():
     """Test basic forward message flow through the gateway."""
     # Create test message using proper field capitalization
-    test_message = Message(
-        Name="test_message",
-        SIN=16,
-        MIN=1,
-        Fields=[
-            Field(Name="string_field", Type=FieldType.STRING, Value="test"),
-            Field(Name="int_field", Type=FieldType.SIGNED_INT, Value=42),
+    test_message = {
+        "Name": "test_message",
+        "SIN": 16,
+        "MIN": 1,
+        "Fields": [
+            {"Name": "string_field", "Type": FieldType.STRING.value, "Value": "test"},
+            {"Name": "int_field", "Type": FieldType.SIGNED_INT.value, "Value": 42},
         ],
-    )
+    }
 
     # Initialize handler
     handler = MockOGWSHandler()
     await handler.authenticate({})  # Mock credentials not needed
 
     try:
-        # Submit message
+        # Submit message with proper OGWS-1 structure
         message_id, validation_result = await handler.submit_message(
-            message=test_message.model_dump(),
+            message={
+                "Name": "test_message",
+                "SIN": 16,
+                "MIN": 1,
+                "Fields": test_message["Fields"],
+                "DestinationID": "OGx-00002000SKY9307",  # Test terminal ID
+                "Network": NetworkType.OGX,  # Use NetworkType enum
+            },
             destination_id="OGx-00002000SKY9307",  # Test terminal ID
         )
 

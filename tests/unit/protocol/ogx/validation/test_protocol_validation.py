@@ -3,7 +3,7 @@
 import pytest
 
 from protocols.ogx.constants.limits import MAX_OGX_PAYLOAD_BYTES
-from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.constants import MessageType, NetworkType
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.common.validation_exceptions import (
     SizeValidationError,
@@ -25,16 +25,16 @@ class TestNetworkValidator:
     @pytest.fixture
     def context(self) -> ValidationContext:
         """Return a validation context."""
-        return ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+        return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
     def test_validate_valid_network(self, validator: NetworkValidator, context: ValidationContext):
         """Test validation with valid network type."""
-        result = validator.validate({"network": "OGx"}, context)
+        result = validator.validate({"network": NetworkType.OGX}, context)
         assert result.is_valid
 
     def test_validate_invalid_network(self, validator, context):
         """Test validation with invalid network type."""
-        result = validator.validate({"network": "Invalid"}, context)
+        result = validator.validate({"network": NetworkType.ISATDATA_PRO}, context)
         assert not result.is_valid
         assert "Invalid network type" in result.errors[0]
 
@@ -58,13 +58,13 @@ class TestNetworkValidator:
 
     def test_validate_with_invalid_network(self, validator, context):
         """Test validation with invalid network value."""
-        result = validator.validate({"network": "invalid"}, context)
+        result = validator.validate({"network": NetworkType.ISATDATA_PRO}, context)
         assert not result.is_valid
         assert "Invalid network type" in result.errors[0]
 
     def test_validate_with_valid_network(self, validator, context):
         """Test validation with valid network value."""
-        result = validator.validate({"network": "OGx"}, context)
+        result = validator.validate({"network": NetworkType.OGX}, context)
         assert result.is_valid
 
     def test_validate_none_input(self, validator, context):
@@ -75,41 +75,43 @@ class TestNetworkValidator:
 
     def test_validate_wrong_network_type(self, validator, context):
         """Test validation with wrong network type in context."""
-        context = ValidationContext(network_type="INVALID", direction=MessageType.FORWARD)
-        result = validator.validate({"network": "OGx"}, context)
+        context = ValidationContext(
+            network_type=NetworkType.ISATDATA_PRO, direction=MessageType.FORWARD
+        )
+        result = validator.validate({"network": NetworkType.OGX}, context)
         assert not result.is_valid
         assert "Invalid network type in context" in result.errors[0]
 
     def test_validate_with_none_context(self, validator):
         """Test validation with None context."""
-        result = validator.validate({"network": "OGx"}, None)
+        result = validator.validate({"network": NetworkType.OGX}, None)
         assert not result.is_valid
         assert "Missing message direction" in result.errors[0]
 
     def test_validate_with_none_context_direction(self, validator: NetworkValidator):
         """Test validation with None context direction."""
         # Create context with valid direction first, then modify for test
-        context = ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+        context = ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
         context.direction = None  # type: ignore  # Intentionally setting invalid type for test
-        result = validator.validate({"network": "OGx"}, context)
+        result = validator.validate({"network": NetworkType.OGX}, context)
         assert not result.is_valid
         assert "Missing message direction" in result.errors[0]
 
     def test_validate_with_none_context_network_type(self, validator: NetworkValidator):
         """Test validation with None context network type."""
         # Create context with valid network_type first, then modify for test
-        context = ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+        context = ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
         context.network_type = None  # type: ignore  # Intentionally setting invalid type for test
-        result = validator.validate({"network": "OGx"}, context)
+        result = validator.validate({"network": NetworkType.OGX}, context)
         assert not result.is_valid
         assert "Missing network type in context" in result.errors[0]
 
     def test_validate_with_invalid_direction(self, validator: NetworkValidator):
         """Test validation with invalid message direction."""
         # Create context with valid direction first, then modify for test
-        context = ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+        context = ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
         context.direction = "INVALID"  # type: ignore  # Intentionally setting invalid type for test
-        result = validator.validate({"network": "OGx"}, context)
+        result = validator.validate({"network": NetworkType.OGX}, context)
         assert not result.is_valid
         assert "Invalid message direction" in result.errors[0]
 
@@ -125,7 +127,7 @@ class TestSizeValidator:
     @pytest.fixture
     def context(self) -> ValidationContext:
         """Return a validation context."""
-        return ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+        return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
     def test_validate_raw_payload_valid_size(self, validator, context):
         """Test validation with valid raw payload size."""
@@ -229,7 +231,7 @@ class TestTransportValidator:
     @pytest.fixture
     def context(self) -> ValidationContext:
         """Return a validation context."""
-        return ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+        return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
     def test_validate_valid_transport(self, validator, context):
         """Test validation with valid transport type."""
@@ -306,7 +308,7 @@ class TestTransportValidator:
     def test_validate_with_none_context_direction(self, validator: TransportValidator):
         """Test validation with None context direction."""
         # Create context with valid direction first, then modify for test
-        context = ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+        context = ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
         context.direction = None  # type: ignore  # Intentionally setting invalid type for test
         result = validator.validate({"transport": "satellite"}, context)
         assert not result.is_valid
@@ -315,7 +317,7 @@ class TestTransportValidator:
     def test_validate_with_none_context_network_type(self, validator: TransportValidator):
         """Test validation with None context network type."""
         # Create context with valid network_type first, then modify for test
-        context = ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+        context = ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
         context.network_type = None  # type: ignore  # Intentionally setting invalid type for test
         result = validator.validate({"transport": "satellite"}, context)
         assert not result.is_valid
@@ -323,7 +325,9 @@ class TestTransportValidator:
 
     def test_validate_with_invalid_network_type(self, validator):
         """Test validation with invalid network type."""
-        context = ValidationContext(network_type="INVALID", direction=MessageType.FORWARD)
+        context = ValidationContext(
+            network_type=NetworkType.ISATDATA_PRO, direction=MessageType.FORWARD
+        )
         result = validator.validate({"transport": "satellite"}, context)
         assert not result.is_valid
         assert "Invalid protocol: Expected OGx network" in result.errors[0]
@@ -356,7 +360,7 @@ class TestTransportValidator:
     def test_validate_with_invalid_direction(self, validator: TransportValidator):
         """Test validation with invalid message direction."""
         # Create context with valid direction first, then modify for test
-        context = ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+        context = ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
         context.direction = "INVALID"  # type: ignore  # Intentionally setting invalid type for test
         result = validator.validate({"transport": "satellite"}, context)
         assert not result.is_valid

@@ -10,6 +10,8 @@ from typing import Dict, List, Optional, Union
 
 from ...constants.field_types import FieldType
 from ...constants.message_types import MessageType
+from ...constants.network_types import NetworkType
+from ...constants.transport_types import TransportType
 
 
 class ValidationType(Enum):
@@ -26,9 +28,9 @@ class ValidationType(Enum):
 class ValidationContext:
     """Context for validation operations from OGWS-1.txt Section 5.1."""
 
-    network_type: str
+    network_type: NetworkType
     direction: MessageType
-    transport_type: Optional[int] = None
+    transport_type: Optional[TransportType] = None
     field_types: Optional[Dict[str, FieldType]] = None
     size_limit: Optional[int] = None
     is_array: bool = False

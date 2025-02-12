@@ -48,19 +48,29 @@ class NetworkValidator(BaseValidator):
                 raise ValidationError("Missing network type")
 
             network_type = data[network_key]
-            if not isinstance(network_type, str):
+
+            # Convert string network type to enum if needed
+            if isinstance(network_type, str):
+                try:
+                    network_type = NetworkType(int(network_type))
+                except (ValueError, TypeError):
+                    raise ValidationError(f"Invalid network type value: {network_type}")
+            elif not isinstance(network_type, NetworkType):
                 raise ValidationError(f"Invalid network type: {network_type}")
 
             # Only OGx network is supported in this validator
-            if network_type.upper() != NetworkType.OGX.name:
+            if network_type != NetworkType.OGX:
                 raise ValidationError(f"Invalid network type: {network_type}")
 
             # 3. Validate network type matches context
             if not context.network_type:
                 raise ValidationError("Missing network type in context")
 
-            if context.network_type.upper() != NetworkType.OGX.name:
+            if not isinstance(context.network_type, NetworkType):
                 raise ValidationError("Invalid network type in context")
+
+            if context.network_type != NetworkType.OGX:
+                raise ValidationError(f"Invalid network type in context: {context.network_type}")
 
             return self._get_validation_result()
 

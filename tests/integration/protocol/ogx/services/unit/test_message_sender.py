@@ -95,7 +95,6 @@ async def test_send_message_success(message_sender, mock_auth_response):
             return mock_auth_response
         mock_response = MagicMock(spec=Response)
         mock_response.status_code = 200
-        mock_response.raise_for_status = AsyncMock()
         mock_response.json.return_value = expected_response
         return mock_response
 
@@ -114,7 +113,6 @@ async def test_send_message_with_transport(message_sender, mock_auth_response):
             return mock_auth_response
         mock_response = MagicMock(spec=Response)
         mock_response.status_code = 200
-        mock_response.raise_for_status = AsyncMock()
         mock_response.json.return_value = {"ErrorID": 0}
         return mock_response
 
@@ -155,7 +153,7 @@ async def test_submit_batch_success(message_sender):
         {"ErrorID": 0, "MessageID": "12346"},
     ]
 
-    with patch.object(message_sender, "send_message") as mock_send:
+    with patch.object(message_sender, "send_message", new_callable=AsyncMock) as mock_send:
         mock_send.side_effect = expected_responses
 
         responses = await message_sender.submit_batch(test_messages)
@@ -169,6 +167,6 @@ async def test_handle_rate_limit(message_sender):
     """Test rate limit handling."""
     error_code = 24579  # ERR_SUBMIT_MESSAGE_RATE_EXCEEDED
 
-    with patch("asyncio.sleep") as mock_sleep:
+    with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
         await message_sender.handle_rate_limit(error_code)
         mock_sleep.assert_called_once()

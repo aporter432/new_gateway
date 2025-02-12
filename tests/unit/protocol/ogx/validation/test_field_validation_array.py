@@ -10,7 +10,7 @@ Tests focus on array field validation:
 
 import pytest
 
-from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.constants import MessageType, NetworkType
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.message.field_validator import OGxFieldValidator
 
@@ -22,19 +22,19 @@ def field_validator() -> OGxFieldValidator:
 
 
 @pytest.fixture
-def validation_context() -> ValidationContext:
-    """Provide validation context."""
-    return ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+def context():
+    """Provide test validation context."""
+    return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
 
 class TestArrayFieldValidation:
     """Test array field validation."""
 
-    def test_array_field_basic_validation(self, field_validator, validation_context):
+    def test_array_field_basic_validation(self, field_validator, context):
         """Test basic array field validation."""
         # Valid empty array
         field_data = {"Name": "test", "Type": "array"}
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert result.is_valid
 
         # Valid array with elements
@@ -45,16 +45,16 @@ class TestArrayFieldValidation:
                 {"Index": 0, "Fields": [{"Name": "item", "Type": "string", "Value": "test"}]}
             ],
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert result.is_valid
 
         # Array with Value (invalid)
         field_data = {"Name": "test", "Type": "array", "Value": "test"}
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid array field: Value attribute not allowed" in result.errors[0]
 
-    def test_array_element_structure(self, field_validator, validation_context):
+    def test_array_element_structure(self, field_validator, context):
         """Test array element structure validation."""
         # Missing Index
         field_data = {
@@ -62,13 +62,13 @@ class TestArrayFieldValidation:
             "Type": "array",
             "Elements": [{"Fields": [{"Name": "item", "Type": "string", "Value": "test"}]}],
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid array element at index 0: Missing required field Index" in result.errors[0]
 
         # Missing Fields
         field_data = {"Name": "test", "Type": "array", "Elements": [{"Index": 0}]}
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid array element at index 0: Missing required field Fields" in result.errors[0]
 
@@ -78,11 +78,11 @@ class TestArrayFieldValidation:
             "Type": "array",
             "Elements": [{"Index": 0, "Fields": "not a list"}],
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid array element at index 0: Fields must be a list" in result.errors[0]
 
-    def test_array_index_validation(self, field_validator, validation_context):
+    def test_array_index_validation(self, field_validator, context):
         """Test array element index validation."""
         # Non-sequential indices
         field_data = {
@@ -95,7 +95,7 @@ class TestArrayFieldValidation:
                 }
             ],
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid array element at index 0: Index must be 0" in result.errors[0]
 
@@ -108,11 +108,11 @@ class TestArrayFieldValidation:
                 {"Index": 0, "Fields": [{"Name": "item", "Type": "string", "Value": "test2"}]},
             ],
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid array element at index 1: Index must be 1" in result.errors[0]
 
-    def test_array_nested_field_validation(self, field_validator, validation_context):
+    def test_array_nested_field_validation(self, field_validator, context):
         """Test validation of fields within array elements."""
         # Invalid field in element
         field_data = {
@@ -131,7 +131,7 @@ class TestArrayFieldValidation:
                 }
             ],
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid unsignedint field: Value must be non-negative" in result.errors[0]
 

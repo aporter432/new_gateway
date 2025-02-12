@@ -4,6 +4,7 @@ Key Concepts:
 1. Message Types:
    - JSON objects for API calls (with fields like DestinationID, RawPayload, etc.)
    - RawPayload (Base64-encoded) for modem pass-through
+   - If both RawPayload and Payload are present, RawPayload takes precedence
 
 2. Size Limits:
    - Raw payload must be under 1023 bytes before Base64 encoding
@@ -43,8 +44,11 @@ class SizeValidator(BaseValidator):
 
         For RawPayload messages:
             - Validates raw payload is under size limit before Base64 encoding
+            - RawPayload takes precedence if both RawPayload and Payload are present
+            - RawPayload must follow terminal message format
         For JSON messages:
             - Validates message structure follows OGWS format
+            - Only validated if no RawPayload is present
 
         Args:
             data: Message data to validate
@@ -61,7 +65,7 @@ class SizeValidator(BaseValidator):
             return ValidationResult(False, ["No data to validate"])
 
         try:
-            # Check if this is a RawPayload message
+            # Check for RawPayload first as it takes precedence
             if "RawPayload" in data:
                 raw_payload = data["RawPayload"]
                 if not isinstance(raw_payload, str):
@@ -75,15 +79,13 @@ class SizeValidator(BaseValidator):
                         current_size=raw_size,
                         max_size=self.message_size_limit,
                     )
+                # Note: RawPayload format validation is handled by terminal message validator
 
-            # For JSON messages, just validate structure
+            # Only validate Payload if no RawPayload is present
             elif "Payload" in data:
                 if not isinstance(data["Payload"], dict):
                     raise ValidationError("Payload must be a JSON object")
                 # No size validation needed for JSON payloads per OGWS docs
-
-            else:
-                raise ValidationError("Message must contain either RawPayload or Payload")
 
             return ValidationResult(True, [])
 

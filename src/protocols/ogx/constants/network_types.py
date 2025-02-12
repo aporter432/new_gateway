@@ -37,13 +37,23 @@ Implementation Notes from OGWS-1.txt:
     - Network affects message state transitions
 """
 
-from enum import Enum, auto
+from enum import Enum
 
 
 class NetworkType(Enum):
-    """Network types as defined in OGWS-1.txt"""
+    """Network types as defined in OGWS-1.txt
 
-    OGX = auto()  # OGx network
+    Values:
+        ISATDATA_PRO (0): IsatData Pro network
+        OGX (1): OGx network
+    """
+
+    ISATDATA_PRO = 0  # IsatData Pro network
+    OGX = 1  # OGx network
+
+    def __str__(self) -> str:
+        """Return string representation of the network type value."""
+        return str(self.value)
 
 
 # Constants for comparison

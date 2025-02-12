@@ -2,7 +2,7 @@
 
 import pytest
 
-from protocols.ogx.constants import FieldType, MessageType
+from protocols.ogx.constants import FieldType, MessageType, NetworkType
 from protocols.ogx.models.fields import Element, Field, Message
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.message.field_validator import OGxFieldValidator
@@ -15,9 +15,9 @@ def field_validator() -> OGxFieldValidator:
 
 
 @pytest.fixture
-def validation_context() -> ValidationContext:
-    """Provide validation context for tests."""
-    return ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+def context() -> ValidationContext:
+    """Provide test validation context."""
+    return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ Tests focus on dynamic field validation:
 
 import pytest
 
-from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.constants import MessageType, NetworkType
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.message.field_validator import OGxFieldValidator
 
@@ -21,15 +21,15 @@ def field_validator() -> OGxFieldValidator:
 
 
 @pytest.fixture
-def validation_context() -> ValidationContext:
-    """Provide validation context."""
-    return ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+def context():
+    """Provide test validation context."""
+    return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
 
 class TestDynamicFieldValidation:
     """Test dynamic field validation."""
 
-    def test_dynamic_field_basic_validation(self, field_validator, validation_context):
+    def test_dynamic_field_basic_validation(self, field_validator, context):
         """Test basic dynamic field validation."""
         # Valid dynamic field
         field_data = {
@@ -38,12 +38,12 @@ class TestDynamicFieldValidation:
             "TypeAttribute": "string",
             "Value": "test",
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert result.is_valid
 
         # Missing TypeAttribute
         field_data = {"Name": "test", "Type": "dynamic", "Value": "test"}
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid dynamic field: Missing required field TypeAttribute" in result.errors[0]
 
@@ -54,11 +54,11 @@ class TestDynamicFieldValidation:
             "TypeAttribute": "",
             "Value": "test",
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid dynamic field: Missing required field TypeAttribute" in result.errors[0]
 
-    def test_dynamic_field_type_validation(self, field_validator, validation_context):
+    def test_dynamic_field_type_validation(self, field_validator, context):
         """Test dynamic field type validation."""
         # Invalid TypeAttribute
         field_data = {
@@ -67,7 +67,7 @@ class TestDynamicFieldValidation:
             "TypeAttribute": "invalid_type",
             "Value": "test",
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid dynamic field: TypeAttribute invalid_type not allowed" in result.errors[0]
 
@@ -78,11 +78,11 @@ class TestDynamicFieldValidation:
             "TypeAttribute": "unsignedint",
             "Value": "not a number",
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid unsignedint field: Value must be an integer" in result.errors[0]
 
-    def test_dynamic_field_null_value(self, field_validator, validation_context):
+    def test_dynamic_field_null_value(self, field_validator, context):
         """Test dynamic field null value validation."""
         # Null value
         field_data = {
@@ -91,11 +91,11 @@ class TestDynamicFieldValidation:
             "TypeAttribute": "string",
             "Value": None,
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid string field: Value must be a string" in result.errors[0]
 
-    def test_property_field_validation(self, field_validator, validation_context):
+    def test_property_field_validation(self, field_validator, context):
         """Test property field validation (same rules as dynamic)."""
         # Valid property field
         field_data = {
@@ -104,12 +104,12 @@ class TestDynamicFieldValidation:
             "TypeAttribute": "string",
             "Value": "test",
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert result.is_valid
 
         # Missing TypeAttribute
         field_data = {"Name": "test", "Type": "property", "Value": "test"}
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid property field: Missing required field TypeAttribute" in result.errors[0]
 
@@ -120,6 +120,6 @@ class TestDynamicFieldValidation:
             "TypeAttribute": "invalid_type",
             "Value": "test",
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid property field: TypeAttribute invalid_type not allowed" in result.errors[0]

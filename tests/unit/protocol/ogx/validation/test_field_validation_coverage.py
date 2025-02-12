@@ -10,7 +10,7 @@ These tests focus on edge cases and error paths that were previously uncovered:
 import pytest
 from unittest.mock import Mock, patch
 
-from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.constants import MessageType, NetworkType
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.common.validation_exceptions import ValidationError
 from protocols.ogx.validation.message.field_validator import OGxFieldValidator
@@ -24,15 +24,15 @@ def field_validator() -> OGxFieldValidator:
 
 
 @pytest.fixture
-def validation_context() -> ValidationContext:
-    """Provide validation context."""
-    return ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+def context():
+    """Provide test validation context."""
+    return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
 
 class TestFieldValidatorCoverage:
     """Additional tests to improve field validator coverage."""
 
-    def test_message_field_import_error(self, field_validator, validation_context):
+    def test_message_field_import_error(self, field_validator, context):
         """Test message field validation when message validator import fails."""
         field_data = {
             "Name": "test",
@@ -40,7 +40,7 @@ class TestFieldValidatorCoverage:
             "Message": {"Name": "inner", "SIN": 16, "MIN": 1, "Fields": []},
         }
 
-        field_validator.context = validation_context
+        field_validator.context = context
         # Mock the message validator import to raise ImportError
         with patch(
             "protocols.ogx.validation.message.field_validator.OGxMessageValidator",
@@ -50,7 +50,7 @@ class TestFieldValidatorCoverage:
                 field_validator._validate_message_field(field_data)
             assert "Message validation unavailable" in str(exc.value)
 
-    def test_dynamic_field_type_resolution_error(self, field_validator, validation_context):
+    def test_dynamic_field_type_resolution_error(self, field_validator, context):
         """Test dynamic field validation when type resolution fails."""
         field_data = {
             "Name": "test",
@@ -58,12 +58,12 @@ class TestFieldValidatorCoverage:
             "TypeAttribute": "invalid_type",
             "Value": "test",
         }
-        field_validator.context = validation_context
+        field_validator.context = context
         with pytest.raises(ValidationError) as exc:
             field_validator._validate_dynamic_field(FieldType.DYNAMIC, field_data)
         assert "Invalid dynamic field: TypeAttribute invalid_type not allowed" in str(exc.value)
 
-    def test_field_type_validation_unexpected_error(self, field_validator, validation_context):
+    def test_field_type_validation_unexpected_error(self, field_validator, context):
         """Test field type validation with unexpected error."""
 
         class BadValue:
@@ -75,14 +75,14 @@ class TestFieldValidatorCoverage:
             "Type": "unsignedint",
             "Value": BadValue(),
         }
-        field_validator.context = validation_context
+        field_validator.context = context
         with pytest.raises(ValidationError) as exc:
             field_validator._validate_field_type(
                 field_type=FieldType.UNSIGNED_INT, value=BadValue(), check_null=True
             )
         assert "Unexpected error" in str(exc.value)
 
-    def test_nested_message_validation_error(self, field_validator, validation_context):
+    def test_nested_message_validation_error(self, field_validator, context):
         """Test validation of nested message with validation error."""
         field_data = {
             "Name": "test",
@@ -100,11 +100,11 @@ class TestFieldValidatorCoverage:
                 ],
             },
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "In nested message: Field validation error" in result.errors[0]
 
-    def test_dynamic_field_null_type_attribute(self, field_validator, validation_context):
+    def test_dynamic_field_null_type_attribute(self, field_validator, context):
         """Test dynamic field with null type attribute."""
         field_data = {
             "Name": "test",
@@ -112,26 +112,26 @@ class TestFieldValidatorCoverage:
             "TypeAttribute": None,
             "Value": "test",
         }
-        field_validator.context = validation_context
+        field_validator.context = context
         with pytest.raises(ValidationError) as exc:
             field_validator._validate_dynamic_field(FieldType.DYNAMIC, field_data)
         assert "Missing required field TypeAttribute" in str(exc.value)
 
-    def test_field_type_validation_with_none_check(self, field_validator, validation_context):
+    def test_field_type_validation_with_none_check(self, field_validator, context):
         """Test field type validation with None check disabled."""
         field_data = {
             "Name": "test",
             "Type": "string",
             "Value": None,
         }
-        field_validator.context = validation_context
+        field_validator.context = context
         with pytest.raises(ValidationError) as exc:
             field_validator._validate_field_type(
                 field_type=FieldType.STRING, value=field_data["Value"], check_null=False
             )
         assert "Invalid string field: Value must be a string" in str(exc.value)
 
-    def test_array_field_with_invalid_nested_field(self, field_validator, validation_context):
+    def test_array_field_with_invalid_nested_field(self, field_validator, context):
         """Test array field with invalid nested field."""
         field_data = {
             "Name": "test",
@@ -150,7 +150,7 @@ class TestFieldValidatorCoverage:
                 }
             ],
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid dynamic field: TypeAttribute invalid not allowed" in str(result.errors[0])
 
@@ -165,7 +165,7 @@ class TestFieldValidatorCoverage:
             field_validator._validate_message_field(field_data)
         assert "Invalid message field: Validation context required" in str(exc.value)
 
-    def test_dynamic_field_with_empty_type_attribute(self, field_validator, validation_context):
+    def test_dynamic_field_with_empty_type_attribute(self, field_validator, context):
         """Test dynamic field with empty type attribute."""
         field_data = {
             "Name": "test",
@@ -173,7 +173,7 @@ class TestFieldValidatorCoverage:
             "TypeAttribute": "",
             "Value": "test",
         }
-        field_validator.context = validation_context
+        field_validator.context = context
         with pytest.raises(ValidationError) as exc:
             field_validator._validate_dynamic_field(FieldType.DYNAMIC, field_data)
         assert "Invalid dynamic field: Missing required field TypeAttribute" in str(exc.value)

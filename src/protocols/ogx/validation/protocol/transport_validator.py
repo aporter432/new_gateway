@@ -41,8 +41,11 @@ class TransportValidator(BaseValidator):
             if not context.network_type:
                 raise ValidationError("Missing network type in context")
 
+            if not isinstance(context.network_type, NetworkType):
+                raise ValidationError("Invalid network type in context")
+
             # Only OGx network is supported in this validator
-            if context.network_type.upper() != NetworkType.OGX.name:
+            if context.network_type != NetworkType.OGX:
                 raise ValidationError("Invalid protocol: Expected OGx network")
 
             # Validate input data

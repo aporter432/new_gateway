@@ -10,7 +10,7 @@ Tests focus on edge cases and error handling:
 
 import pytest
 
-from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.constants import MessageType, NetworkType
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.message.field_validator import OGxFieldValidator
 
@@ -22,44 +22,44 @@ def field_validator() -> OGxFieldValidator:
 
 
 @pytest.fixture
-def validation_context() -> ValidationContext:
-    """Provide validation context."""
-    return ValidationContext(network_type="OGx", direction=MessageType.FORWARD)
+def context():
+    """Provide test validation context."""
+    return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
 
 class TestFieldValidationEdgeCases:
     """Test field validation edge cases and error handling."""
 
-    def test_required_field_validation(self, field_validator, validation_context):
+    def test_required_field_validation(self, field_validator, context):
         """Test validation of required field properties."""
         # Missing Name
         field_data = {"Type": "string", "Value": "test"}
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Missing required field fields: Name" in result.errors[0]
 
         # Missing Type
         field_data = {"Name": "test", "Value": "test"}
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Missing required field fields: Type" in result.errors[0]
 
         # None input
-        result = field_validator.validate(None, validation_context)
+        result = field_validator.validate(None, context)
         assert not result.is_valid
         assert (
             "Required field data missing - Name and Type properties are required"
             in result.errors[0]
         )
 
-    def test_invalid_field_type(self, field_validator, validation_context):
+    def test_invalid_field_type(self, field_validator, context):
         """Test validation with invalid field type."""
         field_data = {"Name": "test", "Type": "invalid_type", "Value": "test"}
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid field type: invalid_type" in result.errors[0]
 
-    def test_error_propagation(self, field_validator, validation_context):
+    def test_error_propagation(self, field_validator, context):
         """Test error propagation in nested structures."""
         # Nested message validation error
         field_data = {
@@ -79,7 +79,7 @@ class TestFieldValidationEdgeCases:
                 ],
             },
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert (
             "In nested message: Field validation error: Invalid dynamic field: TypeAttribute invalid not allowed"
@@ -104,11 +104,11 @@ class TestFieldValidationEdgeCases:
                 }
             ],
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert "Invalid dynamic field: TypeAttribute invalid not allowed" in result.errors[0]
 
-    def test_concurrent_validation_errors(self, field_validator, validation_context):
+    def test_concurrent_validation_errors(self, field_validator, context):
         """Test handling of multiple validation errors."""
         field_data = {
             "Name": "test",
@@ -124,11 +124,11 @@ class TestFieldValidationEdgeCases:
                 ],
             },
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert len([err for err in result.errors if "Invalid" in err]) >= 3
 
-    def test_deep_nested_validation(self, field_validator, validation_context):
+    def test_deep_nested_validation(self, field_validator, context):
         """Test validation of deeply nested structures."""
         field_data = {
             "Name": "outer",
@@ -158,7 +158,7 @@ class TestFieldValidationEdgeCases:
                 ],
             },
         }
-        result = field_validator.validate(field_data, validation_context)
+        result = field_validator.validate(field_data, context)
         assert not result.is_valid
         assert (
             "In nested message: Field validation error: In array element 0: In array element 0: Invalid string field: Value must be a string"
