@@ -11,6 +11,7 @@ cd new_gateway
 
 # Copy environment configuration
 cp .env.example .env
+cp src/ui/.env.example src/ui/.env.local
 
 # Start the development environment
 docker-compose up -d
@@ -69,14 +70,39 @@ The system consists of several key components:
 - [End-to-End Tests](tests/e2e/README.md)
 - [Unit Tests](tests/unit/README.md)
 
-### Additional Resources
-- [Contributing Guidelines](CONTRIBUTING.md)
-- [Changelog](CHANGELOG.md)
-- [License](LICENSE)
+## Development Environment
+
+### Prerequisites
+- Docker and Docker Compose
+- Python 3.11.6+
+- Node.js 18+
+- Poetry 1.7.1+
+
+### Key Services
+- **UI (Next.js)**: Modern web interface for message management
+- **API (FastAPI)**: RESTful API for message handling
+- **Redis**: Message state and caching
+- **PostgreSQL**: Customer data storage
+- **LocalStack**: AWS service emulation
+- **Prometheus/Grafana**: Monitoring and metrics
+
+### Health Checks
+All services include health checks accessible at their respective `/health` endpoints:
+- UI: http://localhost:3001/health
+- API: http://localhost:8000/health
+- Proxy: http://localhost:8080/health
+
+## Contributing
+
+See [Contributing Guidelines](CONTRIBUTING.md) for details on:
+- Code style and standards
+- Pull request process
+- Testing requirements
+- Documentation updates
 
 ## Support
 
 For issues and support:
-- GitHub Issues: [Issues Link]
-- Documentation: [Docs Link]
-- Emergency Contact: [Contact Info]
+- Create an issue in the repository
+- Check the documentation in `src/DOCS`
+- Contact the development team
