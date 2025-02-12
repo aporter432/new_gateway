@@ -1,44 +1,29 @@
-"""Infrastructure logging for database, cache, and other infrastructure components."""
+"""Infrastructure-specific logger configuration."""
 
 import logging
 from typing import Optional
 
-from ..log_settings import LogComponent
-
-# Basic logging configuration
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  # Log to console
-        logging.FileHandler("infra.log"),  # Log to file
-    ],
-)
+from ..log_settings import LogComponent, LoggingConfig
+from .factory import get_logger_factory
 
 
 def get_infra_logger(
-    name: Optional[str] = None,
-    include_metrics: bool = True,
+    config: Optional[LoggingConfig] = None,
 ) -> logging.Logger:
-    """Get logger for infrastructure components.
+    """Get logger for infrastructure operations.
 
     Args:
-        name: Optional sub-component name
-        include_metrics: Whether to include metrics handler
+        config: Optional logging configuration
 
     Returns:
         Configured logger instance
     """
-    from . import get_logger_factory
-
-    factory = get_logger_factory()
+    factory = get_logger_factory(config)
     logger = factory.get_logger(
-        LogComponent.INFRA,
-        use_syslog=True,  # Infrastructure logs should go to syslog
+        component=LogComponent.INFRA,
+        use_file=True,
+        use_stream=True,
+        use_syslog=False,
     )
-
-    if name:
-        logger = logging.getLogger(f"{logger.name}.{name}")
-        logger.parent = logger
 
     return logger

@@ -48,7 +48,7 @@ class MessageWorker:
         """
         self.settings = settings
         self.message_queue = message_queue
-        self.logger = get_infra_logger("message_worker")
+        self.logger = get_infra_logger()
         self.running = False
         self.current_task: Optional[asyncio.Task] = None
 

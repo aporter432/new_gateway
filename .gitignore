@@ -67,8 +67,13 @@ node_modules/
 package-lock.json
 yarn.lock
 
+# Next.js
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
 # JavaScript
-*.js
 *.js.map
 *.jsx
 
@@ -78,10 +83,10 @@ Thumbs.db
 *.bak
 *.tmp
 *.temp
+*.pem
 
 # Project specific
 trace_logs/
 device_configs/
 *.lua
 *.key
-*.pem

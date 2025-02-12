@@ -1,5 +1,6 @@
 # Use Python 3.11-slim image as base
-FROM python:3.11-slim
+ARG TARGETPLATFORM=linux/arm64
+FROM --platform=${TARGETPLATFORM} python:3.11-slim
 
 # Set working directory
 WORKDIR /app
@@ -14,11 +15,14 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH="/app/src"
 
 # Install system dependencies
+# Note: Added --no-install-recommends to minimize image size
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 - \
@@ -38,9 +42,11 @@ COPY tests/ ./tests/
 # Install the project
 RUN poetry install --no-interaction --no-ansi
 
-# Create non-root user
+# Create non-root user and set up logging directory
 RUN useradd -m -u 1000 gateway \
-    && chown -R gateway:gateway /app
+    && mkdir -p /app/logs \
+    && chown -R gateway:gateway /app \
+    && chmod 755 /app/logs
 USER gateway
 
 # Expose port
@@ -48,8 +54,8 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD wget -qO- http://localhost:8000/health || exit 1
 
-# Default command (can be overridden)
-CMD ["poetry", "run", "python", "-m", "src.main"]
+# Default command
+CMD ["poetry", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug"]
 

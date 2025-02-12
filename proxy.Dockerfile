@@ -1,4 +1,5 @@
-FROM nginx:alpine
+ARG TARGETPLATFORM=linux/arm64
+FROM --platform=${TARGETPLATFORM} nginx:alpine
 
 # Install curl for health checks
 RUN apk add --no-cache curl

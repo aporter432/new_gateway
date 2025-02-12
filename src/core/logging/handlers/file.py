@@ -1,15 +1,7 @@
-"""File handlers with rotation support.
-
-This module provides file-based logging handlers with:
-- Size-based rotation
-- Compression of old logs
-- UTC timestamp support
-- Component-specific formatting
-"""
+"""File-based logging handler configuration."""
 
 import logging
-import logging.handlers
-from pathlib import Path
+import os
 from typing import Optional
 
 from ..log_settings import LogComponent, LoggingConfig
@@ -19,43 +11,25 @@ from . import get_formatter
 def get_file_handler(
     component: LogComponent,
     config: LoggingConfig,
-    filename: Optional[Path] = None,
-    max_bytes: int = 10 * 1024 * 1024,  # 10MB
-    backup_count: int = 5,
-    encoding: str = "utf-8",
+    filename: Optional[str] = None,
 ) -> logging.Handler:
-    """Create a rotating file handler.
+    """Create a file handler for logging.
 
     Args:
         component: Logging component to create handler for
         config: Logging configuration
-        filename: Optional specific log file path
-        max_bytes: Maximum size before rotation
-        backup_count: Number of backup files to keep
-        encoding: File encoding to use
+        filename: Optional specific filename to use
 
     Returns:
-        Configured rotating file handler
+        Configured file handler
     """
-    # Use component-specific path if filename not provided
-    log_path = filename or config.get_log_path(component)
+    # Ensure logs directory exists
+    os.makedirs("/app/logs", exist_ok=True)
 
-    # Ensure parent directory exists
-    log_path.parent.mkdir(parents=True, exist_ok=True)
+    # Use component name for log file if not specified
+    if not filename:
+        filename = f"/app/logs/{component.name.lower()}.log"
 
-    # Create rotating handler
-    handler = logging.handlers.RotatingFileHandler(
-        filename=str(log_path),
-        maxBytes=max_bytes,
-        backupCount=backup_count,
-        encoding=encoding,
-    )
-
-    # Get appropriate formatter
+    handler = logging.FileHandler(filename)
     handler.setFormatter(get_formatter(component))
-
-    # Set level from config
-    logger_config = config.get_logger_config(component)
-    handler.setLevel(logging.getLevelName(logger_config.level))
-
     return handler

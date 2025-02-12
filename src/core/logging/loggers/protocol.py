@@ -1,34 +1,31 @@
-"""Protocol-specific logger implementation."""
+"""Protocol-specific logger configuration."""
 
 import logging
 from typing import Optional
 
-from ..log_settings import LogComponent
+from ..handlers.file import get_file_handler
+from ..handlers.stream import get_stream_handler
+from ..log_settings import LogComponent, LoggingConfig
+from .factory import get_logger_factory
 
 
 def get_protocol_logger(
-    name: Optional[str] = None,
-    include_metrics: bool = True,
+    config: Optional[LoggingConfig] = None,
 ) -> logging.Logger:
-    """Get logger for protocol components.
+    """Get logger for protocol operations.
 
     Args:
-        name: Optional sub-component name
-        include_metrics: Whether to include metrics handler
+        config: Optional logging configuration
 
     Returns:
         Configured logger instance
     """
-    from . import get_logger_factory
-
-    factory = get_logger_factory()
+    factory = get_logger_factory(config)
     logger = factory.get_logger(
-        LogComponent.PROTOCOL,
-        use_syslog=True,  # Protocol logs should go to syslog
+        component=LogComponent.PROTOCOL,
+        use_file=True,
+        use_stream=True,
+        use_syslog=False,
     )
-
-    if name:
-        logger = logging.getLogger(f"{logger.name}.{name}")
-        logger.parent = logger
 
     return logger
