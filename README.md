@@ -11,6 +11,12 @@ This project contains several README files and documentation resources:
 - `/CONTRIBUTING.md` - Contribution guidelines and standards
 - `/CHANGELOG.md` - Version history and changes
 
+### Environment Documentation
+- `/src/DOCS/ENVIRONMENT/README.md` - Environment setup overview
+  - `/development/README.md` - Development environment setup
+  - `/production/README.md` - Production deployment and security
+  - `/testing/README.md` - Test environment configuration
+
 ### Test Documentation
 - `/tests/test_setup.md` - Test environment setup guide
 - `/tests/integration/README.md` - Integration testing guide
@@ -19,7 +25,7 @@ This project contains several README files and documentation resources:
 - `/tests/rules/cursor_rules_investigation.md` - Rules 
 
 ### Component Documentation
-- `/src/core/logging/README.md` - Logging system documentation
+- `/src/DOCS/ENVIRONMENT/logging/README.md` - Logging system documentation
 - `/src/protocols/ogx/README.md` - OGx protocol implementation details
 
 ### ISAT Documentation
@@ -29,13 +35,58 @@ This project contains several README files and documentation resources:
 - `/src/DOCS/ISAT DOCS/LUA_FIRMWARE_EXTENSIONS/systems.md` - LUA systems documentation
 - `/src/DOCS/ISAT DOCS/LUA_FIRMWARE_EXTENSIONS/global_functions.md` - LUA global functions
 
-### Environment Setup
-- `/docs/development.md` - Development environment setup
-- `/docs/production.md` - Production deployment guide
-
 ### Additional Resources
 - `.pytest_cache/README.md` - Pytest cache information
 - Various package documentation in `.venv/lib/python3.11/site-packages/`
+
+## Key Application Files
+
+### Core Application
+- `/src/api/main.py` - Main FastAPI application entry point
+  - API route registration
+  - Middleware configuration
+  - Health check endpoints
+  - Application startup/shutdown events
+
+### Configuration
+- `/src/core/app_settings.py` - Application settings management
+  - Environment-specific configuration
+  - Pydantic settings validation
+  - Development/Production mode handling
+  - Security constraints
+
+### Environment
+- `.env` - Primary environment configuration file
+  - Location: `/Users/aaronporter/Desktop/Projects/new_gateway/.env`
+  - Purpose: Development environment defaults
+  - Contains:
+    - Application settings (APP_NAME, DEBUG, etc.)
+    - Server configuration (HOST, PORT, WORKERS)
+    - Database and Redis connection details
+    - AWS credentials and endpoints
+    - Gateway-specific settings (ISAT, OGx)
+    - Security and monitoring parameters
+  - Note: Production should use secure environment variables, not this file
+
+### Development vs Production Configuration
+- **Development**:
+  - Uses `.env` file for easy configuration
+  - Contains safe default values
+  - Includes development-specific settings
+  - Can be version controlled (with example values)
+
+- **Production**:
+  - Uses secure environment variables
+  - No file-based configuration
+  - Credentials managed via secure store
+  - Environment-specific settings
+
+### Proxy Configuration
+- `nginx.conf` - OGWS proxy configuration
+  - API routing
+  - Health check endpoint
+  - Request buffering
+  - SSL configuration
 
 ## Overview
 

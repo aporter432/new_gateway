@@ -25,12 +25,16 @@ class MockOGWSHandler(OGWSProtocolHandler):
         context = ValidationContext(direction=MessageType.FORWARD, network_type="OGX")
         result = self._validate_message(message, context)
         if not result.is_valid:
-            raise OGxProtocolError("Validation failed", errors=result.errors)
+            raise OGxProtocolError(f"Validation failed: {', '.join(result.errors)}")
         return "test_message_id", result
 
     async def get_message_status(self, message_id):
         """Mock status check."""
         return {"State": 1, "StatusUTC": "2024-02-12T00:00:00Z"}
+
+    async def get_messages(self, from_utc, message_type):
+        """Mock message retrieval."""
+        return []  # Return empty list for testing purposes
 
 
 @pytest.mark.asyncio

@@ -75,14 +75,11 @@ Configuration:
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..constants.error_codes import GatewayErrorCode
 from ..constants.message_types import MessageType
-from ..constants.network_types import NetworkType
 from ..constants.transport_types import TransportType
 from ..validation.common.types import ValidationContext, ValidationResult
-from ..validation.common.validation_exceptions import ValidationError
 from ..validation.message.message_validator import OGxMessageValidator
 from ..validation.protocol.network_validator import NetworkValidator
 from ..validation.protocol.size_validator import SizeValidator
