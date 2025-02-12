@@ -7,7 +7,7 @@ import pytest
 from httpx import HTTPError
 
 from core.security import OGWSAuthManager, TokenMetadata
-from tests.unit.api.test_token_setup import get_test_redis, get_test_settings
+from .test_token_setup import get_test_redis, get_test_settings
 
 
 async def test_invalid_credentials():

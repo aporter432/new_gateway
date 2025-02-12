@@ -77,7 +77,7 @@ services:
       - HTTP_PROXY=http://proxy:8888
       - HTTPS_PROXY=http://proxy:8888
     working_dir: /app
-    command: python -m pytest tests/integration/api/auth/test_token_setup.py -v --asyncio-mode=auto
+    command: python -m pytest tests/integration -v
     depends_on:
       redis:
         condition: service_healthy
