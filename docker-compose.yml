@@ -64,6 +64,7 @@ services:
     volumes:
       - ./src:/app/src:ro
       - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
     environment:
       - PYTHONPATH=/app
       - REDIS_HOST=redis
