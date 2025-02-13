@@ -49,7 +49,7 @@ import httpx
 
 from core.app_settings import get_settings
 from core.logging.loggers import get_protocol_logger
-from core.security import OGWSAuthManager
+from protocols.ogx.auth.manager import OGWSAuthManager
 from infrastructure.redis import get_redis_client
 from protocols.ogx.constants import TransportType
 from protocols.ogx.constants.error_codes import GatewayErrorCode

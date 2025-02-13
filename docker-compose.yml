@@ -31,11 +31,9 @@ services:
       - "3001:3001"
     volumes:
       - ./src/ui/src:/app/src:rw
+      - ./src/ui/.next:/app/.next:rw
+      - ./src/ui/node_modules:/app/node_modules:rw
       - ./src/ui/public:/app/public:rw
-      - ui_node_modules:/app/node_modules
-      - ui_next:/app/.next
-      - ui_cache:/app/.cache
-      - ui_env:/app/.env
       - ./src/ui/tsconfig.json:/app/tsconfig.json:ro
       - ./src/ui/next.config.js:/app/next.config.js:ro
     environment:

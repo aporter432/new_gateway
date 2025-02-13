@@ -31,7 +31,7 @@ from pydantic import BaseModel, Field
 
 from api.clients.factory import get_ogws_client
 from core.app_settings import Settings, get_settings
-from core.security import OGWSAuthManager, get_auth_manager
+from protocols.ogx.auth.manager import OGWSAuthManager, get_auth_manager
 from protocols.ogx.constants import APIEndpoint, TransportType
 from protocols.ogx.constants.message_states import MessageState
 from protocols.ogx.constants.message_types import MessageType

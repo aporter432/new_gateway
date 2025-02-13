@@ -4,7 +4,7 @@ from functools import lru_cache
 from typing import Optional
 
 from core.app_settings import Settings, get_settings
-from core.security import OGWSAuthManager
+from protocols.ogx.auth.manager import OGWSAuthManager
 from infrastructure.redis import get_redis_client
 
 from .ogws import OGWSClient

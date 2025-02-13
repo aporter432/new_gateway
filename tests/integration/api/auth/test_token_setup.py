@@ -5,7 +5,7 @@ import asyncio
 from redis.asyncio import Redis
 
 from core.app_settings import Settings
-from core.security import OGWSAuthManager
+from protocols.ogx.auth.manager import OGWSAuthManager
 
 
 def get_test_settings() -> Settings:

@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from core.security import OGWSAuthManager, get_auth_manager
+from protocols.ogx.auth.manager import OGWSAuthManager, get_auth_manager
 
 
 class AuthMiddleware(BaseHTTPMiddleware):

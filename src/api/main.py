@@ -13,7 +13,7 @@ from typing import AsyncGenerator, Dict, Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.middleware.auth import add_auth_middleware
+from api.middleware.ogws_auth import add_auth_middleware
 from api.routes import messages
 from core.logging.loggers import get_protocol_logger
 from protocols.ogx.services.ogws_message_worker import get_message_worker

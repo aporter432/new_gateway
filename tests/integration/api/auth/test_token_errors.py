@@ -6,7 +6,7 @@ import time
 import pytest
 from httpx import HTTPError
 
-from core.security import OGWSAuthManager, TokenMetadata
+from protocols.ogx.auth.manager import OGWSAuthManager, TokenMetadata
 from tests.integration.api.auth.test_token_setup import get_test_redis, get_test_settings
 
 

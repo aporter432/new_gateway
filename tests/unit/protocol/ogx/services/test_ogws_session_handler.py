@@ -26,7 +26,7 @@ from unittest import mock
 import pytest
 from redis.asyncio import Redis
 
-from core.security import OGWSAuthManager
+from protocols.ogx.auth.manager import OGWSAuthManager
 from protocols.ogx.services.ogws_session_handler import SessionHandler
 from protocols.ogx.validation.common.validation_exceptions import (
     AuthenticationError,
