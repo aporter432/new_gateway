@@ -65,11 +65,6 @@ The system consists of several key components:
   - Transport configuration
   - Error handling
 
-### Testing Documentation
-- [Integration Tests](tests/integration/README.md)
-- [End-to-End Tests](tests/e2e/README.md)
-- [Unit Tests](tests/unit/README.md)
-
 ## Development Environment
 
 ### Prerequisites
@@ -92,13 +87,6 @@ All services include health checks accessible at their respective `/health` endp
 - API: http://localhost:8000/health
 - Proxy: http://localhost:8080/health
 
-## Contributing
-
-See [Contributing Guidelines](CONTRIBUTING.md) for details on:
-- Code style and standards
-- Pull request process
-- Testing requirements
-- Documentation updates
 
 ## Support
 

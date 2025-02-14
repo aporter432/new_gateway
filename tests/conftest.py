@@ -5,76 +5,36 @@ import os
 import sys
 import warnings
 from pathlib import Path
-from typing import Any, Dict, AsyncGenerator
+from typing import Any, Dict, Generator
 
-# Set test environment before any imports
+import pytest
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
+
+from core.app_settings import Settings, get_settings
+
 os.environ["TESTING"] = "true"
 
-# Filter out specific warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="passlib.utils")
 warnings.filterwarnings("ignore", category=UserWarning, module="passlib.handlers.bcrypt")
 
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_engine
 
-# Add src to Python path for all tests
 ROOT_DIR = Path(__file__).parent.parent
 SRC_PATH = str(ROOT_DIR / "src")
 if SRC_PATH not in sys.path:
     sys.path.insert(0, SRC_PATH)
 
-# Configure pytest-asyncio
 pytest_plugins = ["pytest_asyncio"]
 
-# Import after setting test environment
-from infrastructure.database.models.base import Base
-from infrastructure.database.models.user import User  # noqa: E402
-from infrastructure.database.session import database_url
 
-
-@pytest.fixture(scope="function")
-async def db_engine():
-    """Create a new engine for each test function."""
-    engine = create_async_engine(database_url)
-    yield engine
-    await engine.dispose()
-
-
-@pytest.fixture(scope="function")
-async def db_connection(db_engine) -> AsyncGenerator[AsyncConnection, None]:
-    """Create a database connection for each test.
-
-    Creates all tables before tests and drops them after.
-    """
-    async with db_engine.connect() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        yield conn
-        await conn.run_sync(Base.metadata.drop_all)
-
-
-@pytest.fixture()
-async def db_session(db_connection: AsyncConnection) -> AsyncGenerator[AsyncSession, None]:
-    """Provide a database session for test isolation.
+@pytest.fixture
+def mock_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Configure test environment settings.
 
     Args:
-        db_connection: Database connection from the function-scoped fixture
-
-    Yields:
-        AsyncSession: Database session that's cleaned up after each test
+        monkeypatch: Pytest fixture for modifying environment
     """
-    async with AsyncSession(bind=db_connection, expire_on_commit=False) as session:
-        # Start with a clean slate for each test
-        for table in reversed(Base.metadata.sorted_tables):
-            await session.execute(table.delete())
-        await session.commit()
-
-        yield session
-
-        # Clean up after the test
-        await session.rollback()
-        for table in reversed(Base.metadata.sorted_tables):
-            await session.execute(table.delete())
-        await session.commit()
+    monkeypatch.setenv("OGWS_CLIENT_ID", "test_client")
+    monkeypatch.setenv("OGWS_CLIENT_SECRET", "test_secret")
 
 
 @pytest.fixture
@@ -87,12 +47,29 @@ def mock_redis_client() -> Dict[str, Any]:
     return {}
 
 
-@pytest.fixture
-def mock_settings(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Configure test environment settings.
+@pytest.fixture(scope="session")
+def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
+    """Create an instance of the default event loop for the test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
-    Args:
-        monkeypatch: Pytest fixture for modifying environment
-    """
-    monkeypatch.setenv("OGWS_CLIENT_ID", "test_client")
-    monkeypatch.setenv("OGWS_CLIENT_SECRET", "test_secret")
+
+@pytest.fixture(scope="session")
+def settings() -> Settings:
+    """Provide test settings with validation."""
+    settings = get_settings()
+
+    # Validate required settings
+    missing = []
+    if not settings.OGWS_CLIENT_ID:
+        missing.append("OGWS_CLIENT_ID")
+    if not settings.OGWS_CLIENT_SECRET:
+        missing.append("OGWS_CLIENT_SECRET")
+    if not settings.OGWS_TEST_MOBILE_ID:
+        missing.append("OGWS_TEST_MOBILE_ID")
+
+    if missing:
+        pytest.skip(f"Missing required settings: {', '.join(missing)}")
+
+    return settings
