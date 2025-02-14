@@ -114,6 +114,10 @@ class Settings(BaseSettings):
     # DynamoDB settings
     DYNAMODB_TABLE_NAME: str = "ogws_message_states"  # Table for message state storage
 
+    # JWT settings
+    JWT_SECRET_KEY: str = "development_secret_key"  # TODO: Production - Set via secure environment
+    JWT_ALGORITHM: str = "HS256"  # JWT signing algorithm
+
     # Test settings - Development only, defined in OGWS-1.txt Section 6.1
     OGWS_TEST_MOBILE_ID: str = "OGx-00002000SKY9307"  # Test terminal ID
     OGWS_TEST_MODE: bool = True  # Enables test endpoints and validation

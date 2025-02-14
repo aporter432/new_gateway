@@ -3,27 +3,28 @@
 ## Overview
 This document outlines the testing strategy and implementation for the UI authentication system. The UI authentication system handles user access to the Gateway's user interface.
 
-## Current Test Coverage
+## Test Structure
 
 ### 1. Test Locations
 ```
 /tests/
-└── unit/
+└── integration/
     └── api/
         └── auth/
             ├── test_login.py      # Login endpoint testing
+            ├── test_jwt.py        # JWT token validation testing
             └── conftest.py        # Auth test fixtures
 ```
 
-## Dependencies
+## Setup Requirements
 
-### 1. Database
+### 1. Database Configuration
 - SQLite in-memory database for unit tests
 - Uses SQLAlchemy async engine
 - Test database isolation per function
 - Automatic cleanup between tests
 
-### 2. Test Configuration
+### 2. Environment Configuration
 ```python
 # Environment variables (set automatically in conftest.py)
 TESTING=true
@@ -50,82 +51,11 @@ passlib = {extras = ["bcrypt"], version = ">=1.7.4"}
 python-multipart = ">=0.0.6"
 ```
 
-## Current Test Coverage
-
-### 1. Login Functionality (`test_login.py`)
-- Successful login with valid credentials
-- Login with invalid password
-- Login with inactive user account
-- Login with non-existent user
-- Login with missing fields
-
-### 2. Test Fixtures
-- `db_engine`: Creates SQLAlchemy engine per test
-- `db_connection`: Manages database connection
-- `db_session`: Provides isolated database session
-- `test_user`: Creates test user with default credentials
-- `client`: FastAPI test client
-- `app`: FastAPI test application
-
-## Running Tests
-
-### 1. Login Tests
+### 4. Running Tests
 ```bash
-# Run login tests
-PYTHONPATH=src poetry run pytest tests/unit/api/auth/test_login.py -v
-
-# Run with coverage
-PYTHONPATH=src poetry run pytest tests/unit/api/auth/test_login.py -v --cov=src --cov-report=term-missing
+# Run JWT tests
+PYTHONPATH=src poetry run pytest tests/integration/api/auth/test_jwt.py -v
 ```
-
-## Test Data
-
-### 1. Default Test User
-```python
-{
-    "email": "test@example.com",
-    "password": "testpassword123!",
-    "name": "Test User",
-    "is_active": True
-}
-```
-
-## Planned Test Coverage
-
-### 1. JWT Token Tests (TODO)
-- Token creation and validation
-- Token expiration
-- Invalid token handling
-- Token refresh
-
-### 2. OAuth2 Tests (TODO)
-- Token-based authentication
-- Role-based access control
-- Session management
-- Permission validation
-
-### 3. User Management Tests (TODO)
-- User creation
-- User updates
-- User deletion
-- Password management
-
-## Best Practices
-
-### 1. Database Usage
-- Always use provided `db_session` fixture
-- Don't create new database connections
-- Let fixtures handle cleanup
-
-### 2. Async/Sync Operations
-- Mark tests with `@pytest.mark.asyncio`
-- Use `async/await` with database operations
-- Use synchronous calls with test client
-
-### 3. Test Isolation
-- Each test function gets fresh database
-- Use function-scoped fixtures
-- Clean up all test data
 
 ## Related Files
 - `src/api/routes/auth/user.py`: Login endpoint implementation

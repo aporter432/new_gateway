@@ -35,7 +35,7 @@ async def get_current_user(
         Current authenticated user
 
     Raises:
-        HTTPException: If token is invalid or user not found
+        HTTPException: If token is invalid, missing email, or user not found
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -44,8 +44,10 @@ async def get_current_user(
     )
 
     try:
-        # Verify token
+        # Verify token expiration
         token_data: TokenData = verify_token(token)
+
+        # Validate email presence
         if token_data.email is None:
             raise credentials_exception
 
