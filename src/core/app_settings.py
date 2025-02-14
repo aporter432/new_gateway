@@ -84,6 +84,17 @@ class Settings(BaseSettings):
     # Environment detection
     ENVIRONMENT: str = "development"  # TODO: Document production environment setup
 
+    # Database settings
+    DATABASE_URL: str = (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/gateway"  # TODO: Production - Set via secure environment
+    )
+    SQL_ECHO: bool = False  # Enable SQL query logging
+    DB_POOL_SIZE: int = 5  # Default connection pool size
+    DB_MAX_OVERFLOW: int = 10  # Maximum number of connections that can be created beyond pool_size
+    DB_POOL_TIMEOUT: int = (
+        30  # Seconds to wait before giving up on getting a connection from the pool
+    )
+
     # OGWS settings with development defaults
     # Reference: OGWS-1.txt Section 4.1.1 - Authentication
     OGWS_CLIENT_ID: str = "70000934"  # TODO: Production - Set via secure environment

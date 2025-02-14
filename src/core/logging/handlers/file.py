@@ -2,6 +2,7 @@
 
 import logging
 import os
+from pathlib import Path
 from typing import Optional
 
 from ..log_settings import LogComponent, LoggingConfig
@@ -23,12 +24,14 @@ def get_file_handler(
     Returns:
         Configured file handler
     """
-    # Ensure logs directory exists
-    os.makedirs("/app/logs", exist_ok=True)
+    # Get project root directory and create logs directory
+    project_root = Path(__file__).parent.parent.parent.parent.parent
+    logs_dir = project_root / "logs"
+    os.makedirs(logs_dir, exist_ok=True)
 
     # Use component name for log file if not specified
     if not filename:
-        filename = f"/app/logs/{component.name.lower()}.log"
+        filename = str(logs_dir / f"{component.name.lower()}.log")
 
     handler = logging.FileHandler(filename)
     handler.setFormatter(get_formatter(component))

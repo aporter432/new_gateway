@@ -43,6 +43,40 @@ The development environment uses containerized services:
 - LocalStack for AWS service emulation
 - Nginx for OGWS proxy
 
+## Database Migrations
+Located at: `src/infrastructure/database/migrations`
+
+### Migration Files
+- `alembic.ini`: Base Alembic configuration
+- `env.py`: Environment-aware migration settings
+- `versions/`: Migration script directory
+  - `001_create_users_table.py`: Initial user table setup
+
+### Running Migrations
+1. **Development**:
+   ```bash
+   # Apply all pending migrations
+   alembic upgrade head
+
+   # Rollback last migration
+   alembic downgrade -1
+
+   # Generate new migration
+   alembic revision -m "description"
+   ```
+
+2. **Environment Handling**:
+   - Development: Uses DATABASE_URL from `.env`
+   - Production: Uses environment variables
+   - Testing: Uses isolated test database
+
+### Migration Guidelines
+- Always run migrations through Alembic
+- Test migrations in development first
+- Back up production database before migrating
+- Include both upgrade and downgrade paths
+- Document complex migrations
+
 ## Examples
 See the `/examples` directory for:
 - Sample environment configurations

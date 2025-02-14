@@ -46,6 +46,15 @@ moto = ">=4.2.11"  # For AWS service mocking
 locust = ">=2.15.0"  # For performance testing
 aioredis = ">=2.0.1"  # For async Redis operations
 
+
+[tool.poetry.group.test.dependencies]
+aiosqlite = "^0.21.0"
+email-validator = "^2.2.0"
+psycopg2-binary = "^2.9.10"
+asyncpg = "^0.30.0"
+bcrypt = ">=4.0.0"
+passlib = {version = ">=1.7.4", extras = ["bcrypt"]}
+
 [tool.black]
 line-length = 100
 target-version = ["py311"]
@@ -96,6 +105,11 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 log_cli = true
 log_cli_level = "INFO"
+filterwarnings = [
+    "ignore::DeprecationWarning:passlib.*:",
+    "ignore::DeprecationWarning:.*crypt",
+    "ignore::UserWarning:passlib.handlers.bcrypt",
+]
 markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
