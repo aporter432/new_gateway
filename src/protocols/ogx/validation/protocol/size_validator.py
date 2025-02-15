@@ -65,6 +65,10 @@ class SizeValidator(BaseValidator):
             return ValidationResult(False, ["No data to validate"])
 
         try:
+            # Check for required payload first
+            if "RawPayload" not in data and "Payload" not in data:
+                raise ValidationError("Message must contain either RawPayload or Payload")
+
             # Check for RawPayload first as it takes precedence
             if "RawPayload" in data:
                 raw_payload = data["RawPayload"]
