@@ -3,7 +3,7 @@
 Exposes database components for external use.
 """
 
-from .session import async_session_maker, engine
 from .repositories import UserRepository
+from .session import async_session_maker, engine
 
 __all__ = ["async_session_maker", "UserRepository"]

@@ -21,9 +21,9 @@ Environment Handling:
 # pylint: disable=no-member
 
 import asyncio
-from logging.config import fileConfig
 import os
-from typing import Dict, Any
+from logging.config import fileConfig
+from typing import Any, Dict
 
 from alembic import context
 from sqlalchemy import pool

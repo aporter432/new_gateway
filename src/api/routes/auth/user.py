@@ -20,7 +20,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.schemas.user import Token
-from api.security.jwt import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from api.security.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 from api.security.password import verify_password
 from infrastructure.database.dependencies import get_db
 from infrastructure.database.repositories.user_repository import UserRepository

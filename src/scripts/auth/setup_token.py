@@ -34,8 +34,8 @@ from httpx import HTTPError
 
 from core.app_settings import get_settings
 from core.logging.loggers import get_auth_logger
-from protocols.ogx.auth.manager import OGWSAuthManager
 from infrastructure.redis import get_redis_client
+from protocols.ogx.auth.manager import OGWSAuthManager
 from protocols.ogx.constants import DEFAULT_TOKEN_EXPIRY
 from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError, ValidationError
 

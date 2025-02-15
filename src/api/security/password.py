@@ -7,6 +7,7 @@ This module provides secure password handling:
 """
 
 from typing import Optional
+
 import bcrypt
 from passlib.context import CryptContext
 

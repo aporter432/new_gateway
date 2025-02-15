@@ -13,12 +13,13 @@ For serialization:
 
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict
 from pydantic import Field as PydanticField
+from pydantic import field_validator
 
 from protocols.ogx.constants import FieldType
-from protocols.ogx.validation.message.field_validator import OGxFieldValidator
 from protocols.ogx.validation.common.validation_exceptions import ValidationError
+from protocols.ogx.validation.message.field_validator import OGxFieldValidator
 
 
 class Element(BaseModel):

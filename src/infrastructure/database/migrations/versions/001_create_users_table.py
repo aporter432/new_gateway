@@ -14,10 +14,9 @@ This migration creates the initial users table with:
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import String, Boolean, DateTime
-
+from alembic import op
+from sqlalchemy import Boolean, DateTime, String
 
 # revision identifiers, used by Alembic
 revision: str = "001"

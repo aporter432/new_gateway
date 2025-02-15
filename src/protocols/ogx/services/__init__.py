@@ -10,9 +10,9 @@ from .ogws_message_receiver import MessageReceiver
 from .ogws_message_sender import MessageSender
 from .ogws_message_worker import MessageWorker
 from .ogws_network_monitor import NetworkMonitor
+from .ogws_protocol_handler import OGWSProtocolHandler
 from .ogws_state_store import MessageStateStore
 from .ogws_transport_optimizer import TransportOptimizer
-from .ogws_protocol_handler import OGWSProtocolHandler
 
 __all__ = [
     "MessageProcessor",

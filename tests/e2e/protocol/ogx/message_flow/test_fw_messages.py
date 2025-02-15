@@ -1,6 +1,12 @@
-"""Integration tests for forward message endpoints.
+"""End-to-End (E2E) tests for forward message endpoints.
+
+Location: tests/e2e/api/endpoints/test_fw_messages.py
 
 This module tests the forward message API endpoints according to OGWS-1.txt specifications.
+These tests require:
+1. Valid API credentials
+2. Access to external OGWS service
+3. Test terminal availability
 
 Important:
     NetworkType Usage:
@@ -13,6 +19,12 @@ Important:
 
     This ensures type safety and consistency across the codebase.
     The NetworkType enum is the single source of truth for network types.
+
+Test Dependencies:
+    - Valid API credentials in environment
+    - Running proxy service
+    - Network access to OGWS API
+    - Test terminal availability
 """
 
 import pytest
