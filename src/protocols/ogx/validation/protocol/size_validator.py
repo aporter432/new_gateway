@@ -45,10 +45,9 @@ class SizeValidator(BaseValidator):
         For RawPayload messages:
             - Validates raw payload is under size limit before Base64 encoding
             - RawPayload takes precedence if both RawPayload and Payload are present
-            - RawPayload must follow terminal message format
         For JSON messages:
             - Validates message structure follows OGWS format
-            - Only validated if no RawPayload is present
+            - Accepts either Payload object or direct Fields array
 
         Args:
             data: Message data to validate
@@ -65,10 +64,6 @@ class SizeValidator(BaseValidator):
             return ValidationResult(False, ["No data to validate"])
 
         try:
-            # Check for required payload first
-            if "RawPayload" not in data and "Payload" not in data:
-                raise ValidationError("Message must contain either RawPayload or Payload")
-
             # Check for RawPayload first as it takes precedence
             if "RawPayload" in data:
                 raw_payload = data["RawPayload"]
@@ -83,13 +78,21 @@ class SizeValidator(BaseValidator):
                         current_size=raw_size,
                         max_size=self.message_size_limit,
                     )
-                # Note: RawPayload format validation is handled by terminal message validator
 
-            # Only validate Payload if no RawPayload is present
+            # Handle JSON messages (either Payload object or direct Fields)
             elif "Payload" in data:
                 if not isinstance(data["Payload"], dict):
                     raise ValidationError("Payload must be a JSON object")
                 # No size validation needed for JSON payloads per OGWS docs
+
+            # Handle direct Fields array
+            elif "Fields" in data:
+                if not isinstance(data["Fields"], list):
+                    raise ValidationError("Fields must be an array")
+                # No size validation needed for Fields per OGWS docs
+
+            else:
+                raise ValidationError("Message must contain RawPayload, Payload, or Fields")
 
             return ValidationResult(True, [])
 
