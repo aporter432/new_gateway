@@ -1,6 +1,47 @@
 # Gateway Testing Guide
 
-This guide provides a systematic approach to testing the gateway implementation, from basic connectivity to end-to-end message flow.
+## Test Environment Types
+
+### Integration Tests (Docker-Based)
+Integration tests are designed to run exclusively in Docker containers. They require:
+- Full Docker environment (redis, postgres, localstack, etc.)
+- Docker network connectivity between services
+- Specific container names and ports
+
+**Important:** Never run integration tests locally. Always use:
+```bash
+# Run all integration tests
+docker-compose run test pytest tests/integration
+
+# Run specific integration test
+docker-compose run test pytest tests/integration/path/to/test.py
+```
+
+### Unit Tests (Local)
+Unit tests can run locally without Docker:
+```bash
+poetry run pytest tests/unit
+```
+
+## Docker Environment Setup
+
+1. Required Services:
+```yaml
+services:
+  - new_gateway-redis (Redis server on port 6379)
+  - new_gateway-db (PostgreSQL on port 5432)
+  - new_gateway-localstack (AWS services on port 4566)
+  - new_gateway-proxy (OGWS proxy on port 8080)
+```
+
+2. Start Docker Environment:
+```bash
+# Start all services
+docker-compose up -d
+
+# Verify services
+docker-compose ps
+```
 
 ## Prerequisites
 
@@ -226,3 +267,27 @@ docker-compose run --remove-orphans test
 # Note: The test command is configured in docker-compose.yml
 # If you need to run a different test, you can override the command:
 # docker-compose run --remove-orphans test python -m pytest <test_path> -v 
+```
+
+## Test Organization
+
+```
+tests/
+├── integration/  # Docker-based integration tests
+│   ├── api/     # API integration tests
+│   ├── auth/    # Authentication tests
+│   └── ...
+├── unit/        # Local unit tests
+└── ...
+```
+
+## Common Issues
+
+1. "Redis connection failed" or similar connection errors:
+   - Ensure you're running tests in Docker
+   - Check if services are running: docker-compose ps
+   - Verify network connectivity: docker network inspect
+
+2. "Not running in Docker" warning:
+   - Integration tests must run in Docker
+   - Use docker-compose run test instead of poetry run pytest

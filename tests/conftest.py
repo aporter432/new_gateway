@@ -1,13 +1,21 @@
-"""Test configuration and fixtures for unit testing FastAPI login functionality."""
+"""Root level test configuration and fixtures.
+
+This module provides base fixtures used across all test types (unit, integration, e2e).
+Test-type specific fixtures are located in their respective conftest.py files:
+- tests/unit/conftest.py
+- tests/integration/conftest.py
+- tests/e2e/conftest.py
+"""
 
 import asyncio
 import os
 import sys
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, AsyncGenerator
 
 import pytest
+from httpx import AsyncClient
 
 from core.app_settings import Settings, get_settings
 
@@ -47,14 +55,6 @@ def mock_redis_client() -> Dict[str, Any]:
 
 
 @pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Create an instance of the default event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session")
 def settings() -> Settings:
     """Provide test settings with validation."""
     settings = get_settings()
@@ -72,3 +72,23 @@ def settings() -> Settings:
         pytest.skip(f"Missing required settings: {', '.join(missing)}")
 
     return settings
+
+
+@pytest.fixture(scope="function")
+async def http_client() -> AsyncGenerator[AsyncClient, None]:
+    """Create an async HTTP client for testing."""
+    async with AsyncClient() as client:
+        yield client
+
+
+@pytest.fixture(autouse=True)
+def mock_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Set up environment variables for testing."""
+    test_env = {
+        "ENVIRONMENT": "test",
+        "OGWS_BASE_URL": "http://localhost:8080/api/v1.0",  # Default for unit tests
+        "OGWS_CLIENT_ID": "70000934",
+        "OGWS_CLIENT_SECRET": "password",
+    }
+    for key, value in test_env.items():
+        monkeypatch.setenv(key, value)

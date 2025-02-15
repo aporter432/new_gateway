@@ -64,7 +64,9 @@ class TestFieldValidation:
                 (FieldType.STRING, "test", 123, "must be a string"),
                 (FieldType.BOOLEAN, True, "invalid", "must be a boolean"),
                 (FieldType.UNSIGNED_INT, 42, -1, "must be non-negative"),
+                (FieldType.UNSIGNED_INT, 42, "not_a_number", "must be an integer"),
                 (FieldType.SIGNED_INT, -42, "not_int", "must be an integer"),
+                (FieldType.SIGNED_INT, -42, object(), "must be an integer"),
                 (FieldType.ENUM, "VALID", "", "must be a non-empty string"),
                 (FieldType.DATA, "YWJj", "invalid", "must be a valid base64"),
             ],
@@ -163,20 +165,53 @@ class TestFieldValidation:
 
         def test_element_structure(self, field_validator):
             """Test element structure validation."""
+            # Test invalid index type
             field = {
                 "Name": "test",
                 "Type": "array",
                 "Elements": [
-                    {"Index": 0, "Fields": []},  # Valid
-                    {"Fields": []},  # Missing Index
-                    {"Index": 2},  # Missing Fields
-                    {"Index": "3", "Fields": []},  # Invalid Index type
-                    {"Index": 4, "Fields": "not_a_list"},  # Invalid Fields type
+                    {"Index": "3", "Fields": []},  # Invalid Index type (hits line 181)
                 ],
             }
             result = field_validator.validate(field, None)
             assert not result.is_valid
-            assert len(result.errors) > 0
+            assert "Index must be an integer" in str(result.errors)
+
+            # Test non-sequential indices (this is checked before duplicates)
+            field = {
+                "Name": "test",
+                "Type": "array",
+                "Elements": [
+                    {"Index": 1, "Fields": []},  # Should be 0
+                ],
+            }
+            result = field_validator.validate(field, None)
+            assert not result.is_valid
+            assert "Index must be 0" in str(result.errors)
+
+            # Test missing Fields
+            field = {
+                "Name": "test",
+                "Type": "array",
+                "Elements": [
+                    {"Index": 0},  # Missing Fields (hits line 203)
+                ],
+            }
+            result = field_validator.validate(field, None)
+            assert not result.is_valid
+            assert "Missing required field Fields" in str(result.errors)
+
+            # Test invalid Fields type
+            field = {
+                "Name": "test",
+                "Type": "array",
+                "Elements": [
+                    {"Index": 0, "Fields": "not_a_list"},  # Invalid Fields type (hits line 210)
+                ],
+            }
+            result = field_validator.validate(field, None)
+            assert not result.is_valid
+            assert "Fields must be a list" in str(result.errors)
 
         def test_sequential_indices(self, field_validator):
             """Test indices must be sequential starting from 0."""
@@ -289,6 +324,7 @@ class TestFieldValidation:
             }
             result = field_validator.validate(field, context)
             assert not result.is_valid
+            assert "Message validation failed" in str(result.errors)
 
             # Test invalid field in message
             field = {

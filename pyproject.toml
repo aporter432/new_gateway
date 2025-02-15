@@ -44,7 +44,6 @@ pre-commit = ">=3.3.0"
 docker = ">=6.1.3"  # For test container management
 moto = ">=4.2.11"  # For AWS service mocking
 locust = ">=2.15.0"  # For performance testing
-aioredis = ">=2.0.1"  # For async Redis operations
 
 
 [tool.poetry.group.test.dependencies]
