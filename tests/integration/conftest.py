@@ -222,8 +222,9 @@ def mock_metrics(monkeypatch):
 
 # Health Check Fixtures
 @pytest.fixture(autouse=True)
-async def verify_service_health(http_client: AsyncClient):
+async def verify_service_health(http_client: AsyncClient, request: pytest.FixtureRequest):
     """Verify all required services are healthy before running tests."""
+    # Check Redis - always needed
     redis_client: AsyncRedis = redis.Redis(
         host=REDIS_HOST,
         port=REDIS_PORT,
@@ -237,10 +238,11 @@ async def verify_service_health(http_client: AsyncClient):
     finally:
         await redis_client.aclose()  # type: ignore # Redis type hints don't include aclose
 
-    # Check LocalStack services - make this optional
-    try:
-        response = await http_client.get(f"{AWS_ENDPOINT_URL}/_localstack/health")
-        if response.status_code != 200:
-            warnings.warn("LocalStack health check failed - some tests may be skipped")
-    except HTTPError as e:  # More specific exception
-        warnings.warn(f"LocalStack not available - some tests may be skipped: {e}")
+    # Only check LocalStack if test needs it
+    if "localstack" in request.keywords:
+        try:
+            response = await http_client.get(f"{AWS_ENDPOINT_URL}/_localstack/health")
+            if response.status_code != 200:
+                pytest.skip("LocalStack not available - skipping test")
+        except HTTPError as e:
+            pytest.skip(f"LocalStack not available - skipping test: {e}")
