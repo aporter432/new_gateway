@@ -1,15 +1,34 @@
 """Authentication routes for user operations.
 
-This module implements the authentication endpoints:
-- Login with email/password
-- Token validation
-- Session management
+This module implements the core authentication endpoints for the gateway application.
+It handles user registration, login, and token management following OAuth2 with JWT.
+
+Key Components:
+    - User Registration: New user signup with email validation
+    - Authentication: Email/password login with JWT token generation
+    - Session Management: Token-based session handling
+    - Role Management: Basic role assignment (expandable for RBAC)
+
+Related Files:
+    - src/api/schemas/user.py: Pydantic models for request/response validation
+    - src/api/security/jwt.py: JWT token generation and validation
+    - src/api/security/password.py: Password hashing and verification
+    - src/infrastructure/database/models/user.py: SQLAlchemy User model
+    - src/infrastructure/database/repositories/user_repository.py: User database operations
+
+Future RBAC Considerations:
+    - Role hierarchy implementation
+    - Permission-based access control
+    - Role-specific endpoints and middleware
+    - Admin interface for role management
+    - Role assignment and modification endpoints
 
 Implementation Notes:
-    - Uses FastAPI for routing
-    - Implements JWT authentication
+    - Uses FastAPI for routing and dependency injection
+    - Implements OAuth2 with JWT for authentication
     - Follows REST API patterns
     - Provides clear error responses
+    - Supports future RBAC expansion
 """
 
 from datetime import timedelta
@@ -19,13 +38,88 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.schemas.user import Token
+from api.schemas.user import Token, UserCreate, UserResponse
 from api.security.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
-from api.security.password import verify_password
+from api.security.password import get_password_hash, verify_password
 from infrastructure.database.dependencies import get_db
+from infrastructure.database.models.user import User, UserRole
 from infrastructure.database.repositories.user_repository import UserRepository
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def register(
+    user_data: UserCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> UserResponse:
+    """Register a new user in the system.
+
+    This endpoint handles new user registration with automatic role assignment.
+    It performs email uniqueness validation and secure password hashing.
+
+    Process Flow:
+        1. Validates input data using UserCreate schema
+        2. Checks for existing email to prevent duplicates
+        3. Hashes password using bcrypt
+        4. Assigns default USER role
+        5. Creates user record in database
+        6. Returns user information (excluding sensitive data)
+
+    Related Components:
+        - UserCreate schema: Validates registration input
+        - UserResponse schema: Formats user response
+        - UserRepository: Handles database operations
+        - Password hashing: Secures user credentials
+
+    Future RBAC Considerations:
+        - Role assignment logic expansion
+        - Custom role creation
+        - Role hierarchy enforcement
+        - Department/team-based role assignment
+
+    Args:
+        user_data: Validated user registration data (email, name, password)
+        db: Async database session for transactions
+
+    Returns:
+        UserResponse: Created user information (excluding sensitive data)
+
+    Raises:
+        HTTPException:
+            - 400: Email already registered
+            - 500: Database operation failure
+    """
+    user_repo = UserRepository(db)
+
+    # Check if user already exists
+    if await user_repo.get_by_email(user_data.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered",
+        )
+
+    # Create user instance
+    user = User(
+        email=user_data.email,
+        name=user_data.name,
+        hashed_password=get_password_hash(user_data.password),
+        role=UserRole.USER,
+        is_active=True,
+    )
+
+    # Save user to database
+    try:
+        user = await user_repo.create(user)
+        await db.commit()
+        # Convert SQLAlchemy model to Pydantic model
+        return UserResponse.model_validate(user)
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create user",
+        ) from e
 
 
 @router.post("/login", response_model=Token)
@@ -33,17 +127,41 @@ async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> Token:
-    """Authenticate user and return access token.
+    """Authenticate user and generate access token.
+
+    This endpoint handles user authentication using OAuth2 password flow
+    and generates JWT tokens for authenticated sessions.
+
+    Process Flow:
+        1. Validates login credentials
+        2. Verifies user exists and is active
+        3. Validates password using secure comparison
+        4. Generates JWT access token
+        5. Returns token with expiration info
+
+    Related Components:
+        - JWT token generation: src/api/security/jwt.py
+        - Password verification: src/api/security/password.py
+        - User repository: Database access for user verification
+        - Token schema: Response formatting
+
+    Future RBAC Considerations:
+        - Role-based token claims
+        - Permission-based access scopes
+        - Role-specific token expiration
+        - Multi-factor authentication integration
 
     Args:
-        form_data: OAuth2 password request form containing email and password
-        db: Database session
+        form_data: OAuth2 form containing username (email) and password
+        db: Async database session for user lookup
 
     Returns:
-        Token object containing access token
+        Token: JWT access token with expiration information
 
     Raises:
-        HTTPException: If authentication fails
+        HTTPException:
+            - 401: Invalid credentials or inactive user
+            - 500: Authentication process failure
     """
     # Get user from database
     user_repo = UserRepository(db)

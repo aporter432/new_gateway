@@ -1,28 +1,56 @@
 """User schemas for request/response validation.
 
-This module implements Pydantic models for user-related API operations.
-It provides:
-- Request validation
-- Response serialization
-- Data transformation
+This module implements Pydantic models for user-related API operations in the gateway application.
+It defines the data structures for user management, authentication, and authorization.
+
+Key Components:
+    - User Base Schema: Common user attributes
+    - Registration Schema: New user creation with validation
+    - Update Schema: User profile modifications
+    - Response Schema: API response formatting
+    - Token Schema: Authentication token structure
+
+Related Files:
+    - src/api/routes/auth/user.py: Authentication endpoints using these schemas
+    - src/infrastructure/database/models/user.py: SQLAlchemy models these schemas map to
+    - src/api/security/jwt.py: JWT token handling using Token schema
+    - src/api/security/password.py: Password handling for UserCreate/Update schemas
 
 Implementation Notes:
-    - Uses Pydantic for validation
-    - Follows API schema patterns
-    - Implements field-level validation
-    - Provides clear error messages
+    - Uses Pydantic for validation and serialization
+    - Implements strict field validation rules
+    - Separates concerns between request/response models
+    - Supports SQLAlchemy model mapping
+    - Provides clear validation error messages
+
+Future RBAC Considerations:
+    - Role-specific schema fields
+    - Permission set representations
+    - Department/team affiliations
+    - Custom role attributes
+    - Audit trail metadata
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, constr
 
 
 class UserBase(BaseModel):
     """Base user schema with shared attributes.
 
-    This model contains fields common to all user operations.
+    This model defines the core user fields used across different operations.
+    It enforces basic validation rules and field constraints.
+
+    Attributes:
+        email: Unique email address for user identification
+        name: User's full name with length constraints
+
+    Usage:
+        - Base class for UserCreate and UserResponse
+        - Ensures consistent user attribute validation
+        - Maintains single source of truth for shared fields
     """
 
     email: EmailStr = Field(..., description="User's email address")
@@ -30,10 +58,25 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    """Schema for user creation requests.
+    """Schema for user registration requests.
 
-    This model extends UserBase with password field for registration.
-    Password will be hashed before storage.
+    This model extends UserBase to include password field and registration-specific validation.
+    It handles new user creation while enforcing security requirements.
+
+    Attributes:
+        email: Inherited from UserBase
+        name: Inherited from UserBase
+        password: Raw password (will be hashed before storage)
+
+    Usage:
+        - Validates registration requests
+        - Enforces password requirements
+        - Maps to User database model
+
+    Security Notes:
+        - Password is never stored in raw form
+        - Minimum password length enforced
+        - Password complexity rules applied
     """
 
     password: str = Field(
@@ -45,10 +88,28 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    """Schema for user update requests.
+    """Schema for user profile updates.
 
-    This model allows updating user fields individually.
-    All fields are optional.
+    This model defines fields that can be modified after user creation.
+    All fields are optional to support partial updates.
+
+    Attributes:
+        name: Optional update to user's name
+        email: Optional update to email address
+        password: Optional password change
+        is_active: Optional account status update
+
+    Usage:
+        - Partial user profile updates
+        - Account status management
+        - Password changes
+        - Email address updates
+
+    Future RBAC Considerations:
+        - Role modification fields
+        - Permission updates
+        - Department changes
+        - Access level modifications
     """
 
     name: Optional[str] = Field(None, min_length=1, max_length=255, description="User's full name")
@@ -63,10 +124,28 @@ class UserUpdate(BaseModel):
 
 
 class UserInDB(UserBase):
-    """Schema for user information from database.
+    """Internal schema for database user representation.
 
-    This model represents the user as stored in the database,
-    including system fields but excluding sensitive data.
+    This model represents the user as stored in the database, including
+    system-managed fields but excluding sensitive data like passwords.
+
+    Attributes:
+        id: Unique user identifier
+        is_active: Account status flag
+        role: User's role in the system
+        created_at: Account creation timestamp
+        updated_at: Last modification timestamp
+
+    Usage:
+        - Database record mapping
+        - Internal user representation
+        - Audit trail support
+
+    Future RBAC Considerations:
+        - Extended role information
+        - Permission sets
+        - Access history
+        - Security clearance levels
     """
 
     id: int
@@ -81,18 +160,44 @@ class UserInDB(UserBase):
 class UserResponse(UserInDB):
     """Schema for user information in API responses.
 
-    This model represents the user data returned in API responses.
-    It excludes sensitive information and includes computed fields.
-    """
+    This model defines the user data structure returned by API endpoints.
+    It inherits from UserInDB but can be extended with computed fields
+    and excludes sensitive information.
 
-    # Currently identical to UserInDB, but allows for future response-specific customization
+    Usage:
+        - API response formatting
+        - Public user profile representation
+        - User list endpoints
+
+    Future RBAC Considerations:
+        - Role-specific data inclusion
+        - Permission summaries
+        - Access level indicators
+        - Team/department information
+    """
 
 
 class Token(BaseModel):
-    """Schema for authentication tokens.
+    """Schema for authentication token responses.
 
-    This model represents the token response structure
-    for successful authentication.
+    This model defines the structure of authentication tokens returned
+    after successful login or token refresh operations.
+
+    Attributes:
+        access_token: JWT token string
+        token_type: Token type (always "bearer")
+        expires_in: Token lifetime in seconds
+
+    Usage:
+        - Login response formatting
+        - Token refresh responses
+        - OAuth2 compliance
+
+    Future RBAC Considerations:
+        - Role-based token metadata
+        - Permission claims
+        - Access scope information
+        - Token refresh rules
     """
 
     access_token: str

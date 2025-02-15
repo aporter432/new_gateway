@@ -1,31 +1,72 @@
 """User model for authentication and authorization.
 
-This module implements the user data model for the UI authentication system.
-It follows the MVP requirements while maintaining extensibility for future enhancements.
+This module implements the core database model for user management in the gateway application.
+It defines the user entity structure and relationships for SQLAlchemy ORM.
+
+Key Components:
+    - User Model: Core user entity with authentication fields
+    - Role Enumeration: Basic role definition (expandable for RBAC)
+    - Timestamps: Audit trail support
+    - Indexes: Performance optimization for common queries
+
+Related Files:
+    - src/api/schemas/user.py: Pydantic schemas mapping to this model
+    - src/infrastructure/database/repositories/user_repository.py: Repository layer for this model
+    - src/api/routes/auth/user.py: API endpoints using this model
+    - src/api/security/password.py: Password hashing for this model
+
+Database Considerations:
+    - Uses SQLAlchemy async ORM
+    - Implements proper indexing for lookups
+    - Ensures referential integrity
+    - Supports audit trailing
+    - Optimizes for read performance
 
 Implementation Notes:
-    - Uses SQLAlchemy for ORM
-    - Follows existing database patterns
-    - Implements minimal required fields
-    - Ensures proper indexing for lookups
+    - Follows SQLAlchemy 2.0 patterns
+    - Uses typed ORM mappings
+    - Implements proper cascade behaviors
+    - Ensures proper constraint definitions
+    - Supports async operations
+
+Future RBAC Considerations:
+    - Extended role hierarchy
+    - Permission tables and relationships
+    - Department/team associations
+    - Access level tracking
+    - Audit logging relationships
 """
 
 from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, String, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 
 
 class UserRole(str, Enum):
-    """User role enumeration.
+    """User role enumeration for authorization control.
+
+    This enumeration defines the basic role types in the system.
+    It serves as the foundation for role-based access control.
 
     Attributes:
         USER: Standard user with basic access
         ADMIN: Administrative user with full access
+
+    Usage:
+        - Role assignment in User model
+        - Authorization checks
+        - Access control decisions
+
+    Future RBAC Considerations:
+        - Extended role hierarchy
+        - Custom role definitions
+        - Role inheritance
+        - Department-specific roles
     """
 
     USER = "user"
@@ -35,34 +76,102 @@ class UserRole(str, Enum):
 class User(Base):
     """User model for authentication and authorization.
 
-    This model implements the core user attributes required for MVP:
-    - Email (used as username)
-    - Name
-    - Password (hashed)
-    - Role
-    - Active status
-    - Timestamps
+    This model defines the core user entity in the database, handling
+    user authentication, authorization, and profile management.
+
+    Table Structure:
+        - __tablename__: 'users'
+        - Primary Key: id (auto-incrementing)
+        - Unique Constraints: email
+        - Indexes: email, role
+        - Timestamps: created_at, updated_at
 
     Attributes:
-        email: Unique email address used as username
+        id: Unique user identifier
+        email: Email address (used as username)
         name: User's full name
         hashed_password: Bcrypt hashed password
-        role: User role (user/admin)
-        is_active: Whether the user account is active
-        created_at: Timestamp of user creation
-        updated_at: Timestamp of last update
+        role: User's role (USER/ADMIN)
+        is_active: Account status flag
+        created_at: Account creation timestamp
+        updated_at: Last modification timestamp
+
+    Relationships:
+        TBD based on future requirements:
+        - User permissions
+        - Department associations
+        - Access logs
+        - Session records
+
+    Usage:
+        - User authentication
+        - Profile management
+        - Authorization checks
+        - Audit trailing
+
+    Future RBAC Considerations:
+        - Role relationship table
+        - Permission associations
+        - Department/team relationships
+        - Access history tracking
+        - Security log associations
     """
 
     __tablename__ = "users"
 
-    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[UserRole] = mapped_column(String(50), nullable=False, default=UserRole.USER)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    # Primary key
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Authentication fields
+    email: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        index=True,
+        nullable=False,
+        doc="User's email address (used as username)",
+    )
+    hashed_password: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        doc="Bcrypt hashed password",
+    )
+
+    # Profile fields
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        doc="User's full name",
+    )
+    role: Mapped[UserRole] = mapped_column(
+        default=UserRole.USER,
+        nullable=False,
+        index=True,
+        doc="User's role for access control",
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+        doc="Whether the user account is active",
+    )
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        doc="Timestamp of account creation",
+    )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True, onupdate=datetime.utcnow
+        DateTime,
+        nullable=True,
+        onupdate=datetime.utcnow,
+        doc="Timestamp of last update",
+    )
+
+    # Indexes
+    __table_args__ = (
+        Index("ix_users_email_role", "email", "role"),  # Composite index for auth queries
     )
 
     def __repr__(self) -> str:
