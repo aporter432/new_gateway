@@ -15,6 +15,38 @@ Important:
     The NetworkType enum is the single source of truth for network types.
 """
 
-from protocols.ogx.constants import NetworkType  # Always import NetworkType enum
+import pytest
+from httpx import AsyncClient
+from protocols.ogx.constants import NetworkType, FieldType
 
-# Test cases will be implemented here
+pytestmark = pytest.mark.asyncio
+
+
+async def test_forward_message_basic():
+    """Test basic forward message submission."""
+    async with AsyncClient() as client:
+        response = await client.post(
+            "http://proxy:8080/api/v1.0/messages/forward",
+            json={
+                "Name": "test_message",
+                "SIN": 16,
+                "MIN": 1,
+                "Fields": [
+                    {"Name": "string_field", "Type": FieldType.STRING.value, "Value": "test"},
+                    {"Name": "int_field", "Type": FieldType.SIGNED_INT.value, "Value": 42},
+                ],
+                "DestinationID": "OGx-00002000SKY9307",  # Test terminal ID
+                "Network": NetworkType.OGX.value,  # Use NetworkType enum
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "message_id" in data
+
+        # Check message state
+        status_response = await client.get(
+            f"http://proxy:8080/api/v1.0/messages/{data['message_id']}/status"
+        )
+        assert status_response.status_code == 200
+        state = status_response.json()
+        assert state["State"] == 1  # RECEIVED state

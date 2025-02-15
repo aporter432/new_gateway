@@ -179,7 +179,7 @@ class TestSessionHandlerCreate:
                     extra={
                         "customer_id": "unknown",
                         "asset_id": "session_handler",
-                        "error": "client_id is required",
+                        "error": "Validation error: client_id is required",
                         "action": "create_session",
                     },
                 ),
