@@ -37,6 +37,22 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from protocols.ogx.constants.message_types import MessageType
+from protocols.ogx.constants.transport_types import TransportType
+from protocols.ogx.constants.network_types import NetworkType
+from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
+from protocols.ogx.validation.common.types import ValidationContext, ValidationResult
+from protocols.ogx.validation.common.validation_exceptions import (
+    AuthenticationError,
+    ProtocolError,
+    RateLimitError,
+    SizeValidationError,
+    ValidationError,
+)
+from protocols.ogx.validation.protocol.network_validator import NetworkValidator
+from protocols.ogx.validation.protocol.size_validator import SizeValidator
+from protocols.ogx.validation.protocol.transport_validator import TransportValidator
+
 # Mock core dependencies to avoid circular imports
 with patch.dict(
     "sys.modules",
@@ -48,148 +64,139 @@ with patch.dict(
         "protocols.ogx.validation.message.message_validator": MagicMock(),
     },
 ):
-    from protocols.ogx.constants.message_types import MessageType
-    from protocols.ogx.constants.network_types import NetworkType
-    from protocols.ogx.constants.transport_types import TransportType
-    from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
-    from protocols.ogx.validation.common.types import ValidationContext, ValidationResult
-    from protocols.ogx.validation.common.validation_exceptions import (
-        AuthenticationError,
-        ProtocolError,
-        RateLimitError,
-        SizeValidationError,
-    )
-    from protocols.ogx.validation.protocol.network_validator import NetworkValidator
-    from protocols.ogx.validation.protocol.size_validator import SizeValidator
-    from protocols.ogx.validation.protocol.transport_validator import TransportValidator
+    # Class must be indented inside the with block
+    class MockOGWSHandler(OGWSProtocolHandler):
+        """Mock implementation of OGWSProtocolHandler for testing.
 
+        This class provides a concrete implementation of the abstract base class
+        with configurable behavior for testing different scenarios.
 
-class MockOGWSHandler(OGWSProtocolHandler):
-    """Mock implementation of OGWSProtocolHandler for testing.
-
-    This class provides a concrete implementation of the abstract base class
-    with configurable behavior for testing different scenarios.
-
-    Attributes:
-        mock_token (str): Token to return from authenticate
-        mock_messages (List[Dict]): Messages to return from get_messages
-        should_fail (bool): Whether operations should raise exceptions
-        rate_limited (bool): Whether to simulate rate limiting
-    """
-
-    def __init__(
-        self,
-        mock_token: str = "test_token",
-        mock_messages: Optional[List[Dict[str, Any]]] = None,
-        should_fail: bool = False,
-        rate_limited: bool = False,
-    ):
-        """Initialize mock handler with test configuration."""
-        super().__init__()
-        self.mock_token = mock_token
-        self.mock_messages = mock_messages or []
-        self.should_fail = should_fail
-        self.rate_limited = rate_limited
-        # Initialize validators
-        self.size_validator = SizeValidator()
-        self.network_validator = NetworkValidator()
-        self.transport_validator = TransportValidator()
-        self.message_validator = MagicMock()
-        self.message_validator.validate.return_value = ValidationResult(True, [])
-
-    def set_auth_state(self, is_authenticated: bool = True, token: Optional[str] = None) -> None:
-        """Set authentication state for testing.
-
-        This method is only for testing purposes to avoid accessing protected members.
+        Attributes:
+            mock_token (str): Token to return from authenticate
+           mock_messages (List[Dict]): Messages to return from get_messages
+           should_fail (bool): Whether operations should raise exceptions
+            rate_limited (bool): Whether to simulate rate limiting
         """
-        self._authenticated = is_authenticated
-        self._bearer_token = token or self.mock_token if is_authenticated else None
 
-    def update_metrics(self) -> None:
-        """Update request metrics for testing.
+        def __init__(
+            self,
+            mock_token: str = "test_token",
+            mock_messages: Optional[List[Dict[str, Any]]] = None,
+            should_fail: bool = False,
+            rate_limited: bool = False,
+        ):
+            """Initialize mock handler with test configuration."""
+            super().__init__()
+            self.mock_token = mock_token
+            self.mock_messages = mock_messages or []
+            self.should_fail = should_fail
+            self.rate_limited = rate_limited
+            # Initialize validators
+            self.size_validator = SizeValidator()
+            self.network_validator = NetworkValidator()
+            self.transport_validator = TransportValidator()
+            self.message_validator = MagicMock()
+            self.message_validator.validate.return_value = ValidationResult(True, [])
 
-        This method is only for testing purposes to avoid accessing protected members.
-        """
-        self._update_request_metrics()
+        def set_auth_state(
+            self, is_authenticated: bool = True, token: Optional[str] = None
+        ) -> None:
+            """Set authentication state for testing.
 
-    def validate_message(
-        self, message: Dict[str, Any], context: ValidationContext
-    ) -> ValidationResult:
-        """Validate message for testing.
+            This method is only for testing purposes to avoid accessing protected members.
+            """
+            self._authenticated = is_authenticated
+            self._bearer_token = token or self.mock_token if is_authenticated else None
 
-        This method is only for testing purposes to avoid accessing protected members.
-        """
-        return self._validate_message(message, context)
+        def update_metrics(self) -> None:
+            """Update request metrics for testing.
 
-    @property
-    def is_authenticated(self) -> bool:
-        """Get authentication status."""
-        return self._authenticated
+            This method is only for testing purposes to avoid accessing protected members.
+            """
+            self._update_request_metrics()
 
-    @property
-    def bearer_token(self) -> Optional[str]:
-        """Get bearer token."""
-        return self._bearer_token
+        def validate_message(
+            self, message: Dict[str, Any], context: ValidationContext
+        ) -> ValidationResult:
+            """Validate message for testing.
 
-    @property
-    def request_count(self) -> int:
-        """Get request count."""
-        return self._request_count
+            This method is only for testing purposes to avoid accessing protected members.
+            """
+            return self._validate_message(message, context)
 
-    @property
-    def last_request_time(self) -> Optional[datetime]:
-        """Get last request time."""
-        return self._last_request_time
+        @property
+        def is_authenticated(self) -> bool:
+            """Get authentication status."""
+            return self._authenticated
 
-    async def authenticate(self, credentials: Dict[str, Any]) -> str:
-        """Mock authentication implementation."""
-        if self.should_fail:
-            raise AuthenticationError("Mock auth failure")
-        if self.rate_limited:
-            raise RateLimitError("Mock rate limit")
-        self.set_auth_state(True, self.mock_token)
-        self.update_metrics()
-        return self.mock_token
+        @property
+        def bearer_token(self) -> Optional[str]:
+            """Get bearer token."""
+            return self._bearer_token
 
-    async def submit_message(
-        self,
-        message: Dict[str, Any],
-        destination_id: str,
-        transport_type: Optional[TransportType] = None,
-    ) -> tuple[str, ValidationResult]:
-        """Mock message submission implementation."""
-        if not self.is_authenticated:
-            raise ProtocolError("Not authenticated")
-        if self.should_fail:
-            raise ProtocolError("Mock submission failure")
-        if self.rate_limited:
-            raise RateLimitError("Mock rate limit")
-        self.update_metrics()
-        return "mock_message_id", ValidationResult(True, [], None)
+        @property
+        def request_count(self) -> int:
+            """Get request count."""
+            return self._request_count
 
-    async def get_messages(
-        self, from_utc: datetime, message_type: MessageType
-    ) -> List[Dict[str, Any]]:
-        """Mock message retrieval implementation."""
-        if not self.is_authenticated:
-            raise ProtocolError("Not authenticated")
-        if self.should_fail:
-            raise ProtocolError("Mock retrieval failure")
-        if self.rate_limited:
-            raise RateLimitError("Mock rate limit")
-        self.update_metrics()
-        return self.mock_messages
+        @property
+        def last_request_time(self) -> Optional[datetime]:
+            """Get last request time."""
+            return self._last_request_time
 
-    async def get_message_status(self, message_id: str) -> Dict[str, Any]:
-        """Mock status check implementation."""
-        if not self.is_authenticated:
-            raise ProtocolError("Not authenticated")
-        if self.should_fail:
-            raise ProtocolError("Mock status check failure")
-        if self.rate_limited:
-            raise RateLimitError("Mock rate limit")
-        self.update_metrics()
-        return {"State": 1, "StatusUTC": datetime.utcnow().isoformat()}
+        async def authenticate(self, credentials: Dict[str, Any]) -> str:
+            """Mock authentication implementation."""
+            if self.should_fail:
+                raise AuthenticationError("Mock auth failure")
+            if self.rate_limited:
+                raise RateLimitError("Mock rate limit")
+            self.set_auth_state(True, self.mock_token)
+            self.update_metrics()
+            return self.mock_token
+
+        async def submit_message(
+            self,
+            message: Dict[str, Any],
+            destination_id: str,
+            transport_type: Optional[TransportType] = None,
+        ) -> tuple[str, ValidationResult]:
+            """Mock message submission implementation."""
+            if not self.is_authenticated:
+                raise ProtocolError("Not authenticated")
+            if self.should_fail:
+                raise ProtocolError("Mock submission failure")
+            if self.rate_limited:
+                raise RateLimitError("Mock rate limit")
+            self.update_metrics()
+            return "mock_message_id", ValidationResult(True, [], None)
+
+        async def get_messages(
+            self, from_utc: datetime, message_type: MessageType
+        ) -> List[Dict[str, Any]]:
+            """Mock message retrieval implementation."""
+            if not self.is_authenticated:
+                raise ProtocolError("Not authenticated")
+            if self.should_fail:
+                raise ProtocolError("Mock retrieval failure")
+            if self.rate_limited:
+                raise RateLimitError("Mock rate limit")
+            self.update_metrics()
+            return self.mock_messages
+
+        async def get_message_status(self, message_id: str) -> Dict[str, Any]:
+            """Mock status check implementation."""
+            if not self.is_authenticated:
+                raise ProtocolError("Not authenticated")
+            if self.should_fail:
+                raise ProtocolError("Mock status check failure")
+            if self.rate_limited:
+                raise RateLimitError("Mock rate limit")
+            self.update_metrics()
+            return {"State": 1, "StatusUTC": datetime.utcnow().isoformat()}
+
+        async def close(self) -> None:
+            """Implement required close method."""
+            # Empty implementation is fine, no pass needed
 
 
 @pytest.mark.asyncio
@@ -501,7 +508,7 @@ class TestOGWSProtocolHandlerValidateMessage:
         # Test invalid network
         invalid_message = {
             "RawPayload": "test",
-            "Network": "INVALID",
+            "Network": NetworkType.OGX,  # Use enum instead of string
         }
         result = handler.validate_message(invalid_message, mock_context)
         assert not result.is_valid

@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Dict, Generator
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
 from core.app_settings import Settings, get_settings
 

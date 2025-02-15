@@ -13,10 +13,12 @@ For serialization:
 
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from pydantic import Field as PydanticField
 
 from protocols.ogx.constants import FieldType
+from protocols.ogx.validation.message.field_validator import OGxFieldValidator
+from protocols.ogx.validation.common.validation_exceptions import ValidationError
 
 
 class Element(BaseModel):
@@ -93,6 +95,26 @@ class Field(BaseModel):
     message: Optional[Message] = PydanticField(default=None, alias="Message")
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True, populate_by_name=True)
+
+    @field_validator("value")
+    @classmethod
+    def validate_value_type(cls, v: Any, info):
+        """Validate that the value matches the field type according to OGWS-1.txt specification.
+
+        Uses OGxFieldValidator to ensure compliance with OGWS-1 requirements.
+        """
+        field_type = info.data.get("type")
+        if v is not None:
+            validator = OGxFieldValidator()
+            try:
+                validator._validate_field_type(field_type, v)
+                # Convert valid string booleans to Python booleans
+                if field_type == FieldType.BOOLEAN and isinstance(v, str):
+                    return str(v).lower() in ("true", "1")
+                return v
+            except ValidationError as e:
+                raise ValueError(str(e))
+        return v
 
     def model_dump(self, **kwargs):
         """Override model_dump to handle value serialization according to OGWS-1.txt."""

@@ -12,11 +12,11 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi import HTTPException
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 
 from api.security.jwt import (
-    ALGORITHM,
     ACCESS_TOKEN_EXPIRE_MINUTES,
+    ALGORITHM,
     TokenData,
     create_access_token,
     verify_token,

@@ -48,7 +48,18 @@ class ProtocolError(OGxProtocolError):
 
 
 class ValidationError(Exception):
-    """Base validation exception class."""
+    """Base validation exception class.
+
+    All validation errors will include a 'Validation error:' prefix in their string representation
+    and default to GatewayErrorCode.VALIDATION_ERROR if no specific error code is provided.
+
+    Examples:
+        >>> err = ValidationError("Invalid format")
+        >>> str(err)
+        'Validation error: Invalid format'
+        >>> err.error_code
+        GatewayErrorCode.VALIDATION_ERROR
+    """
 
     def __init__(
         self,
@@ -57,32 +68,25 @@ class ValidationError(Exception):
         cause: Optional[Exception] = None,
         details: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """Initialize validation error.
-
-        Args:
-            message: Error message
-            error_code: Error code from GatewayErrorCode enum
-            cause: Original exception that caused this error
-            details: Additional error details
-        """
-        super().__init__(message)
+        self._original_message = message
         self.message = message
+        super().__init__(message)
         self.error_code = error_code
         self.cause = cause
         self.details = details or {}
         if cause:
-            self.__cause__ = cause  # Explicitly set cause for exception chaining
+            self.__cause__ = cause
 
     def __str__(self) -> str:
-        """Return string representation including details if present."""
-        msg = self.message
+        """Return formatted error message with prefix and optional details."""
+        base_msg = f"Validation error: {self.message}"
         if self.details:
             details_str = ", ".join(f"{k}={v}" for k, v in self.details.items())
-            msg = f"{msg} ({details_str})"
-        return msg
+            return f"{base_msg} ({details_str})"
+        return base_msg
 
     def __repr__(self) -> str:
-        args = [repr(self.message)]
+        args = [repr(self._original_message)]
         args.append(str(self.error_code.value))  # Always include error code
         return f"{self.__class__.__name__}({', '.join(args)})"
 
@@ -107,16 +111,10 @@ class MessageValidationError(ValidationError):
         self.context = context
 
     def __str__(self) -> str:
+        base_msg = f"Validation error: {self.message}"
         if self.context:
-            return f"{self.message} (Context: {self.context})"
-        return self.message
-
-    def __repr__(self) -> str:
-        args = [repr(self.message)]
-        args.append(str(self.error_code.value))  # Always include error code
-        if self.context:
-            args.append(repr(self.context))
-        return f"{self.__class__.__name__}({', '.join(args)})"
+            return f"{base_msg} (Context: {self.context})"
+        return base_msg
 
 
 class ElementValidationError(ValidationError):
@@ -140,20 +138,12 @@ class ElementValidationError(ValidationError):
         self.context = context
 
     def __str__(self) -> str:
-        parts = [self.message]
+        parts = [f"Validation error: {self.message}"]
         if self.element_index is not None:
             parts.append(f"at index {self.element_index}")
         if self.context:
             parts.append(f"({self.context})")
         return " ".join(parts)
-
-    def __repr__(self) -> str:
-        args = [repr(self.message)]
-        if self.element_index is not None:
-            args.append(str(self.element_index))
-        if self.context:
-            args.append(repr(self.context))
-        return f"{self.__class__.__name__}({', '.join(args)})"
 
 
 class FieldValidationError(ValidationError):
@@ -174,9 +164,10 @@ class FieldValidationError(ValidationError):
         self.field_name = field_name
 
     def __str__(self) -> str:
+        base_msg = f"Validation error: {self.message}"
         if self.field_name:
-            return f"{self.message} in field '{self.field_name}'"
-        return self.message
+            return f"{base_msg} in field '{self.field_name}'"
+        return base_msg
 
 
 class MessageFilterValidationError(ValidationError):
@@ -197,17 +188,10 @@ class MessageFilterValidationError(ValidationError):
         self.filter_details = filter_details
 
     def __str__(self) -> str:
+        base_msg = f"Validation error: {self.message}"
         if self.filter_details:
-            return f"{self.message} ({self.filter_details})"
-        return self.message
-
-    def __repr__(self) -> str:
-        args = [repr(self.message)]
-        if self.filter_details:
-            # Use single quotes and escape inner single quotes
-            filter_details = self.filter_details.replace("'", "\\'")
-            args.append(f"'{filter_details}'")
-        return f"{self.__class__.__name__}({', '.join(args)})"
+            return f"{base_msg} ({self.filter_details})"
+        return base_msg
 
 
 class SizeValidationError(ValidationError):
@@ -231,18 +215,10 @@ class SizeValidationError(ValidationError):
         self.max_size = max_size
 
     def __str__(self) -> str:
-        msg = self.message
+        base_msg = f"Validation error: {self.message}"
         if self.current_size is not None and self.max_size is not None:
-            msg = f"{msg} (size: {self.current_size}, max: {self.max_size})"
-        return msg
-
-    def __repr__(self) -> str:
-        args = [repr(self.message)]
-        if self.current_size is not None:
-            args.append(str(self.current_size))
-        if self.max_size is not None:
-            args.append(str(self.max_size))
-        return f"{self.__class__.__name__}({', '.join(args)})"
+            return f"{base_msg} (size: {self.current_size}, max: {self.max_size})"
+        return base_msg
 
 
 class AuthenticationError(OGxProtocolError):
@@ -262,13 +238,31 @@ class AuthenticationError(OGxProtocolError):
 
 
 class EncodingError(OGxProtocolError):
-    """Encoding error with invalid message format code."""
+    """Encoding error with ENCODE_ERROR code.
+
+    All encoding errors will include an 'Encoding error:' prefix and default to
+    GatewayErrorCode.ENCODE_ERROR if no specific error code is provided.
+
+    Examples:
+        >>> err = EncodingError("Malformed JSON")
+        >>> str(err)
+        'Encoding error: Malformed JSON'
+        >>> err.error_code
+        GatewayErrorCode.ENCODE_ERROR
+    """
 
     def __init__(self, message: str, error_code: Optional[int] = None):
-        error_code = error_code or GatewayErrorCode.INVALID_MESSAGE_FORMAT
+        """Initialize encoding error.
+
+        Args:
+            message: Error message
+            error_code: Optional error code. Defaults to ENCODE_ERROR if not provided.
+        """
+        self._original_message = message
         formatted_message = f"Encoding error: {message}"
+        error_code = error_code or GatewayErrorCode.ENCODE_ERROR
         super().__init__(formatted_message, error_code)
-        self._original_message = message  # Override the original message after super().__init__
+        self._original_message = message
 
     def __repr__(self) -> str:
         args = [repr(self._original_message)]

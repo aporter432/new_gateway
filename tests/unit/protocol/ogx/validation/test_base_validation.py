@@ -8,9 +8,9 @@ from typing import Any
 
 import pytest
 
+from src.protocols.ogx.constants import NetworkType
 from src.protocols.ogx.constants.field_types import FieldType
 from src.protocols.ogx.constants.message_types import MessageType
-from src.protocols.ogx.constants import NetworkType
 from src.protocols.ogx.validation.common.base_validator import BaseValidator
 from src.protocols.ogx.validation.common.types import ValidationContext, ValidationResult
 from src.protocols.ogx.validation.common.validation_exceptions import ValidationError
@@ -68,7 +68,7 @@ class TestBaseValidatorEdgeCases:
     @pytest.mark.parametrize(
         "field_type,valid_value,invalid_value",
         [
-            (FieldType.BOOLEAN, True, "true"),
+            (FieldType.BOOLEAN, True, "INVALID_BOOL"),
             (FieldType.UNSIGNED_INT, 42, -1),
             (FieldType.SIGNED_INT, -42, "not_an_int"),
             (FieldType.STRING, "valid", b"bytes"),

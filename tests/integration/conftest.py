@@ -7,21 +7,25 @@ This module provides fixtures for managing test environment services including:
 - Metrics collection
 """
 
+# pylint: disable=protected-access
+# Accessing protected members is expected in test fixtures for cleanup
+
 # MOVE TO: /tests/integration/conftest.py - Integration test docstring
 
 # MOVE TO: /tests/integration/conftest.py - Integration-specific imports
-import asyncio
 import os
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
 
 import aioredis
 import boto3
+import httpx
+import prometheus_client
 import pytest
 from httpx import AsyncClient
-from prometheus_client import REGISTRY, CollectorRegistry
+from prometheus_client import CollectorRegistry
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
 from infrastructure.database.models.base import Base
-from infrastructure.database.models.user import User  # noqa: E402
 from infrastructure.database.session import database_url
 
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
@@ -121,7 +125,7 @@ def metrics_registry():
     registry = CollectorRegistry()
     yield registry
     # Clear all collectors from the registry after the test
-    for collector in list(registry._collector_to_names.keys()):
+    for collector in list(registry._collector_to_names.keys()):  # pylint: disable=protected-access
         registry.unregister(collector)
 
 
@@ -164,22 +168,22 @@ def mock_env_vars(monkeypatch):
 
 # MOVE TO: /tests/integration/conftest.py - Metrics mock specific to integration tests
 @pytest.fixture
-def mock_metrics():
-    """Provide a context for testing metrics collection.
-
-    This fixture ensures metrics don't persist between tests and
-    allows verification of metric values.
-    """
+def mock_metrics(monkeypatch):
+    """Mock the metrics registry for integration tests."""
     # Store the original registry
-    original_registry = REGISTRY
+    original_registry = prometheus_client.REGISTRY
 
-    # Create a new registry for the test
+    # Create a new registry for the test and patch it
     test_registry = CollectorRegistry()
-    REGISTRY = test_registry
+    monkeypatch.setattr(prometheus_client, "REGISTRY", test_registry)
     yield test_registry
 
-    # Restore the original registry
-    REGISTRY = original_registry
+    # Restore the original registry after test
+    monkeypatch.setattr(prometheus_client, "REGISTRY", original_registry)
+
+    # Clear all collectors from the test registry
+    for collector in list(test_registry._collector_to_names.keys()):  # pylint: disable=protected-access
+        test_registry.unregister(collector)
 
 
 # MOVE TO: /tests/integration/conftest.py - Integration service health checks
@@ -208,7 +212,7 @@ async def verify_service_health(http_client: AsyncClient):
         response = await http_client.get(f"{AWS_ENDPOINT_URL}/_localstack/health")
         if response.status_code != 200:
             pytest.fail("LocalStack health check failed")
-    except Exception as e:
+    except httpx.HTTPStatusError as e:  # Be more specific with the exception
         pytest.fail(f"LocalStack connection failed: {e}")
 
 

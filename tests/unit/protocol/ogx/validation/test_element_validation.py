@@ -6,8 +6,9 @@ Tests focus on array element validation:
 - Error propagation
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from protocols.ogx.constants.message_types import MessageType
 from protocols.ogx.validation.common.types import ValidationContext

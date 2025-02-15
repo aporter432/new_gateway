@@ -1,0 +1,144 @@
+---
+description: Enforce consistent implementation based on existing codebase patterns
+globs: "*.py"
+---
+# Consistent Usage Rule
+
+## Pre-Implementation Requirements
+
+1. MUST search for existing usage:
+```bash
+# Find ALL similar usages
+grep -r "relevant_pattern" .
+# Show context for each match
+grep -r "relevant_pattern" . -B 5 -A 5
+```
+
+2. MUST verify pattern consistency:
+- Examine ALL occurrences
+- Document the established pattern
+- Note any variations and their context
+
+3. MUST request missing context:
+```python
+# If implementation unclear, request:
+- Related files
+- Parent class implementations
+- Test implementations
+- Usage examples
+```
+
+## Implementation Requirements
+
+1. MUST follow established patterns:
+```python
+# If pattern exists:
+implementation = existing_pattern
+
+# If multiple patterns:
+raise ClarificationRequired("Multiple patterns found: [list patterns]")
+
+# If no pattern:
+raise ContextRequired("Need to see related implementations")
+```
+
+2. MUST maintain consistency:
+- Same naming conventions
+- Same parameter ordering
+- Same return types
+- Same error handling
+- Same documentation style
+
+3. MUST verify against codebase:
+```python
+# Before implementing:
+- Check ALL similar files
+- Check ALL similar classes
+- Check ALL similar methods
+- Check ALL similar tests
+```
+
+## Validation Steps
+
+1. Search Phase:
+- MUST show search commands used
+- MUST show ALL matches found
+- MUST request missing context
+
+2. Analysis Phase:
+- MUST document pattern found
+- MUST highlight consistencies
+- MUST flag inconsistencies
+
+3. Implementation Phase:
+- MUST follow documented pattern
+- MUST maintain consistency
+- MUST justify ANY deviation
+
+## Enforcement
+
+1. NO implementation without:
+- Complete usage search
+- Pattern documentation
+- Consistency verification
+
+2. NO pattern deviation without:
+- Explicit justification
+- Full context review
+- Pattern conflict resolution
+
+3. MUST request context if:
+- Pattern unclear
+- Multiple patterns exist
+- Implementation uncertain
+
+## Usage Example
+
+```python
+# Before implementing:
+"""
+1. Search performed:
+   grep -r "CollectorRegistry" .
+   
+2. Pattern found:
+   - Protected access with pylint disable
+   - Consistent across test files
+   
+3. Implementation follows pattern:
+   for collector in list(
+       registry._collector_to_names.keys()
+   ):  # pylint: disable=protected-access
+       registry.unregister(collector)
+"""
+```
+
+## Error Messages
+
+1. Missing Search:
+"MUST show search for existing usage patterns"
+
+2. Missing Pattern:
+"MUST document established pattern from codebase"
+
+3. Inconsistent Implementation:
+"MUST follow existing pattern: [show pattern]"
+
+4. Missing Context:
+"MUST request: [list required context]"
+
+## Verification
+
+1. Pre-Implementation:
+- [ ] Search performed
+- [ ] Patterns documented
+- [ ] Context complete
+
+2. Implementation:
+- [ ] Follows pattern
+- [ ] Maintains consistency
+- [ ] Properly documented
+
+3. Post-Implementation:
+- [ ] Matches existing usage
+- [ ] No unexplained deviations
+- [ ] Consistent with codebase

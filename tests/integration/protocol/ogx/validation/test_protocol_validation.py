@@ -2,8 +2,8 @@
 
 import pytest
 
-from protocols.ogx.constants.limits import MAX_OGX_PAYLOAD_BYTES
 from protocols.ogx.constants import MessageType, NetworkType
+from protocols.ogx.constants.limits import MAX_OGX_PAYLOAD_BYTES
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.common.validation_exceptions import (
     SizeValidationError,

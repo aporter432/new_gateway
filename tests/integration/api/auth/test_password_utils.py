@@ -8,7 +8,7 @@ This module tests:
 
 import pytest
 
-from api.security.password import get_password_hash, verify_password, validate_password
+from api.security.password import get_password_hash, validate_password, verify_password
 
 
 def test_password_hashing():

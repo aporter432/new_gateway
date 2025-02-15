@@ -20,8 +20,8 @@ Test Dependencies:
 """
 
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch, ANY
 from unittest import mock
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 from redis.asyncio import Redis

@@ -17,6 +17,7 @@ Child classes should use these constants through the base validator's methods:
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from ...constants.error_codes import GatewayErrorCode
 from ...constants.field_types import FieldType
 from ...constants.message_format import (
     REQUIRED_ELEMENT_PROPERTIES,
@@ -92,30 +93,63 @@ class BaseValidator(ABC):
             # Implement type-specific validation from Table 3
             if field_type == FieldType.BOOLEAN:
                 if not isinstance(value, bool):
-                    raise ValueError("Boolean value must be true or false")
+                    raise ValidationError(
+                        "Invalid boolean field: Value must be a boolean",
+                        GatewayErrorCode.INVALID_FIELD_FORMAT,
+                    )
+                return
 
             elif field_type == FieldType.UNSIGNED_INT:
-                int_val = int(float(value)) if isinstance(value, str) else int(value)
-                if int_val < 0:
-                    raise ValueError("Unsigned integer must be non-negative")
+                try:
+                    int_val = int(float(value)) if isinstance(value, str) else int(value)
+                    if int_val < 0:
+                        raise ValidationError(
+                            "Invalid unsigned integer field: Value must be non-negative",
+                            GatewayErrorCode.INVALID_FIELD_FORMAT,
+                        )
+                except (TypeError, ValueError):
+                    raise ValidationError(
+                        "Invalid unsigned integer field: Value must be a number",
+                        GatewayErrorCode.INVALID_FIELD_FORMAT,
+                    )
 
             elif field_type == FieldType.SIGNED_INT:
-                int(float(value)) if isinstance(value, str) else int(value)
+                try:
+                    int(float(value)) if isinstance(value, str) else int(value)
+                except (TypeError, ValueError):
+                    raise ValidationError(
+                        "Invalid signed integer field: Value must be a number",
+                        GatewayErrorCode.INVALID_FIELD_FORMAT,
+                    )
 
             elif field_type == FieldType.STRING:
                 if not isinstance(value, str):
-                    raise ValueError(f"Value must be string, got {type(value).__name__}")
+                    raise ValidationError(
+                        f"Invalid string field: Value must be string, got {type(value).__name__}",
+                        GatewayErrorCode.INVALID_FIELD_FORMAT,
+                    )
 
             elif field_type == FieldType.ARRAY:
                 if value is not None and not isinstance(value, list):
-                    raise ValueError("Array value must be list or None")
+                    raise ValidationError(
+                        "Invalid array field: Value must be list or None",
+                        GatewayErrorCode.INVALID_FIELD_FORMAT,
+                    )
 
             elif field_type == FieldType.MESSAGE:
                 if value is not None and not isinstance(value, dict):
-                    raise ValueError("Message value must be dictionary or None")
+                    raise ValidationError(
+                        "Invalid message field: Value must be dictionary or None",
+                        GatewayErrorCode.INVALID_FIELD_FORMAT,
+                    )
 
-        except (TypeError, ValueError) as exc:
-            raise ValidationError(f"Invalid value for type {field_type}: {value}") from exc
+        except ValidationError:
+            raise
+        except Exception as exc:
+            raise ValidationError(
+                f"Invalid {field_type.value} field: {str(exc)}",
+                GatewayErrorCode.INVALID_FIELD_FORMAT,
+            )
 
     def _add_error(self, message: str) -> None:
         """Add validation error message."""
