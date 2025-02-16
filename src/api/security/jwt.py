@@ -106,14 +106,11 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         Encoded JWT token string
 
     Raises:
-        ValueError: If token creation fails
-
-    Note:
-        Token includes standard claims:
-        - exp (expiration time)
-        - iat (issued at)
-        - sub (subject)
+        ValueError: If token data is None, empty, or invalid
     """
+    if data is None or not data:
+        raise ValueError("Token data cannot be None or empty")
+
     try:
         to_encode = data.copy()
         expire = datetime.now(timezone.utc) + (
@@ -156,17 +153,17 @@ def verify_token(token: str) -> TokenData:
         HTTPException:
             - 401: Invalid or expired token
             - 403: Invalid token structure
-
-    Note:
-        Implements additional security checks beyond basic JWT validation
     """
     try:
         # Decode and verify token
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[ALGORITHM])
 
         # Extract and validate claims
-        email: str = payload.get("sub")
-        if email is None:
+        email = payload.get("email")
+        sub = payload.get("sub")
+        exp = payload.get("exp")
+
+        if not email or not sub:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
@@ -174,7 +171,7 @@ def verify_token(token: str) -> TokenData:
             )
 
         # Create validated token data
-        token_data = TokenData(email=email, exp=payload["exp"], sub=payload.get("sub"))
+        token_data = TokenData(email=email, exp=exp, sub=sub)
         return token_data
 
     except JWTError as e:

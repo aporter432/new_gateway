@@ -142,27 +142,28 @@ async def get_current_active_user(
         Verified active User instance
 
     Raises:
-        HTTPException: 400 if user account is inactive
-
-    Usage:
-        ```python
-        @router.post("/update")
-        async def update_me(
-            user: User = Depends(get_current_active_user)
-        ):
-            return user
-        ```
-
-    Future RBAC Considerations:
-        - Account status levels
-        - Session validation
-        - Access restrictions
+        HTTPException:
+            - 400: If user account is inactive
+            - 400: If user is None or invalid
     """
-    if not current_user.is_active:
+    if not current_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user account",
+            detail="Invalid user",
         )
+
+    try:
+        if not current_user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Inactive user account",
+            )
+    except AttributeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user status",
+        )
+
     return current_user
 
 
@@ -187,27 +188,26 @@ async def get_current_admin_user(
         Verified admin User instance
 
     Raises:
-        HTTPException: 403 if user is not an admin
-
-    Usage:
-        ```python
-        @router.delete("/users/{user_id}")
-        async def delete_user(
-            user_id: int,
-            admin: User = Depends(get_current_admin_user)
-        ):
-            return {"deleted": user_id}
-        ```
-
-    Future RBAC Considerations:
-        - Role hierarchy
-        - Permission-based access
-        - Administrative scope levels
-        - Delegated administration
+        HTTPException:
+            - 403: If user is not an admin
+            - 400: If user is None or invalid
     """
-    if current_user.role != "admin":
+    if not current_user:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Administrative privileges required",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user",
         )
+
+    try:
+        if current_user.role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Administrative privileges required",
+            )
+    except AttributeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user role",
+        )
+
     return current_user
