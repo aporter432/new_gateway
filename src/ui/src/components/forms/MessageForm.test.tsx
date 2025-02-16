@@ -30,4 +30,4 @@ describe('MessageForm', () => {
         expect(screen.getByLabelText(/Destination ID/i)).toBeInvalid()
         expect(screen.getByLabelText(/Payload/i)).toBeInvalid()
     })
-}) 
+})

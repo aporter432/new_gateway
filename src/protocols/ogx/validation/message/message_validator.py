@@ -18,7 +18,7 @@ Implementation Notes:
     5. Individual field validation via OGxFieldValidator
 """
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import Any, Dict
 
 from ...constants.error_codes import GatewayErrorCode
 from ...constants.message_format import REQUIRED_MESSAGE_FIELDS

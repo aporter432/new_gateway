@@ -5,7 +5,7 @@ Validates JSON message structure and content according to OGWS-1.txt specificati
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 from protocols.ogx.constants import MessageState
 from protocols.ogx.validation.common.validation_exceptions import ValidationError

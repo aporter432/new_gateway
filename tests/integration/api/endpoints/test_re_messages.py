@@ -20,6 +20,4 @@ Important:
     - Network type affects message size limits
 """
 
-from protocols.ogx.constants import NetworkType  # Always import NetworkType enum
-
 # Test cases will be implemented here

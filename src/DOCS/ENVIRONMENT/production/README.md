@@ -82,7 +82,7 @@ Configure alerts for:
 - Credential rotation
 - Access control updates
 - Security patch management
-- Audit logging 
+- Audit logging
 
 ## Logging
 For detailed logging configuration and usage in production, see:
@@ -157,4 +157,4 @@ retention = {
    - CloudWatch integration
    - Log aggregation
    - Alert configuration
-   - Performance metrics extraction 
+   - Performance metrics extraction

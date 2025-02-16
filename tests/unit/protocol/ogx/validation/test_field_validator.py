@@ -8,7 +8,6 @@ Test organization follows the specification structure:
 5. Dynamic Fields
 """
 
-import base64
 import pytest
 
 from protocols.ogx.constants import MessageType, NetworkType

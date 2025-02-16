@@ -82,45 +82,43 @@ class Settings(BaseSettings):
     )
 
     # Environment detection
-    ENVIRONMENT: str = "development"  # TODO: Document production environment setup
+    ENVIRONMENT: str = "development"
 
     # Database settings
-    DATABASE_URL: str = (
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/gateway"  # TODO: Production - Set via secure environment
-    )
-    SQL_ECHO: bool = False  # Enable SQL query logging
-    DB_POOL_SIZE: int = 5  # Default connection pool size
-    DB_MAX_OVERFLOW: int = 10  # Maximum number of connections that can be created beyond pool_size
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/gateway"
+    SQL_ECHO: bool = False
+    DB_POOL_SIZE: int = 5
+    DB_MAX_OVERFLOW: int = 10
     DB_POOL_TIMEOUT: int = (
         30  # Seconds to wait before giving up on getting a connection from the pool
     )
 
     # OGWS settings with development defaults
     # Reference: OGWS-1.txt Section 4.1.1 - Authentication
-    OGWS_CLIENT_ID: str = "70000934"  # TODO: Production - Set via secure environment
-    OGWS_CLIENT_SECRET: str = "password"  # TODO: Production - Set via secure environment
-    OGWS_BASE_URL: str = "https://ogws.orbcomm.com/api/v1.0"  # From OGWS-1.txt Section 3.1
-    OGWS_TOKEN_EXPIRY: int = 31536000  # 1 year in seconds, from OGWS-1.txt Section 4.1.2
+    OGWS_CLIENT_ID: str = "70000934"
+    OGWS_CLIENT_SECRET: str = "password"
+    OGWS_BASE_URL: str = "https://ogws.orbcomm.com/api/v1.0"
+    OGWS_TOKEN_EXPIRY: int = 31536000
 
     # Customer identification - required in production
-    CUSTOMER_ID: str = "test_customer"  # TODO: Production - Set via secure environment
+    CUSTOMER_ID: str = "test_customer"
 
-    # Redis settings - See docker-compose.yml for development defaults
-    REDIS_HOST: str = "localhost"  # TODO: Production - Set via infrastructure config
+    # Redis settings
+    REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
-    REDIS_PASSWORD: str = ""  # TODO: Production - Set via secure environment
+    REDIS_PASSWORD: str = ""
 
     # DynamoDB settings
-    DYNAMODB_TABLE_NAME: str = "ogws_message_states"  # Table for message state storage
+    DYNAMODB_TABLE_NAME: str = "ogws_message_states"
 
     # JWT settings
-    JWT_SECRET_KEY: str = "development_secret_key"  # TODO: Production - Set via secure environment
-    JWT_ALGORITHM: str = "HS256"  # JWT signing algorithm
+    JWT_SECRET_KEY: str = "development_secret_key"
+    JWT_ALGORITHM: str = "HS256"
 
-    # Test settings - Development only, defined in OGWS-1.txt Section 6.1
-    OGWS_TEST_MOBILE_ID: str = "OGx-00002000SKY9307"  # Test terminal ID
-    OGWS_TEST_MODE: bool = True  # Enables test endpoints and validation
+    # Test settings
+    OGWS_TEST_MOBILE_ID: str = "OGx-00002000SKY9307"
+    OGWS_TEST_MODE: bool = True
 
     def __hash__(self) -> int:
         """Make Settings hashable for lru_cache compatibility.

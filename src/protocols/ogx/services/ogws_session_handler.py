@@ -42,6 +42,7 @@ from typing import Dict, Optional, cast
 from redis.asyncio import Redis
 
 from core.app_settings import get_settings
+from core.logging.log_settings import LoggingConfig
 from core.logging.loggers import get_protocol_logger
 from infrastructure.redis import get_redis_client
 from protocols.ogx.auth.manager import OGWSAuthManager
@@ -94,7 +95,8 @@ class SessionHandler:
     def __init__(self) -> None:
         """Initialize session handler."""
         self.settings = get_settings()
-        self.logger = get_protocol_logger("session_handler")
+        config = LoggingConfig()
+        self.logger = get_protocol_logger(config)
         self.auth_manager: Optional[OGWSAuthManager] = None
         self.redis: Optional[Redis] = None
         self.session_key_prefix = "ogws:session:"
@@ -156,10 +158,11 @@ class SessionHandler:
             # Check concurrent session limit for this customer
             active_sessions = await self._get_customer_session_count(customer_id)
             if active_sessions >= self.max_concurrent_sessions_per_customer:
-                raise RateLimitError(
-                    f"Maximum concurrent sessions ({self.max_concurrent_sessions_per_customer}) exceeded for customer {customer_id}",
-                    error_code=HTTPErrorCode.TOO_MANY_REQUESTS,
+                msg = (
+                    f"Maximum concurrent sessions ({self.max_concurrent_sessions_per_customer}) "
+                    f"exceeded for customer {customer_id}"
                 )
+                raise RateLimitError(msg, error_code=HTTPErrorCode.TOO_MANY_REQUESTS)
 
             # Get auth token
             token = await self.auth_manager.get_valid_token()
@@ -191,7 +194,7 @@ class SessionHandler:
             )
             raise
 
-        except Exception as e:
+        except (ConnectionError, TimeoutError, IOError) as e:
             self.logger.error(
                 "Unexpected error during session creation",
                 extra={
@@ -201,7 +204,9 @@ class SessionHandler:
                     "action": "create_session",
                 },
             )
-            raise OGxProtocolError(f"Failed to create session: {str(e)}") from e
+            raise OGxProtocolError(
+                f"Failed to create session due to connection error: {str(e)}"
+            ) from e
 
     async def validate_session(self, session_id: str) -> bool:
         """Validate session and update last activity.
@@ -223,7 +228,7 @@ class SessionHandler:
             session_key = f"{self.session_key_prefix}{session_id}"
             try:
                 session_data = await self.redis.hgetall(session_key)
-            except Exception as e:
+            except (ConnectionError, TimeoutError) as e:
                 # Log Redis errors during initial retrieval for troubleshooting
                 self.logger.error(
                     "Redis error during session data retrieval",
@@ -262,7 +267,7 @@ class SessionHandler:
                     "last_activity",
                     datetime.now().isoformat(),
                 )
-            except Exception as e:
+            except (ConnectionError, TimeoutError, IOError) as e:
                 self.logger.warning(
                     "Failed to update last activity",
                     extra={
@@ -280,7 +285,7 @@ class SessionHandler:
             try:
                 auth_header = {"Authorization": f"Bearer {token}"}
                 await self.auth_manager.validate_token(auth_header)
-            except Exception as e:
+            except (AuthenticationError, ValidationError, OGxProtocolError) as e:
                 self.logger.error(
                     "Token validation failed",
                     extra={
@@ -295,7 +300,7 @@ class SessionHandler:
 
             return True
 
-        except Exception as e:
+        except (ConnectionError, TimeoutError, IOError) as e:
             self.logger.error(
                 "Session validation failed",
                 extra={

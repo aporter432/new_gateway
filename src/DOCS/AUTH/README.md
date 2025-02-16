@@ -145,4 +145,4 @@ The authentication system is designed to support future Role-Based Access Contro
 - JWT Implementation: `src/api/security/jwt.py`
 - Password Security: `src/api/security/password.py`
 - Database Schema: `src/infrastructure/database/models/user.py`
-- API Documentation: Generated OpenAPI schema 
+- API Documentation: Generated OpenAPI schema

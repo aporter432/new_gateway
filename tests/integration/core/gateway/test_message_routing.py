@@ -21,6 +21,4 @@ Important:
     - Network type must be preserved throughout routing chain
 """
 
-from protocols.ogx.constants import NetworkType  # Always import NetworkType enum
-
 # Test cases will be implemented here

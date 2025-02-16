@@ -7,10 +7,11 @@ This module tests the authentication middleware functionality:
 - Response management
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import httpx
-from fastapi import FastAPI, Response, Request
+import pytest
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp
 

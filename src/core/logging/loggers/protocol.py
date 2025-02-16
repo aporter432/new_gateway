@@ -3,8 +3,6 @@
 import logging
 from typing import Optional
 
-from ..handlers.file import get_file_handler
-from ..handlers.stream import get_stream_handler
 from ..log_settings import LogComponent, LoggingConfig
 from .factory import get_logger_factory
 

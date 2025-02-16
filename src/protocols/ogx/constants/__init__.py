@@ -1,7 +1,5 @@
 """Constants for OGx protocol according to OGWS-1.txt specification."""
 
-from enum import Enum, auto
-
 # Import all module components first
 from .auth import AuthRole, GrantType, ThrottleGroup
 from .endpoints import APIEndpoint
@@ -30,9 +28,7 @@ from .message_format import (
 )
 from .message_states import MessageState
 from .message_types import MessageType
-from .network_types import (
-    NetworkType,
-)
+from .network_types import NetworkType
 from .operation_modes import OperationMode
 from .transport_types import TransportType
 

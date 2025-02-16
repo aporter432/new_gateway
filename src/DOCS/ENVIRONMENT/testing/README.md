@@ -173,7 +173,7 @@ test = {
 - Automatic cleanup after each test run
 - Keep failed test logs for debugging
 - Maximum log retention: 7 days
-- Emergency cleanup at 85% disk usage 
+- Emergency cleanup at 85% disk usage
 
 # Integration Test Environment
 
@@ -238,11 +238,11 @@ OGWS_BASE_URL=http://proxy:8080/api/v1.0
 # Example usage
 async def test_message_flow():
     redis_helper, dynamo_helper = await setup_test_environment(
-        redis_client, 
-        dynamodb_client, 
+        redis_client,
+        dynamodb_client,
         "test_messages"
     )
-    
+
     # Create and verify message state
     await redis_helper.set_message_state("msg_id", {"state": "processing"})
     state = await redis_helper.get_message_state("msg_id")
@@ -317,4 +317,4 @@ The environment automatically verifies the health of required services before ru
 1. Add PostgreSQL integration
 2. Enhance service mocking capabilities
 3. Add more helper utilities for common test scenarios
-4. Improve error handling and reporting 
+4. Improve error handling and reporting

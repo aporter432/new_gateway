@@ -37,7 +37,7 @@ Future RBAC Considerations:
     - Department/team authorization
 """
 
-from typing import Optional, Annotated
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer

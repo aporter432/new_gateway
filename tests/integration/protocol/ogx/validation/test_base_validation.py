@@ -2,8 +2,6 @@
 
 import pytest
 
-from protocols.ogx.validation.common.validation_exceptions import ValidationError
-
 
 class TestBaseValidation:
     """Base validation test suite."""

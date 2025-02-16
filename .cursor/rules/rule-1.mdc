@@ -1,6 +1,6 @@
 ---
 description: Implementation Standards and OGWS-1 Compliance
-globs: 
+globs:
 ---
 ---
 name: "Implementation Standards and OGWS-1 Compliance"
@@ -12,7 +12,7 @@ validation:
     - check: "mandatory_search_results"
       command: |
         # Must show ALL matches
-        echo "=== Classes ===" 
+        echo "=== Classes ==="
         grep -r "class.*" src/protocols/ogx/ --include="*.py" -B 2 -A 10
         echo "=== Functions ==="
         grep -r "def.*" src/protocols/ogx/ --include="*.py" -B 2 -A 5
@@ -46,17 +46,17 @@ validation:
     - prohibited:
         - pattern: "(?<!# Justified: )(?:class|def).*:"
           message: "New implementation without explicit justification comment"
-        
+
         - pattern: "(?<!# Reuse: )(?:class|def).*:"
           message: "Must document what was considered for reuse"
-        
+
         - pattern: "(?<!# Extends: )class.*\\(.*\\):"
           message: "Must document what is being extended"
 
     - required:
         - pattern: "# Justified: .*\\n# Alternatives: .*\\n# Reuse: .*\\n# Extends: .*\\n"
           message: "Missing complete implementation justification block"
-        
+
         - pattern: "@pytest\\.mark\\.dependency\\(depends=\\[.*\\]\\)\\n@pytest\\.mark\\.relationship\\(['\"].*['\"]\\)"
           message: "Tests must declare both dependencies and relationships"
 
@@ -70,7 +70,7 @@ validation:
           require_review: true
           fail_if_empty: true
           error_message: "Must review ALL changes together"
-        
+
         - command: |
             echo "=== Coverage Impact ==="
             pytest --cov=src/protocols/ogx tests/unit/protocol/ogx/ --cov-report=term-missing > new_coverage.txt
@@ -129,7 +129,7 @@ verification:
         2. Have you verified NO similar implementations exist?
         3. Have you confirmed the technical necessity?
         4. Are you satisfied with the justification?
-        
+
         Type 'YES' only if ALL above are true.
       require_response: "YES"
       fail_if_skipped: true
@@ -141,22 +141,22 @@ documentation:
         # Implementation Review
         ## Existing Code Found:
         {stored_search_results}
-        
+
         ## Alternatives Considered:
         For each existing implementation:
         - [ ] Why it cannot be reused as-is
         - [ ] Why it cannot be extended
         - [ ] What parts ARE being reused
-        
+
         ## Implementation Justification:
         - [ ] Why new code is absolutely necessary
         - [ ] What existing code is being extended
         - [ ] What existing code is being reused
         - [ ] How duplication is prevented
-        
+
         ## Test Coverage:
         {stored_coverage_results}
-        
+
         ## Review Checklist:
         - [ ] All alternatives reviewed
         - [ ] Reuse maximized
@@ -188,14 +188,14 @@ reuse_enforcement:
     - new_implementation_without_extension:
         pattern: "class [A-Z][a-zA-Z]*(?!\\([A-Z][a-zA-Z]*\\)):"
         message: "MUST extend existing class - standalone implementations prohibited"
-    
+
     - duplicate_method_signatures:
         pattern: "def [a-z_]+\\([^)]*\\):"
         action: "grep_check"
         command: "grep -r 'def {match}' src/protocols/ogx/"
         fail_if_found: true
         message: "Similar method already exists - MUST reuse or extend"
-    
+
     - hardcoded_values:
         pattern: "\\b\\d+\\b|\"[A-Z_]+\"|'[A-Z_]+'"
         message: "MUST use constants from constants directory - no hardcoding"
@@ -204,11 +204,11 @@ reuse_enforcement:
     - inheritance:
         pattern: "class [A-Z][a-zA-Z]*\\(([A-Z][a-zA-Z]*)+\\):"
         message: "All classes MUST extend existing base classes"
-    
+
     - super_calls:
         pattern: "super\\(\\)\\.\\w+"
         message: "MUST call parent implementation when extending"
-    
+
     - import_existing:
         pattern: "from src.protocols.ogx"
         message: "MUST import and reuse existing implementations"
@@ -225,7 +225,7 @@ reuse_enforcement:
         require_review: true
         fail_if_empty: false
         error_message: "MUST check for similar implementations"
-    
+
     - verify_reuse:
         command: |
           # Verify reuse of existing code
@@ -236,7 +236,7 @@ reuse_enforcement:
         require_review: true
         fail_if_empty: true
         error_message: "MUST show code reuse"
-    
+
     - check_duplication:
         command: |
           # Check for potential duplication
@@ -281,15 +281,15 @@ NO changes without complete documentation and review.
    ```python
    """
    Implementation relationship documentation
-   
+
    Alternatives Considered:
    1. [existing class] - [why not used]
    2. [another class] - [why not used]
-   
+
    Reuse:
    - [what is reused]
    - [how it's reused]
-   
+
    @see [related files]
    """
    ```

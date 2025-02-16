@@ -1,7 +1,7 @@
 """Create users table.
 
 Revision ID: 001
-Revises: 
+Revises:
 Create Date: 2024-02-13
 
 This migration creates the initial users table with:

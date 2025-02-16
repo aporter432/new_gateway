@@ -3,10 +3,10 @@
 import pytest
 
 from protocols.ogx.constants.limits import (
+    MAX_OGX_PAYLOAD_BYTES,
     calculate_base64_size,
     calculate_json_overhead,
     validate_payload_size,
-    MAX_OGX_PAYLOAD_BYTES,
 )
 
 

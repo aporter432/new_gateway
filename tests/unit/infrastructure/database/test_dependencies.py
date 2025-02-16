@@ -7,8 +7,10 @@ This module tests the database dependency injection functionality:
 - Session cleanup
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.database.dependencies import get_db
@@ -111,15 +113,15 @@ async def test_get_db_context_manager_error():
     - No session operations occur if context manager fails
     - Context manager exit is called with exception info
     """
-    # Create mocks
-    mock_session = AsyncMock(spec=AsyncSession)
 
     # Create an async context manager that raises on enter
     class MockContextManager:
-        async def __aenter__(self):
-            raise Exception("Context manager error")
+        """Mock async context manager that simulates database session errors."""
 
-        async def __aexit__(self, exc_type, exc_val, exc_tb):
+        async def __aenter__(self):
+            raise RuntimeError("Context manager error")
+
+        async def __aexit__(self, *_args):
             return None
 
     context_manager = MockContextManager()
@@ -129,7 +131,7 @@ async def test_get_db_context_manager_error():
         db_generator = get_db()
 
         # Verify error is propagated
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(RuntimeError) as exc_info:
             await db_generator.__anext__()
 
         assert str(exc_info.value) == "Context manager error"
@@ -179,7 +181,7 @@ async def test_get_db_session_cleanup_on_error():
     context_manager.__aenter__ = AsyncMock(return_value=mock_session)
 
     # Configure __aexit__ to be called with the error
-    async def async_exit(exc_type, exc_val, exc_tb):
+    async def async_exit(*_args):
         return None
 
     context_manager.__aexit__ = AsyncMock(side_effect=async_exit)
@@ -191,12 +193,12 @@ async def test_get_db_session_cleanup_on_error():
         session = await db_generator.__anext__()
 
         # Simulate an error during session use
-        error = Exception("Error during session use")
+        error = RuntimeError("Error during session use")
         mock_session.execute = AsyncMock(side_effect=error)
 
         # Verify session is cleaned up
-        with pytest.raises(Exception) as exc_info:
-            await session.execute("SELECT 1")
+        with pytest.raises(RuntimeError) as exc_info:
+            await session.execute(text("SELECT 1"))
 
         assert str(exc_info.value) == "Error during session use"
 

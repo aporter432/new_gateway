@@ -2,7 +2,7 @@
 
 Tests custom exception types and their behaviors as defined in OGWS-1.txt Section 5.1:
 - ValidationError
-- MessageValidationError 
+- MessageValidationError
 - ElementValidationError
 - FieldValidationError
 

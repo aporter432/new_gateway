@@ -37,7 +37,7 @@ Future Considerations:
     - Security event logging
 """
 
-from typing import Callable, Optional
+from typing import Callable
 
 import httpx
 from fastapi import FastAPI, Request, Response

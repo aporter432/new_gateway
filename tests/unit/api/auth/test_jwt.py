@@ -15,12 +15,7 @@ import pytest
 from fastapi import HTTPException
 from jose import jwt
 
-from api.security.jwt import (
-    ALGORITHM,
-    TokenData,
-    create_access_token,
-    verify_token,
-)
+from api.security.jwt import ALGORITHM, TokenData, create_access_token, verify_token
 
 
 @pytest.fixture

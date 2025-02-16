@@ -6,7 +6,6 @@ Tests the complete forward message flow according to OGWS-1.txt specifications.
 import pytest
 
 from protocols.ogx.constants import FieldType, MessageType, NetworkType
-from protocols.ogx.models.fields import Field, Message
 from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError

@@ -66,4 +66,4 @@ NO ad-hoc implementations or deviations from established patterns.
 ## Enforcement
 - All checks MUST pass
 - Build fails if violations found
-- No exceptions to patterns 
+- No exceptions to patterns

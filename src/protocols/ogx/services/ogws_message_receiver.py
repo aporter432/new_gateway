@@ -15,18 +15,12 @@ Implementation Notes:
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from core.app_settings import get_settings
 from core.logging.loggers import get_protocol_logger
 from protocols.ogx.constants.error_codes import GatewayErrorCode
-from protocols.ogx.constants.limits import (
-    DEFAULT_CALLS_PER_MINUTE,
-    DEFAULT_WINDOW_SECONDS,
-    MAX_MESSAGES_PER_RESPONSE,
-    MAX_STATUS_IDS_PER_REQUEST,
-    MESSAGE_RETENTION_DAYS,
-)
+from protocols.ogx.constants.limits import MAX_MESSAGES_PER_RESPONSE
 from protocols.ogx.constants.message_types import MessageType
 from protocols.ogx.validation.common.validation_exceptions import (
     OGxProtocolError,

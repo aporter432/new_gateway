@@ -1,0 +1,28 @@
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+
+# Docker artifacts
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Virtual environments
+.venv/
+env/
+
+# Logs
+logs/
+*.log
+
+# IDE config
+.vscode/
+.idea/
+
+# Tests and coverage
+.coverage
+htmlcov/

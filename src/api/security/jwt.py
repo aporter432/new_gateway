@@ -49,7 +49,7 @@ from core.app_settings import get_settings
 # JWT configuration from settings
 settings = get_settings()
 ALGORITHM = settings.JWT_ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 30 minutes default expiration
+ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 60 minutes default expiration
 
 
 class TokenData(BaseModel):
@@ -163,15 +163,17 @@ def verify_token(token: str) -> TokenData:
         sub = payload.get("sub")
         exp = payload.get("exp")
 
-        if not email or not sub:
+        if not email or not sub or not exp:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Create validated token data
-        token_data = TokenData(email=email, exp=exp, sub=sub)
+        # Create validated token data with converted exp timestamp
+        token_data = TokenData(
+            email=email, exp=datetime.fromtimestamp(float(exp), tz=timezone.utc), sub=sub
+        )
         return token_data
 
     except JWTError as e:

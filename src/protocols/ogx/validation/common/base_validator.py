@@ -19,12 +19,7 @@ from typing import Any, Dict, List, Optional
 
 from ...constants.error_codes import GatewayErrorCode
 from ...constants.field_types import FieldType
-from ...constants.message_format import (
-    REQUIRED_ELEMENT_PROPERTIES,
-    REQUIRED_FIELD_PROPERTIES,
-    REQUIRED_MESSAGE_FIELDS,
-)
-from .types import ValidationContext, ValidationResult, ValidationType
+from .types import ValidationContext, ValidationResult
 from .validation_exceptions import ValidationError
 
 

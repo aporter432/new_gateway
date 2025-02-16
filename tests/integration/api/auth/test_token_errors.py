@@ -8,17 +8,17 @@ but it's preferred over the deprecated close() method.
 
 import asyncio
 import time
-from typing import cast
+from unittest.mock import patch
 
 import pytest
 from httpx import HTTPError, Request, Response
-from unittest.mock import patch
 
 from protocols.ogx.auth.manager import OGWSAuthManager, TokenMetadata
 from tests.integration.api.auth.test_token_setup import get_test_redis, get_test_settings
 
 # Use function-scoped event loop for better isolation
 pytestmark = pytest.mark.asyncio
+
 
 async def test_invalid_credentials():
     """Test token acquisition with invalid credentials."""
@@ -34,7 +34,7 @@ async def test_invalid_credentials():
             json={"error": "invalid_credentials"},
             request=Request("POST", "http://proxy:8080/api/v1.0/token"),
         )
-        
+
         with patch("httpx.AsyncClient.post", return_value=mock_response):
             with pytest.raises(HTTPError) as exc_info:
                 await auth_manager.get_valid_token()

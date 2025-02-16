@@ -99,11 +99,11 @@ raise ContextRequired("Need to see related implementations")
 """
 1. Search performed:
    grep -r "CollectorRegistry" .
-   
+
 2. Pattern found:
    - Protected access with pylint disable
    - Consistent across test files
-   
+
 3. Implementation follows pattern:
    for collector in list(
        registry._collector_to_names.keys()

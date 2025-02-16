@@ -330,7 +330,7 @@ describe('MessageForm', () => {
   it('validates required fields', () => {
     render(<MessageForm />)
     const submitButton = screen.getByRole('button', { name: /Submit/i })
-    
+
     fireEvent.click(submitButton)
     expect(screen.getByLabelText(/Destination ID/i)).toBeInvalid()
   })
@@ -407,4 +407,4 @@ Coverage reports are generated in the `coverage/` directory and include:
 For development support:
 - Review troubleshooting section
 - Check component documentation
-- Consult backend API documentation 
+- Consult backend API documentation

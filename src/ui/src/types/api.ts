@@ -22,4 +22,4 @@ export interface MessageResponse {
     status: string;
     error?: string;
     timestamp: string;
-} 
+}

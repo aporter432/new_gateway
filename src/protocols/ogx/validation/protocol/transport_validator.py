@@ -1,6 +1,6 @@
 """Transport validation according to OGWS-1.txt Section 4.3.1."""
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict
 
 from ...constants.message_types import MessageType
 from ...constants.network_types import NetworkType

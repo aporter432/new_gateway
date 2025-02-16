@@ -13,4 +13,4 @@ RUN nginx -t
 EXPOSE 8080
 
 # Use the default nginx command
-CMD ["nginx", "-g", "daemon off;"] 
+CMD ["nginx", "-g", "daemon off;"]

@@ -37,10 +37,9 @@ Future Considerations:
     - Password breach checking
 """
 
-from typing import Optional, List
 import re
+from typing import Optional
 
-import bcrypt
 from passlib.context import CryptContext
 
 # Configure password hashing with security settings

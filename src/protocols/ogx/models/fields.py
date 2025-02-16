@@ -75,7 +75,7 @@ class Field(BaseModel):
 
     According to OGWS-1.txt Table 3, a field must have:
     - A name (serialized as "Name")
-    - A type (serialized as "Type": enum, boolean, unsignedint, signedint, string, data, array, or message)
+    - A type (serialized as "Type"): enum,bool, unsignedint, signedint, string, data, array, message
     - Exactly one of: value, elements, or message (serialized as "Value", "Elements", or "Message")
 
     Serialization Requirements:
@@ -103,18 +103,28 @@ class Field(BaseModel):
         """Validate that the value matches the field type according to OGWS-1.txt specification.
 
         Uses OGxFieldValidator to ensure compliance with OGWS-1 requirements.
+
+        Args:
+            v: The value to validate
+            info: Validation context information containing field type
+
+        Returns:
+            The validated value, possibly converted (e.g., string booleans to Python booleans)
+
+        Raises:
+            ValueError: If the value doesn't match the field type requirements
         """
         field_type = info.data.get("type")
         if v is not None:
             validator = OGxFieldValidator()
             try:
-                validator._validate_field_type(field_type, v)
+                validator.validate_field_type(field_type, v)  # Using public method instead
                 # Convert valid string booleans to Python booleans
                 if field_type == FieldType.BOOLEAN and isinstance(v, str):
                     return str(v).lower() in ("true", "1")
                 return v
             except ValidationError as e:
-                raise ValueError(str(e))
+                raise ValueError(str(e)) from e  # Properly chain the exception
         return v
 
     def model_dump(self, **kwargs):

@@ -21,6 +21,4 @@ Important:
     - Model dumps should preserve NetworkType enum values
 """
 
-from protocols.ogx.constants import NetworkType  # Always import NetworkType enum
-
 # Test cases will be implemented here

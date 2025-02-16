@@ -88,7 +88,6 @@ Implementation Notes from OGWS-1.txt:
     - Error handling includes detailed context
 """
 
-from enum import Enum
 from typing import Final, Set
 
 # Required fields for every message per OGWS-1.txt

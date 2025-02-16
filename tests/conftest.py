@@ -7,12 +7,11 @@ Test-type specific fixtures are located in their respective conftest.py files:
 - tests/e2e/conftest.py
 """
 
-import asyncio
 import os
 import sys
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Generator, AsyncGenerator
+from typing import Any, AsyncGenerator, Dict
 
 import pytest
 from httpx import AsyncClient

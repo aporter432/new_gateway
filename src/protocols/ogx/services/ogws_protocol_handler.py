@@ -44,7 +44,7 @@ Usage:
         'client_id': 'your_id',
         'client_secret': 'your_secret'
     })
-    
+
     # Submit message
     message_id, result = await handler.submit_message(
         message={'payload': 'data'},

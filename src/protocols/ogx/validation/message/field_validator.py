@@ -15,10 +15,7 @@ from typing import Any, Dict, Optional, Set
 
 from ...constants.error_codes import GatewayErrorCode
 from ...constants.field_types import BASIC_TYPE_ATTRIBUTES, FieldType
-from ...constants.message_format import (
-    REQUIRED_FIELD_PROPERTIES,
-    REQUIRED_VALUE_FIELD_PROPERTIES,
-)
+from ...constants.message_format import REQUIRED_FIELD_PROPERTIES, REQUIRED_VALUE_FIELD_PROPERTIES
 from ..common.base_validator import BaseValidator
 from ..common.types import ValidationContext, ValidationResult
 from ..common.validation_exceptions import ValidationError
@@ -442,7 +439,7 @@ class OGxFieldValidator(BaseValidator):
                     base64.b64decode(value)
                 except Exception as exc:
                     raise ValidationError(
-                        f"Invalid {field_type.value} field: Value must be a valid base64 encoded string",
+                        f"Invalid {field_type.value} field: Value must be valid base64 encoded string",
                         GatewayErrorCode.INVALID_FIELD_FORMAT,
                     ) from exc
 
@@ -453,3 +450,25 @@ class OGxFieldValidator(BaseValidator):
                 f"Invalid {field_type.value} field: Unexpected error {str(exc)}",
                 GatewayErrorCode.INVALID_FIELD_FORMAT,
             ) from exc
+
+    def validate_field_type(
+        self,
+        field_type: FieldType,
+        value: Any,
+        type_attribute: Optional[str] = None,
+        check_null: bool = True,
+    ) -> None:
+        """Validate a field value against its declared type.
+
+        Public interface for field type validation, following OGWS-1.txt Table 3 rules.
+
+        Args:
+            field_type: The type to validate against
+            value: The value to validate
+            type_attribute: Optional type attribute for dynamic fields
+            check_null: Whether to check for null values
+
+        Raises:
+            ValidationError: If the value doesn't match type requirements
+        """
+        return self._validate_field_type(field_type, value, type_attribute, check_null)

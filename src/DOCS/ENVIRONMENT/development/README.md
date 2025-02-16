@@ -96,4 +96,4 @@ Common issues and solutions are documented in:
 
 ## Logging
 For detailed logging configuration and usage, see:
-[Gateway Logging System Documentation](../logging/README.md) 
+[Gateway Logging System Documentation](../logging/README.md)

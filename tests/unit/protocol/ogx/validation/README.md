@@ -154,4 +154,4 @@ Minor coverage gaps exist in error handling paths:
 4. `size_validator.py` (93%):
    - Error handling paths
 
-These gaps represent defensive error handling code that is difficult to trigger in normal testing conditions. 
+These gaps represent defensive error handling code that is difficult to trigger in normal testing conditions.

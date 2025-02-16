@@ -10,11 +10,11 @@ compliance_checks:
         # Store existing patterns
         echo "=== Storing Existing Patterns ==="
         grep -r "class|def" src/protocols/ogx/ | sort > existing_patterns.txt
-        
+
         # Store method signatures
         echo "=== Storing Method Signatures ==="
         grep -r "def.*:" src/protocols/ogx/ | sort > existing_methods.txt
-        
+
         # Store inheritance patterns
         echo "=== Storing Class Patterns ==="
         grep -r "class.*(" src/protocols/ogx/ | sort > existing_classes.txt
@@ -24,11 +24,11 @@ compliance_checks:
         # Check if new code matches existing patterns
         echo "=== Checking New Against Existing ==="
         diff existing_patterns.txt <(grep -r "class|def" {new_file})
-        
+
         # Verify inheritance
         echo "=== Verifying Inheritance ==="
         grep "class.*:" {new_file} | grep -v "("
-        
+
         # Check method signatures
         echo "=== Checking Method Signatures ==="
         for method in $(grep "def" {new_file} | cut -d' ' -f2); do
@@ -40,14 +40,14 @@ compliance_checks:
         pattern: "class [A-Z][a-zA-Z]*:"
         message: "BLOCKED: Must extend existing class"
         fail_build: true
-    
+
     - method_exists:
         pattern: "def ([a-z_]+)"
         action: "check_existing"
         command: "grep '{match}' existing_methods.txt"
         message: "BLOCKED: Method already exists - must reuse"
         fail_build: true
-    
+
     - pattern_mismatch:
         pattern: "def [a-z_]+\\([^)]*\\):"
         action: "verify_signature"
@@ -135,4 +135,4 @@ MUST reuse existing methods.
 - Build FAILS on violation
 - NO exceptions allowed
 - MUST match existing patterns
-- MUST reuse existing code 
+- MUST reuse existing code

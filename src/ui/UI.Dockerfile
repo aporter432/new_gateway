@@ -69,4 +69,4 @@ ENV HOST=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Use setup script as entrypoint
-ENTRYPOINT ["/app/setup.sh"] 
+ENTRYPOINT ["/app/setup.sh"]

@@ -9,16 +9,14 @@ and services. They require:
 """
 
 import asyncio
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 
 from core.app_settings import get_settings
-from protocols.ogx.constants import FieldType, MessageType, TransportType
+from protocols.ogx.constants import FieldType, TransportType
 from protocols.ogx.models.fields import Field, Message
 from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
-from protocols.ogx.services.ogws_state_store import get_message_state
 from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
 
 

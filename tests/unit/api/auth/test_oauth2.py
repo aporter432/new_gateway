@@ -7,15 +7,15 @@ This module tests the OAuth2 password flow implementation, including:
 - Error handling for various scenarios
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.security.oauth2 import get_current_user, get_current_active_user, get_current_admin_user
 from api.security.jwt import TokenData
+from api.security.oauth2 import get_current_active_user, get_current_admin_user, get_current_user
 from infrastructure.database.models.user import User, UserRole
 
 

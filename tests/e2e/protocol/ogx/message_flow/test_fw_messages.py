@@ -29,7 +29,8 @@ Test Dependencies:
 
 import pytest
 from httpx import AsyncClient
-from protocols.ogx.constants import NetworkType, FieldType
+
+from protocols.ogx.constants import FieldType, NetworkType
 
 pytestmark = pytest.mark.asyncio
 

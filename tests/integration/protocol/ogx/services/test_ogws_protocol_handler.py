@@ -38,8 +38,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from protocols.ogx.constants.message_types import MessageType
-from protocols.ogx.constants.transport_types import TransportType
 from protocols.ogx.constants.network_types import NetworkType
+from protocols.ogx.constants.transport_types import TransportType
 from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
 from protocols.ogx.validation.common.types import ValidationContext, ValidationResult
 from protocols.ogx.validation.common.validation_exceptions import (
@@ -96,11 +96,13 @@ with patch.dict(
             self.network_validator = NetworkValidator()
             self.transport_validator = TransportValidator()
             self.message_validator = MagicMock()
+
             # Check for required payload
             def validate_mock(message, context):
                 if "RawPayload" not in message and "Payload" not in message:
                     raise ValidationError("Message must contain either RawPayload or Payload")
                 return ValidationResult(True, [])
+
             self.message_validator.validate.side_effect = validate_mock
 
         def set_auth_state(

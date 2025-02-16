@@ -97,9 +97,6 @@ class SizeValidator(BaseValidator):
 
             return ValidationResult(True, [])
 
-        except (SizeValidationError, ValidationError):
-            raise
-
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError) as e:
             self._add_error(f"Failed to validate message: {str(e)}")
             return self._get_validation_result()

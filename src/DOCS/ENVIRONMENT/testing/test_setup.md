@@ -258,7 +258,7 @@ For test-related issues:
 For additional support:
 - Review the test documentation in `tests/integration/README.md`
 - Check the development guide in project root
-- Contact the development team 
+- Contact the development team
 
 ```bash
 # Run token lifecycle test
@@ -266,7 +266,7 @@ docker-compose run --remove-orphans test
 
 # Note: The test command is configured in docker-compose.yml
 # If you need to run a different test, you can override the command:
-# docker-compose run --remove-orphans test python -m pytest <test_path> -v 
+# docker-compose run --remove-orphans test python -m pytest <test_path> -v
 ```
 
 ## Test Organization

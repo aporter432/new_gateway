@@ -30,4 +30,4 @@ if [ ! -f tests/e2e/.env.e2e ]; then
     cp tests/e2e/.env.e2e.example tests/e2e/.env.e2e
 fi
 
-echo "✅ E2E test environment setup complete" 
+echo "✅ E2E test environment setup complete"

@@ -41,8 +41,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, String, Index
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Boolean, DateTime, Index, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
 

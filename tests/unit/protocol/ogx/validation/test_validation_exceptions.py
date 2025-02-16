@@ -27,8 +27,6 @@ from protocols.ogx.validation.common.validation_exceptions import (
     FieldValidationError,
     MessageFilterValidationError,
     MessageValidationError,
-    OGxProtocolError,
-    ProtocolError,
     RateLimitError,
     SizeValidationError,
     ValidationError,

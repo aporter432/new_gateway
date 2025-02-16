@@ -14,7 +14,7 @@ validation:
       fail_if_missing: true
       error_message: "Required constants not found in constants directory"
   implementation:
-    - prohibited: 
+    - prohibited:
         - pattern: "^[A-Z][A-Z_]*\\s*=\\s*"
           message: "No local constant definitions allowed"
         - pattern: "\\d{3,}|\"[A-Z_]{3,}\""
@@ -79,7 +79,7 @@ NO local constant definitions or magic numbers are allowed.
    ```python
    # INCORRECT:
    MAX_SIZE = 1000  # Local constant
-   
+
    # CORRECT:
    from ...constants.limits import MAX_SIZE
    ```
@@ -99,4 +99,4 @@ NO local constant definitions or magic numbers are allowed.
 ## Enforcement
 - All checks MUST pass
 - Build fails if violations found
-- No warnings, only errors 
+- No warnings, only errors

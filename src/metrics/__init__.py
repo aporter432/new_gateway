@@ -14,12 +14,7 @@ from .collectors.api import APIMetrics
 from .collectors.auth import AuthMetrics
 from .collectors.message import MessageMetrics
 from .collectors.system import SystemMetrics
-from .exceptions import (
-    BackendError,
-    CollectorError,
-    MetricsError,
-    SystemMetricsError,
-)
+from .exceptions import BackendError, CollectorError, MetricsError, SystemMetricsError
 from .middleware.fastapi import MetricsMiddleware
 
 __all__ = [
