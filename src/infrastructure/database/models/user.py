@@ -41,7 +41,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, Index, String
+from sqlalchemy import Boolean, DateTime
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -56,21 +58,14 @@ class UserRole(str, Enum):
     Attributes:
         USER: Standard user with basic access
         ADMIN: Administrative user with full access
-
-    Usage:
-        - Role assignment in User model
-        - Authorization checks
-        - Access control decisions
-
-    Future RBAC Considerations:
-        - Extended role hierarchy
-        - Custom role definitions
-        - Role inheritance
-        - Department-specific roles
     """
 
     USER = "user"
     ADMIN = "admin"
+
+    def __str__(self) -> str:
+        """Return the lowercase string value of the enum."""
+        return self.value.lower()
 
 
 class User(Base):
@@ -143,6 +138,7 @@ class User(Base):
         doc="User's full name",
     )
     role: Mapped[UserRole] = mapped_column(
+        SAEnum(UserRole, name="userrole", values_callable=lambda x: [e.value.lower() for e in x]),
         default=UserRole.USER,
         nullable=False,
         index=True,
@@ -171,8 +167,8 @@ class User(Base):
 
     # Indexes
     __table_args__ = (
-        Index("ix_users_email_role", "email", "role"),  # Composite index for auth queries
-    )
+        Index("ix_users_email_role", "email", "role"),
+    )  # Composite index for auth queries
 
     def __repr__(self) -> str:
         """Get string representation of the user.

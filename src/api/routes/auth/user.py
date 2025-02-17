@@ -40,12 +40,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.schemas.user import Token, UserCreate, UserResponse
 from api.security.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
+from api.security.oauth2 import get_current_active_user
 from api.security.password import get_password_hash, verify_password
 from infrastructure.database.dependencies import get_db
 from infrastructure.database.models.user import User, UserRole
 from infrastructure.database.repositories.user_repository import UserRepository
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -198,3 +199,21 @@ async def login(
         token_type="bearer",
         expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
     )
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> UserResponse:
+    """Get current user information.
+
+    This endpoint returns the authenticated user's information.
+    It requires a valid JWT token in the Authorization header.
+
+    Args:
+        current_user: Current authenticated user from token
+
+    Returns:
+        UserResponse: User information (excluding sensitive data)
+    """
+    return UserResponse.model_validate(current_user)

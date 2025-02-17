@@ -68,11 +68,11 @@ def test_password_validation(password: str, is_valid: bool):
 def test_password_validation_messages():
     """Test specific validation error messages."""
     # Test length requirements
-    assert "at least 8 characters" in validate_password("Short1!")
-    assert "at most 100 characters" in validate_password("a" * 101 + "A1!")
+    assert "must be at least 8 characters" in validate_password("Short1!")
+    assert "must not exceed 100 characters" in validate_password("a" * 101 + "A1!")
 
     # Test character requirements
-    assert "uppercase letter" in validate_password("lowercase123!")
-    assert "lowercase letter" in validate_password("UPPERCASE123!")
-    assert "number" in validate_password("NoNumbers!")
-    assert "special character" in validate_password("NoSpecial123")
+    assert "must contain at least one uppercase letter" in validate_password("lowercase123!")
+    assert "must contain at least one lowercase letter" in validate_password("UPPERCASE123!")
+    assert "must contain at least one number" in validate_password("NoNumbers!")
+    assert "must contain at least one special character" in validate_password("NoSpecial123")

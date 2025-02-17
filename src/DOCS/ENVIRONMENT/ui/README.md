@@ -6,20 +6,45 @@ This document details the UI development environment setup for the Smart Gateway
 ## MVP Implementation
 The current MVP implementation includes:
 
-### 1. Message Submission Form (`/src/components/forms/MessageForm.tsx`)
+### 1. Authentication System (`/src/lib/api.ts`, `/src/app/page.tsx`, `/src/app/dashboard/page.tsx`)
+- JWT-based authentication
+- Protected routes with client-side validation
+- Token management in localStorage
+- Centralized API client for auth operations
+
+#### Authentication Flow
+1. **Login (`/src/app/page.tsx`)**
+   - User submits credentials
+   - Credentials sent to backend via Next.js API route
+   - JWT token stored in localStorage
+   - Redirect to dashboard on success
+
+2. **Protected Dashboard (`/src/app/dashboard/page.tsx`)**
+   - Checks for token in localStorage
+   - Verifies token validity with backend
+   - Redirects to login if token is invalid/missing
+   - Displays user information if authenticated
+
+3. **API Client (`/src/lib/api.ts`)**
+   - Centralized authentication endpoints
+   - Token validation
+   - Error handling
+   - Session management
+
+### 2. Message Submission Form (`/src/components/forms/MessageForm.tsx`)
 - Network type selection (OGx/IsatData Pro)
 - Destination ID input
 - JSON payload editor
 - Real-time form validation
 - Error handling and status display
 
-### 2. API Integration (`/src/lib/api.ts`)
+### 3. API Integration (`/src/lib/api.ts`)
 - Message submission endpoint
 - Status checking endpoint
 - Error handling
 - Type-safe API calls
 
-### 3. Type Definitions (`/src/types/api.ts`)
+### 4. Type Definitions (`/src/types/api.ts`)
 - Network type enumeration
 - Message interfaces
 - API request/response types
@@ -28,22 +53,29 @@ The current MVP implementation includes:
 ```
 src/ui/
 ├── src/
-│   ├── app/              # Next.js app pages
-│   │   └── page.tsx      # Main message submission page
-│   ├── components/       # React components
+│   ├── app/                    # Next.js app pages
+│   │   ├── page.tsx           # Login page
+│   │   ├── dashboard/         # Protected routes
+│   │   │   └── page.tsx       # Dashboard page
+│   │   └── api/               # API routes
+│   │       └── auth/          # Auth endpoints
+│   │           ├── login/     # Login handler
+│   │           ├── logout/    # Logout handler
+│   │           └── me/        # User info handler
+│   ├── components/            # React components
 │   │   └── forms/
 │   │       └── MessageForm.tsx
-│   ├── lib/             # Utilities
-│   │   └── api.ts       # API client
-│   └── types/           # TypeScript definitions
-│       └── api.ts       # API types
-├── public/              # Static assets
-├── next.config.ts       # Next.js configuration
-├── tsconfig.json        # TypeScript configuration
-├── postcss.config.mjs   # PostCSS configuration
-├── tailwind.config.ts   # Tailwind CSS configuration
-├── eslint.config.mjs    # ESLint configuration
-└── next-env.d.ts        # Next.js TypeScript declarations
+│   ├── lib/                   # Utilities
+│   │   └── api.ts            # API client (auth + messages)
+│   └── types/                 # TypeScript definitions
+│       └── api.ts            # API types
+├── public/                    # Static assets
+├── next.config.ts            # Next.js configuration
+├── tsconfig.json             # TypeScript configuration
+├── postcss.config.mjs        # PostCSS configuration
+├── tailwind.config.ts        # Tailwind CSS configuration
+├── eslint.config.mjs         # ESLint configuration
+└── next-env.d.ts            # Next.js TypeScript declarations
 ```
 
 ## Docker Configuration
@@ -408,3 +440,125 @@ For development support:
 - Review troubleshooting section
 - Check component documentation
 - Consult backend API documentation
+
+## Authentication Implementation
+
+### Overview
+The authentication system uses JWT tokens with a centralized API client for all auth operations. The implementation follows these key principles:
+- Token-based authentication using JWT
+- Client-side route protection
+- Secure token storage in localStorage
+- Centralized error handling
+
+### Key Components
+
+#### 1. API Client (`/src/lib/api.ts`)
+```typescript
+// Authentication endpoints
+export async function login(username: string, password: string) {
+    const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+        },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&grant_type=password`,
+        credentials: 'include',
+    });
+    // ... error handling
+}
+
+export async function checkAuth(token: string) {
+    const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+    });
+    // ... error handling
+}
+```
+
+#### 2. Protected Routes
+Protected routes (like Dashboard) implement client-side authentication checks:
+```typescript
+useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        router.push('/');
+        return;
+    }
+
+    const verifyAuth = async () => {
+        try {
+            const data = await checkAuth(token);
+            setUserName(data.name);
+        } catch (err) {
+            router.push('/');
+        }
+    };
+
+    verifyAuth();
+}, [router]);
+```
+
+#### 3. Login Flow
+The login page handles:
+- Form submission
+- Token storage
+- Error display
+- Redirection
+
+```typescript
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    try {
+        const data = await login(username, password);
+        localStorage.setItem('token', data.access_token);
+        router.push('/dashboard');
+    } catch (err) {
+        setError('Invalid username or password');
+    }
+}
+```
+
+### Security Considerations
+
+1. **Token Storage**
+   - JWT tokens stored in localStorage
+   - Tokens include expiration time
+   - Automatic logout on token expiration
+
+2. **Route Protection**
+   - Client-side authentication checks
+   - Server-side validation through API routes
+   - Automatic redirection for unauthenticated users
+
+3. **API Security**
+   - CSRF protection through credentials inclusion
+   - Token validation on every request
+   - Secure error handling
+
+### Testing Authentication
+
+#### Manual Testing
+1. Start the application
+2. Navigate to http://localhost:3001
+3. Test login with:
+   - Valid credentials
+   - Invalid credentials
+   - Expired token
+4. Verify protected route access
+5. Test logout functionality
+
+#### Common Auth Issues
+1. **Token Issues**
+   - Clear localStorage
+   - Check token expiration
+   - Verify token format
+
+2. **Route Protection**
+   - Check authentication redirects
+   - Verify token validation
+   - Test error handling

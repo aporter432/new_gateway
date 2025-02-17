@@ -7,7 +7,6 @@ This module tests:
 - Error handling
 """
 
-import time
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -61,13 +60,13 @@ def test_verify_valid_token():
 
 def test_verify_expired_token():
     """Test verification of expired token."""
-    # Create token that expires immediately
-    token = create_access_token(
-        {"sub": "test@example.com"},
-        expires_delta=timedelta(microseconds=1),
+    # Create token that is already expired by setting expiration in the past
+    past_time = datetime.now(tz=timezone.utc) - timedelta(seconds=1)
+    token = jwt.encode(
+        {"sub": "test@example.com", "exp": int(past_time.timestamp())},
+        settings.JWT_SECRET_KEY,
+        algorithm=ALGORITHM,
     )
-    # Wait for token to expire
-    time.sleep(0.1)
 
     with pytest.raises(HTTPException) as exc_info:
         verify_token(token)
@@ -226,3 +225,24 @@ def test_verify_token_decode_error():
             verify_token(invalid_token)
         assert exc_info.value.status_code == 401
         assert "Could not validate credentials" in exc_info.value.detail
+
+
+def test_create_access_token_none_data():
+    """Test token creation with None data."""
+    with pytest.raises(ValueError) as exc_info:
+        create_access_token(None)
+    assert "Token data cannot be None or empty" in str(exc_info.value)
+
+
+def test_create_access_token_empty_data():
+    """Test token creation with empty data."""
+    with pytest.raises(ValueError) as exc_info:
+        create_access_token({})
+    assert "Token data cannot be None or empty" in str(exc_info.value)
+
+
+def test_create_access_token_missing_claims():
+    """Test token creation with missing required claims."""
+    with pytest.raises(ValueError) as exc_info:
+        create_access_token({"other": "value"})
+    assert "Token data must contain either 'sub' or 'email' claim" in str(exc_info.value)

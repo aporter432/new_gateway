@@ -8,11 +8,13 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    POETRY_VERSION=1.7.1 \
+    POETRY_VERSION=2.0.0 \
     POETRY_HOME="/opt/poetry" \
-    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_VIRTUALENVS_CREATE=true \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_NO_INTERACTION=1 \
-    PYTHONPATH="/app/src"
+    PYTHONPATH="/app/src" \
+    no_proxy=localhost,127.0.0.1,db,redis,localstack
 
 # Install system dependencies
 # Note: Added --no-install-recommends to minimize image size
@@ -21,6 +23,11 @@ RUN apt-get update \
     build-essential \
     curl \
     wget \
+    libpq-dev \
+    postgresql-client \
+    dnsutils \
+    iputils-ping \
+    net-tools \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -31,22 +38,24 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 
 # Copy only dependency files first
 COPY pyproject.toml poetry.lock ./
+COPY README.md ./
+COPY alembic.ini ./
 
 # Install dependencies
-RUN poetry install --no-root --no-interaction --no-ansi
+RUN poetry install --no-root --no-interaction --no-ansi --with test
 
 # Copy source code and tests
 COPY src/ ./src/
 COPY tests/ ./tests/
 
 # Install the project
-RUN poetry install --no-interaction --no-ansi
+RUN poetry install --no-interaction --no-ansi --with test
 
 # Create non-root user and set up logging directory
 RUN useradd -m -u 1000 gateway \
-    && mkdir -p /app/logs \
+    && mkdir -p /app/logs/auth /app/logs/api /app/logs/system \
     && chown -R gateway:gateway /app \
-    && chmod 755 /app/logs
+    && chmod -R 755 /app/logs
 USER gateway
 
 # Expose port

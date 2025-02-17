@@ -99,20 +99,28 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         4. Return encoded token
 
     Args:
-        data: Claims to include in token
+        data: Claims to include in token. Must contain either 'sub' or 'email'
         expires_delta: Optional custom expiration time
 
     Returns:
         Encoded JWT token string
 
     Raises:
-        ValueError: If token data is None, empty, or invalid
+        ValueError: If token data is None, empty, or missing required claims
     """
     if data is None or not data:
         raise ValueError("Token data cannot be None or empty")
 
     try:
         to_encode = data.copy()
+
+        # Ensure we have both sub and email claims
+        email = to_encode.get("email") or to_encode.get("sub")
+        if not email:
+            raise ValueError("Token data must contain either 'sub' or 'email' claim")
+
+        to_encode.update({"email": email, "sub": email})  # Use email as subject if not provided
+
         expire = datetime.now(timezone.utc) + (
             expires_delta if expires_delta else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         )
@@ -156,26 +164,39 @@ def verify_token(token: str) -> TokenData:
     """
     try:
         # Decode and verify token
-        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_exp": True},  # Explicitly verify expiration
+        )
 
-        # Extract and validate claims
+        # Extract claims
         email = payload.get("email")
         sub = payload.get("sub")
         exp = payload.get("exp")
 
-        if not email or not sub or not exp:
+        if not exp:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Create validated token data with converted exp timestamp
+        # Create token data with optional claims
         token_data = TokenData(
-            email=email, exp=datetime.fromtimestamp(float(exp), tz=timezone.utc), sub=sub
+            email=email or sub,  # Use sub as fallback for email
+            exp=datetime.fromtimestamp(float(exp), tz=timezone.utc),
+            sub=sub or email,  # Use email as fallback for sub
         )
         return token_data
 
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

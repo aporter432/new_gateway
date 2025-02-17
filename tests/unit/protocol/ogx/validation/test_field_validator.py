@@ -67,7 +67,7 @@ class TestFieldValidation:
                 (FieldType.SIGNED_INT, -42, "not_int", "must be an integer"),
                 (FieldType.SIGNED_INT, -42, object(), "must be an integer"),
                 (FieldType.ENUM, "VALID", "", "must be a non-empty string"),
-                (FieldType.DATA, "YWJj", "invalid", "must be a valid base64"),
+                (FieldType.DATA, "YWJj", "invalid", "Value must be a valid base64 encoded string"),
             ],
         )
         def test_basic_field_validation(
@@ -137,7 +137,7 @@ class TestFieldValidation:
             }
             result = field_validator.validate(field, None)
             assert not result.is_valid
-            assert "must be a valid base64 encoded string" in result.errors[0]
+            assert "Value must be a valid base64 encoded string" in result.errors[0]
 
     class TestArrayFields:
         """Test array field validation."""

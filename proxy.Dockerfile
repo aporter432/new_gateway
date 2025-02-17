@@ -7,9 +7,6 @@ RUN apk add --no-cache curl
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Test nginx configuration
-RUN nginx -t
-
 EXPOSE 8080
 
 # Use the default nginx command

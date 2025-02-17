@@ -76,8 +76,13 @@ This directory contains comprehensive documentation for all environment configur
 ## Infrastructure Requirements
 
 ### Development
+- **Database**:
+  - PostgreSQL via Docker
+  - Configuration via `app_settings.py`
+  - Alembic migrations
+  - Local development defaults
+  - Documentation: `DOCS/ENVIRONMENT/database/`
 - Redis (Message state, caching)
-- PostgreSQL (Customer data)
 - LocalStack (AWS emulation)
 - Nginx (OGWS proxy)
 

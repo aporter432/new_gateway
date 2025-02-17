@@ -116,7 +116,7 @@ async def test_get_current_active_user_inactive(test_user: User, db_session: Asy
 @pytest.mark.asyncio
 async def test_get_current_admin_user_success(test_admin: User):
     """Test successful admin user validation."""
-    admin = get_current_admin_user(test_admin)
+    admin = await get_current_admin_user(test_admin)
     assert admin.email == test_admin.email
 
 
@@ -124,6 +124,50 @@ async def test_get_current_admin_user_success(test_admin: User):
 async def test_get_current_admin_user_not_admin(test_user: User):
     """Test admin validation with non-admin user."""
     with pytest.raises(HTTPException) as exc_info:
-        get_current_admin_user(test_user)
+        await get_current_admin_user(test_user)
     assert exc_info.value.status_code == 403
-    assert "Not enough permissions" in exc_info.value.detail
+    assert "Administrative privileges required" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_get_current_active_user_none():
+    """Test active user validation with None user."""
+    with pytest.raises(HTTPException) as exc_info:
+        await get_current_active_user(None)
+    assert exc_info.value.status_code == 400
+    assert "Invalid user" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_get_current_active_user_invalid_attribute():
+    """Test active user validation with invalid user object."""
+
+    class InvalidUser:
+        pass
+
+    with pytest.raises(HTTPException) as exc_info:
+        await get_current_active_user(InvalidUser())
+    assert exc_info.value.status_code == 400
+    assert "Invalid user status" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_get_current_admin_user_none():
+    """Test admin validation with None user."""
+    with pytest.raises(HTTPException) as exc_info:
+        await get_current_admin_user(None)
+    assert exc_info.value.status_code == 400
+    assert "Invalid user" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_get_current_admin_user_invalid_attribute():
+    """Test admin validation with invalid user object."""
+
+    class InvalidUser:
+        pass
+
+    with pytest.raises(HTTPException) as exc_info:
+        await get_current_admin_user(InvalidUser())
+    assert exc_info.value.status_code == 400
+    assert "Invalid user role" in exc_info.value.detail

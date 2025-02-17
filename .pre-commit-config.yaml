@@ -25,6 +25,7 @@ repos:
     hooks:
       - id: flake8
         args: [--max-line-length=120]
+        files: ^(src/|tests/)
         exclude: ^(abndoned-gateway/|old-gateway/|DOCS/|alembic/|mock_OGx\.py|create_structure\.py)
 
   # Temporarily disabled until test module naming is resolved

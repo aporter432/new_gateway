@@ -37,17 +37,20 @@ Future Considerations:
     - Password breach checking
 """
 
+import logging
 import re
 from typing import Optional
 
 from passlib.context import CryptContext
 
+# Basic logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Configure password hashing with security settings
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
-    bcrypt__rounds=12,  # Work factor for bcrypt (2^12 iterations)
-    bcrypt__salt_size=16,  # 16 bytes = 128 bits of salt
 )
 
 
@@ -76,7 +79,13 @@ def get_password_hash(password: str) -> str:
         - Salt
         - Hash value
     """
-    return pwd_context.hash(password)
+    try:
+        hashed = pwd_context.hash(password)
+        logger.info("Password hashed successfully")
+        return hashed
+    except Exception as e:
+        logger.error(f"Password hashing failed: {e}")
+        raise
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

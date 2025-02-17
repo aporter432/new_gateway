@@ -21,19 +21,17 @@ Environment Handling:
 # pylint: disable=no-member
 
 import asyncio
-import os
 from logging.config import fileConfig
-from typing import Any, Dict
 
 from alembic import context
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from core.app_settings import get_settings
-from infrastructure.database.models import Base
+from infrastructure.database.models.base import Base
 
-# Load Alembic configuration
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
 config = context.config
 
 # Set up logging (if configured)
@@ -44,21 +42,14 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
-# Get database URL from environment or settings
 def get_database_url() -> str:
     """Get database URL based on environment.
 
     Returns:
         Database URL for current environment
     """
-    # First try environment variable
-    url = os.getenv("DATABASE_URL")
-    if url:
-        return url
-
-    # Fall back to settings
     settings = get_settings()
-    return settings.DATABASE_URL
+    return settings.database_url
 
 
 def run_migrations_offline() -> None:
@@ -87,11 +78,7 @@ def do_run_migrations(connection: Connection) -> None:
     Args:
         connection: Database connection to use
     """
-    context.configure(
-        connection=connection,
-        target_metadata=target_metadata,
-        compare_type=True,  # Compare column types
-    )
+    context.configure(connection=connection, target_metadata=target_metadata)
 
     with context.begin_transaction():
         context.run_migrations()
@@ -99,22 +86,20 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations asynchronously."""
-    # Override SQLAlchemy URL with our URL
-    section = config.config_ini_section
-    configuration: Dict[str, Any] = config.get_section(section) or {}
-    configuration["sqlalchemy.url"] = get_database_url()
+    configuration = config.get_section(config.config_ini_section)
+    if configuration is not None:
+        configuration["sqlalchemy.url"] = get_database_url()
 
-    # Create async engine
-    connectable = async_engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+        connectable = engine_from_config(
+            configuration,
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
+        with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
 
-    await connectable.dispose()
+        await connectable.dispose()
 
 
 def run_migrations_online() -> None:

@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # Database settings
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/gateway"
+    DATABASE_URL: str
     SQL_ECHO: bool = False
     DB_POOL_SIZE: int = 5
     DB_MAX_OVERFLOW: int = 10

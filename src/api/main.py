@@ -14,7 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.middleware.ogws_auth import add_auth_middleware
-from api.routes import messages
+from api.routes import auth, messages  # Import routers only
 from core.logging.loggers import get_protocol_logger
 from protocols.ogx.services.ogws_message_worker import get_message_worker
 
@@ -68,7 +68,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 # Create FastAPI app
 app = FastAPI(
     title="Smart Gateway API",
-    description="API for OGWS message handling and device management",
+    description="""
+    API for OGWS message handling and device management.
+
+    Route Structure:
+    - /api/auth/* - Authentication endpoints (login, logout, user info)
+    - /api/v1/* - Internal message handling endpoints
+    - /health - Health check endpoint
+
+    Note: OGWS API communication (/api/v1.0/*) is handled by nginx proxy
+    and should not be accessed directly by clients.
+    """,
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -85,8 +95,22 @@ app.add_middleware(
 # Add auth middleware
 add_auth_middleware(app)
 
-# Include routers
-app.include_router(messages.router, prefix="/api/v1", tags=["messages"])
+# Include routers with explicit documentation
+# Messages Router (/api/v1/*)
+# Internal message handling endpoints. These routes handle message processing and management.
+app.include_router(
+    messages.router,
+    prefix="/api/v1",
+    tags=["messages"],
+)
+
+# Auth Router (/api/auth/*)
+# Authentication endpoints. These routes handle user authentication and management.
+app.include_router(
+    auth.router,
+    prefix="/api",
+    tags=["auth"],
+)
 
 
 @app.get("/health")

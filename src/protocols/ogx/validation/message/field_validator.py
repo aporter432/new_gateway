@@ -424,7 +424,7 @@ class OGxFieldValidator(BaseValidator):
             elif field_type == FieldType.DATA:
                 if not isinstance(value, str):
                     raise ValidationError(
-                        f"Invalid {field_type.value} field: Value must be a base64 encoded string",
+                        f"Invalid {field_type.value} field: Value must be a valid base64",
                         GatewayErrorCode.INVALID_FIELD_FORMAT,
                     )
                 try:
@@ -439,7 +439,7 @@ class OGxFieldValidator(BaseValidator):
                     base64.b64decode(value)
                 except Exception as exc:
                     raise ValidationError(
-                        f"Invalid {field_type.value} field: Value must be valid base64 encoded string",
+                        f"Invalid {field_type.value} field: Value must be a valid base64 encoded string",
                         GatewayErrorCode.INVALID_FIELD_FORMAT,
                     ) from exc
 
