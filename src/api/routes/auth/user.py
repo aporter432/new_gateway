@@ -34,12 +34,12 @@ Implementation Notes:
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.schemas.user import Token, UserCreate, UserResponse
-from api.security.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
+from api.security.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, revoke_token
 from api.security.oauth2 import get_current_active_user
 from api.security.password import get_password_hash, verify_password
 from infrastructure.database.dependencies import get_db
@@ -217,3 +217,47 @@ async def get_current_user_info(
         UserResponse: User information (excluding sensitive data)
     """
     return UserResponse.model_validate(current_user)
+
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    response: Response,
+) -> dict:
+    """Log out current user.
+
+    This endpoint handles user logout by:
+    1. Revoking the current JWT token
+    2. Clearing any session data
+    3. Returning success response
+
+    Process Flow:
+        1. Validate current user token
+        2. Revoke token
+        3. Clear session cookies
+        4. Return success
+
+    Args:
+        current_user: Current authenticated user (from token)
+        response: FastAPI response object for cookie manipulation
+
+    Returns:
+        dict: Success message
+    """
+    try:
+        # Get token from current user context
+        token = current_user.token if hasattr(current_user, "token") else None
+
+        # Revoke token if present
+        if token:
+            await revoke_token(token)
+
+        # Clear any session cookies
+        response.delete_cookie(key="session")
+
+        return {"message": "Successfully logged out"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Logout failed",
+        ) from e

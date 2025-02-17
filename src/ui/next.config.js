@@ -3,11 +3,38 @@ const config = {
     reactStrictMode: true,
     swcMinify: false,
     output: 'standalone',
+    // Disable server components and enable client-side routing
+    experimental: {
+        appDir: true,
+        serverActions: false,
+    },
+    pageExtensions: ['tsx', 'ts'],
+    // Rewrite API routes to our backend
     async rewrites() {
         return [
             {
+                // Forward auth requests to our FastAPI backend
+                source: '/api/auth/:path*',
+                destination: 'http://localhost:8080/api/auth/:path*',
+            },
+            {
+                // Forward API requests to our FastAPI backend
                 source: '/api/:path*',
-                destination: `${process.env.BACKEND_URL}/api/:path*`,
+                destination: 'http://localhost:8080/api/:path*',
+            }
+        ]
+    },
+    // Disable automatic static optimization for dynamic routes
+    async headers() {
+        return [
+            {
+                source: '/:path*',
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'no-store, must-revalidate',
+                    }
+                ],
             },
         ]
     },

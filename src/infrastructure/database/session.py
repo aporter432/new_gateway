@@ -28,6 +28,10 @@ settings = get_settings()
 is_test = os.environ.get("TESTING", "").lower() == "true"
 database_url = "sqlite+aiosqlite:///:memory:" if is_test else settings.DATABASE_URL
 
+# Convert URL to async if needed
+if database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
+
 # Add debug logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

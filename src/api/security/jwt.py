@@ -51,6 +51,10 @@ settings = get_settings()
 ALGORITHM = settings.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 60 minutes default expiration
 
+# Store for revoked tokens
+# In production, use Redis or database
+REVOKED_TOKENS = set()
+
 
 class TokenData(BaseModel):
     """Token payload data structure.
@@ -131,6 +135,20 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         raise ValueError(f"Failed to create access token: {str(e)}") from e
 
 
+async def revoke_token(token: str) -> None:
+    """Revoke a JWT token.
+
+    In production, this should:
+    1. Store token in Redis/database blacklist
+    2. Set expiry matching token expiry
+    3. Clean up expired tokens periodically
+
+    Args:
+        token: JWT token to revoke
+    """
+    REVOKED_TOKENS.add(token)
+
+
 def verify_token(token: str) -> TokenData:
     """Verify and decode a JWT token.
 
@@ -163,6 +181,14 @@ def verify_token(token: str) -> TokenData:
             - 403: Invalid token structure
     """
     try:
+        # Check if token is revoked
+        if token in REVOKED_TOKENS:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been revoked",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         # Decode and verify token
         payload = jwt.decode(
             token,
@@ -194,7 +220,7 @@ def verify_token(token: str) -> TokenData:
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except JWTError as e:

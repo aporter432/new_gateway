@@ -40,8 +40,10 @@ export default function Home() {
 
         try {
             const data = await login(username, password);
-            localStorage.setItem('token', data.access_token);
-            router.push('/dashboard');
+            // Store token and wait for it to be set
+            await Promise.resolve(localStorage.setItem('token', data.access_token));
+            // Use replace instead of push to avoid RSC issues
+            router.replace('/dashboard');
         } catch (err) {
             console.error('Login error:', err);
             setError(err instanceof Error ? err.message : 'Invalid username or password');
