@@ -14,21 +14,6 @@
    git clone <repository-url>
    cd new_gateway
    ```
-
-2. Install dependencies:
-   ```bash
-   # Install Python dependencies
-   poetry install
-
-   # Install pre-commit hooks
-   poetry run pre-commit install
-
-   # Install UI dependencies
-   cd src/ui
-   npm install
-   cd ../..
-   ```
-
 ## Running the Application
 
 ### First Time Setup

@@ -30,7 +30,7 @@ export default function DashboardPage() {
 
     // Get user info on mount
     useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         if (!token) {
             router.replace('/');
             return;
@@ -42,6 +42,10 @@ export default function DashboardPage() {
                 setUserName(data.name || '');
             } catch (err) {
                 console.error('Failed to load user info:', err);
+                // Clear both storage locations on error
+                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
+                router.replace('/');
             } finally {
                 setLoading(false);
             }
@@ -52,15 +56,19 @@ export default function DashboardPage() {
 
     const handleLogout = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             if (token) {
                 await logout();
+                // Clear both storage locations
                 localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
             }
             router.push('/');
         } catch (err) {
             console.error('Logout failed:', err);
-            // Still redirect even if logout fails
+            // Clear both storage locations even if logout fails
+            localStorage.removeItem('token');
+            sessionStorage.removeItem('token');
             router.push('/');
         }
     };

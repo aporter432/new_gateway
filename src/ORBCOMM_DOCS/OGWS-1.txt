@@ -1,1 +1,1397 @@
-ORBC0MM¨ WHERE DATA DRIVES DECISIONS OGx Gateway Web Service (OGWS) User Guide N214, Version 0.05 OGx BET A Dec 2023 ©ORBCOMM¨ CONTACT AND LEGAL INFORMATION Visit ORBCOMM Online Website: www.ORBCOMM.com Office: 395 W Passaic Street, Suite 325, Rochelle Park, NJ 07662 USA Contact Support Website: https://www.orbcomm.com/ en/support Email: customer.care@orbcomm.com OR FMSupport@orbcomm.com (Fleet Management support needs) Phone: (North America Toll-Free) 1.800.ORBCOMM (United Kingdom Toll-Free) +44 800 538.5909 (USA/ International Toll) +1.804.404.8681 (United Kingdom Toll) +44 20 3855.6153 (Australia Toll) +61 (8) 6186 9633 (Austria, Germany, Switzerland Toll) +49 89.208045522 (NewZealand Toll) +64 (9) 8841439 (Ireland Toll) +353 1.582.4013 Export Control Statement The contents of this document, in whole or in part, shall not be exported from the United States, which export shall include, but not be limited to, transmittal to any non-U.S. citizen wherever said person is located, except in accordance with all United States laws and regulations relating to exports and to all administrative acts of the U.S. Government pursuant to such laws and regulations. Diversion, re-export or transshipment of the contents of this document, in whole or in part, contrary to U.S. law is also strictly prohibited. Trademark Notice The ORBCOMM name and logo are registered trademarks of ORBCOMM Inc. and may not be used without permission. Other trademarks, trade names, and logos are those of their respective owners. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 TABLE OF CONTENTS Contact and Legal lnfonnation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2 Contact Support . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2 Trademark Notice . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2 TABLE OF CONTENTS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3 List of Figures . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 List of Tables . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 Preface ................................................................................................................................... 6 Purpose ...................................................................................................................... 6 Notation ...................................................................................................................... 6 Reference . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6 Errata Sheet . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6 1 Overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 1.1 Terminals . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8 1.2 Gateway Accounts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8 2 The OGWS Protocol ................................................................................................................ . 11 2.1 Submit Messages ..................................................................................................... 12 2.1.1 Message Timeout ................................................................................................ 12 2.2 Get From-Mobile Messages ........................................................................................ 12 2.2.1 OGWS Client Application Guidelines ......................................................................... 13 2.3 Message Retention and Limitations .............................................................................. 14 2.3.1 Firewall Limits .................................................................................................... 14 2.3.2 Call Frequency Limits ........................................................................................... 14 2.3.3 Message Submission and Retrieval Count Limits ........................................................ 15 2.3.4 Time Stamp Values .............................................................................................. 15 3 OGWS Web Service ................................................................................................................. 16 3.1 User Authentication ................................................................................................... 16 3.1.1 Revoke Tokens ................................................................................................... 16 3.1.2 Bearer Token Examples ........................................................................................ 16 3.1.2.1 Obtain a Bearer Token ...................................................................................... 16 3.1.2.2 Authenticate API Requests with a Bearer Token ...................................................... 17 3.2 Authorization Roles ................................................................................................... 18 3.3 API Versions ........................................................................................................... 18 3.4 Access Throttling ..................................................................................................... 18 3.4.1 Firewall Limits .................................................................................................... 18 3.4.2 Account Level Request Throttling ............................................................................ 18 3.4.2.1 Account Based Sliding Window Request Limiter ...................................................... 18 N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 3.4.2.2 Account Based Concurrency Limiter ..................................................................... 19 3.4.2.3 Rate of Submitted To-Mobile Messages ................................................................ 19 3.4.2.4 Rate of Retrieved To-Mobile Message Statuses ....................................................... 19 3.5 Developer Tools ....................................................................................................... 19 4 OGWS Application Programming Interface .................................................................................... 21 4.1 Authentication Methods ............................................................................................. 21 4.1.1 Token ............................................................................................................... 21 4.1.2 Invalidate Tokens ................................................................................................ 22 4.2 Information Methods ................................................................................................. 22 4.2.1 Service ............................................................................................................. 22 4.2.2 Subaccount List .................................................................................................. 23 4.2.3 Terminals .......................................................................................................... 25 4.2.4 Terminal ........................................................................................................... 28 4.2.5 Subaccount Terminals .......................................................................................... 29 4.2.6 Broadcast .......................................................................................................... 29 4.2.7 Subaccount Broadcast .......................................................................................... 31 4.3 Submit Methods ....................................................................................................... 31 4.3.1 Submit Messages ................................................................................................ 33 4.3.2 Submit a Message to Multiple Destinations ............................................................... 38 4.3.3 Submit Cancellation Requests ................................................................................ 40 4.4 Get Methods ............................................................................................................ 42 4.4.1 Retrieve To-Mobile (FW) Messages ......................................................................... 42 4.4.2 Retrieve To-Mobile (FW) Statuses ........................................................................... 46 4.4.3 Retrieve To-Mobile (FW) Status Updates ................................................................... 49 4.4.4 Retrieve To-Mobile (FW) Status Updates for Subaccounts ............................................. 51 4.4.5 Retrieve To-Mobile (FW) Status Updates of All Subaccounts .......................................... 52 4.4.6 Retrieve From-Mobile (RE) Messages ....................................................................... 53 4.4.7 Retrieve From-Mobile (RE) Subaccount Message Records ............................................. 56 4.4.8 Retrieve From-Mobile (RE) Message Records from All Subaccounts ................................ 57 5 Common Message Fonnat ....................................................................................................... . 58 5.1 Common Message Fields ........................................................................................... 59 5.1.1 Common Message Example ................................................................................... 59 APPENDIX A HTTP Error Codes ................................................................................................... 62 APPENDIX B Interface Test System .............................................................................................. 63 N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 LIST OF FIGURES Figure 1: Gateway Interface ....................................................................................................... 7 Figure 2: OGWS in the Context of the Network . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 Figure 3: Multiple Clients . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8 Figure 4: OGx/lsatData Pro Mobile Gateway Accounts ...................................................................... 9 Figure 5: Subaccounts Relationship ............................................................................................. 10 Figure 6: Overview of OGWS ...................................................................................................... 11 Figure 7: Getting Messages ....................................................................................................... 13 Figure 8: OGx Network Message States ........................................................................................ 32 Figure 9: lsatData Pro Network Message States .............................................................................. 33 Figure 10: Common Message Format (Data Structure) ..................................................................... 58 LIST OF TABLES Table 1: OGx Message State Descriptions ..................................................................................... 32 Table 2: lsatData Pro Message State Descriptions .......................................................................... 33 Table 3: Common Message Fields .............................................................................................. 59 N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 PREFACE Purpose This guide provides an overview of the OGx Gateway Web Service (OGWS) for developers and defines the OGWS interface for both terminal and modem users. Notation OGx Gateway Web Service is platform independent. Many code examples in this document are in C# for Microsoft¨ .NET 7 or higher using Microsoft¨ Visual Studio¨ 2022. A to-mobile (forward) message is a message sent to the terminal from the gateway, while a from-mobile (return) message is one sent from the terminal. Content in this guide applies to both terminal and modem users unless noted otherwise. Reference It is recommended that you be familiar with the content of the following documents before using this guide. These documents are available from the Partner Support website (partner-support.orbcomm.com) or the ORBCOMM Developer Toolkit, also available from the website. Always check the website for the most current documentation releases or release notes. Document names and numbers are subject to change, or be discontinued, without notice. [N204]  Versa Automated Provisioning Protocol (VAPP)  [N415]  OGx Network Overview  [T404]  LSF Developer Guide  [T405]  LSF API Reference Guide  [T415]  AT Interface Developer Guide -OGx  Errata Sheet Refer to the Partner Support website (partner-support.orbcomm.com) for any possible Errata Sheets available after the release of this guide. N214, Version 0.05 OGx BETA ORBCOMM¨PROPRIETARYAND CONFIDENTIAL© Dec 2023 1 OVERVIEW The OGx network provides messaging services between terminals and an Internet application. This guide defines the OGx Gateway Web Service (OGWS) protocol, which customers can use to submit and retrieve messages to and from their terminals from their Internet application. OGWS users can submit messages to terminals on the OGx network or the lsatData Pro network and retrieve messages from terminals either on the OGx network or the lsatData Pro network. The OGWS API is a REST JSON based API used to submit and retrieve terminal messages, retrieve users' account data, and retrieve statuses of submitted messages. The web service accepts messages for both lsatData Pro and OGx terminals. Whether a message goes through the lsatData Pro or the OGx network depends on which network the terminal is registered. Modem messages are described in [T415]. Figure 1: Gateway Interface Client Applications OGWS 0.Figure 2 shows the position of OGWS in the message chain. Figure 2: OGWS in the Context of the Network Cusiornar'sserversI server applications OGWS ~~ /~~/ ----------.~ i] End u.$t;r ~Pi,'fl<:_ \Q00fl$ ,r;;1;11-,v,rtuni~1.ti11g (l,Je,:11)'1D OGWS ái...d ,1;,-.,r ~pplic;Jlions c,,,~n,1,,nic~~~ to cwS1omefs1>8tká¢1~e ~ertem N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 The OGWS is primarily used to support a back-office server exchanging messages with the web service and exposing those messages or a subset to its own client applications. However, desktop or mobile applications can also connect directly to the web service, when appropriate. Multiple clients can access the same account on the Gateway. Any Gateway account restrictions apply to the account, not to the client. Refer to section 3.4 for more details. Figure3: Multiple Clients Cu~tomer OGWS client applications OGWS Mobile terminals Acee¥" ID: 7000234 Acee.,; 10: 7000234 ~--~o-.Access10, 7000234Desllto~mobile ~ aW1ioatioo¥ <:::>~ Each client must maintain its own high-watermark to extract messages in sequence. The Gateway uses high.watermarks to return the latest messages to client applications. Along with the latest messages, the Gateway returns the next high-watermark. The client must save this high-watermark and use it for future access. 1.1 Terminals A terminal must be activated to send and receive messages. Terminals can be activated using the Partner Support website or through the provisioning API (VAPP ). A terminal can only be activated on a single Gateway account. 1.2 Gateway Accounts Every Gateway customer has an account on the Gateway, which comprises the following: ¥ Credentials in the form of access ID/ password pair ¥ Account configuration, restrictions, and access limits ¥ Set of mobile IDs ¥ Set of broadcast IDs 1 ¥ Set of subaccount IDs ¥ Message definitions 1 Broadcast IDs only apply to terminals operating on the lsatData Pro network. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 8 The Gateway uses message definitions to encode to-mobile message payloads and decode from-mobile message payloads. This allows bit-efficient transport of data over the OGx satellite network but allows the Gateway to present an interface that consists of named fields of various data types. Message definition files are created using the Developer Studio tool found in the ORBCOMM Developer Toolkit. Upload and manage the message definition file from the Partner Support website (Online Utilities link) if you want the Gateway to decode your messages. If the Manage Message Definition Files option is not available, contact Partner Support for assistance. A Gateway user can: ¥ Send messages to terminals associated with its account or subaccounts. ¥ Broadcast messages to groups of terminals represented by a broadcast ID associated with its account or subaccounts. ¥ Retrieve messages from terminals associated with its account or subaccounts. Figure4: OGx/lsatData Pro Mobile Gateway Accounts Q,Gx/lsatData Pro Gateáway account Mobileterrninals Access IDlpassword Acce-sslimits Accountimormatioo Broadcast groups Subaccounts A subaccount is a separate Gateway account (Figure 5), which a Gateway user can access using their own access ID and password. If a Gateway account contains one or more subaccounts, users accessing this account can send and receive messages to terminals belonging to other Gateway accounts (its subaccounts). The user must explicitly provide the optional subaccount ID to send or receive messages to the subaccount's mobile IDs or broadcast IDs. For example, if account B is not a subaccount of account A, users accessing account A are unable to send receive messages to the mobile IDs or broadcast IDs of account B. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Figure 5: Subaccounts Relationship OGx/tsatData Pro Gateway account Mobile terminals Access limits Account informatlon Broadcast groups OGx/1HtOata Pro Gateway account Subaocounls Mobile lerrninl'JI~~/2~~f1// Access ID/password Access limits Account information Broadcast groups Subaccounts ~,. OGxllDP Gateway account Mobile terminals A<:c::8:SS10/pas$word Access limrts Account Information Broodcast groups Every subaccount ID points to another Gateway account with its own set of mobile IDs and broadcast IDs. A subaccount for one Gateway user could be the primary account for another Gateway user, which means a subaccount can have its own further subaccounts. An account with subaccount A does not inherit the subaccounts of account A. A Gateway account can only send/receive messages to terminals belonging to itself or its subaccounts. From-mobile message billing is done for the Gateway account to which the terminal belongs. If a message is sent from a terminal, the account where the terminal is activated is billed, regardless of whether the from-mobile message was requested by a to-mobile message from a different account. By default, to-mobile message billing is processed for the Gateway account to which the terminal belongs. Contact Partner Support if you want to change this billing behavior. Account and subaccount IDs must be provisioned by Partner Support. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 2 THE OGWS PROTOCOL The URL of the OGWS is https://ogws.orbcomm.com/api/v1 .0. Figure 6: Overview of OGWS OGwsclient ap pll ca.ti on ltok-e:r1 Note: A test system is provided with the updated web service interface at least 30 days before release of the update. Customers are encouraged to test their applications in advance of the upgrade using this test system. Refer to APPENDIX B for details. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 2.1 Submit Messages The client application prepares a message to be submitted to a terminal and uses one of the Submit web service operations (Section 4.3). If the OGWS accepts the message, the client application receives a Gateway generated message ID of the submitted message; otherwise the client receives an error code. To map the client application's message IDs to the Gateway generated message IDs, client applications can optionally submit a UserMessagelD with the message. The UserMessagelD is returned as a response together with a Forward Message ID generated by the Gateway. 2.1.1 Message Timeout If a terminal is offline blocked and a to-mobile message cannot be delivered, the OGx Gateway closes the message after 10 days. The client application may also request the Gateway cancel the message at any time. 2.2 Get From-Mobile Messages To start polling the Gateway, a client application typically uses the Gateway's current time as a first high-watermark. The subsequent high-watermarks are returned with each successful /get/re_messages. Calls that are not successful (responses ErrorCode > 0) or calls that do not return messages, do not contain a valid next high-watermark in the response. Client applications should always store the last valid high-watermark and use it in subsequent calls. When the /get/re_messages returns, it provides new high-watermark information that the client application needs to use for the next call. A single response returns a maximum of 500 messages. Figure 7 shows a client application polling the web service for response messages. The client application needs to pass a valid access token and message filter information. The high-watermark is part of the message filter. With every call to the Gateway's /get/re_messages, the client application needs to provide at least the high-watermark information. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Figure 7: Getting Messages OGWS client application OGWS /sut>mitlmHH M TOken and account verifications,call throttling l'erlflcations MSIW gecontentan<l messagiedestination verlffcatlo11s. OGW.. fOIWOrdn?e/i/SIIQeID,LJ(ll1tMUSIJQeID Senoi.themessage,out Check for erro~wlhin themessag:eresponse, retrieve 0OWS g~nsrllled 10 /gft/fvt_s.taluan(HWMor ID list) Retnevusatusesol requeste-crme,sa9nor retrlevit a lls.t or u pctatecl statuSH since 1114 S1Jppl&<IHWt.1 2.2.1 OGWS Client Application Guidelines Client applications should: ¥ Provide a valid high-watermark (a nonempty FromUTC property from a previous response) with each /get/re_ messages call. Failure to do so results in the OGWS unnecessarily returning the same set of messages with each call. ¥ Store the most recently received high-watermark to a persistent store so that it can be used with the next call, or when the application needs to restart. A valid next high-watermark is returned as part of a /get/re_messages call response that has returned at least one message. Any /get/re_messages calls that return no messages do not contain a valid next high-watermark. ¥ Set an HTTP request timeout to at least 60 seconds to allow enough time for a response to arrive. Explicitly set the value because default values vary between different development environments. ¥ Query for new messages with a reasonable frequency. OGWS implements several throttling methods that may result in rejected calls. Each OGWS access account is provisioned for a maximum call rate. This does not mean that a client application should call the OGWS often. If your terminals produce less than 300 messages per minute, your client application should not query the OGWS more frequently than once per minute. If you have N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 higher traffic rates, you can request a query frequency limit increase. ¥ Wait for a response from each /get/re_messages call before issuing a new one. Failure to do so could result in several /get/re_messages requests being processed in parallel. The OGWS rejects /get/re_messages requests if it detects that it is already processing three old requests from the same OGWS account. If that happens, the web service request fails with HTTP error 429 -too many requests. During regular message polling, client applications should not: ¥ Repeat the same high-watermark in case a new high-watermark has been provided in a previous response.This behavior causes the application to always get the same duplicate set of old messages. Because OGx allows the retrieval of from-mobile messages for up to five days, this mistake can prevent retrieval of older messages. ¥ Use a high-watermark from a set number of hours/days in the past. This allows you to query mostly old messages. Each /get/re_messages call returns mostly duplicate messages and occasionally several newer ones. ¥ Call the OGWS too frequently about terminal traffic. In this case, most /get/re_messages calls return empty results and can quickly exhaust the GET frequency limit -especially in cases where you query the OGWS from more than one client application. ¥ If your client application performs /get/re_messages calls from a periodic timer, the application must ensure that the previous call to /get/re_messages has finished before it issues a new one. Not addressing this issue can result in multiple calls being made using the same high-watermark running in parallel. 2.3 Message Retention and Limitations OGWS allows the retrieval of from-mobile messages for up to five (5) days. Any customer application requiring access to messages older than five days must retrieve the messages when available and store them locally for later retrieval. 2.3.1 Firewall Limits The ORBCOMM firewall allows up to 10 simultaneous connections to the web service originating from the same IP address,whetherfrom one or multiple client applications, and whether accessing a single or multiple accounts.This limit is unrelated to any other limit imposed by the OGWS. 2.3.2 Call Frequency Limits Each OGWS account is assigned a GET, INFO, and SEND frequency of five calls for a window of 60 seconds. A limit of 10 means that each OGWS account can perform at most 10 GET and 10 SEND web service operations within a 1-minute interval. If web service calls are performed more frequently, an HTTP error 429 -too many requests is returned. If that happens, the client application must wait for a short while and then repeat the same request until it no longer receives the error. The error code can occur frequently if you use more than one client application to access the OGWS using the same account. Customers with higher traffic rates can request a limit increase. The current limit of 10 allows you to query up to 5,000 from-mobile messages and to-mobile statuses per minute. Any /get/re_messages calls executed in parallel also have a limit. If you have more than three (3) /get/re_messages calls running in parallel, subsequent calls fail until some of the running calls complete. Each web service method describes the throttling group. N214, Version 0.05 OGx BETA ORBCOMM¨ AND CONFIDENTIAL© PROPRIETARY Dec 2023 2.3.3 Message Submission and Retrieval Count Limits The following limits apply to listed web service operations: ¥ Any re_messages web service operation -Returns up to 500 messages. ¥ Any fw_statuses web service operation -Returns up to 500 statuses if a time stamp is used as a high.watermark, or 100 statuses if message IDs (up to 100) are specified in its request filter. ¥ /fw_messages -Returns up to 100 messages and accepts up to 100 message IDs in its request filter. ¥ Any submit message web service operation -Sends up to 100 to-mobile messages in one web service call. 2.3.4 Time Stamp Values The OGWS expects UTCbased time in all web service calls containing time values and it returns UTC based time in all responses containing time values. Time values should be in the following format: YYYY-MM-DD hh:mm:ss where: YYYY -year (for example, 2024) MM -month (01 to 12) DD-day (01 to 31) hh -hour (00 to 23) mm -minute (00 to 59) ss -second (00 to 59) N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 3 OGWS WEB SERVICE 3.1 User Authentication The OGWS offers applications the ability to issue authenticated requests on behalf of the application itself, as opposed to on behalf of a specific user. To use this method, users need to use a bearer token. They can generate a bearer token by passing their Access ID and password through the POST api/v{version} /au th/token endpoint. The application-only auth flow follows this order: 1. An application encodes its access ID, password, and token expiry time (in seconds) into a specially encoded set of credentials. If token expiry time is not supplied, the web service uses a default value of 7 days, otherwise, the specified token expiry time is used, provided it does not exceed 365 days. 2. An application makes a request to the POST api/v{version} / au th/token endpoint to exchange these credentials for a bearer token. 3. When accessing the REST API, the application uses the bearer token to authenticate. Tokens include user access ID and token expire time, so requests made using a bearer token can be authenticated against individual OGWS user accounts. Users can revoke all issued tokens before they expire by calling the POST auth/ invalidate_ tokens endpoint. Requests made using invalid or revoked bearer tokens result in an HTTP error 401 -Unauthorized error. Tokens are client Access ID, password, and the bearer token itself grant access to make requests on behalf of an passwords application. DO NOT share these values. 3.1.1 Revoke Tokens Users can revoke all valid tokens by calling the GET api/v {version}/ auth/ invalidate_ tokens endpoint. All previously issued tokens, independent of their expiry time, are no longer successfully authenticated by the OGWS (equivalent to 'sign off all clients'). Note: Valid tokens may still authenticate for a short period of time after they have been invalidated as their cancellation propagates to all OGWS servers. 3.1.2 Bearer Token Examples 3.1.2.1 Obtain a Bearer Token The access ID/ password must be exchanged for a bearer token by issuing a request to POST auth/token: ¥ The request must be an HTTP POST request. ¥ The request must include a Content-Type header with the value of application/ x-www-forrn.urlencoded. ¥ The body of the request must include user credentials. Request: POST https://ogws.orbcornm.com/api/vl.0/auth/token Content-Type: application/x-www-form-urlencoded N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 User-Agent: PostmanRuntime/7.28.4 Accept: * /* Cache-Control: no-cache Accept-Encoding: gzip, deflate, br Connection: keep-alive client id=70000001&client secret=password&expires in=31536000&grant_type=client credentials Response(includes the bearer token): Transfer-Encoding: chunked Content-Type: text/plain; charset=utf-8 Content-Encoding: gzip Vary: Accept-Encoding Server: Microsoft-IIS/10.0 api-supported-versions: 1.0 X-Powered-By: ASP.NET {"token_type":"bearer","expires in":31536000,"access_ token":"eyJhbGciOiJIUzI1NiisinR5cCI6IkpXVCJ9.eyJpZCI6IjcwMDAwMDAxiiwicm9sZSI6IlByb3Zpc2lvb mluZyisim5iZiI6MTY4NTA0MTAlMCwiZXhwijoxNzE2NTc3MDUwLCJpYXQiOjE2ODUwNDEwNTAsimlzcyI6IlNlY3V yZUFwaSisimF1ZCI6IlNlY3VyZUFwaVVzZXIifQ.lxlz-2UEsjCH2RqxfZf8i3YqJclwZkrwtrHy7Kehlvc"} 3.1.2.2 Authenticate API Requests with a Bearer Token Use a bearer token to issue requests to the API. To use the bearer token, construct a normal HTTPS request and include an Authorization header with the value of bearer <base64 bearer token value from the previous example>. Request: GET https://ogws.orbcomm.com/api/vl.0/messages Authorization: Bearer eyJhbGciOiJIUzI1NiisinR5cCI6IkpXVCJ9.eyJleHAiOjE2MzgzMDA5NDAsimlzcyI6IkFQSSBVUkwiLCJhdWQiO iJBUEkgVVJMin0.PGwVKS31UoXSnVugjdzUMveUXRfGe0cFc7_BbmnSY9o User-Agent: PostmanRuntime/7.28.4 Accept: */* Cache-Control: no-cache Accept-Encoding: gzip, deflate, br Connection: keep-alive Response: Transfer-Encoding: chunked Content-Type: application/json; charset=utf-8 Server: Microsoft-IIS/10.0 api-supported-versions: 1.0 X-Powered-By: ASP.NET [{ ... N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 3.2 Authorization Roles Each OGWS endpoint request must be authorized after it is authenticated. The OGWS recognizes these roles: User  All web service users belong to this role by default. They can access most of the customer interface endpoints.  Superuser  Super accounts have this role. These users can access endpoints that can access account/ message information belonging to their subaccounts. Requests from User roles to these endpoints are rejected with the 'Forbidden' error.  3.3 API Versions Changes and updates to OGWS are generally backwards compatible, however, at times breaking changes are required. Version:This refers to the version number found in the URL path of any API request (for example, GET api/v{version_ number}/messages). Breaking Changes: Breaking changes are changes that require customer development actions to maintain existing functionality. A list of breaking changes may include: ¥ Removing a parameter from the API request/response ¥ Modifying the name or type of parameter or endpoint ¥ Changing the behavior of endpoints (for example, async vs sync stats) ¥ Adding /changing optional or required parameters (for example, making name a required field in the request) Deprecation:Deprecated versions are not supported, and it is recommended that developers cease to use these APls. Sunset:Once an API version is sunset, the corresponding API endpoints are no longer accessible. 3.4 Access Throttling In addition to limits imposed on individual accounts, OGWS enforces high-level throttling and concurrency limits on the overall service, which prevents abusive or excessive use of the web service. When those limits are exceeded, an HTTP error 503 (service unavailable) is returned. Client implementations are expected to appropriately delay subsequent requests. 3.4.1 Firewall Limits The ORBCOMM firewall allows up to 10 simultaneous connections to the Web Service originating from the same IP address. 3.4.2 Account Level Request Throttling Account level throttling is provisioned for each user account separately. 3.4.2.1 Account Based Sliding Window Request Limiter OGWS performs access throttling by user account ID. For every user account there is a limit to a number of INFO, GET and SEND type of web service requests within a configured time window. OGWS allows overriding the default throttling configuration on a per account basis. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Default throttling limit for all accounts is 10 web service calls per type in a sliding window of 60 seconds. If exceeded, this limiter returns HTTP error 429 -Too Many Requests. 3.4.2.2 Account Based Concurrency Limiter The OGWS tracks the number of requests currently being executed by each account. If the default limit of three (3) is exceeded, new requests are rejected and receive an HTTP error 429 -Too Many Requests. This limit is configurable on a per account basis. 3.4.2.3 Rate of Submitted To-Mobile Messages By default, OGWS does not limit the rate of submitted to-mobile messages, but ORBCOMM Partner-Support may activate such restrictions for accounts that start submitting an unusually high rate of messages. If exceeded, this limiter returns an error code ERR_ SUBMIT_ MESSAGE_ RATE_ EXCEEDED (24579) within the response object (it does not trigger an HTTP error). 3.4.2.4 Rate of Retrieved To-Mobile Message Statuses By default, OGWS does not limit the rate of retrieved to-mobile messages, but ORBCOMM Partner-Support may activate such restrictions for accounts that start retrieving an unusually high rate of messages. If exceeded, this limiter returns an error code ERR_ RETRIEVE_ STATUS_ RATE_ EXCEEDED (24581) within the response object (it does not trigger an HTTP error). 3.5 Developer Tools ORBCOMMprovides access to web pages for API descriptions and enables live testing of API endpoints on the customer test website (https:/ /ogws.swlab.ca/docs/api/index.html). N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Select~ deflnllion ~I_0G_w_s _____________Al'_1_v_1.t v~IORBCCMM OGX Gateway Web Service (OGWS) API GD -¥tpWI G.'$-a~g,,<l<"" T.ffTM (d 5-er'/Jfe C,,,,~ fCon~tl l~fOI Tracleinak._ Au<llort¥¥ i Get The ORBCOMM Developer Toolkit (ODT), available from the Partner Support website, provides the following to assist with your development: ¥ A Postman environment ¥ Sample code N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 4 OGWS APPLICATION PROGRAMMING INTERFACE The main categories of operations are:authentication, get, info, and submit. Your account must be provisioned to use the OGWS before you can access the web service interface. If your account is not provisioned OGWS returns an HTTP error 401 (unauthorized). Note: For all methods described in this section, {version} version number is 1.0. 4.1 Authentication Methods This section describes the authentication methods available on the Gateway interface. 4.1.1 Token Description: Call this method to generate a bearer token, which is used for authentication when calling other web service methods. Syntax: POST api/v{version}/auth/token Rate Limited Call -Method: Yes -GET Authentication: Access ID and password supplied with the request body Notes: The client must make a request to the token endpoint by using the "application/x-www-form.urlencoded" format with a character encoding of UTF-8 in the HTTP request entity-body. Request The request body must contain the user account's access ID and password and include the mandatory grant type. client_id=7000000l&client secret=password&expires_in=31536000&grant type=client credentials client_id (required) User's access ID (a string beginning with 7) client_secret (required) User's access password expires_in (optional) Sets the token expire time in seconds, but only if less than the maximum allowed expire time {OGWS configuration parameter MaxTokenExpireT imeinDays). grant_type (required) Value MUST be set to client_credentials Response (includes bearer token) GetTokenResponse{ token_type string nullable: true example: bearer Indicates the token type value. The only supported type is bearer. expires_in integer($int32) nullable: true example: 31536000 The amount of time that the access token is valid (in seconds). N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 access_token string nullable: true example: eyJhbGciOiJIUzl1 Nilsl. ... PpNIOoX4bY The requested access token. error string nullable: true example: unauthorized_client An error code string 4.1.2 Invalidate Tokens Description:  This method revokes all previously issued tokens.  Syntax:  POST api/v{version)/auth/invalidate_tokens  Rate Limited Call -Method:  No  Authentication:  Bearer token  Notes:  A request with a revoked token made on another OGWS instance before the change has fully  propagated may still succeed.  4.2 Information Methods This section describes the information methods available on the Gateway interface. 4.2.1 Service Description: Returns web service information (version, list of error codes, ... ). Syntax: GET api/v{version)/info/service Rate Limited Call -Method: Yes-INFO Authentication: Bearer token Authorization: User Notes: This web service operation can be called by a back-office server application during its initialization sequence to create a dictionary of all available OGWS error codes. This dictionary allows back.office application to get both the name and the description of an error returned by the OGWS. Parameters GetErrorCodes If set to true, the web service call returns a list of all error codes. If set to false or omitted, a list of error codes is not returned. Responses 200 Call Success. Check ErrorlD for possible errors. Description Service response -includes the API version number and a list of error code information. ErrorlD integer($int32) nullable: true N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Contains error code in case a call to service failed. Zero for success. The field is only provided in the event of an error.  Version  string nullable: true  ErrorCodes  Web service version number (this is not the API version number) nullable: true Array of possible API error information  Errorlnfo{ description: ID Name Description })  API error information integer($int32) Error code string nullable: true Error code's name string nullable: true Error code's description  Example  "ErrorID":  0,  ''Version'':  ''5.1.8'',  "ErrorCodes":  [  "ID":  12308,  "Name":  "ERR_NDN_INVALID_BEAM",  "Description":  "Non  delivery  notification  reason:  invalid  beam  number"  401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns 'Too Many Requests". 4.2.2 Subaccount List Description: Retrieve a list of subaccounts linked to a caller's account. Syntax: GET api/v{version)/info/subaccount/list Rate Limited Call -Method: Yes-INFO Authentication: Bearer token Authorization: Superuser Responses N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 200 Call Success. Check ErrorlD for possible errors. GetSubaccountlnfoResponse{ Description ErrorlD  List of subaccounts linked to the caller's account integer($int32} nullable: true example: 0  Contains an error number or zero if there were no errors.  Subaccounts  nullable: true  Array of account information records. Subaccountlnfo{ description: AccountlD  Account information record integer($int32} example: 60023006  Subaccount ID  AccountName  string nullable: true example: Truck fleet A  }]  Subaccount Name  Example "Subaccounts": "AccountID": 60023006, "AccountName": "Truck fleet A", }, "AccountID": 60023007, "AccountName": "Truck fleet B", 401 When authentication and authorization fail. 403 When the caller is not a super account user the API returns "Forbidden¥. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 4.2.3 Terminals Description: Syntax: Rate Limited Call -Method: Authentication: Authorization: Notes: Parameters Since/D PageSize Responses Retrieve a list of terminal information belonging to caller's account. The request returns a maximum of pageSize Terminallnfo records. GET api/v{version}/info/terminals Yes-INFO Bearer token User Range of the pageSize parameter is 1 to 1000. Result records are sorted by terminal's prime ID. First call to the terminals should be set Since ID parameter to an empty string, and all subsequent calls to the prime ID of the last terminal returned within the previous call's result. of the previous call's result. Prime ID of the last retrieved terminal record. Maximum number of terminal records to return in a response. If not specified, default page size = 1000. The parameter value cannot exceed 1000. 200 Call Success. Check ErrorlD for possible errors. GetT erminalslnfoResponse{ Description Terminals response -includes a list of user accounts' terminal information records. ErrorlD integer($int32) nullable: true example: 0 Contains an error number or zero if there were no errors. Terminals nullable: true Array of terminal information records. Terminallnfo{ description: Terminal information record PrimelD string nullable: true example: 01000005SKYCD96 Primary terminal identifier. Terminals can have multiple identifiers; MTSN, IMEI, MEID or MAC address. During provisioning, one of these identifiers is marked as a primary ID. When set, the primary ID cannot be changed. All from-mobile messages contain the prime ID only. Description string nullable: true example: Test terminal 002 Description of the terminal. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 LastRegionName MTSN IMEI MEID MAC LastRegistrationUTC LastCellAccessUTC LastRegistrationMessagelD string nullable: true example: AMERRB9 Name of the satellite geo beam from where the last satellite terminal registration message came from. string nullable: true example: 01000005SKYCD96 The terminal serial number (used for satellite communication). string nullable: true example: 359739077429074 The terminal's IMEI. string nullable: true example: 99001092003340 The terminal's MEID. string nullable: true example: 00:00:Se:00:53:af Terminal's MAC address. string nullable: true example: 2022-01-22 20:00:24 UTC based time stamp of a last satellite terminal registration message. This field is valid only for satellite terminals. This field may be omitted from a response in case no valid value is available/ required. string nullable: true example: UTC time of the most recent communication between the terminal and the OGx Gateway over a cellular network. This field may be omitted from a response in case no valid value is available/ required. integer($int64) nullable: true example: 387611800032 ID of the most recent modem registration message. This field is valid only for satellite terminals and may be omitted from a response in case no valid value is available/ required. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 LastSatelliteNetwork LastOperationMode PairedTerminalPrimelD Example "ErrorID": 0, "Terminals": integer($int32) nullable: true The most recent satellite network this terminal was on: 0 -lsatData Pro 1 -OGx This field may be omitted from a response in case no valid value is available/ required. integer($int32) nullable: true Terminal operational mode: 0-ALWAYS_ON (OGx o lsatData Pro) 1 -WAKE._UP {OGx or lsatData Pro) 2 -MOBILE_RECEIVE._ON_SEND(OGx only) 3 -HYBRID (OGx only) This field may be omitted from a response in case no valid value is available/ required. string nullable: true Prime ID of the paired terminal when a satellite modem is paired with a cellular terminal. This field may be omitted from a response in case no valid value is available/ required. "Prime ID": "01000005SKYCD96", "Description": "Test terminal 002", "LastRegionName": "AMERRB9", "MTSN": "01000005SKYCD96", "IMEI": "359739077429074", "MEID": "99001092003340", "MAC": "00:00:5e:00:53:af", "LastRegistrationUTC": "2022-01-22 20:00:24", "LastSatelliteNetwork": 0, "LastRegistrationMessageID "á 7453876543, "LastOperationMode": 0 401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 4.2.4 Terminal Description:  Retrieve a terminal information belonging to caller's account. The request returns only one  Terminallnfo record.  Syntax:  GET  api/v{version}/info/terminal  Rate Limited Call -Method:  Yes-INFO  Authentication:  Bearer token  Authorization:  User  Parameters Prime/D The terminal's prime ID. Only retrieves information related to this terminal. Responses 200 Call Success. Check ErrorlD for possible errors. GetTerminallnfoResponse{ Description Terminal response -includes the terminal information record. ErrorlD integer($int32) nullable: true example: 0 Contains an error number or zero if there were no errors. Terminal nullable: true Array of terminal information records. Terminallnfo{ Refer to terminals for details Example "ErrorID" : 0, "Terminal": { "PrimeID": "01000005SKYCD96", "Description": "Test terminal 002", "LastRegionName": "AMERRB9", "MTSN": "01000005SKYCD96", "IMEi": "359739077429074", "MEID": "99001092003340", "MAC": "00:00:5e:00:53:af", "LastRegistrationUTC": "2022-01-22 20:00:24", "LastRegistrationMessageID ": 7453876543, "LastOperationMode": 0 N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint. the API returns "Too Many Requests". 4.2.5 Subaccount Terminals Description: Retrieve a list of terminal information belonging to caller's specified subaccount. The request returns a maximum of pageSize Terminallnfo records Syntax: GET api/v{version}/info/subaccount/terminals Rate Limited Call -Method: Yes-INFO Authentication: Bearer token Authorization: User Notes: Range of the pageSize parameter is 1 to 1000. Result records are sorted by terminal's prime ID. First call to the subaccounuerminals would set sincelD parameter to an empty string and all subsequent calls to the prime ID of the terminal from the end of the previous call's result. Parameters Since/D Prime ID of the last retrieved terminal record. PageSize Maximum number of terminal records to return in a response. If not specified, a default page size of 1000 is implied. The parameter value cannot exceed 1000. SubAccount/D Subaccount ID for which a terminal list is requested. Responses 200 Call Success. Check ErrorlD for possible errors. Response data schema is the same as for /info/terminals (refer to section 4.2.3) 401 When authentication and authorization fail. 403 When the caller is not a super account user the API returns "Forbidden". 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.2.6 Broadcast Description: Retrieve a list of broadcast information belonging to caller's account. Syntax: GET api/v{version}/info/broadcast Rate Limited Call -Method: Yes-INFO Authentication: Bearer token Authorization: User Responses 200 Call Success. Check ErrorlD for possible errors. GetBroadcastlnfoResponse{ Description 'broadcast' response -includes a list of user accounts' broadcast ID information records. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 ErrorlD integer($int32) nullable: true example: 0 Contains an error number or zero if there were no errors. BroadcastlDs nullable: true Array of broadcast information records. Broadcastlnfo{ description: Broadcast information record ID string nullable: true example: 16775830GRP2B2B Broadcast ID. Description string nullable: true example: Test broadcast ID Description of the broadcast ID. SatelliteNetwork integer($int32) nullable: true Satellite network this broadcast group is on: 0 -lsatData Pro This field may be omitted from a response in case no valid value is available/ required. }] Example "ErrorID": 0, "BroadcastIDs": "ID": "16775830GRP2B2B", "Description": "Test broadcast ID" "SatelliteNetwork": 0 401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 4.2.7 Subaccount Broadcast Description: Retrievea list of broadcast information belonging to caller's subaccount. Syntax: GET api/v{version}/info/subaccount/broadcast Rate Limited Call -Method: Yes-INFO Authentication: Bearer token Authorization: User Parameters SubAccount/D The requested broadcast list's subaccount ID. Responses 200 Call Success. Check ErrorlD for possible errors. Response data schema is the same as for /info/broadcast (refer to Broadcast for details) 401 When authentication and authorization fail. 403 When the caller is not a super account user the API returns "Forbidden". 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.3 Submit Methods This section provides a list of Gateway operations used to submit messages. The OGWS supports both OGx and lsatData Pro messages. The OGWS limits the number of outstanding to-mobile messages for each terminal. If there are more than 10 outstanding to-mobile messages of a certain size class (small, regular, or large) for a single terminal, the Gateway rejects them and reports an error message. OGx network messages have a payload limit of 1,023 bytes. lsatData Pro network messages have a small message payload of up to 400 bytes, medium messages up to and including 2000 bytes, and large messages up to 10,000. Outstanding messages are messages that have not yet been acknowledged by a terminal. When a message is submitted, it remains open until either a transmission acknowledgment is received, or an error condition causes the message to close. Figure 8 shows OGx submit message states for a to-mobile message. Because you can provision a terminal with more than one ID (MTSN and IMEI for example), you can use any of these IDs when submitting a to-mobile message. For over-the air traffic, the OGx gateway chooses the correct one depending on the transport available or requested to send the message. Use the /get/fw_statuses web service operation to query the message state. An OGx message has one of the following states: N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Figure 8: OGx Network Message States 1 -RECEIVED Closed states Table 1: OGx Message State Descriptions State  Description  0-ACCEPTED  Message accepted by the OGWS (for OGx network messages) or OGWS/IGWS (for lsatData Pro network messages).  1 -RECEIVED  Message acknowledged by its destination.  2-ERROR  Submission error (error reported by either OGWS, Network Processing Center, or the terminal). Check the error code.  3 -DELIVERY FAILED  Message failed to be delivered. Check the error code.  4-TIMED OUT  Message timed out by either the OGx Gateway or Network Processing Center.  5 -CANCELLED  Message cancelled.  7 -BROADCAST SUBMITTED  Broadcast Message transmitted.  8 -SENDING IN PROGRESS  Sending in progress (OGx network messages only).  The lsatData Pro network has the following message states: N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Figure 9: lsatData Pro Network Message States 1-RECEIVED Closed states Table 2: lsatData Pro Message State Descriptions State  Description  0-ACCEPTED  Gateway has accepted and queued the message.  1 ¥ RECEIVED  The Gateway received an acknowledgment that the terminal received the message.  2-ERROR  The message closed due to an error. An error code specifies the reason.  3 ¥ DELIVERY FAILED  Gateway failed to deliver the message to a terminal. An error code specifies the reason.  4-TIMED OUT  Message failed to be delivered within 120 minutes. A normal state when the message cannot be delivered is DELIVERY FAILED. TIMED OUT. This state is required in case the message is still not delivered 120 minutes after it was sent from the Gateway. Delayed send messages (WAITING state) time out based on their expiry time.  5 -CANCELLED  Message was successfully cancelled by the client application.  6-WAITING  The message has been sent with a delayed option and it is queued for sending when conditions are met.  7-BROADCAST SUBMITTED  lsatData Pro broadcast message submitted.  4.3.1 Submit Messages Description:  Allows users to submit one or more to-mobile messages to their terminals.  Syntax:  POST  api/v{version}/submit/messages  Rate Limited Call -Method:  Yes áSEND  Authentication:  Bearer token  Authorization:  User  Parameters  N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 No input parameters Request Body SubmitMessage{ Description A class that represents a to-mobile message. Destination ID string nullable: true example: 01008988SKY5909 Destination of the client message. This is either a terminal or a broadcast ID. This field can be omitted if 'submitToMultiple' method is used. In that case, a message destination is taken from the 'destinations' list, and this property is ignored even if specified. UserMessagel D integer($int64) nullable: true example: 2097 The UserMessagelD is the client's message identification number. The client must provide a user message ID if they want to map it to the Gateway's number -the ID in the FowardSubmission class. The Gateway does not store the UserMessagelD anywhere. This field is irrelevant if the SubmitMessagesToMultipleDestinations web service operation is called. RawPayload string($byte) -base64 encoded binary array nullable: true example: tAEyMDlyL TAyL TE3IDE2OjQwOTBfXzlfMTY0M ... zEwXzE2NDA0NV8xMV8xNjQwNC0xMzU= Contains a byte array of raw payload that is submitted to its destination unchanged. If both RawPayload and Payload are specified, then OGWS ignores the Payload data and sends only the RawPayload. RawPayload must follow the format of terminal messages. Payload  Common Message{  Name  string default: null nullable: true  SIN  integer($int32)  MIN  integer($int32)  lsForward  string default: null nullable: true  Fields  default: null nullable: true  CommonMessageField{  Name  string default null nullable: true  Value  string default null nullable: true  Type  string default null nullable: true  Elements  default: null nullable: true  N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 CommonMessageElement{ Index integer($int32} default: -1 Fields [...] }I Message { } } TransportType integer($int32} nullable: true Specifies a transport for sending of the to-mobile message. It is an optional property, and it should remain unspecified unless you want to limit your delivery options to a specific transport. Options include: "0" -Any transport (satellite or cellular). Default option if TransportType not specified. "1" -Satellite transport only. If this option is set, the message is never sent over the cellular network. "2" -Cellular transport only. MessageLifetime integer($int32} nullable: true example: 24 Maximum message lifetime in hours. If set, this value applies only to OGx network's terminals. DelayedSendOptions SatelliteDelayedSendOptions{ description If set, DelayedSendOptions properties (lsatData Pro terminals only} control how the message is sent. If DelayedSendOptions is not set, the message is sent as soon as possible. This option applies only to messages sent over the satellite network. If TransportType is set to "CELL", this option is ignored. By default, an account is not permitted to set this send option. Contact Partner Support for this permission. DelayedSend boolean example: true If set to true, to-mobile message are queued for sending only when the Gateway receives a from-mobile message from the destination terminal. MessageExpireUTC string nullable: true example: 2022-11-25 12:00:23 If no from-mobile message arrives before the MessageExpireUTC, the message are closed with a 'timed out' state. If MessageExpireUTC is not set, the Gateway sets it to 5 days from the time the message was submitted. Request Body Example "DestinationID": "01008988SKY5909", "UserMessageID": 2097, N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 "RawPayload": "B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F31363 43034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F31363430343 55F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==", "TransportType": 1, "DelayedSendOptions": "DelayedSend": true, "MessageExpireUTC": "2022-11-25 12:00:23" }, "DestinationID": "352648040000008", "UserMessageID": 2098, "RawPayload": "B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F31363 43034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F31363430343 55F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==", "TransportType": 2 }, "DestinationID": "01008988SKY5909", "UserMessageID": 2099, "Payload": { "Name": "getTerminalStatus", "SIN": 16, "MIN": 2, "IsForward": "True", "Fields": [] }, "TransportType": 2 Responses 200 Call Success. Check ErrorlD for possible errors. SubmitMessagesResponse{ Description Submit messages response N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 ErrorlD Submissions integer($int32) nullable: true example: 0 Contains error code in case a call to submit/ messages failed. Zero for success. nullable: true Array of FW message submission information ForwardSubmission{ description: ID Destination ID ErrorlD UserMessagelD OT AMessageSize Information about a submitted message returned by the web service. Each ForwardSubmission object contains information about one submitted to.mobile message. In the event of an error (that is, ErrorlD > 0), the message ID is not set. However, DestinationlD and UserMessagelD, if set, are returned in the response. integer($int64) nullable: true example: 10844864715 ID of the to-mobile message generated by the Gateway. The client can use the ID to query for status of the to-mobile message. ID value may roll over back to 1 once it reaches a maximum value for its type. This field may be omitted from a response in case no valid value is available/ required. string nullable: true example: 01008988SKY5909 The mobile ID or the broadcast ID where the message is sent. This field may be omitted from a response in case no valid value is available/ required. integer($int32) nullable: true example: 0 Contains an error number or zero if the message was accepted by the Gateway. This field may be omitted from a response in case there is no error. integer($int64) nullable: true example: 2097 When it is submitted with the message, the Gateway returns this number to allow the client application to map its local message IDs (that is, UserMessagelD) to Gateway generated IDs (that is, ID). This field may be omitted from a response in case no valid value is available/required. integer($int32) nullable: true Over-the-air message size in bytes. This field may be omitted from a response in case no valid value is available/required. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Response Example  "Submissions":  "ID": 10844864715, "DestinationID": "UserMessageID": "OTAMessageSize": },  "01008988SKY5909", 2097, 202  "ID": 10844864716, "DestinationID": "UserMessageID": "OTAMessageSize": },  "352648040000008", 2098, 202  "ErrorID": 21827, "UserMessageID":  2099  401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.3.2 Submit a Message to Multiple Destinations Description:  Allows users to submit one to-mobile message to multiple destination terminals.  Syntax:  POST api/v{version)/submit/to_multiple  Rate Limited Call -Method:  Yes-SEND  Authentication:  Bearer token  Authorization:  User  Parameters No input parameters Request Body SubmitMessageToDestinationsRequest{ Description Defines a body of the submit/to_multiple request N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Message  SubmitMessage{... }  Refer to Submit Messages for details.  Destinations  [List of terminal destinations.  string]  Destinationsof the client message. Destinations are either terminal or broadcast IDs.  RequestBody Example "Message": { "RawPayload": "B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F31363 43034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F31363430343 55F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==" }, "Destinations": "01008988SKY5909", "01008989SKY5900" Responses 200 Call Success. Check ErrorlD for possible errors. SubmitMessagesResponse{ Refer to Submit Messages for details. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Response Example "errorID": 0, "submissions": "id":  10844864715,  "destinationID":  "01008988SKY5909",  "userMessageID":  2097,  "otaMessageSize":  202  },  "id": 10844864716, "destinationID": "01008989SKY5900", "userMessageID": 2097, "otaMessageSize": 202 401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.3.3 Submit Cancellation Requests Description: Submits cancellation requests to selected to-mobile messages. Syntax: POST api/v{version}/submit/cancellations Rate Limited Call -Method: Yes-SEND Authentication: Bearer token Authorization: User Parameters No input parameters RequestBody List of to-mobile message IDs you want cancelled. [integer($int64)] RequestBody Example 10844864715, 10844864716, N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 10844864823, 10844864825 Responses 200 Call Success. Check ErrorlD for possible errors. SubmitCancellationsResponse{ description: The cancellations' response ErrorlD integer($int32} nullable: true example: 0 Contains error code in case a call failed. Zero for success. Cancellations nullable: true Array of FW message cancellation information SubmitCancellationResult{ description: Information about a submitted cancellation request returned by the web service . Each SubmitCancellationResult object contains information about one submitted cancellation request. In the event of an error (that is, ErrorlD > 0), the message ID is not set. ID integer($int64} nullable: true example: 10844864715 ID of a to-mobile message being cancelled. CancellationStatus integer($int32} nullable: true Status of this cancellation requests: 1 -Message immediately canceled since it has not been sent yet. 2 -Message already closed and cannot be canceled 3 -Message submitted, attempting to cancel it. Cancellation request's FWID available in this response. This field may be omitted from a response. CancelRequestlD integer($int64} nullable: true To-mobile message ID of the cancellation request. Your cancellation status depends on the status of this message. ErrorlD integer($int32} nullable: true example: 0 Contains an error number in case an error happened when trying to cancel the message. This field may be omitted from a response in case there is no error. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Response Example "Cancellations": "ID": 10844864715, "CancellationStatus": 1, "CancelRequestID": 10844869023 401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.4 Get Methods This section lists all the get methods provided by the OGWS. The Gateway restricts the frequency that clients can call get methods of the web service. A reasonable access rate for customers with many terminals is five (5) per minute. Accessing the web service more frequently may be rejected. If you call a web service too often, the web service immediately returns an HTTP error 429 -Too Many Requests. If you have a higher traffic rate or multiple back-office applications, you can request an increase to this limit. Because you can provision a terminal with more than one ID (for example, MTSN and IMEI), all from-mobile messages include the terminal's prime ID. For a list of common Gateway error codes, refer to the Service web service operation. 4.4.1 Retrieve To-Mobile (FW) Messages Description:  Retrieves to-mobile message records defined by an array of to-mobile message IDs (ID List). Only  messages belonging to the account calling this method (or one of its immediate subaccounts) is  retrieved.  Syntax:  GET api/v{version}/get/fw_messages  Rate Limited Call -Method:  Yes -GET  Authentication:  Bearer token  Authorization:  User  Parameters IDList List of to-mobile message IDs. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Responses 200 Call Success. Check ErrorlD for possible errors. GetForwardMessagesResponse{ description: Response to a call retrieving to-mobile (FW) messages. Contains a list of requested forward (to.mobile) messages. ErrorlD integer($int32) nullable: true example: 0 Present only if the web service call fails. In the event of a failure, the ErrorlD value serves as a reference for understanding the cause of the error. Messages nullable: true Array of requested FW (to-mobile) message records. Forward Message{ description: ID AccountlD StatusUTC CreateUTC lsClosed Information related to a single FW (to-mobile) message. integer($int64) nullable: true example: 10844864715 ID of the message. This is the message ID assigned by the Gateway when the message was first submitted. integer($int32) nullable: true example: 70092006 ID of the account that submitted the message. This field is present only in case the account that is asking for this information is not the account that the message belongs to. string nullable: true example: 2022-11-25 12:00:23 Time (UTC) of the most recent message status update. string nullable: true example: 2022-11-2512:00:03 Time (UTC) the message was created on the Gateway. boolean nullable: true example: true True if the message has been closed, or false if it is still open. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 State DestinationlD ErrorlD RawPayload Payload ReferenceNumber CancelationMessagelD Transport integer($int32) nullable: true example: 1 The latest state of the message. 0 -Message accepted by the OGWS. 1 -Message acknowledged by its destination. 2 -Submission error (error reported by either OGWS, Network Processing Center, or the terminal). Check the error code. 3 -Message failed to be delivered. Check the error code. 4 -Message timed out by either the OGx Gateway or Network Processing Center. 5 -Message cancelled. 6 -Message queued for delayed send (only applies for lsatData Pro network messages). 7 -Broadcast message transmitted. 8 -Message sending in progress. string nullable: true example: 01238909SKYE7 AE The mobile ID or broadcast ID of the message. integer($int32) nullable: true example: 14 An error number if the Gateway was not able to get the to-mobile message. This field may be omitted from a response in case there is no error. string($byte) -base64 encoded binary array nullable: true Raw message payload CommonMessage{... } integer($int32) nullable: true example: 1012 Message reference number. Some from-mobile messages can contain this number. It can be used to link to-and from-mobile messages. integer($int64) nullable: true example: 1012 Message ID of a message being cancelled. integer($int32) nullable: true Transport over which the message was sent. Options include: 1 -Message was sent over the satellite network. 2 -Message was sent over the cellular network. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 RegionName  string nullable:true  Name of the satellite geo beam from where the last satellite terminal registration message came from.  Network  0 .lsatData Pro network 1 -OGx network  Response Example "Messages": "ID": 10844864715, "StatusUTC": "2022-11-25 12:00:23", "CreateUTC": "2022-11-25 12:00:03", "IsClosed": true, "State": 1, "DestinationID": "01008988SKY5909", "Payload": { "Name": "getTerminalStatus", "SIN": 16, "MIN": 2, ''IsForward'': ''True'', "Fields": [] }, "ReferenceNumber": 1012, "Transport": 1, "RegionName": "AMERRB8", "Network": 1 }, "ID": 10844864716, "StatusUTC": "2022-11-25 12:00:15", "CreateUTC": "2022-11-25 12:00:04", "IsClosed": false, "State": 0, "DestinationID": "01008988SKY5909", "Payload": { "Name": "getTerminalStatus", "SIN": 16, "MIN": 2, ''IsForward'': ''True'', N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 "Fields": [] }, "ReferenceNumber": 1012, "Transport": 1 }, "ID": 10844864806, "ErrorID": 14 401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.4.2 Retrieve To-Mobile (FW} Statuses Description:  Retrieves statuses of submitted to-mobile messages defined by their OGWS assigned message  IDs. Only messages belonging to the account calling this method (or one of its immediate  subaccounts) are retrieved.  Syntax:  GET api/v{version}/get/fw_statuses  Rate Limited Call -Method:  Yes -GET  Authentication:  Bearer token  Authorization:  User  Parameters IDList List of to-mobile message IDs. Responses 200 Call Success. Check ErrorlD for possible errors. GetForwardStatusesResponse{ description: Contains a list of requested forward (to-mobile) message statuses. ErrorlD integer($int32) nullable: true example: 0 Present only if the web service call fails. In the event of a failure, the ErrorlD value serves as a reference for understanding the cause of the error. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 NextFromUTC Statuses string nullable: true This field only applies to fw_status_updates. A 'FromUTC' of a subsequent request's parameter needs to be set to this value. If you regularly poll for to-mobile messages' status changes, you have to use a high water mark returned here in your subsequent requests. Reusing high water mark (FromUTC) values while successfully retrieving large number of records results in throttling of your future requests. nullable: true Array of requested FW (to-mobile) message status records. Status Record{ description: ID AccountlD lsClosed State CreateUTC FW (to-mobile) message status information record. integer($int64) nullable: true example: 10844864715 ID of the message. This is the message ID assigned by the Gateway when the message was first submitted. integer($int32) nullable: true example: 70092006 ID of the account that submitted the message. This field is present only in case the account that is asking for this information is not the account that the message belongs to. boolean nullable: true example: true True if the message has been closed, or false if it is still open. integer($int32) nullable: true example: 1 The latest state of the message. "0" -Message accepted by the OGWS. "1" -Message acknowledged by its destination. "2" -Submission error (error reported by either OGWS, Network Processing Center, or the terminal). Check the error code. "3" -Message failed to be delivered. Check the error code. "4" -Message timed out by either the OGx Gateway or Network Processing Center. "5" -Message cancelled. "6" -Message queued for delayed send (this state only applies to lsatData Pro network messages). "7" -Broadcast message transmitted. "8" -Sending in progress. string nullable: true example: 2022-11-2512:00:03 Time (UTC) the message was created on the Gateway. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 StatusUTC  string nullable: true example: 2022-11-25 12:00:23  Time (UTC) of the most recent message status update.  ErrorlD  integer($int32) nullable: true example: 14  An error number if the Gateway was not able to get the to-mobile message. This field may be omitted from a response in case there is no error.  Transport  integer($int32) nullable: true  Transport over which the message was sent. Possible options:  "1" ."2" . message was sent over the satellite network. message was sent over the cellular network.  Region Name  string nullable: true  Name of the satellite geo beam from where the last satellite terminal registration message came from.  ReferenceNumber  integer($int32) nullable: true  Message reference number  Network  0 .1 . lsatData Pro OGx  Response Example "Statuses": "ID": 10844864715, "IsClosed": true, "State": 1, "CreateUTC": "2022-11-25 12:00:20", "StatusUTC": "2022-11-25 12:00:23", "Transport": 1, "RegionName": "AMERRB8", "ReferenceNumber": 41, "Network": 1 }, "ID": 10844864716, "IsClosed": false, "State": 0, N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 "CreateUTC":  "2022-11-25  "StatusUTC":  "2022-11-25  "Transport":  1,  "ReferenceNumber": 20, "Network": 1 }, "ID": 10844864806, "ErrorID": 14 12:00:00", 12:00:15", 401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.4.3 Retrieve To-Mobile (FW) Status Updates Description: Retrieves updates in statuses of submitted to-mobile messages since the specified time (UTC). Only messages belonging to the account calling this method are retrieved. No subaccounts' message statuses are retrieved. Syntax: GET api/v{version}/get/fw_status_updates Rate Limited Call -Method: Yes -GET Authentication: Bearer token Authorization: User Parameters FromUTC Retrieves status records of messages updated after FromUTC. The FromUTC format 'yyyy-MM-dd HH24:mm:ss' Responses 200 Call Success. Check ErrorlD for possible errors. GetForwardStatusesResponse{ description: Contains a list of requested forward (to-mobile) message statuses. ErrorlD integer($int32) nullable: true example: 0 Present only if the web service call fails. In the event of a failure, the ErrorlD value serves as a reference for understanding the cause of the error. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 NextFromUTC string nullable:true A 'FromUTC' of a subsequent request's parameter needs to be set to this value. If you regularly poll for to-mobile messages' status changes, you have to use a high water mark returned here in your subsequent requests. Reusing high water mark (FromUTC) values while successfully retrieving large number of records results in throttling of your future requests. Statuses nullable:true Array of requested FW (to-mobile) message status records. StatusRecord{... }) Refer to Retrieve To-Mobile (FW) Statusesfor details Response Example "Statuses": "ID":  10844864715,  "IsClosed":  true,  "State":  1,  "CreateUTC":  "2022-11-25  12:00:20",  "StatusUTC":  "2022-11-25  12:00:23",  "Transport":  1,  "RegionName":  "AMERRB8",  "ReferenceNumber": 41 }, "ID": 10844864716, "IsClosed": false, "State": 0, "CreateUTC": "2022-11-25 12:00:00", "StatusUTC": "2022-11-25 12:00:15", "Transport": 1, "ReferenceNumber": 20 }, "ID": 10844864806, "ErrorID": 14 N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.4.4 Retrieve To-Mobile (FW) Status Updates for Subaccounts Description: Retrieves updates in statuses of submitted to-mobile messages since the specified time (UTC). Only updates of to-mobile messages belonging to the specified subaccount of the account calling this method are retrieved. Syntax: GET api/v{version}/get/subaccount/fw_status_updates Rate Limited Call -Method: Yes -GET Authentication: Bearer token Authorization: Superuser Parameters subaccount/D Account ID of the subaccount for which FW status updates are being requested. That account needs to be a subaccount of the account making the call. FromUTC Retrieves status records of messages updated after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss' Responses 200 Call Success. Check ErrorlD for possible errors. GetForwardStatusesResponse{ Refer to section Retrieve To-Mobile (FW) Status Updates for details.: Response Example "Statuses": "ID":  10844864715,  "IsClosed":  true,  "State":  1,  "CreateUTC":  "2022-11-25  12:00:20",  "StatusUTC":  "2022-11-25  12:00:23",  "Transport":  1,  "RegionName":  "AMERRB8",  "ReferenceNumber": 41 }, "ID": 10844864716, "IsClosed": false, "State": 0, "CreateUTC": "2022-11-25 12:00:00", "StatusUTC": "2022-11-25 12:00:15", "Transport": 1, N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 "ReferenceNumber": 20 }, "ID": 10844864806, "ErrorID": 14 401 When authentication and authorization fail. 403 When the caller is not a super account user the API returns "Forbiddená. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.4.5 Retrieve To-Mobile (FW} Status Updates of All Subaccounts Description: Retrieves updates in statuses of submitted to-mobile messages since the specified time (UTC). Updates of to-mobile messages belonging to the account calling this method and ALL of its subaccounts are retrieved. Syntax: GET api/v{version}/get/subaccount/all/fw_status_updates Rate Limited Call -Method: Yes -GET Authentication: Bearer token Authorization: Superuser Parameters FromUTC Retrieves status records of messages updated after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss' Responses 200 Call Success. Check ErrorlD for possible errors. GetForwardStatusesResponse{ Refer to section Retrieve To-Mobile (FW) Status Updates for details.: Response Example "Statuses": "ID": 10844864715, "IsClosed": true, "State": 1, "CreateUTC": "2022-11-25 12:00:20", "StatusUTC": "2022-11-25 12:00:23", "Transport": 1, "RegionName": "AMERRB8", N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 "ReferenceNumber": 41 }, "ID": 10844864716, "IsClosed": false, "State": 0, "CreateUTC": "2022-11-25 "StatusUTC": "2022-11-25 "Transport": 1, "ReferenceNumber": 20 }, "ID": 10844864806, "ErrorID": 14 12:00:00", 12:00:15", 401 When authentication and authorization fail. 403 When the caller is not a super account user the API returns "Forbidden¥. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.4.6 Retrieve From-Mobile (RE) Messages Description: Retrieves return (from-mobile) messages received by the Gateway after the specified time (UTC). Only messages belonging to the account calling this method are retrieved. No subaccounts' message statuses are retrieved. Syntax: GET api/v{version}/get/re_messages Rate Limited Call -Method: Yes -GET Authentication: Bearer token Authorization: User Parameters FromUTC Retrieves status records of messages updated after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss' Include Types Set this field to true if you want the Payload to include field types. If not specified, default= false. lncludeRawPayload By default, the OGWS returns already decoded messages. If it needs to get the message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded message is returned. If not specified, default = false. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 Responses 200 Call success. Check ErrrolD for possible errors. GetReturnMessagesResponse{ description: Contains a list of from-mobile message records. ErrorlD integer($int32) nullable: true example: 0 Present only if the web service call fails. In the event of a failure, the ErrorlD value serves as a reference for understanding the cause of the error. NextFromUTC string nullable: true example: 2022-11-25 12:00:03 Contains the value of the next FromUTC field that the client needs to provide with a request to receive contiguous messages. This field may be omitted in case of an error or if no messages were returned by this response. If you regularly poll for from-mobile messages, you have to use a high-water mark returned here in your subsequent requests. Reusing high-water mark (FromUTC) values while successfully retrieving large number of records results in throttling of your future requests. Messages nullable: true Array of requested FW (to-mobile) message records. Return Message{ description: A class that represents a to-mobile message. ID integer($int64) nullable: true example: 10979489832 ID of the from-mobile message. This ID is a 64-bit unsigned number used by the Gateway to reference a message. MessageUTC string nullable: true example: 2022-11-25 12:00:03 The OGWS message time (UTC). A time when the message becomes available for retrieval. ReceiveUTC string nullable: true example: 2022-11-25 12:00:03 For a satellite traffic message -The time (UTC) when the message was received by the earth station. For a cellular traffic message -The Epoch or empty (that is, the value of the field is ignored or not supplied by the OGWS). SIN integer($int32) nullable: true example: 128 Message's Service Identification Number. The SIN is also included in the payload. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 MobilelD RawPayload Payload Region Name OT AMessageSize AccountlD Transport MobileOwnerlD Network }] string nullable: true example: 01008988SKY5909 Identification number (Prime ID) of the terminal that sent the message. string($byte) -base64 encoded binary array nullable: true This field contains the raw, binary payload of the message if the 'lncludeRawPayload' query parameter was set to true, or if the message decoding to a common message format was not possible. CommonMessage{... } string nullable: true example: AMERRBS For satellite traffic message -the terminal's region Name. integer($int32) nullable: true example: 20 Over-the-air message size in bytes. integer($int32) nullable: true example: 70092006 ID of the customer account the message was assigned to (used only when retrieving subaccounts' messages). integer($int32) nullable: true Over-the-air transport used to deliver the message. Possible options include: "1" -Message was sent over the satellite network. "2" -Message was sent over the cellular network. integer($int32) nullable: true ID of the customer account that the terminal belongs to. The field is present only if the account is different than the account retrieving the message. 0 -lsatData Pro 1 -OGx Response Example "Messages": "ID": 10844864715, "MessageUTC": "2022-11-25 12:00:03", N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 "ReceiveUTC": "2022-11-25 12:00:02", "SIN": 128, "MobileID": "01008988SKY5909", "RawPayload": "YQECAxY=", "Payload": "Name": "message_name", "SIN": 128, "MIN": 1, "IsForward": null, "Fields": [ "Name": "field_value", "Value": 11 0 11 , "Type": null, "Elements": null, "Message": null }, "RegionName": "AORW", "OTAMessageSize":  20,  "Transport":  1,  "MobileOwnerID":  60000120,  "Network":  1  401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint. the API returns "Too Many Requests". 4.4.7 Retrieve From-Mobile (RE) Subaccount Message Records Description: Retrieves return (from-mobile} messages received by OGx Gateway after the specified time (UTC}. Only messages belonging to the specified subaccount are retrieved. Syntax: GET api/v{version}/get/subaccount/re_messages Rate Limited Call -Method: Yes -GET Authentication: Bearer token Authorization: Superuser Parameters N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 FromUTC Retrieves message records received after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss' SubAccount/D Account ID of the subaccount for which messages are requested. That account needs to be a subaccount of the account making the call. Include Types Set this field to true if you want the Payload to include field types. If not specified, default= false. lncludeRawPay/oad By default, the OGWS returns already decoded messages. If it needs to get the message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded message is returned. If not specified, default = false. Responses 200 Call success. Check ErrorlD for possible errors. GetReturnMessagesResponse{ Refer to Retrieve From-Mobile (RE} Messages for details. 401 When authentication and authorization fail. 403 When the caller is not a super account user the API returns "Forbidden¥. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests". 4.4.8 Retrieve From-Mobile (RE) Message Records from All Subaccounts Description: Retrieves return (from-mobile} messages received by OGx Gateway after the specified time (UTC}. Messages belonging to the calling (super user account) and all of its subaccounts are retrieved. Syntax: GET api/v{version}/get/subaccounts/all/re_messages Rate Limited Call -Method: Yes -GET Authentication: Bearer token Authorization: Superuser Parameters FromUTC Retrieves message records received after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss' Include Types Set this field to true if you want the Payload to include field types. If not specified, a default= false. lncludeRawPay/oad By default, the OGWS returns already decoded messages. If it needs to get the message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded message is returned. If not specified, default = false. Responses 200 Call success. Check ErrorlD for possible errors. GetReturnMessagesResponse{ Refer to Retrieve From-Mobile (RE} Messages for details. 401 When authentication and authorization fail. 403 When the caller is not a super user account user the API returns "Forbidden". 429 When a user exceeds provisioned rate limits for a given API endpoint. the API returns "Too Many Requests". N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 5 COMMON MESSAGE FORMAT This section applies only to terminal users. All OGx messages (both to-mobile and from-mobile) can be defined by a common message format. Figure 10: Common Message Format (Data Structure) Message A Field A ,,Message ll r -8 Properties 8 Propertie.s,, ,,lsForward Name,,Fields,, MIN ,, Type,, I -,,rName Value,, SIN /# Elements Element A r l,, ' Fields 8 Properties.,,...,,Index Message  Instances of this data structure represent the message in both the to-mobile and from-mobile direction. Based on the message definitions, the Gateway encodes / decodes messages from / to this form.  lsForward  This field is relevant only if the message is part of another field. In that case, the message is a to-mobile message if set to true. Otherwise it is a from-mobile message.  MIN  Message identification number for the given SIN.  Name  Message name  SIN  Service identification number  Fields  An array of Field(instances of the field data structure). Each Field could be made of either a name/ value pair or contain another array of fields.  Field  A field is made of a name/ value pair or an array of elements. If the client specifies both, the Gateway rejects the message.  Name  Field name  Type  Type of the field -refer to Table 3 for more details.  Value  Value of the field.  Message  A message embedded within a field.  Elements  Array of Element(instances of the element data structure).  Element  Element indexed structure containing one or more fields.  Index  Element's index  Fields  Element's fields  5.1 Common Message Fields There are 10 types of common message fields. The attributes and elements used are determined by the field type, which is specified when the message is defined using Developer Studio. Table 3: Common MessageFields Developer Studio Field Type  Type Attribute (used by Dynamic or Property fields)  Value Attribute  Enum  enum  Enumeration value  Boolean  boolean  True or False  Unsigned Int  unsigned int  Decimal number  Signed Int  signedint  Decimal number  String  string  String  Data  data  Base64 encoded data  Array  array  None  Message  message  None  Dynamic  (one of above)  (depends on type)  Property  (one of above)  (depends on type)  5.1.1 Common Message Example Following is an example of a common message. "Payload": { ''Name'': ''position'', "SIN": 20, "MIN": 1, "IsForward": null, "Fields": "Name": "fixValid", "Value": "True", "Type": "boolean", "Elements": null, "Message": null }, "Name": "fixType", "Value": "3D", "Type": "enum", N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 "Elements": "Message": }, ''Name'': "Value": "Type": "Elements": "Message": }, "Name": "Value": ''Type'': "Elements": "Message": }, ''Name'': "Value": ''Type'': "Elements": "Message": }, "Name": "Value": "Type": "Elements": "Message": }, "Name": "Value": ''Type'': "Elements": "Message": }, null, null ''latitude'', "2717897", "signedint", null, null "longitude", "-4555212", ''signedint'', null, null ''altitude'', "760", ''signedint'', null, null "speed", "0", "unsignedint", null, null "heading", "0", ''unsignedint'', null, null N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 "Name": "times tamp", "Value": "1695145141", "Type": "signedint", "Elements": null, "Message": null N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023 APPENDIX A HTTP ERROR CODES HTTP Code  Description  200  Call success. Check ErrorlD for possible errors.  401  When authentication and authorization fail.  403  When the caller is not a super account user the API returns "Forbidden".  429  When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".  503  "Service Unavailable" because the limiter is not a 'per account' limiter.  APPENDIX B INTERFACE TEST SYSTEM Overview ORBCOMM provides test portals corresponding to all the major traffic and administrative enterprise to enterprise (e2e) interfaces. This section outlines the necessary connection parameters for the OGWS. ORBCOMM's intent is that this test interface is always available for your back-office development testing, and ORBCOMM endeavors to roll out new network interface software on this portal one month prior to roll out on the associated network servers. OGWS Access ID  70000934 {Superuser account containing 70000935 as a subaccount. Messages can be sent to terminals belonging to its subaccounts)  Password  password  Access ID  70000935 {User account)  Password  password  GET/SEND web service call frequency limits  10 per minute  Mobile ID  OGx-00002000SKY9307 OGx-00002001SKY9317 lsatData Pro -01097623SKY2C68 lsatData Pro -01014034SKY9397  External URLs  https://ogws.swlab.ca/docs/api/index.html OGWS URL: https://ogws.swlab.ca/api/v1 .0/  All messages sent to the terminal are immediately acknowledged by a mobile simulator. N214, Version 0.05 OGx BETA ORBCOMM¨ PROPRIETARY AND CONFIDENTIAL© Dec 2023
+ORBC0MMï¿½
+WHERE DATA DRIVES DECISIONS
+OGx Gateway Web Service (OGWS) User Guide
+N214, Version 0.05 OGx BET A Dec 2023
+ï¿½ORBCOMMï¿½
+CONTACT AND LEGAL INFORMATION Visit ORBCOMM Online
+Website: www.ORBCOMM.com Office: 395 W Passaic Street, Suite 325, Rochelle Park, NJ 07662 USA
+Contact Support
+Website: https://www.orbcomm.com/ en/support
+Email: customer.care@orbcomm.com OR FMSupport@orbcomm.com (Fleet Management support needs)
+Phone: (North America Toll-Free) 1.800.ORBCOMM (United Kingdom Toll-Free) +44 800 538.5909
+(USA/ International Toll) +1.804.404.8681 (United Kingdom Toll) +44 20 3855.6153
+(Australia Toll) +61 (8) 6186 9633 (Austria, Germany, Switzerland Toll) +49 89.208045522
+(NewZealand Toll) +64 (9) 8841439 (Ireland Toll) +353 1.582.4013
+
+Export Control Statement
+The contents of this document, in whole or in part, shall not be exported from the United States, which export shall include, but not be limited to, transmittal to any non-U.S. citizen wherever said person is located, except in accordance with all United States laws and regulations relating to exports and to all administrative acts of the U.S. Government pursuant to such laws and regulations. Diversion, re-export or transshipment of the contents of this document, in whole or in part, contrary to U.S. law is also strictly prohibited.
+
+Trademark Notice
+The ORBCOMM name and logo are registered trademarks of ORBCOMM Inc. and may not be used without permission. Other trademarks, trade names, and logos are those of their respective owners.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+
+
+TABLE OF CONTENTS
+Contact and Legal lnfonnation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2 Contact Support . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2 Trademark Notice . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2 TABLE OF CONTENTS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3 List of Figures . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 List of Tables . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 Preface ................................................................................................................................... 6
+Purpose ...................................................................................................................... 6 Notation ...................................................................................................................... 6 Reference . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6 Errata Sheet . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6 1 Overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+1.1 Terminals . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+1.2 Gateway Accounts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8 2 The OGWS Protocol ................................................................................................................ . 11
+2.1 Submit Messages ..................................................................................................... 12
+2.1.1 Message Timeout ................................................................................................ 12
+2.2 Get From-Mobile Messages ........................................................................................ 12
+2.2.1 OGWS Client Application Guidelines ......................................................................... 13
+2.3 Message Retention and Limitations .............................................................................. 14
+2.3.1 Firewall Limits .................................................................................................... 14
+2.3.2 Call Frequency Limits ........................................................................................... 14
+2.3.3 Message Submission and Retrieval Count Limits ........................................................ 15
+2.3.4 Time Stamp Values .............................................................................................. 15 3 OGWS Web Service ................................................................................................................. 16
+3.1 User Authentication ................................................................................................... 16
+3.1.1 Revoke Tokens ................................................................................................... 16
+3.1.2 Bearer Token Examples ........................................................................................ 16
+3.1.2.1 Obtain a Bearer Token ...................................................................................... 16
+3.1.2.2 Authenticate API Requests with a Bearer Token ......................................................
+17
+3.2 Authorization Roles ...................................................................................................
+18
+3.3 API Versions ...........................................................................................................
+18
+3.4 Access Throttling .....................................................................................................
+18
+3.4.1 Firewall Limits ....................................................................................................
+18
+3.4.2 Account Level Request Throttling ............................................................................
+18
+3.4.2.1 Account Based Sliding Window Request Limiter ......................................................
+18
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+3.4.2.2 Account Based Concurrency Limiter .....................................................................
+19
+3.4.2.3 Rate of Submitted To-Mobile Messages ................................................................
+19
+3.4.2.4 Rate of Retrieved To-Mobile Message Statuses .......................................................
+19
+3.5 Developer Tools .......................................................................................................
+19 4 OGWS Application Programming Interface ....................................................................................
+21
+4.1 Authentication Methods .............................................................................................
+21
+4.1.1 Token ............................................................................................................... 21
+4.1.2 Invalidate Tokens ................................................................................................ 22
+4.2 Information Methods ................................................................................................. 22
+4.2.1 Service ............................................................................................................. 22
+4.2.2 Subaccount List .................................................................................................. 23
+4.2.3 Terminals .......................................................................................................... 25
+4.2.4 Terminal ........................................................................................................... 28
+4.2.5 Subaccount Terminals .......................................................................................... 29
+4.2.6 Broadcast .......................................................................................................... 29
+4.2.7 Subaccount Broadcast .......................................................................................... 31
+4.3 Submit Methods ....................................................................................................... 31
+4.3.1 Submit Messages ................................................................................................ 33
+4.3.2 Submit a Message to Multiple Destinations ............................................................... 38
+4.3.3 Submit Cancellation Requests ................................................................................ 40
+4.4 Get Methods ............................................................................................................ 42
+4.4.1 Retrieve To-Mobile (FW) Messages ......................................................................... 42
+4.4.2 Retrieve To-Mobile (FW) Statuses ........................................................................... 46
+4.4.3 Retrieve To-Mobile (FW) Status Updates ................................................................... 49
+4.4.4 Retrieve To-Mobile (FW) Status Updates for Subaccounts ............................................. 51
+4.4.5 Retrieve To-Mobile (FW) Status Updates of All Subaccounts .......................................... 52
+4.4.6 Retrieve From-Mobile (RE) Messages ....................................................................... 53
+4.4.7 Retrieve From-Mobile (RE) Subaccount Message Records ............................................. 56
+4.4.8 Retrieve From-Mobile (RE) Message Records from All Subaccounts ................................ 57 5 Common Message Fonnat ....................................................................................................... . 58
+5.1 Common Message Fields ........................................................................................... 59
+5.1.1 Common Message Example ...................................................................................
+59 APPENDIX A HTTP Error Codes ...................................................................................................
+62 APPENDIX B Interface Test System ..............................................................................................
+63
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+
+
+LIST OF FIGURES
+Figure 1: Gateway Interface .......................................................................................................
+7 Figure 2: OGWS in the Context of the Network . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 Figure 3: Multiple Clients . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8 Figure 4: OGx/lsatData Pro Mobile Gateway Accounts ......................................................................
+9 Figure 5: Subaccounts Relationship ............................................................................................. 10 Figure 6: Overview of OGWS ...................................................................................................... 11 Figure 7: Getting Messages ....................................................................................................... 13 Figure 8: OGx Network Message States ........................................................................................ 32 Figure 9: lsatData Pro Network Message States .............................................................................. 33 Figure 10: Common Message Format (Data Structure) ..................................................................... 58
+
+LIST OF TABLES
+Table 1: OGx Message State Descriptions ..................................................................................... 32 Table 2: lsatData Pro Message State Descriptions .......................................................................... 33 Table 3: Common Message Fields .............................................................................................. 59
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+PREFACE
+Purpose
+This guide provides an overview of the OGx Gateway Web Service (OGWS) for developers and defines the OGWS interface for both terminal and modem users.
+
+Notation
+OGx Gateway Web Service is platform independent. Many code examples in this document are in C# for Microsoftï¿½ .NET 7 or higher using Microsoftï¿½ Visual Studioï¿½ 2022.
+A to-mobile (forward) message is a message sent to the terminal from the gateway, while a from-mobile (return) message is one sent from the terminal.
+Content in this guide applies to both terminal and modem users unless noted otherwise.
+
+Reference
+It is recommended that you be familiar with the content of the following documents before using this guide. These documents are available from the Partner Support website (partner-support.orbcomm.com) or the ORBCOMM Developer Toolkit, also available from the website. Always check the website for the most current documentation releases or release notes.
+Document names and numbers are subject to change, or be discontinued, without notice.
+[N204]  Versa Automated Provisioning Protocol (VAPP)
+[N415]  OGx Network Overview
+[T404]  LSF Developer Guide
+[T405]  LSF API Reference Guide
+[T415]  AT Interface Developer Guide -OGx
+
+
+Errata Sheet
+Refer to the Partner Support website (partner-support.orbcomm.com) for any possible Errata Sheets available after the release of this guide.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½PROPRIETARYAND CONFIDENTIALï¿½ Dec 2023
+
+
+1 OVERVIEW
+The OGx network provides messaging services between terminals and an Internet application. This guide defines the OGx Gateway Web Service (OGWS) protocol, which customers can use to submit and retrieve messages to and from their terminals from their Internet application. OGWS users can submit messages to terminals on the OGx network or the lsatData Pro network and retrieve messages from terminals either on the OGx network or the lsatData Pro network.
+The OGWS API is a REST JSON based API used to submit and retrieve terminal messages, retrieve users' account data, and retrieve statuses of submitted messages.
+The web service accepts messages for both lsatData Pro and OGx terminals. Whether a message goes through the lsatData Pro or the OGx network depends on which network the terminal is registered.
+Modem messages are described in [T415].
+Figure 1: Gateway Interface
+Client Applications OGWS
+
+0.
+
+Figure 2 shows the position of OGWS in the message chain.
+Figure 2: OGWS in the Context of the Network
+Cusiornar'sserversI server applications
+OGWS
+~~
+
+
+
+
+
+/~~/
+
+----------.~ i] End u.$t;r ~Pi,'fl<:_ \Q
+00fl$ ,r;;1;11-,v,rtuni~1.ti11g (l,Je,:11)'1D OGWS
+ï¿½i...d ,1;,-.,r ~pplic;Jlions c,,,~n,1,,nic~~~ to cwS1omefs1>8tkï¿½1~e ~ertem
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+The OGWS is primarily used to support a back-office server exchanging messages with the web service and exposing those messages or a subset to its own client applications. However, desktop or mobile applications can also connect directly to the web service, when appropriate.
+Multiple clients can access the same account on the Gateway. Any Gateway account restrictions apply to the account, not to the client. Refer to section 3.4 for more details.
+Figure3: Multiple Clients
+Cu~tomer OGWS client applications
+
+OGWS
+Mobile terminals
+Aceeï¿½" ID: 7000234 Acee.,; 10: 7000234
+~--~o-.
+
+Access10, 7000234
+Desllto~mobile ~ aW1ioatiooï¿½ <:::>~
+Each client must maintain its own high-watermark to extract messages in sequence. The Gateway uses high.watermarks to return the latest messages to client applications. Along with the latest messages, the Gateway returns the next high-watermark. The client must save this high-watermark and use it for future access.
+1.1 Terminals
+A terminal must be activated to send and receive messages. Terminals can be activated using the Partner Support website or through the provisioning API (VAPP ). A terminal can only be activated on a single Gateway account.
+
+1.2 Gateway Accounts
+Every Gateway customer has an account on the Gateway, which comprises the following:
+Credentials in the form of access ID/ password pair
+Account configuration, restrictions, and access limits
+Set of mobile IDs
+Set of broadcast IDs 1
+Set of subaccount IDs
+Message definitions
+
+
+
+The Gateway uses message definitions to encode to-mobile message payloads and decode from-mobile
+message payloads. This allows bit-efficient transport of data over the OGx satellite network but allows the
+Gateway to present an interface that consists of named fields of various data types.
+Message definition files are created using the Developer Studio tool found in the ORBCOMM Developer Toolkit.
+Upload and manage the message definition file from the Partner Support website (Online Utilities link) if you want
+the Gateway to decode your messages. If the Manage Message Definition Files option is not available, contact
+Partner Support for assistance.
+A Gateway user can:
+Send messages to terminals associated with its account or subaccounts.
+Broadcast messages to groups of terminals represented by a broadcast ID associated with its account or subaccounts.
+Retrieve messages from terminals associated with its account or subaccounts.
+
+
+Figure4: OGx Mobile Gateway Accounts
+OGGx Gateway account
+Mobileterrninals
+Access ID password Access limits Account information
+Broadcast groups
+Subaccounts
+
+A subaccount is a separate Gateway account (Figure 5), which a Gateway user can access using their own access ID and password.
+If a Gateway account contains one or more subaccounts, users accessing this account can send and receive messages to terminals belonging to other Gateway accounts (its subaccounts).
+The user must explicitly provide the optional subaccount ID to send or receive messages to the subaccount's mobile IDs or broadcast IDs.
+For example, if account B is not a subaccount of account A, users accessing account A are unable to send receive messages to the mobile IDs or broadcast IDs of account B.
+
+
+OGx Gateway account
+Mobile terminals
+Access limits Account informatlon
+Broadcast groups
+OGx Gateway account Subaocounts Mobile terminal ID
+
+Access ID/password Access limits Account information Broadcast groups
+
+Subaccounts
+
+OGx Gateway account
+Mobile terminals
+Access
+10/pasword Access limrts Account Information Broodcast groups
+
+Every subaccount ID points to another Gateway account with its own set of mobile IDs and broadcast IDs. A subaccount for one Gateway user could be the primary account for another Gateway user, which means a subaccount can have its own further subaccounts. An account with subaccount A does not inherit the subaccounts of account A. A Gateway account can only send/receive messages to terminals belonging to itself or its subaccounts.
+From-mobile message billing is done for the Gateway account to which the terminal belongs. If a message is sent from a terminal, the account where the terminal is activated is billed, regardless of whether the from-mobile message was requested by a to-mobile message from a different account.
+By default, to-mobile message billing is processed for the Gateway account to which the terminal belongs. Contact Partner Support if you want to change this billing behavior.
+Account and subaccount IDs must be provisioned by Partner Support.
+
+
+
+
+2 THE OGWS PROTOCOL
+The URL of the OGWS is https://ogws.orbcomm.com/api/v1 .0. Figure 6: Overview of OGWS OGwsclient ap pll ca.ti on
+ltok-e:r1
+
+
+Note: A test system is provided with the updated web service interface at least 30 days before release of the update. Customers are encouraged to test their applications in advance of the upgrade using this test system. Refer to APPENDIX B for details.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+2.1 Submit Messages
+The client application prepares a message to be submitted to a terminal and uses one of the Submit web service operations (Section 4.3). If the OGWS accepts the message, the client application receives a Gateway generated message ID of the submitted message; otherwise the client receives an error code.
+To map the client application's message IDs to the Gateway generated message IDs, client applications can optionally submit a UserMessagelD with the message. The UserMessagelD is returned as a response together with a Forward Message ID generated by the Gateway.
+2.1.1 Message Timeout
+If a terminal is offline blocked and a to-mobile message cannot be delivered, the OGx Gateway closes the message after 10 days. The client application may also request the Gateway cancel the message at any time.
+
+
+2.2 Get From-Mobile Messages
+To start polling the Gateway, a client application typically uses the Gateway's current time as a first high-watermark. The subsequent high-watermarks are returned with each successful /get/re_messages. Calls that are not successful (responses ErrorCode > 0) or calls that do not return messages, do not contain a valid next high-watermark in the response.
+Client applications should always store the last valid high-watermark and use it in subsequent calls.
+When the /get/re_messages returns, it provides new high-watermark information that the client application needs to use for the next call. A single response returns a maximum of 500 messages.
+Figure 7 shows a client application polling the web service for response messages. The client application needs to pass a valid access token and message filter information. The high-watermark is part of the message filter. With every call to the Gateway's /get/re_messages, the client application needs to provide at least the high-watermark information.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Figure 7: Getting Messages OGWS client application OGWS
+/sut>mitlmHH M TOken and account verifications,call throttling l'erlflcations
+
+MSIW gecontentan<l messagiedestination verlffcatlo11s.
+OGW.. fOIWOrdn?e/i/SIIQeID,LJ(ll1tMUSIJQeID
+
+Senoi.themessage,out
+Check for erro~wlhin themessag:eresponse, retrieve 0OWS g~nsrllled 10
+/gft/fvt_s.taluan(HWMor ID list)
+Retnevusatusesol requeste-cr
+me,sa9nor retrlevit a lls.t or u pctatecl statuSH since 1114 S1Jppl&<IHWt.1
+2.2.1 OGWS Client Application Guidelines
+Client applications should:
+ï¿½
+Provide a valid high-watermark (a nonempty FromUTC property from a previous response) with each /get/re_ messages call. Failure to do so results in the OGWS unnecessarily returning the same set of messages with each call.
+
+ï¿½
+Store the most recently received high-watermark to a persistent store so that it can be used with the next call, or when the application needs to restart. A valid next high-watermark is returned as part of a /get/re_messages call response that has returned at least one message. Any /get/re_messages calls that return no messages do not contain a valid next high-watermark.
+
+ï¿½
+Set an HTTP request timeout to at least 60 seconds to allow enough time for a response to arrive. Explicitly set the value because default values vary between different development environments.
+
+ï¿½
+Query for new messages with a reasonable frequency. OGWS implements several throttling methods that may result in rejected calls. Each OGWS access account is provisioned for a maximum call rate. This does not mean that a client application should call the OGWS often. If your terminals produce less than 300 messages per minute, your client application should not query the OGWS more frequently than once per minute. If you have
+
+
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+higher traffic rates, you can request a query frequency limit increase.
+ï¿½ Wait for a response from each /get/re_messages call before issuing a new one. Failure to do so could result in several /get/re_messages requests being processed in parallel. The OGWS rejects /get/re_messages requests if it detects that it is already processing three old requests from the same OGWS account. If that happens, the web service request fails with HTTP error 429 -too many requests.
+During regular message polling, client applications should not:
+ï¿½
+Repeat the same high-watermark in case a new high-watermark has been provided in a previous response.This behavior causes the application to always get the same duplicate set of old messages. Because OGx allows the retrieval of from-mobile messages for up to five days, this mistake can prevent retrieval of older messages.
+
+ï¿½
+Use a high-watermark from a set number of hours/days in the past. This allows you to query mostly old messages. Each /get/re_messages call returns mostly duplicate messages and occasionally several newer ones.
+
+ï¿½
+Call the OGWS too frequently about terminal traffic. In this case, most /get/re_messages calls return empty results and can quickly exhaust the GET frequency limit -especially in cases where you query the OGWS from more than one client application.
+
+ï¿½
+If your client application performs /get/re_messages calls from a periodic timer, the application must ensure that the previous call to /get/re_messages has finished before it issues a new one. Not addressing this issue can result in multiple calls being made using the same high-watermark running in parallel.
+
+
+
+
+2.3 Message Retention and Limitations
+OGWS allows the retrieval of from-mobile messages for up to five (5) days. Any customer application requiring access to messages older than five days must retrieve the messages when available and store them locally for later retrieval.
+2.3.1 Firewall Limits
+The ORBCOMM firewall allows up to 10 simultaneous connections to the web service originating from the same IP address,whetherfrom one or multiple client applications, and whether accessing a single or multiple accounts.This limit is unrelated to any other limit imposed by the OGWS.
+
+2.3.2 Call Frequency Limits
+Each OGWS account is assigned a GET, INFO, and SEND frequency of five calls for a window of 60 seconds. A limit of 10 means that each OGWS account can perform at most 10 GET and 10 SEND web service operations within a 1-minute interval. If web service calls are performed more frequently, an HTTP error 429 -too many requests is returned. If that happens, the client application must wait for a short while and then repeat the same request until it no longer receives the error. The error code can occur frequently if you use more than one client application to access the OGWS using the same account.
+Customers with higher traffic rates can request a limit increase.
+The current limit of 10 allows you to query up to 5,000 from-mobile messages and to-mobile statuses per minute.
+Any /get/re_messages calls executed in parallel also have a limit. If you have more than three (3) /get/re_messages calls running in parallel, subsequent calls fail until some of the running calls complete.
+Each web service method describes the throttling group.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ AND CONFIDENTIALï¿½
+PROPRIETARY Dec 2023
+
+2.3.3 Message Submission and Retrieval Count Limits
+The following limits apply to listed web service operations:
+ï¿½
+Any re_messages web service operation -Returns up to 500 messages.
+
+ï¿½
+Any fw_statuses web service operation -Returns up to 500 statuses if a time stamp is used as a high.watermark, or 100 statuses if message IDs (up to 100) are specified in its request filter.
+
+ï¿½
+/fw_messages -Returns up to 100 messages and accepts up to 100 message IDs in its request filter.
+
+ï¿½
+Any submit message web service operation -Sends up to 100 to-mobile messages in one web service call.
+
+
+
+2.3.4 Time Stamp Values
+The OGWS expects UTCbased time in all web service calls containing time values and it returns UTC based time in all responses containing time values.
+Time values should be in the following format:
+YYYY-MM-DD hh:mm:ss
+where:
+YYYY -year (for example, 2024) MM -month (01 to 12) DD-day (01 to 31) hh -hour (00 to 23) mm -minute (00 to 59) ss -second (00 to 59)
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+
+
+
+3 OGWS WEB SERVICE
+3.1 User Authentication
+The OGWS offers applications the ability to issue authenticated requests on behalf of the application itself, as opposed to on behalf of a specific user.
+To use this method, users need to use a bearer token. They can generate a bearer token by passing their Access ID and password through the POST api/v{version} /au th/token endpoint.
+The application-only auth flow follows this order:
+1.
+An application encodes its access ID, password, and token expiry time (in seconds) into a specially encoded set of credentials. If token expiry time is not supplied, the web service uses a default value of 7 days, otherwise, the specified token expiry time is used, provided it does not exceed 365 days.
+
+2.
+An application makes a request to the POST api/v{version} / au th/token endpoint to exchange these credentials for a bearer token.
+
+3.
+When accessing the REST API, the application uses the bearer token to authenticate.
+
+
+Tokens include user access ID and token expire time, so requests made using a bearer token can be authenticated against individual OGWS user accounts. Users can revoke all issued tokens before they expire by calling the POST auth/ invalidate_ tokens endpoint. Requests made using invalid or revoked bearer tokens result in an HTTP error 401 -Unauthorized error.
+Tokens are client Access ID, password, and the bearer token itself grant access to make requests on behalf of an passwords application. DO NOT share these values.
+3.1.1 Revoke Tokens
+Users can revoke all valid tokens by calling the GET api/v {version}/ auth/ invalidate_ tokens endpoint. All previously issued tokens, independent of their expiry time, are no longer successfully authenticated by the OGWS (equivalent to 'sign off all clients').
+Note: Valid tokens may still authenticate for a short period of time after they have been invalidated as their cancellation propagates to all OGWS servers.
+
+3.1.2 Bearer Token Examples
+3.1.2.1 Obtain a Bearer Token
+The access ID/ password must be exchanged for a bearer token by issuing a request to POST auth/token:
+ï¿½
+The request must be an HTTP POST request.
+
+ï¿½
+The request must include a Content-Type header with the value of application/ x-www-forrn.urlencoded.
+
+ï¿½
+The body of the request must include user credentials.
+
+
+Request:
+POST https://ogws.orbcornm.com/api/vl.0/auth/token Content-Type: application/x-www-form-urlencoded
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+User-Agent: PostmanRuntime/7.28.4 Accept: * /* Cache-Control: no-cache Accept-Encoding: gzip, deflate, br Connection: keep-alive client id=70000001&client secret=password&expires in=31536000&grant_type=client credentials
+Response(includes the bearer token):
+Transfer-Encoding: chunked Content-Type: text/plain; charset=utf-8 Content-Encoding: gzip Vary: Accept-Encoding Server: Microsoft-IIS/10.0 api-supported-versions: 1.0 X-Powered-By: ASP.NET {"token_type":"bearer","expires in":31536000,"access_ token":"eyJhbGciOiJIUzI1NiisinR5cCI6IkpXVCJ9.eyJpZCI6IjcwMDAwMDAxiiwicm9sZSI6IlByb3Zpc2lvb mluZyisim5iZiI6MTY4NTA0MTAlMCwiZXhwijoxNzE2NTc3MDUwLCJpYXQiOjE2ODUwNDEwNTAsimlzcyI6IlNlY3V yZUFwaSisimF1ZCI6IlNlY3VyZUFwaVVzZXIifQ.lxlz-2UEsjCH2RqxfZf8i3YqJclwZkrwtrHy7Kehlvc"}
+
+
+3.1.2.2 Authenticate API Requests with a Bearer Token
+Use a bearer token to issue requests to the API. To use the bearer token, construct a normal HTTPS request and include an Authorization header with the value of bearer <base64 bearer token value from the previous example>.
+Request:
+GET https://ogws.orbcomm.com/api/vl.0/messages Authorization: Bearer eyJhbGciOiJIUzI1NiisinR5cCI6IkpXVCJ9.eyJleHAiOjE2MzgzMDA5NDAsimlzcyI6IkFQSSBVUkwiLCJhdWQiO iJBUEkgVVJMin0.PGwVKS31UoXSnVugjdzUMveUXRfGe0cFc7_BbmnSY9o User-Agent: PostmanRuntime/7.28.4 Accept: */* Cache-Control: no-cache Accept-Encoding: gzip, deflate, br Connection: keep-alive
+Response:
+Transfer-Encoding: chunked Content-Type: application/json; charset=utf-8 Server: Microsoft-IIS/10.0 api-supported-versions: 1.0 X-Powered-By: ASP.NET
+[{ ...
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+
+
+
+3.2 Authorization Roles
+Each OGWS endpoint request must be authorized after it is authenticated. The OGWS recognizes these roles:
+User  All web service users belong to this role by default. They can access most of the customer interface endpoints.
+Superuser  Super accounts have this role. These users can access endpoints that can access account/ message information belonging to their subaccounts. Requests from User roles to these endpoints are rejected with the 'Forbidden' error.
+
+
+3.3 API Versions
+Changes and updates to OGWS are generally backwards compatible, however, at times breaking changes are required.
+Version:This refers to the version number found in the URL path of any API request (for example, GET api/v{version_ number}/messages).
+Breaking Changes: Breaking changes are changes that require customer development actions to maintain existing functionality. A list of breaking changes may include:
+ï¿½
+Removing a parameter from the API request/response
+
+ï¿½
+Modifying the name or type of parameter or endpoint
+
+ï¿½
+Changing the behavior of endpoints (for example, async vs sync stats)
+
+
+ï¿½ Adding /changing optional or required parameters (for example, making name a required field in the request) Deprecation:Deprecated versions are not supported, and it is recommended that developers cease to use these APls. Sunset:Once an API version is sunset, the corresponding API endpoints are no longer accessible.
+
+3.4 Access Throttling
+In addition to limits imposed on individual accounts, OGWS enforces high-level throttling and concurrency limits on the overall service, which prevents abusive or excessive use of the web service. When those limits are exceeded, an HTTP error 503 (service unavailable) is returned. Client implementations are expected to appropriately delay subsequent requests.
+3.4.1 Firewall Limits
+The ORBCOMM firewall allows up to 10 simultaneous connections to the Web Service originating from the same IP address.
+
+3.4.2 Account Level Request Throttling
+Account level throttling is provisioned for each user account separately.
+3.4.2.1 Account Based Sliding Window Request Limiter
+OGWS performs access throttling by user account ID. For every user account there is a limit to a number of INFO, GET and SEND type of web service requests within a configured time window.
+OGWS allows overriding the default throttling configuration on a per account basis.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Default throttling limit for all accounts is 10 web service calls per type in a sliding window of 60 seconds. If exceeded, this limiter returns HTTP error 429 -Too Many Requests.
+
+
+3.4.2.2 Account Based Concurrency Limiter
+The OGWS tracks the number of requests currently being executed by each account. If the default limit of three (3) is exceeded, new requests are rejected and receive an HTTP error 429 -Too Many Requests. This limit is configurable on a per account basis.
+
+3.4.2.3 Rate of Submitted To-Mobile Messages
+By default, OGWS does not limit the rate of submitted to-mobile messages, but ORBCOMM Partner-Support may activate such restrictions for accounts that start submitting an unusually high rate of messages.
+If exceeded, this limiter returns an error code ERR_ SUBMIT_ MESSAGE_ RATE_ EXCEEDED (24579) within the response object (it does not trigger an HTTP error).
+
+3.4.2.4 Rate of Retrieved To-Mobile Message Statuses
+By default, OGWS does not limit the rate of retrieved to-mobile messages, but ORBCOMM Partner-Support may activate such restrictions for accounts that start retrieving an unusually high rate of messages.
+If exceeded, this limiter returns an error code ERR_ RETRIEVE_ STATUS_ RATE_ EXCEEDED (24581) within the response object (it does not trigger an HTTP error).
+
+
+3.5 Developer Tools
+ORBCOMMprovides access to web pages for API descriptions and enables live testing of API endpoints on the customer test website (https:/ /ogws.swlab.ca/docs/api/index.html).
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Select~ deflnllion ~I_0G_w_s ____________
+_Al'_1_v_1.t v~I
+
+
+ORBCCMM
+OGX Gateway Web Service (OGWS) API GD
+-ï¿½tpWI G.'$-a~g,,<l<""
+T.ffTM (d 5-er'/Jfe
+C,,,,~ fCon~tl l~fOI
+Tracleinak._
+Au<llortï¿½ï¿½ i
+Get
+
+The ORBCOMM Developer Toolkit (ODT), available from the Partner Support website, provides the following to assist with your development:
+ï¿½
+A Postman environment
+
+ï¿½
+Sample code
+
+
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+
+
+4 OGWS APPLICATION PROGRAMMING INTERFACE
+The main categories of operations are:authentication, get, info, and submit.
+Your account must be provisioned to use the OGWS before you can access the web service interface. If your account is not provisioned OGWS returns an HTTP error 401 (unauthorized).
+Note: For all methods described in this section, {version} version number is 1.0.
+4.1 Authentication Methods
+This section describes the authentication methods available on the Gateway interface.
+4.1.1 Token
+Description: Call this method to generate a bearer token, which is used for authentication when calling other web service methods.
+Syntax: POST api/v{version}/auth/token
+Rate Limited Call -Method: Yes -GET Authentication: Access ID and password supplied with the request body Notes: The client must make a request to the token endpoint by using the "application/x-www-form.
+urlencoded" format with a character encoding of UTF-8 in the HTTP request entity-body.
+Request
+The request body must contain the user account's access ID and password and include the mandatory grant type.
+client_id=7000000l&client secret=password&expires_in=31536000&grant type=client credentials
+client_id (required) User's access ID (a string beginning with 7) client_secret (required) User's access password expires_in (optional) Sets the token expire time in seconds, but only if less than the maximum allowed expire
+time {OGWS configuration parameter MaxTokenExpireT imeinDays).
+grant_type (required) Value MUST be set to client_credentials
+Response (includes bearer token)
+GetTokenResponse{
+token_type string nullable: true example: bearer
+Indicates the token type value. The only supported type is bearer.
+expires_in integer($int32) nullable: true example: 31536000
+The amount of time that the access token is valid (in seconds).
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+access_token string
+nullable: true
+example: eyJhbGciOiJIUzl1 Nilsl. ... PpNIOoX4bY
+The requested access token.
+error string
+nullable: true
+example: unauthorized_client
+An error code string
+
+4.1.2 Invalidate Tokens
+Description:  This method revokes all previously issued tokens.
+Syntax:  POST api/v{version)/auth/invalidate_tokens
+Rate Limited Call -Method:  No
+Authentication:  Bearer token
+Notes:  A request with a revoked token made on another OGWS instance before the change has fully
+propagated may still succeed.
+
+
+4.2 Information Methods
+This section describes the information methods available on the Gateway interface.
+4.2.1 Service
+Description: Returns web service information (version, list of error codes, ... ). Syntax: GET api/v{version)/info/service Rate Limited Call -Method: Yes-INFO Authentication: Bearer token Authorization: User Notes: This web service operation can be called by a back-office server application during its initialization
+sequence to create a dictionary of all available OGWS error codes. This dictionary allows back.office application to get both the name and the description of an error returned by the OGWS.
+Parameters
+GetErrorCodes If set to true, the web service call returns a list of all error codes. If set to false or omitted, a list of error codes is not returned.
+Responses 200 Call Success. Check ErrorlD for possible errors. Description Service response -includes the API version number and a list of error code information. ErrorlD integer($int32) nullable: true
+
+Contains error code in case a call to service failed. Zero for success. The field is only provided in the event of an error.
+Version  string nullable: true
+ErrorCodes  Web service version number (this is not the API version number) nullable: true Array of possible API error information
+Errorlnfo{ description: ID Name Description })  API error information integer($int32) Error code string nullable: true Error code's name string nullable: true Error code's description
+Example
+"ErrorID":  0,
+''Version'':  ''5.1.8'',
+"ErrorCodes":  [
+"ID":  12308,
+"Name":  "ERR_NDN_INVALID_BEAM",
+"Description":  "Non  delivery  notification  reason:  invalid  beam  number"
+
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns 'Too Many Requests".
+4.2.2 Subaccount List
+Description: Retrieve a list of subaccounts linked to a caller's account.
+Syntax: GET api/v{version)/info/subaccount/list Rate Limited Call -Method: Yes-INFO Authentication: Bearer token Authorization: Superuser
+
+Responses
+200 Call Success. Check ErrorlD for possible errors.
+GetSubaccountlnfoResponse{
+Description ErrorlD  List of subaccounts linked to the caller's account integer($int32} nullable: true example: 0
+Contains an error number or zero if there were no errors.
+Subaccounts  nullable: true
+Array of account information records. Subaccountlnfo{ description: AccountlD  Account information record integer($int32} example: 60023006
+Subaccount ID
+AccountName  string nullable: true example: Truck fleet A
+}]  Subaccount Name
+
+Example
+"Subaccounts":
+"AccountID": 60023006, "AccountName": "Truck fleet A", },
+"AccountID": 60023007, "AccountName": "Truck fleet B",
+401 When authentication and authorization fail.
+403 When the caller is not a super account user the API returns "Forbiddenï¿½.
+429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+
+4.2.3 Terminals
+Description:
+Syntax: Rate Limited Call -Method: Authentication: Authorization: Notes:
+Parameters
+Since/D
+PageSize
+Responses
+Retrieve a list of terminal information belonging to caller's account. The request returns a maximum of pageSize Terminallnfo records.
+GET api/v{version}/info/terminals
+Yes-INFO Bearer token User Range of the pageSize parameter is 1 to 1000.
+Result records are sorted by terminal's prime ID. First call to the terminals should be set Since ID parameter to an empty string, and all subsequent calls to the prime ID of the last terminal returned within the previous call's result. of the previous call's result.
+Prime ID of the last retrieved terminal record.
+Maximum number of terminal records to return in a response. If not specified, default page size = 1000. The parameter value cannot exceed 1000.
+200 Call Success. Check ErrorlD for possible errors.
+GetT erminalslnfoResponse{
+Description Terminals response -includes a list of user accounts' terminal information records.
+ErrorlD integer($int32) nullable: true example: 0
+Contains an error number or zero if there were no errors.
+Terminals nullable: true
+Array of terminal information records.
+Terminallnfo{
+description: Terminal information record
+PrimelD string nullable: true example: 01000005SKYCD96
+Primary terminal identifier. Terminals can have multiple identifiers; MTSN, IMEI, MEID or MAC address. During provisioning, one of these identifiers is marked as a primary ID. When set, the primary ID cannot be changed. All from-mobile messages contain the prime ID only.
+Description string nullable: true example: Test terminal 002
+Description of the terminal.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+LastRegionName
+MTSN
+IMEI
+MEID
+MAC
+LastRegistrationUTC
+LastCellAccessUTC
+LastRegistrationMessagelD
+string nullable: true example: AMERRB9
+Name of the satellite geo beam from where the last satellite terminal registration message came from.
+string nullable: true example: 01000005SKYCD96
+The terminal serial number (used for satellite communication). string nullable: true example: 359739077429074
+The terminal's IMEI.
+string nullable: true example: 99001092003340
+The terminal's MEID.
+string nullable: true example: 00:00:Se:00:53:af
+Terminal's MAC address.
+string nullable: true example: 2022-01-22 20:00:24
+UTC based time stamp of a last satellite terminal registration message. This field is valid only for satellite terminals. This field may be omitted from a response in case no valid value is available/ required.
+string nullable: true example:
+UTC time of the most recent communication between the terminal and the OGx Gateway over a cellular network. This field may be omitted from a response in case no valid value is available/ required.
+integer($int64) nullable: true example: 387611800032
+ID of the most recent modem registration message. This field is valid only for satellite terminals and may be omitted from a response in case no valid value is available/ required.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+LastSatelliteNetwork
+LastOperationMode
+PairedTerminalPrimelD
+Example
+"ErrorID": 0, "Terminals":
+integer($int32) nullable: true
+The most recent satellite network this terminal was on: 0 -lsatData Pro 1 -OGx
+This field may be omitted from a response in case no valid value is available/ required.
+integer($int32) nullable: true
+Terminal operational mode: 0-ALWAYS_ON (OGx o lsatData Pro) 1 -WAKE._UP {OGx or lsatData Pro) 2 -MOBILE_RECEIVE._ON_SEND
+(OGx only) 3 -HYBRID (OGx only)
+This field may be omitted from a response in case no valid value is
+available/ required. string nullable: true
+Prime ID of the paired terminal when a satellite modem is paired with a cellular terminal. This field may be omitted from a response in case no valid value is available/ required.
+"Prime ID": "01000005SKYCD96", "Description": "Test terminal 002", "LastRegionName": "AMERRB9", "MTSN": "01000005SKYCD96", "IMEI": "359739077429074", "MEID": "99001092003340", "MAC": "00:00:5e:00:53:af", "LastRegistrationUTC": "2022-01-22 20:00:24", "LastSatelliteNetwork": 0, "LastRegistrationMessageID "ï¿½ 7453876543, "LastOperationMode": 0
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+
+
+4.2.4 Terminal
+Description:  Retrieve a terminal information belonging to caller's account. The request returns only one
+Terminallnfo record.
+Syntax:  GET  api/v{version}/info/terminal
+Rate Limited Call -Method:  Yes-INFO
+Authentication:  Bearer token
+Authorization:  User
+
+Parameters
+Prime/D The terminal's prime ID. Only retrieves information related to this terminal.
+Responses
+200 Call Success. Check ErrorlD for possible errors.
+GetTerminallnfoResponse{
+Description Terminal response -includes the terminal information record.
+ErrorlD integer($int32) nullable: true example: 0
+Contains an error number or zero if there were no errors.
+Terminal nullable: true
+Array of terminal information records.
+Terminallnfo{
+Refer to terminals for details Example
+"ErrorID" : 0,
+"Terminal": { "PrimeID": "01000005SKYCD96", "Description": "Test terminal 002", "LastRegionName": "AMERRB9", "MTSN": "01000005SKYCD96", "IMEi": "359739077429074", "MEID": "99001092003340", "MAC": "00:00:5e:00:53:af", "LastRegistrationUTC": "2022-01-22 20:00:24", "LastRegistrationMessageID ": 7453876543, "LastOperationMode": 0
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint. the API returns "Too Many Requests".
+4.2.5 Subaccount Terminals
+Description: Retrieve a list of terminal information belonging to caller's specified subaccount. The request returns a maximum of pageSize Terminallnfo records Syntax: GET api/v{version}/info/subaccount/terminals
+Rate Limited Call -Method: Yes-INFO
+Authentication: Bearer token Authorization: User
+Notes: Range of the pageSize parameter is 1 to 1000.
+Result records are sorted by terminal's prime ID.
+First call to the subaccounuerminals would set sincelD parameter to an empty string and all subsequent calls to the prime ID of the terminal from the end of the previous call's result.
+Parameters
+Since/D Prime ID of the last retrieved terminal record.
+PageSize Maximum number of terminal records to return in a response. If not specified, a default page size of 1000 is implied. The parameter value cannot exceed 1000.
+SubAccount/D Subaccount ID for which a terminal list is requested.
+Responses
+200 Call Success. Check ErrorlD for possible errors. Response data schema is the same as for /info/terminals (refer to section 4.2.3)
+401 When authentication and authorization fail.
+403 When the caller is not a super account user the API returns "Forbidden".
+429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+4.2.6 Broadcast
+Description: Retrieve a list of broadcast information belonging to caller's account. Syntax: GET api/v{version}/info/broadcast
+Rate Limited Call -Method: Yes-INFO
+Authentication: Bearer token Authorization: User
+Responses
+200 Call Success. Check ErrorlD for possible errors.
+GetBroadcastlnfoResponse{
+Description 'broadcast' response -includes a list of user accounts' broadcast ID information records.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+ErrorlD integer($int32) nullable: true example: 0
+Contains an error number or zero if there were no errors.
+BroadcastlDs nullable: true
+Array of broadcast information records.
+Broadcastlnfo{
+description: Broadcast information record ID string nullable: true example: 16775830GRP2B2B Broadcast ID. Description string nullable: true example: Test broadcast ID Description of the broadcast ID. SatelliteNetwork integer($int32) nullable: true Satellite network this broadcast group is on: 0 -lsatData Pro This field may be omitted from a response in case no valid value is available/ required. }]
+Example
+"ErrorID": 0,
+"BroadcastIDs":
+"ID": "16775830GRP2B2B", "Description": "Test broadcast ID" "SatelliteNetwork": 0
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+
+4.2.7 Subaccount Broadcast
+Description: Retrievea list of broadcast information belonging to caller's subaccount.
+Syntax: GET api/v{version}/info/subaccount/broadcast
+Rate Limited Call -Method: Yes-INFO
+Authentication: Bearer token
+Authorization: User
+Parameters SubAccount/D The requested broadcast list's subaccount ID.
+Responses 200 Call Success. Check ErrorlD for possible errors.
+Response data schema is the same as for /info/broadcast (refer to Broadcast for details) 401 When authentication and authorization fail.
+403 When the caller is not a super account user the API returns "Forbidden".
+
+429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+4.3 Submit Methods
+This section provides a list of Gateway operations used to submit messages. The OGWS supports both OGx and lsatData Pro messages.
+The OGWS limits the number of outstanding to-mobile messages for each terminal. If there are more than 10 outstanding to-mobile messages of a certain size class (small, regular, or large) for a single terminal, the Gateway rejects them and reports an error message.
+OGx network messages have a payload limit of 1,023 bytes. lsatData Pro network messages have a small message payload of up to 400 bytes, medium messages up to and including 2000 bytes, and large messages up to 10,000.
+Outstanding messages are messages that have not yet been acknowledged by a terminal.
+When a message is submitted, it remains open until either a transmission acknowledgment is received, or an error condition causes the message to close. Figure 8 shows OGx submit message states for a to-mobile message.
+Because you can provision a terminal with more than one ID (MTSN and IMEI for example), you can use any of these IDs when submitting a to-mobile message. For over-the air traffic, the OGx gateway chooses the correct one depending on the transport available or requested to send the message.
+Use the /get/fw_statuses web service operation to query the message state.
+An OGx message has one of the following states:
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Figure 8: OGx Network Message States
+1 -RECEIVED
+
+Closed states Table 1: OGx Message State Descriptions
+State  Description
+0-ACCEPTED  Message accepted by the OGWS (for OGx network messages) or OGWS/IGWS (for lsatData Pro network messages).
+1 -RECEIVED  Message acknowledged by its destination.
+2-ERROR  Submission error (error reported by either OGWS, Network Processing Center, or the terminal). Check the error code.
+3 -DELIVERY FAILED  Message failed to be delivered. Check the error code.
+4-TIMED OUT  Message timed out by either the OGx Gateway or Network Processing Center.
+5 -CANCELLED  Message cancelled.
+7 -BROADCAST SUBMITTED  Broadcast Message transmitted.
+8 -SENDING IN PROGRESS  Sending in progress (OGx network messages only).
+
+The lsatData Pro network has the following message states:
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Figure 9: lsatData Pro Network Message States
+1-RECEIVED
+
+Closed states Table 2: lsatData Pro Message State Descriptions
+State  Description
+0-ACCEPTED  Gateway has accepted and queued the message.
+1 ï¿½ RECEIVED  The Gateway received an acknowledgment that the terminal received the message.
+2-ERROR  The message closed due to an error. An error code specifies the reason.
+3 ï¿½ DELIVERY FAILED  Gateway failed to deliver the message to a terminal. An error code specifies the reason.
+4-TIMED OUT  Message failed to be delivered within 120 minutes. A normal state when the message cannot be delivered is DELIVERY FAILED. TIMED OUT. This state is required in case the message is still not delivered 120 minutes after it was sent from the Gateway. Delayed send messages (WAITING state) time out based on their expiry time.
+5 -CANCELLED  Message was successfully cancelled by the client application.
+6-WAITING  The message has been sent with a delayed option and it is queued for sending when conditions are met.
+7-BROADCAST SUBMITTED  lsatData Pro broadcast message submitted.
+
+4.3.1 Submit Messages
+Description:  Allows users to submit one or more to-mobile messages to their terminals.
+Syntax:  POST  api/v{version}/submit/messages
+Rate Limited Call -Method:  Yes ï¿½SEND
+Authentication:  Bearer token
+Authorization:  User
+Parameters
+
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+No input parameters
+Request Body
+SubmitMessage{
+Description A class that represents a to-mobile message.
+Destination ID string nullable: true example: 01008988SKY5909
+Destination of the client message. This is either a terminal or a broadcast ID. This field can be omitted if 'submitToMultiple' method is used. In that case, a message destination is taken from the 'destinations' list, and this property is ignored even if specified.
+UserMessagel D integer($int64) nullable: true example: 2097
+The UserMessagelD is the client's message identification number. The client must provide a user message ID if they want to map it to the Gateway's number -the ID in the FowardSubmission class. The Gateway does not store the UserMessagelD anywhere. This field is irrelevant if the SubmitMessagesToMultipleDestinations web service operation is called.
+RawPayload string($byte) -base64 encoded binary array nullable: true example: tAEyMDlyL TAyL TE3IDE2OjQwOTBfXzlfMTY0M ... zEwXzE2NDA0NV8xMV8xNjQwNC0xMzU=
+Contains a byte array of raw payload that is submitted to its destination unchanged. If both RawPayload and Payload are specified, then OGWS ignores the Payload data and sends only the RawPayload. RawPayload must follow the format of terminal messages.
+Payload  Common Message{
+Name  string default: null nullable: true
+SIN  integer($int32)
+MIN  integer($int32)
+lsForward  string default: null nullable: true
+Fields  default: null nullable: true
+CommonMessageField{
+Name  string default null nullable: true
+Value  string default null nullable: true
+Type  string default null nullable: true
+Elements  default: null nullable: true
+
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+CommonMessageElement{
+Index integer($int32} default: -1 Fields [...] }I
+Message { }
+}
+TransportType integer($int32} nullable: true
+Specifies a transport for sending of the to-mobile message. It is an optional property, and it should remain unspecified unless you want to limit your delivery options to a specific transport. Options include:
+"0" -Any transport (satellite or cellular). Default option if TransportType not specified. "1" -Satellite transport only. If this option is set, the message is never sent over the cellular network. "2" -Cellular transport only.
+MessageLifetime integer($int32} nullable: true example: 24
+Maximum message lifetime in hours. If set, this value applies only to OGx network's terminals.
+DelayedSendOptions SatelliteDelayedSendOptions{
+description If set, DelayedSendOptions properties (lsatData Pro terminals only} control how the message is sent. If DelayedSendOptions is not set, the message is sent as soon as possible. This option applies only to messages sent over the satellite network. If TransportType is set to "CELL", this option is ignored. By default, an account is not permitted to set this send option. Contact Partner Support for this permission.
+DelayedSend boolean example: true
+If set to true, to-mobile message are queued for sending only when the Gateway receives a from-mobile message from the destination terminal.
+MessageExpireUTC string nullable: true example: 2022-11-25 12:00:23
+If no from-mobile message arrives before the MessageExpireUTC, the message are closed with a 'timed out' state. If MessageExpireUTC is not set, the Gateway sets it to 5 days from the time the message was submitted.
+Request Body Example
+"DestinationID": "01008988SKY5909", "UserMessageID": 2097,
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+"RawPayload": "B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F31363 43034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F31363430343 55F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==",
+"TransportType": 1,
+"DelayedSendOptions": "DelayedSend": true, "MessageExpireUTC": "2022-11-25 12:00:23"
+},
+"DestinationID": "352648040000008", "UserMessageID": 2098, "RawPayload":
+"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F31363 43034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F31363430343 55F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==",
+"TransportType": 2
+},
+"DestinationID": "01008988SKY5909", "UserMessageID": 2099, "Payload": {
+"Name": "getTerminalStatus",
+"SIN": 16, "MIN": 2,
+"IsForward": "True",
+"Fields": []
+},
+"TransportType": 2
+Responses 200 Call Success. Check ErrorlD for possible errors. SubmitMessagesResponse{ Description Submit messages response
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+ErrorlD
+Submissions
+integer($int32) nullable: true example: 0
+Contains error code in case a call to submit/ messages failed. Zero for success.
+nullable: true Array of FW message submission information
+ForwardSubmission{
+description:
+ID
+Destination ID
+ErrorlD
+UserMessagelD
+OT AMessageSize Information about a submitted message returned by the web service. Each ForwardSubmission object contains information about one submitted to.mobile message. In the event of an error (that is, ErrorlD > 0), the message ID is not set. However, DestinationlD and UserMessagelD, if set, are returned in the response.
+integer($int64) nullable: true example: 10844864715
+ID of the to-mobile message generated by the Gateway. The client can use the ID to query for status of the to-mobile message. ID value may roll over back to 1 once it reaches a maximum value for its type. This field may be omitted from a response in case no valid value is available/ required.
+string nullable: true example: 01008988SKY5909
+The mobile ID or the broadcast ID where the message is sent. This field may be omitted from a response in case no valid value is available/ required.
+integer($int32) nullable: true example: 0
+Contains an error number or zero if the message was accepted by the Gateway. This field may be omitted from a response in case there is no error.
+integer($int64) nullable: true example: 2097
+When it is submitted with the message, the Gateway returns this number to allow the client application to map its local message IDs (that is, UserMessagelD) to Gateway generated IDs (that is, ID). This field may be omitted from a response in case no valid value is available/required.
+integer($int32) nullable: true
+Over-the-air message size in bytes. This field may be omitted from a response in case no valid value is available/required.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Response Example  "Submissions":
+"ID": 10844864715, "DestinationID": "UserMessageID": "OTAMessageSize": },  "01008988SKY5909", 2097, 202
+"ID": 10844864716, "DestinationID": "UserMessageID": "OTAMessageSize": },  "352648040000008", 2098, 202
+"ErrorID": 21827, "UserMessageID":  2099
+
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+4.3.2 Submit a Message to Multiple Destinations
+Description:  Allows users to submit one to-mobile message to multiple destination terminals.
+Syntax:  POST api/v{version)/submit/to_multiple
+Rate Limited Call -Method:  Yes-SEND
+Authentication:  Bearer token
+Authorization:  User
+
+Parameters
+No input parameters
+Request Body SubmitMessageToDestinationsRequest{
+Description Defines a body of the submit/to_multiple request
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Message  SubmitMessage{... }
+Refer to Submit Messages for details.
+Destinations  [List of terminal destinations.
+string]
+Destinationsof the client message. Destinations are either terminal or broadcast IDs.
+
+RequestBody Example
+"Message": {
+"RawPayload": "B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F31363 43034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F31363430343 55F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w=="
+},
+"Destinations": "01008988SKY5909", "01008989SKY5900"
+Responses 200 Call Success. Check ErrorlD for possible errors. SubmitMessagesResponse{ Refer to Submit Messages for details.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Response Example
+"errorID": 0, "submissions":
+"id":  10844864715,
+"destinationID":  "01008988SKY5909",
+"userMessageID":  2097,
+"otaMessageSize":  202
+},
+
+"id": 10844864716, "destinationID": "01008989SKY5900", "userMessageID": 2097, "otaMessageSize": 202
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+4.3.3 Submit Cancellation Requests
+Description: Submits cancellation requests to selected to-mobile messages. Syntax: POST api/v{version}/submit/cancellations Rate Limited Call -Method: Yes-SEND Authentication: Bearer token Authorization: User
+Parameters
+No input parameters
+RequestBody
+List of to-mobile message IDs you want cancelled. [integer($int64)]
+RequestBody Example
+10844864715, 10844864716,
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+10844864823, 10844864825
+Responses
+200 Call Success. Check ErrorlD for possible errors.
+SubmitCancellationsResponse{
+description: The cancellations' response
+ErrorlD integer($int32} nullable: true example: 0
+Contains error code in case a call failed. Zero for success.
+Cancellations nullable: true
+Array of FW message cancellation information
+SubmitCancellationResult{
+description: Information about a submitted cancellation request returned by the web service . Each SubmitCancellationResult object contains information about one submitted cancellation request. In the event of an error (that is, ErrorlD > 0), the message ID is not set.
+ID integer($int64} nullable: true example: 10844864715
+ID of a to-mobile message being cancelled.
+CancellationStatus integer($int32} nullable: true
+Status of this cancellation requests:
+1 -Message immediately canceled since it has not been sent yet.
+2 -Message already closed and cannot be canceled
+3 -Message submitted, attempting to cancel it.
+Cancellation request's FWID available in this response. This field may be omitted from a response.
+CancelRequestlD integer($int64} nullable: true
+To-mobile message ID of the cancellation request. Your cancellation status depends on the status of this message.
+ErrorlD integer($int32} nullable: true example: 0
+Contains an error number in case an error happened when trying to cancel
+the message. This field may be omitted from a response in case there is no
+error.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Response Example
+"Cancellations":
+"ID": 10844864715, "CancellationStatus": 1, "CancelRequestID": 10844869023
+401 When authentication and authorization fail.
+429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+4.4 Get Methods
+This section lists all the get methods provided by the OGWS.
+The Gateway restricts the frequency that clients can call get methods of the web service. A reasonable access rate for customers with many terminals is five (5) per minute. Accessing the web service more frequently may be rejected. If you call a web service too often, the web service immediately returns an HTTP error 429 -Too Many Requests. If you have a higher traffic rate or multiple back-office applications, you can request an increase to this limit.
+Because you can provision a terminal with more than one ID (for example, MTSN and IMEI), all from-mobile messages include the terminal's prime ID.
+For a list of common Gateway error codes, refer to the Service web service operation.
+4.4.1 Retrieve To-Mobile (FW) Messages
+Description:  Retrieves to-mobile message records defined by an array of to-mobile message IDs (ID List). Only
+messages belonging to the account calling this method (or one of its immediate subaccounts) is
+retrieved.
+Syntax:  GET api/v{version}/get/fw_messages
+Rate Limited Call -Method:  Yes -GET
+Authentication:  Bearer token
+Authorization:  User
+
+Parameters
+IDList List of to-mobile message IDs.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+Responses
+200 Call Success. Check ErrorlD for possible errors.
+GetForwardMessagesResponse{
+description: Response to a call retrieving to-mobile (FW) messages. Contains a list of requested forward (to.mobile) messages.
+ErrorlD integer($int32) nullable: true example: 0
+Present only if the web service call fails. In the event of a failure, the ErrorlD value serves as a reference for understanding the cause of the error.
+Messages nullable: true
+Array of requested FW (to-mobile) message records.
+Forward Message{
+description: ID
+AccountlD
+StatusUTC
+CreateUTC
+lsClosed Information related to a single FW (to-mobile) message.
+integer($int64) nullable: true example: 10844864715
+ID of the message. This is the message ID assigned by the Gateway when the message was first submitted.
+integer($int32) nullable: true example: 70092006
+ID of the account that submitted the message. This field is present only in case the account that is asking for this information is not the account that the message belongs to.
+string nullable: true example: 2022-11-25 12:00:23
+Time (UTC) of the most recent message status update.
+string nullable: true example: 2022-11-2512:00:03
+Time (UTC) the message was created on the Gateway.
+boolean nullable: true example: true
+True if the message has been closed, or false if it is still open.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+State
+DestinationlD
+ErrorlD
+RawPayload
+Payload ReferenceNumber
+CancelationMessagelD
+Transport
+integer($int32) nullable: true example: 1
+The latest state of the message.
+0 -Message accepted by the OGWS. 1 -Message acknowledged by its destination. 2 -Submission error (error reported by either OGWS, Network Processing Center, or the terminal). Check the error code. 3 -Message failed to be delivered. Check the error code. 4 -Message timed out by either the OGx Gateway or Network Processing Center. 5 -Message cancelled. 6 -Message queued for delayed send (only applies for lsatData Pro network messages). 7 -Broadcast message transmitted. 8 -Message sending in progress.
+string nullable: true example: 01238909SKYE7 AE
+The mobile ID or broadcast ID of the message.
+integer($int32) nullable: true example: 14
+An error number if the Gateway was not able to get the to-mobile message. This field may be omitted from a response in case there is no error.
+string($byte) -base64 encoded binary array nullable: true
+Raw message payload
+CommonMessage{... }
+integer($int32) nullable: true example: 1012
+Message reference number. Some from-mobile messages can contain this number. It can be used to link to-and from-mobile messages.
+integer($int64) nullable: true example: 1012
+Message ID of a message being cancelled.
+integer($int32) nullable: true
+Transport over which the message was sent. Options include:
+1 -Message was sent over the satellite network. 2 -Message was sent over the cellular network.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+RegionName  string nullable:true
+Name of the satellite geo beam from where the last satellite terminal registration message came from.
+Network  0 .lsatData Pro network 1 -OGx network
+
+Response Example
+"Messages":
+"ID": 10844864715, "StatusUTC": "2022-11-25 12:00:23", "CreateUTC": "2022-11-25 12:00:03", "IsClosed": true, "State": 1, "DestinationID": "01008988SKY5909", "Payload": {
+"Name": "getTerminalStatus", "SIN": 16,
+"MIN": 2,
+''IsForward'': ''True'',
+"Fields": [] }, "ReferenceNumber": 1012, "Transport": 1, "RegionName": "AMERRB8", "Network": 1
+},
+"ID": 10844864716, "StatusUTC": "2022-11-25 12:00:15", "CreateUTC": "2022-11-25 12:00:04", "IsClosed": false, "State": 0, "DestinationID": "01008988SKY5909", "Payload": {
+"Name": "getTerminalStatus", "SIN": 16,
+"MIN": 2,
+''IsForward'': ''True'',
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+"Fields": [] }, "ReferenceNumber": 1012, "Transport": 1
+},
+"ID": 10844864806, "ErrorID": 14
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+4.4.2 Retrieve To-Mobile (FW} Statuses
+Description:  Retrieves statuses of submitted to-mobile messages defined by their OGWS assigned message
+IDs. Only messages belonging to the account calling this method (or one of its immediate
+subaccounts) are retrieved.
+Syntax:  GET api/v{version}/get/fw_statuses
+Rate Limited Call -Method:  Yes -GET
+Authentication:  Bearer token
+Authorization:  User
+
+Parameters IDList List of to-mobile message IDs.
+Responses 200 Call Success. Check ErrorlD for possible errors.
+GetForwardStatusesResponse{
+description: Contains a list of requested forward (to-mobile) message statuses.
+ErrorlD integer($int32) nullable: true example: 0
+Present only if the web service call fails. In the event of a failure, the ErrorlD value serves as a reference for understanding the cause of the error.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+NextFromUTC
+Statuses
+string nullable: true
+This field only applies to fw_status_updates.
+A 'FromUTC' of a subsequent request's parameter needs to be set to this value. If you regularly poll for to-mobile messages' status changes, you have to use a high water mark returned here in your subsequent requests. Reusing high water mark (FromUTC) values while successfully retrieving large number of records results in throttling of your future requests.
+nullable: true
+Array of requested FW (to-mobile) message status records.
+Status Record{
+description: ID
+AccountlD
+lsClosed
+State
+CreateUTC
+FW (to-mobile) message status information record.
+integer($int64) nullable: true example: 10844864715
+ID of the message. This is the message ID assigned by the Gateway when the message was first submitted.
+integer($int32) nullable: true example: 70092006
+ID of the account that submitted the message. This field is present only in case the account that is asking for this information is not the account that the message belongs to.
+boolean nullable: true example: true
+True if the message has been closed, or false if it is still open.
+integer($int32) nullable: true example: 1
+The latest state of the message.
+"0" -Message accepted by the OGWS. "1" -Message acknowledged by its destination. "2" -Submission error (error reported by either OGWS, Network Processing Center, or the terminal). Check the error code. "3" -Message failed to be delivered. Check the error code. "4" -Message timed out by either the OGx Gateway or Network Processing Center. "5" -Message cancelled. "6" -Message queued for delayed send (this state only applies to lsatData Pro network messages). "7" -Broadcast message transmitted. "8" -Sending in progress.
+string nullable: true example: 2022-11-2512:00:03
+Time (UTC) the message was created on the Gateway.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+StatusUTC  string nullable: true example: 2022-11-25 12:00:23
+Time (UTC) of the most recent message status update.
+ErrorlD  integer($int32) nullable: true example: 14
+An error number if the Gateway was not able to get the to-mobile message. This field may be omitted from a response in case there is no error.
+Transport  integer($int32) nullable: true
+Transport over which the message was sent. Possible options:
+"1" ."2" . message was sent over the satellite network. message was sent over the cellular network.
+Region Name  string nullable: true
+Name of the satellite geo beam from where the last satellite terminal registration message came from.
+ReferenceNumber  integer($int32) nullable: true
+Message reference number
+Network  0 .1 . lsatData Pro OGx
+
+Response Example
+"Statuses":
+"ID": 10844864715, "IsClosed": true, "State": 1, "CreateUTC": "2022-11-25 12:00:20", "StatusUTC": "2022-11-25 12:00:23", "Transport": 1, "RegionName": "AMERRB8", "ReferenceNumber": 41, "Network": 1
+},
+"ID": 10844864716, "IsClosed": false, "State": 0,
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+"CreateUTC":  "2022-11-25
+"StatusUTC":  "2022-11-25
+"Transport":  1,
+
+"ReferenceNumber": 20, "Network": 1 },
+"ID": 10844864806, "ErrorID": 14
+12:00:00", 12:00:15",
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+4.4.3 Retrieve To-Mobile (FW) Status Updates
+Description: Retrieves updates in statuses of submitted to-mobile messages since the specified time (UTC). Only messages belonging to the account calling this method are retrieved. No subaccounts' message statuses are retrieved.
+Syntax: GET api/v{version}/get/fw_status_updates Rate Limited Call -Method: Yes -GET Authentication: Bearer token Authorization: User
+Parameters
+FromUTC Retrieves status records of messages updated after FromUTC. The FromUTC format 'yyyy-MM-dd HH24:mm:ss'
+Responses 200 Call Success. Check ErrorlD for possible errors.
+GetForwardStatusesResponse{
+description: Contains a list of requested forward (to-mobile) message statuses.
+ErrorlD integer($int32) nullable: true example: 0
+Present only if the web service call fails. In the event of a failure, the ErrorlD value serves as a reference for understanding the cause of the error.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+NextFromUTC string nullable:true
+A 'FromUTC' of a subsequent request's parameter needs to be set to this value. If you regularly poll for to-mobile messages' status changes, you have to use a high water mark returned here in your subsequent requests. Reusing high water mark (FromUTC) values while successfully retrieving large number of records results in throttling of your future requests.
+Statuses nullable:true
+Array of requested FW (to-mobile) message status records. StatusRecord{... }) Refer to Retrieve To-Mobile (FW) Statusesfor details
+Response Example
+"Statuses":
+"ID":  10844864715,
+"IsClosed":  true,
+"State":  1,
+"CreateUTC":  "2022-11-25  12:00:20",
+"StatusUTC":  "2022-11-25  12:00:23",
+"Transport":  1,
+"RegionName":  "AMERRB8",
+
+"ReferenceNumber": 41 },
+"ID": 10844864716, "IsClosed": false, "State": 0, "CreateUTC": "2022-11-25 12:00:00", "StatusUTC": "2022-11-25 12:00:15", "Transport": 1, "ReferenceNumber": 20
+},
+"ID": 10844864806, "ErrorID": 14
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+4.4.4 Retrieve To-Mobile (FW) Status Updates for Subaccounts
+Description: Retrieves updates in statuses of submitted to-mobile messages since the specified time (UTC). Only updates of to-mobile messages belonging to the specified subaccount of the account calling this method are retrieved.
+Syntax: GET api/v{version}/get/subaccount/fw_status_updates
+Rate Limited Call -Method: Yes -GET
+Authentication: Bearer token
+Authorization: Superuser
+Parameters
+subaccount/D Account ID of the subaccount for which FW status updates are being requested. That account needs to be a subaccount of the account making the call. FromUTC Retrieves status records of messages updated after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss'
+Responses
+200 Call Success. Check ErrorlD for possible errors.
+GetForwardStatusesResponse{
+Refer to section Retrieve To-Mobile (FW) Status Updates for details.:
+Response Example
+"Statuses":
+"ID":  10844864715,
+"IsClosed":  true,
+"State":  1,
+"CreateUTC":  "2022-11-25  12:00:20",
+"StatusUTC":  "2022-11-25  12:00:23",
+"Transport":  1,
+"RegionName":  "AMERRB8",
+
+"ReferenceNumber": 41
+},
+"ID": 10844864716, "IsClosed": false, "State": 0, "CreateUTC": "2022-11-25 12:00:00", "StatusUTC": "2022-11-25 12:00:15", "Transport": 1,
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+"ReferenceNumber": 20
+},
+"ID": 10844864806, "ErrorID": 14
+401 When authentication and authorization fail. 403 When the caller is not a super account user the API returns "Forbidden.
+429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+
+4.4.5 Retrieve To-Mobile (FW} Status Updates of All Subaccounts
+Description: Retrieves updates in statuses of submitted to-mobile messages since the specified time (UTC). Updates of to-mobile messages belonging to the account calling this method and ALL of its subaccounts are retrieved.
+Syntax: GET api/v{version}/get/subaccount/all/fw_status_updates
+Rate Limited Call -Method: Yes -GET Authentication: Bearer token Authorization: Superuser
+Parameters
+FromUTC Retrieves status records of messages updated after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss'
+Responses
+200 Call Success. Check ErrorlD for possible errors.
+GetForwardStatusesResponse{
+Refer to section Retrieve To-Mobile (FW) Status Updates for details.:
+Response Example
+"Statuses":
+"ID": 10844864715, "IsClosed": true, "State": 1, "CreateUTC": "2022-11-25 12:00:20", "StatusUTC": "2022-11-25 12:00:23", "Transport": 1, "RegionName": "AMERRB8",
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+"ReferenceNumber": 41 },
+"ID": 10844864716, "IsClosed": false, "State": 0, "CreateUTC": "2022-11-25 "StatusUTC": "2022-11-25 "Transport": 1, "ReferenceNumber": 20
+},
+"ID": 10844864806, "ErrorID": 14
+12:00:00", 12:00:15",
+401 When authentication and authorization fail. 403 When the caller is not a super account user the API returns "Forbidden.
+429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+
+4.4.6 Retrieve From-Mobile (RE) Messages
+Description: Retrieves return (from-mobile) messages received by the Gateway after the specified time (UTC).
+Only messages belonging to the account calling this method are retrieved. No subaccounts' message statuses are retrieved.
+
+Syntax: GET api/v{version}/get/re_messages
+Rate Limited Call -Method: Yes -GET
+Authentication: Bearer token
+Authorization: User
+Parameters
+FromUTC Retrieves status records of messages updated after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss'
+Include Types Set this field to true if you want the Payload to include field types. If not specified, default= false.
+lncludeRawPayload By default, the OGWS returns already decoded messages.
+If it needs to get the message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded message is returned.
+If not specified, default = false.
+
+Responses
+200 Call success. Check ErrrolD for possible errors.
+GetReturnMessagesResponse{
+description: Contains a list of from-mobile message records.
+ErrorlD integer($int32) nullable: true example: 0
+Present only if the web service call fails. In the event of a failure, the ErrorlD value serves as a reference for understanding the cause of the error.
+NextFromUTC string nullable: true example: 2022-11-25 12:00:03
+Contains the value of the next FromUTC field that the client needs to provide with a request to receive contiguous messages. This field may be omitted in case of an error or if no messages were returned by this response. If you regularly poll for from-mobile messages, you have to use a high-water mark returned here in your subsequent requests. Reusing high-water mark (FromUTC) values while successfully retrieving large number of records results in throttling of your future requests.
+Messages nullable: true
+Array of requested FW (to-mobile) message records.
+Return Message{
+description: A class that represents a to-mobile message.
+ID integer($int64) nullable: true example: 10979489832
+ID of the from-mobile message. This ID is a 64-bit unsigned number used by the Gateway to reference a message.
+MessageUTC string nullable: true example: 2022-11-25 12:00:03
+The OGWS message time (UTC). A time when the message becomes available for retrieval.
+ReceiveUTC string nullable: true example: 2022-11-25 12:00:03
+For a satellite traffic message -The time (UTC) when the message was received by the earth station. For a cellular traffic message -The Epoch or empty (that is, the value of the field is ignored or not supplied by the OGWS).
+SIN integer($int32) nullable: true example: 128
+Message's Service Identification Number. The SIN is also included in the payload.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+MobilelD
+RawPayload
+Payload Region Name
+OT AMessageSize
+AccountlD
+Transport
+MobileOwnerlD
+Network }]
+string nullable: true example: 01008988SKY5909
+Identification number (Prime ID) of the terminal that sent the message.
+string($byte) -base64 encoded binary array nullable: true
+This field contains the raw, binary payload of the message if the 'lncludeRawPayload' query parameter was set to true, or if the message decoding to a common message format was not possible.
+CommonMessage{... }
+string nullable: true example: AMERRBS
+For satellite traffic message -the terminal's region Name.
+integer($int32) nullable: true example: 20
+Over-the-air message size in bytes.
+integer($int32) nullable: true example: 70092006
+ID of the customer account the message was assigned to (used only when retrieving subaccounts' messages).
+integer($int32) nullable: true
+Over-the-air transport used to deliver the message. Possible options include:
+"1" -Message was sent over the satellite network. "2" -Message was sent over the cellular network.
+integer($int32) nullable: true
+ID of the customer account that the terminal belongs to. The field is present only if the account is different than the account retrieving the message.
+0 -lsatData Pro 1 -OGx
+Response Example
+"Messages":
+"ID": 10844864715, "MessageUTC": "2022-11-25 12:00:03",
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+"ReceiveUTC": "2022-11-25 12:00:02", "SIN": 128, "MobileID": "01008988SKY5909", "RawPayload": "YQECAxY=", "Payload":
+"Name": "message_name",
+"SIN": 128,
+"MIN": 1,
+"IsForward": null,
+"Fields": [
+"Name": "field_value",
+"Value": 11 0 11 ,
+"Type": null,
+"Elements": null,
+"Message": null
+}, "RegionName": "AORW",
+"OTAMessageSize":  20,
+"Transport":  1,
+"MobileOwnerID":  60000120,
+"Network":  1
+
+401 When authentication and authorization fail. 429 When a user exceeds provisioned rate limits for a given API endpoint. the API returns "Too Many Requests".
+4.4.7 Retrieve From-Mobile (RE) Subaccount Message Records
+Description: Retrieves return (from-mobile} messages received by OGx Gateway after the specified time (UTC}. Only messages belonging to the specified subaccount are retrieved. Syntax: GET api/v{version}/get/subaccount/re_messages Rate Limited Call -Method: Yes -GET Authentication: Bearer token Authorization: Superuser
+Parameters
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+FromUTC Retrieves message records received after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss'
+SubAccount/D Account ID of the subaccount for which messages are requested. That account needs to be a subaccount of the account making the call.
+Include Types Set this field to true if you want the Payload to include field types. If not specified, default= false.
+lncludeRawPay/oad By default, the OGWS returns already decoded messages. If it needs to get the message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded message is returned. If not specified, default = false.
+Responses
+200 Call success. Check ErrorlD for possible errors.
+GetReturnMessagesResponse{
+Refer to Retrieve From-Mobile (RE} Messages for details.
+401 When authentication and authorization fail.
+403 When the caller is not a super account user the API returns "Forbidden.
+429 When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+4.4.8 Retrieve From-Mobile (RE) Message Records from All Subaccounts
+Description: Retrieves return (from-mobile} messages received by OGx Gateway after the specified time (UTC}.
+Messages belonging to the calling (super user account) and all of its subaccounts are retrieved.
+
+Syntax: GET api/v{version}/get/subaccounts/all/re_messages
+Rate Limited Call -Method: Yes -GET
+Authentication: Bearer token Authorization: Superuser
+Parameters
+FromUTC Retrieves message records received after FromUTC. The FromUTC format: 'yyyy-MM-dd HH24:mm:ss'
+Include Types Set this field to true if you want the Payload to include field types. If not specified, a default= false.
+lncludeRawPay/oad By default, the OGWS returns already decoded messages. If it needs to get the message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded message is returned. If not specified, default = false.
+Responses
+200 Call success. Check ErrorlD for possible errors.
+GetReturnMessagesResponse{
+Refer to Retrieve From-Mobile (RE} Messages for details.
+401 When authentication and authorization fail. 403 When the caller is not a super user account user the API returns "Forbidden".
+429 When a user exceeds provisioned rate limits for a given API endpoint. the API returns "Too Many Requests".
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+5 COMMON MESSAGE FORMAT
+This section applies only to terminal users. All OGx messages (both to-mobile and from-mobile) can be defined by a common message format.
+Figure 10: Common Message Format (Data Structure)
+Message A
+Field A
+,,
+Message
+l
+l
+r
+-
+8 Properties
+8 Propertie.s
+,,
+,,
+lsForward
+Name
+,,
+Fields
+,,
+MIN
+,,
+Type
+,,
+I -,,
+r
+Name
+Value
+,,
+SIN
+/# Elements
+Element A
+r
+l
+,, '
+Fields
+8 Properties
+.,,...
+,,
+Index
+Message  Instances of this data structure represent the message in both the to-mobile and from-mobile direction. Based on the message definitions, the Gateway encodes / decodes messages from / to this form.
+lsForward  This field is relevant only if the message is part of another field. In that case, the message is a to-mobile message if set to true. Otherwise it is a from-mobile message.
+MIN  Message identification number for the given SIN.
+Name  Message name
+SIN  Service identification number
+Fields  An array of Field(instances of the field data structure). Each Field could be made of either a name/ value pair or contain another array of fields.
+
+Field  A field is made of a name/ value pair or an array of elements. If the client specifies both, the Gateway rejects the message.
+Name  Field name
+Type  Type of the field -refer to Table 3 for more details.
+Value  Value of the field.
+Message  A message embedded within a field.
+Elements  Array of Element(instances of the element data structure).
+
+Element  Element indexed structure containing one or more fields.
+Index  Element's index
+Fields  Element's fields
+
+5.1 Common Message Fields
+There are 10 types of common message fields. The attributes and elements used are determined by the field type, which is specified when the message is defined using Developer Studio.
+Table 3: Common MessageFields
+Developer Studio Field Type  Type Attribute (used by Dynamic or Property fields)  Value Attribute
+Enum  enum  Enumeration value
+Boolean  boolean  True or False
+Unsigned Int  unsigned int  Decimal number
+Signed Int  signedint  Decimal number
+String  string  String
+Data  data  Base64 encoded data
+Array  array  None
+Message  message  None
+Dynamic  (one of above)  (depends on type)
+Property  (one of above)  (depends on type)
+
+5.1.1 Common Message Example
+Following is an example of a common message.
+"Payload": { ''Name'': ''position'', "SIN": 20,
+"MIN": 1,
+"IsForward": null,
+"Fields":
+"Name": "fixValid", "Value": "True", "Type": "boolean", "Elements": null, "Message": null
+},
+"Name": "fixType", "Value": "3D", "Type": "enum",
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+"Elements": "Message":
+},
+''Name'': "Value": "Type": "Elements": "Message":
+},
+"Name": "Value": ''Type'': "Elements": "Message":
+},
+''Name'': "Value": ''Type'': "Elements": "Message":
+},
+"Name":
+"Value": "Type": "Elements": "Message":
+},
+"Name": "Value": ''Type'': "Elements": "Message":
+},
+null, null
+''latitude'', "2717897", "signedint", null, null
+"longitude", "-4555212", ''signedint'', null, null
+''altitude'', "760", ''signedint'', null, null
+"speed",
+"0", "unsignedint", null, null
+"heading", "0", ''unsignedint'', null, null
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+"Name": "times tamp",
+"Value": "1695145141", "Type": "signedint", "Elements": null, "Message": null
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023
+APPENDIX A HTTP ERROR CODES
+HTTP Code  Description
+200  Call success. Check ErrorlD for possible errors.
+401  When authentication and authorization fail.
+403  When the caller is not a super account user the API returns "Forbidden".
+429  When a user exceeds provisioned rate limits for a given API endpoint, the API returns "Too Many Requests".
+503  "Service Unavailable" because the limiter is not a 'per account' limiter.
+
+APPENDIX B INTERFACE TEST SYSTEM
+Overview
+ORBCOMM provides test portals corresponding to all the major traffic and administrative enterprise to enterprise (e2e) interfaces.
+This section outlines the necessary connection parameters for the OGWS.
+ORBCOMM's intent is that this test interface is always available for your back-office development testing, and ORBCOMM endeavors to roll out new network interface software on this portal one month prior to roll out on the associated network servers.
+OGWS
+Access ID  70000934 {Superuser account containing 70000935 as a subaccount. Messages can be sent to terminals belonging to its subaccounts)
+Password  password
+Access ID  70000935 {User account)
+Password  password
+GET/SEND web service call frequency limits  10 per minute
+Mobile ID  OGx-00002000SKY9307 OGx-00002001SKY9317 lsatData Pro -01097623SKY2C68 lsatData Pro -01014034SKY9397
+External URLs  https://ogws.swlab.ca/docs/api/index.html OGWS URL: https://ogws.swlab.ca/api/v1 .0/
+
+All messages sent to the terminal are immediately acknowledged by a mobile simulator.
+N214, Version 0.05 OGx BETA ORBCOMMï¿½ PROPRIETARY AND CONFIDENTIALï¿½ Dec 2023

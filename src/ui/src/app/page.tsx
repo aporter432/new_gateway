@@ -24,6 +24,7 @@ export default function Home() {
     const router = useRouter();
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
 
     /**
      * Handle login form submission
@@ -41,7 +42,11 @@ export default function Home() {
         try {
             const data = await login(username, password);
             // Store token and wait for it to be set
-            await Promise.resolve(localStorage.setItem('token', data.access_token));
+            if (rememberMe) {
+                await Promise.resolve(localStorage.setItem('token', data.access_token));
+            } else {
+                await Promise.resolve(sessionStorage.setItem('token', data.access_token));
+            }
             // Use replace instead of push to avoid RSC issues
             router.replace('/dashboard');
         } catch (err) {
@@ -87,6 +92,18 @@ export default function Home() {
                         required
                         className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300 focus:outline-none text-black"
                     />
+                    <div className="w-full flex items-center justify-start">
+                        <input
+                            type="checkbox"
+                            id="rememberMe"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="mr-2"
+                        />
+                        <label htmlFor="rememberMe" className="text-sm text-gray-600">
+                            Remember me
+                        </label>
+                    </div>
                     <button
                         type="submit"
                         disabled={isLoading}
