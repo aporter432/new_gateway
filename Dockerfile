@@ -5,7 +5,7 @@ FROM --platform=${TARGETPLATFORM} python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Set environment variables
+# Set environment variables for Poetry 2.0.0
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     POETRY_VERSION=2.0.0 \
@@ -13,45 +13,48 @@ ENV PYTHONUNBUFFERED=1 \
     POETRY_VIRTUALENVS_CREATE=true \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_NO_INTERACTION=1 \
-    PYTHONPATH="/app/src" \
+    PYTHONPATH="/app/src:/app/common" \
     no_proxy=localhost,127.0.0.1,db,redis,localstack
 
 # Install system dependencies
-# Note: Added --no-install-recommends to minimize image size
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     wget \
     libpq-dev \
-    postgresql-client \
-    dnsutils \
-    iputils-ping \
-    net-tools \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
+# Install Poetry 2.0.0
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && cd /usr/local/bin \
     && ln -s /opt/poetry/bin/poetry
 
-# Copy only dependency files first
+# Copy poetry files first for better caching
 COPY pyproject.toml poetry.lock ./
-COPY README.md ./
-COPY alembic.ini ./
+COPY README.md alembic.ini ./
 
-# Install dependencies
-RUN poetry install --no-root --no-interaction --no-ansi --with test
+# ✅ Initialize Git and pull submodules (to get `common`)
+COPY .git .git
+COPY .gitmodules .gitmodules
+RUN git submodule update --init --recursive
 
-# Copy source code and tests
+# ✅ Copy submodule directly into container for Poetry
+COPY common/ ./common/
+
+# Install dependencies from local submodule
+RUN poetry lock
+
+RUN poetry install --no-root
+# Copy the source code
 COPY src/ ./src/
 COPY tests/ ./tests/
 
-# Install the project
-RUN poetry install --no-interaction --no-ansi --with test
+# Install the project (with submodule)
+RUN poetry install
 
-# Create non-root user and set up logging directory
+# Create non-root user and setup logging directories
 RUN useradd -m -u 1000 gateway \
     && mkdir -p /app/logs/auth /app/logs/api /app/logs/system \
     && chown -R gateway:gateway /app \
