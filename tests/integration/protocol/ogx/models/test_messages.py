@@ -1,6 +1,6 @@
 """Integration tests for OGx message models.
 
-This module tests the OGx message models according to OGWS-1.txt specifications.
+This module tests the OGx message models according to OGx-1.txt specifications.
 
 Important:
     NetworkType Usage:

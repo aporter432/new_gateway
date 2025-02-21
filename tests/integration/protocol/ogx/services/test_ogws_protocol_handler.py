@@ -1,28 +1,28 @@
-"""Unit tests for OGWSProtocolHandler implementation.
+"""Unit tests for OGxProtocolHandler implementation.
 
-This module provides comprehensive testing of the OGWS protocol handler
-according to OGWS-1.txt specifications. Each test class corresponds to a
-specific method in the OGWSProtocolHandler class, following Single
+This module provides comprehensive testing of the OGx protocol handler
+according to OGx-1.txt specifications. Each test class corresponds to a
+specific method in the OGxProtocolHandler class, following Single
 Responsibility Principle.
 
 Test Organization:
     Tests are organized by method:
-    - TestOGWSProtocolHandlerAuthenticate: Tests authenticate() method
-    - TestOGWSProtocolHandlerSubmitMessage: Tests submit_message() method
-    - TestOGWSProtocolHandlerGetMessages: Tests get_messages() method
-    - TestOGWSProtocolHandlerGetMessageStatus: Tests get_message_status() method
-    - TestOGWSProtocolHandlerValidateMessage: Tests _validate_message() method
-    - TestOGWSProtocolHandlerRateLimit: Tests rate limiting methods
+    - TestOGxProtocolHandlerAuthenticate: Tests authenticate() method
+    - TestOGxProtocolHandlerSubmitMessage: Tests submit_message() method
+    - TestOGxProtocolHandlerGetMessages: Tests get_messages() method
+    - TestOGxProtocolHandlerGetMessageStatus: Tests get_message_status() method
+    - TestOGxProtocolHandlerValidateMessage: Tests _validate_message() method
+    - TestOGxProtocolHandlerRateLimit: Tests rate limiting methods
 
 Usage:
     Run tests using pytest:
     ```bash
-    pytest tests/unit/protocol/ogx/services/test_ogws_protocol_handler.py -v
+    pytest tests/unit/protocol/ogx/services/test_OGx_protocol_handler.py -v
     ```
 
     Run specific test class:
     ```bash
-    pytest tests/unit/protocol/ogx/services/test_ogws_protocol_handler.py::TestOGWSProtocolHandlerAuthenticate -v
+    pytest tests/unit/protocol/ogx/services/test_OGx_protocol_handler.py::TestOGxProtocolHandlerAuthenticate -v
     ```
 
 Test Dependencies:
@@ -36,11 +36,10 @@ from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from protocols.ogx.constants.message_types import MessageType
 from protocols.ogx.constants.network_types import NetworkType
 from protocols.ogx.constants.transport_types import TransportType
-from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
+from protocols.ogx.services.OGx_protocol_handler import OGxProtocolHandler
 from protocols.ogx.validation.common.types import ValidationContext, ValidationResult
 from protocols.ogx.validation.common.validation_exceptions import (
     AuthenticationError,
@@ -51,7 +50,7 @@ from protocols.ogx.validation.common.validation_exceptions import (
 )
 from protocols.ogx.validation.protocol.network_validator import NetworkValidator
 from protocols.ogx.validation.protocol.size_validator import SizeValidator
-from protocols.ogx.validation.protocol.transport_validator import TransportValidator
+from protocols.ogx.validation.protocol.transport_validator import OGxTransportValidator
 
 # Mock core dependencies to avoid circular imports
 with patch.dict(
@@ -65,8 +64,8 @@ with patch.dict(
     },
 ):
     # Class must be indented inside the with block
-    class MockOGWSHandler(OGWSProtocolHandler):
-        """Mock implementation of OGWSProtocolHandler for testing.
+    class MockOGxHandler(OGxProtocolHandler):
+        """Mock implementation of OGxProtocolHandler for testing.
 
         This class provides a concrete implementation of the abstract base class
         with configurable behavior for testing different scenarios.
@@ -94,7 +93,7 @@ with patch.dict(
             # Initialize validators
             self.size_validator = SizeValidator()
             self.network_validator = NetworkValidator()
-            self.transport_validator = TransportValidator()
+            self.transport_validator = OGxTransportValidator()
             self.message_validator = MagicMock()
 
             # Check for required payload
@@ -207,21 +206,21 @@ with patch.dict(
 
 
 @pytest.mark.asyncio
-class TestOGWSProtocolHandlerAuthenticate:
-    """Test suite for OGWSProtocolHandler.authenticate method.
+class TestOGxProtocolHandlerAuthenticate:
+    """Test suite for OGxProtocolHandler.authenticate method.
 
-    Tests the authentication flow according to OGWS-1.txt Section 3.1.
+    Tests the authentication flow according to OGx-1.txt Section 3.1.
     """
 
     @pytest.fixture
-    def handler(self) -> MockOGWSHandler:
-        """Create MockOGWSHandler instance."""
-        return MockOGWSHandler()
+    def handler(self) -> MockOGxHandler:
+        """Create MockOGxHandler instance."""
+        return MockOGxHandler()
 
     @pytest.fixture
-    def authenticated_handler(self) -> MockOGWSHandler:
-        """Create authenticated MockOGWSHandler instance."""
-        handler = MockOGWSHandler()
+    def authenticated_handler(self) -> MockOGxHandler:
+        """Create authenticated MockOGxHandler instance."""
+        handler = MockOGxHandler()
         handler.set_auth_state(True)
         return handler
 
@@ -235,7 +234,7 @@ class TestOGWSProtocolHandlerAuthenticate:
         }
 
     async def test_successful_authentication(
-        self, handler: MockOGWSHandler, mock_credentials: Dict[str, Any]
+        self, handler: MockOGxHandler, mock_credentials: Dict[str, Any]
     ):
         """Test successful authentication flow."""
         token = await handler.authenticate(mock_credentials)
@@ -245,7 +244,7 @@ class TestOGWSProtocolHandlerAuthenticate:
 
     async def test_invalid_credentials(self):
         """Test authentication with invalid credentials."""
-        handler = MockOGWSHandler(should_fail=True)
+        handler = MockOGxHandler(should_fail=True)
         with pytest.raises(AuthenticationError):
             await handler.authenticate({"client_id": "invalid"})
         assert not handler.is_authenticated
@@ -253,23 +252,23 @@ class TestOGWSProtocolHandlerAuthenticate:
 
     async def test_rate_limited_authentication(self, mock_credentials: Dict[str, Any]):
         """Test authentication under rate limiting."""
-        handler = MockOGWSHandler(rate_limited=True)
+        handler = MockOGxHandler(rate_limited=True)
         with pytest.raises(RateLimitError) as exc:
             await handler.authenticate(mock_credentials)
         assert "Mock rate limit" in str(exc.value)
 
 
 @pytest.mark.asyncio
-class TestOGWSProtocolHandlerSubmitMessage:
-    """Test suite for OGWSProtocolHandler.submit_message method.
+class TestOGxProtocolHandlerSubmitMessage:
+    """Test suite for OGxProtocolHandler.submit_message method.
 
-    Tests message submission according to OGWS-1.txt Section 4.3.
+    Tests message submission according to OGx-1.txt Section 4.3.
     """
 
     @pytest.fixture
-    def handler(self) -> MockOGWSHandler:
-        """Create authenticated MockOGWSHandler instance."""
-        handler = MockOGWSHandler()
+    def handler(self) -> MockOGxHandler:
+        """Create authenticated MockOGxHandler instance."""
+        handler = MockOGxHandler()
         handler.set_auth_state(True)
         return handler
 
@@ -287,7 +286,7 @@ class TestOGWSProtocolHandlerSubmitMessage:
 
     async def test_successful_submission(
         self,
-        handler: MockOGWSHandler,
+        handler: MockOGxHandler,
         valid_message: Dict[str, Any],
     ):
         """Test successful message submission."""
@@ -298,12 +297,12 @@ class TestOGWSProtocolHandlerSubmitMessage:
 
     async def test_unauthenticated_submission(self, valid_message: Dict[str, Any]):
         """Test submission without authentication."""
-        handler = MockOGWSHandler()
+        handler = MockOGxHandler()
         with pytest.raises(ProtocolError):
             await handler.submit_message(valid_message, "test_destination")
 
     async def test_rate_limited_submission(
-        self, handler: MockOGWSHandler, valid_message: Dict[str, Any]
+        self, handler: MockOGxHandler, valid_message: Dict[str, Any]
     ):
         """Test submission under rate limiting."""
         handler.rate_limited = True
@@ -312,20 +311,20 @@ class TestOGWSProtocolHandlerSubmitMessage:
 
 
 @pytest.mark.asyncio
-class TestOGWSProtocolHandlerGetMessages:
-    """Test suite for OGWSProtocolHandler.get_messages method.
+class TestOGxProtocolHandlerGetMessages:
+    """Test suite for OGxProtocolHandler.get_messages method.
 
-    Tests message retrieval according to OGWS-1.txt Section 4.4.
+    Tests message retrieval according to OGx-1.txt Section 4.4.
     """
 
     @pytest.fixture
-    def handler(self) -> MockOGWSHandler:
-        """Create authenticated MockOGWSHandler instance."""
-        handler = MockOGWSHandler()
+    def handler(self) -> MockOGxHandler:
+        """Create authenticated MockOGxHandler instance."""
+        handler = MockOGxHandler()
         handler.set_auth_state(True)
         return handler
 
-    async def test_successful_retrieval(self, handler: MockOGWSHandler):
+    async def test_successful_retrieval(self, handler: MockOGxHandler):
         """Test successful message retrieval."""
         from_time = datetime.utcnow() - timedelta(hours=1)
         messages = await handler.get_messages(from_time, MessageType.RETURN)
@@ -334,12 +333,12 @@ class TestOGWSProtocolHandlerGetMessages:
 
     async def test_unauthenticated_retrieval(self):
         """Test retrieval without authentication."""
-        handler = MockOGWSHandler()
+        handler = MockOGxHandler()
         from_time = datetime.utcnow() - timedelta(hours=1)
         with pytest.raises(ProtocolError):
             await handler.get_messages(from_time, MessageType.RETURN)
 
-    async def test_rate_limited_retrieval(self, handler: MockOGWSHandler):
+    async def test_rate_limited_retrieval(self, handler: MockOGxHandler):
         """Test retrieval under rate limiting."""
         handler.rate_limited = True
         from_time = datetime.utcnow() - timedelta(hours=1)
@@ -348,20 +347,20 @@ class TestOGWSProtocolHandlerGetMessages:
 
 
 @pytest.mark.asyncio
-class TestOGWSProtocolHandlerGetMessageStatus:
-    """Test suite for OGWSProtocolHandler.get_message_status method.
+class TestOGxProtocolHandlerGetMessageStatus:
+    """Test suite for OGxProtocolHandler.get_message_status method.
 
-    Tests message status checking according to OGWS-1.txt Section 4.4.2.
+    Tests message status checking according to OGx-1.txt Section 4.4.2.
     """
 
     @pytest.fixture
-    def handler(self) -> MockOGWSHandler:
-        """Create authenticated MockOGWSHandler instance."""
-        handler = MockOGWSHandler()
+    def handler(self) -> MockOGxHandler:
+        """Create authenticated MockOGxHandler instance."""
+        handler = MockOGxHandler()
         handler.set_auth_state(True)
         return handler
 
-    async def test_successful_status_check(self, handler: MockOGWSHandler):
+    async def test_successful_status_check(self, handler: MockOGxHandler):
         """Test successful status check."""
         status = await handler.get_message_status("test_message_id")
         assert status["State"] == 1
@@ -370,27 +369,27 @@ class TestOGWSProtocolHandlerGetMessageStatus:
 
     async def test_unauthenticated_status_check(self):
         """Test status check without authentication."""
-        handler = MockOGWSHandler()
+        handler = MockOGxHandler()
         with pytest.raises(ProtocolError):
             await handler.get_message_status("test_message_id")
 
-    async def test_rate_limited_status_check(self, handler: MockOGWSHandler):
+    async def test_rate_limited_status_check(self, handler: MockOGxHandler):
         """Test status check under rate limiting."""
         handler.rate_limited = True
         with pytest.raises(RateLimitError):
             await handler.get_message_status("test_message_id")
 
 
-class TestOGWSProtocolHandlerValidateMessage:
-    """Test suite for OGWSProtocolHandler._validate_message method.
+class TestOGxProtocolHandlerValidateMessage:
+    """Test suite for OGxProtocolHandler._validate_message method.
 
-    Tests message validation according to OGWS-1.txt Section 5.
+    Tests message validation according to OGx-1.txt Section 5.
     """
 
     @pytest.fixture
-    def handler(self) -> MockOGWSHandler:
-        """Create MockOGWSHandler instance."""
-        return MockOGWSHandler()
+    def handler(self) -> MockOGxHandler:
+        """Create MockOGxHandler instance."""
+        return MockOGxHandler()
 
     @pytest.fixture
     def valid_message(self) -> Dict[str, Any]:
@@ -414,7 +413,7 @@ class TestOGWSProtocolHandlerValidateMessage:
 
     def test_validation_pipeline(
         self,
-        handler: MockOGWSHandler,
+        handler: MockOGxHandler,
         valid_message: Dict[str, Any],
         mock_context: ValidationContext,
     ):
@@ -424,7 +423,7 @@ class TestOGWSProtocolHandlerValidateMessage:
         assert hasattr(result, "is_valid")
         assert hasattr(result, "errors")
 
-    def test_size_validation(self, handler: MockOGWSHandler, mock_context: ValidationContext):
+    def test_size_validation(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test message size validation.
 
         Tests that messages exceeding the raw binary payload limit (1023 bytes)
@@ -441,9 +440,7 @@ class TestOGWSProtocolHandlerValidateMessage:
             handler.validate_message(large_message, mock_context)
         assert "Raw payload size 1024 bytes exceeds maximum of 1023 bytes" in str(exc.value)
 
-    def test_base64_size_validation(
-        self, handler: MockOGWSHandler, mock_context: ValidationContext
-    ):
+    def test_base64_size_validation(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test that Base64 encoding overhead doesn't affect size validation.
 
         A payload of exactly 1023 bytes should pass validation, even though
@@ -459,7 +456,7 @@ class TestOGWSProtocolHandlerValidateMessage:
         result = handler.validate_message(valid_message, mock_context)
         assert result.is_valid, "Message at size limit should be valid"
 
-    def test_invalid_payload_type(self, handler: MockOGWSHandler, mock_context: ValidationContext):
+    def test_invalid_payload_type(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test validation with invalid payload type."""
         invalid_message = {
             "RawPayload": 123,  # Should be string
@@ -469,7 +466,7 @@ class TestOGWSProtocolHandlerValidateMessage:
             handler.validate_message(invalid_message, mock_context)
         assert "RawPayload must be a string" in str(exc.value)
 
-    def test_missing_payload(self, handler: MockOGWSHandler, mock_context: ValidationContext):
+    def test_missing_payload(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test validation with missing payload."""
         # The message is missing both RawPayload and Payload
         invalid_message = {
@@ -481,7 +478,7 @@ class TestOGWSProtocolHandlerValidateMessage:
             handler.validate_message(invalid_message, mock_context)
         assert "Message must contain either RawPayload or Payload" in str(exc.value)
 
-    def test_invalid_json_payload(self, handler: MockOGWSHandler, mock_context: ValidationContext):
+    def test_invalid_json_payload(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test validation with invalid JSON payload."""
         invalid_message = {
             "Payload": "not a dict",  # Should be a dictionary
@@ -491,7 +488,7 @@ class TestOGWSProtocolHandlerValidateMessage:
             handler.validate_message(invalid_message, mock_context)
         assert "Payload must be a JSON object" in str(exc.value)
 
-    def test_transport_validation(self, handler: MockOGWSHandler, mock_context: ValidationContext):
+    def test_transport_validation(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test transport validation."""
         # Test valid transport
         valid_message = {
@@ -512,7 +509,7 @@ class TestOGWSProtocolHandlerValidateMessage:
         assert not result.is_valid
         assert any("Invalid transport type" in error for error in result.errors)
 
-    def test_network_validation(self, handler: MockOGWSHandler, mock_context: ValidationContext):
+    def test_network_validation(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test network validation."""
         # Test valid network
         valid_message = {
@@ -531,7 +528,7 @@ class TestOGWSProtocolHandlerValidateMessage:
         assert not result.is_valid
         assert any("Invalid network type" in error for error in result.errors)
 
-    def test_validation_with_none_context(self, handler: MockOGWSHandler):
+    def test_validation_with_none_context(self, handler: MockOGxHandler):
         """Test validation with None context."""
         message = {
             "RawPayload": "test",
@@ -541,9 +538,7 @@ class TestOGWSProtocolHandlerValidateMessage:
         assert not result.is_valid
         assert any("Missing message direction" in error for error in result.errors)
 
-    def test_size_validation_result(
-        self, handler: MockOGWSHandler, mock_context: ValidationContext
-    ):
+    def test_size_validation_result(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test that size validation failures are properly propagated.
 
         This test ensures that when size validation fails, the result is returned
@@ -577,25 +572,25 @@ class TestOGWSProtocolHandlerValidateMessage:
         handler.network_validator.validate.assert_not_called()
 
 
-class TestOGWSProtocolHandlerRateLimit:
-    """Test suite for OGWSProtocolHandler rate limiting methods.
+class TestOGxProtocolHandlerRateLimit:
+    """Test suite for OGxProtocolHandler rate limiting methods.
 
-    Tests rate limiting according to OGWS-1.txt Section 3.4.
+    Tests rate limiting according to OGx-1.txt Section 3.4.
     """
 
     @pytest.fixture
-    def handler(self) -> MockOGWSHandler:
-        """Create MockOGWSHandler instance."""
-        return MockOGWSHandler()
+    def handler(self) -> MockOGxHandler:
+        """Create MockOGxHandler instance."""
+        return MockOGxHandler()
 
-    def test_request_metrics_update(self, handler: MockOGWSHandler):
+    def test_request_metrics_update(self, handler: MockOGxHandler):
         """Test request metrics tracking."""
         initial_count = handler.request_count
         handler.update_metrics()
         assert handler.request_count == initial_count + 1
         assert handler.last_request_time is not None
 
-    def test_concurrent_request_tracking(self, handler: MockOGWSHandler):
+    def test_concurrent_request_tracking(self, handler: MockOGxHandler):
         """Test concurrent request tracking."""
         for _ in range(5):
             handler.update_metrics()

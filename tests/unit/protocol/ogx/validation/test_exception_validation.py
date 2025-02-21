@@ -1,13 +1,13 @@
 """Unit tests for validation exceptions.
 
-Tests custom exception types and their behaviors as defined in OGWS-1.txt Section 5.1:
+Tests custom exception types and their behaviors as defined in OGx-1.txt Section 5.1:
 - ValidationError
 - MessageValidationError
 - ElementValidationError
 - FieldValidationError
 
 Error Message Formatting:
-While OGWS-1.txt doesn't mandate prefixes for all error types, it establishes a pattern
+While OGx-1.txt doesn't mandate prefixes for all error types, it establishes a pattern
 with Authentication/Encoding/Rate limit errors having clear prefixes. We extend this pattern
 to all error types for:
 - Consistent error identification
@@ -28,7 +28,7 @@ from protocols.ogx.validation.common.validation_exceptions import (
 
 
 class TestValidationExceptions:
-    """Test validation exception behaviors per OGWS-1.txt and best practices."""
+    """Test validation exception behaviors per OGx-1.txt and best practices."""
 
     def test_validation_error_creation(self):
         """Test basic ValidationError creation and attributes."""

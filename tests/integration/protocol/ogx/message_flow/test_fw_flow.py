@@ -1,17 +1,16 @@
 """Integration tests for OGx forward message flow functionality.
 
-Tests the complete forward message flow according to OGWS-1.txt specifications.
+Tests the complete forward message flow according to OGx-1.txt specifications.
 """
 
 import pytest
-
 from protocols.ogx.constants import FieldType, MessageType, NetworkType
-from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
+from protocols.ogx.services.OGx_protocol_handler import OGxProtocolHandler
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
 
 
-class MockOGWSHandler(OGWSProtocolHandler):
+class MockOGxHandler(OGxProtocolHandler):
     """Mock implementation for testing forward message flow."""
 
     async def authenticate(self, credentials):
@@ -64,11 +63,11 @@ async def test_forward_message_flow():
     }
 
     # Initialize handler
-    handler = MockOGWSHandler()
+    handler = MockOGxHandler()
     await handler.authenticate({})  # Mock credentials not needed
 
     try:
-        # Submit message with proper OGWS-1 structure
+        # Submit message with proper OGx-1 structure
         message_id, validation_result = await handler.submit_message(
             message={
                 "Name": "test_message",

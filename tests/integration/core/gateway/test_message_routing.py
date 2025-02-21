@@ -1,6 +1,6 @@
 """Integration tests for message routing functionality.
 
-This module tests the gateway's message routing capabilities according to OGWS-1.txt specifications.
+This module tests the gateway's message routing capabilities according to OGx-1.txt specifications.
 
 Important:
     NetworkType Usage:

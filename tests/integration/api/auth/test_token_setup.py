@@ -2,19 +2,18 @@
 
 import asyncio
 
-from redis.asyncio import Redis
-
 from core.app_settings import Settings
-from protocols.ogx.auth.manager import OGWSAuthManager
+from protocols.ogx.auth.manager import OGxAuthManager
+from redis.asyncio import Redis
 
 
 def get_test_settings() -> Settings:
     """Get settings configured for test environment."""
     return Settings(
-        OGWS_CLIENT_ID="70000934",  # Test superuser account
-        OGWS_CLIENT_SECRET="password",
-        OGWS_BASE_URL="http://proxy:8080/api/v1.0",  # Use Docker service name and port
-        OGWS_TEST_MODE=True,
+        OGx_CLIENT_ID="70000934",  # Test superuser account
+        OGx_CLIENT_SECRET="password",
+        OGx_BASE_URL="http://proxy:8080/api/v1.0",  # Use Docker service name and port
+        OGx_TEST_MODE=True,
         CUSTOMER_ID="test_customer",  # Required for logging
     )
 
@@ -46,7 +45,7 @@ async def test_token_lifecycle():
     - In production, tokens are long-lived (up to 1 year) and reused
     - The mock service generates new tokens for testing purposes
     - Token invalidation clears local storage but tokens remain valid
-      on OGWS until natural expiration
+      on OGx until natural expiration
     - This test verifies the token management functionality while
       accommodating the mock service's behavior
     """
@@ -55,10 +54,10 @@ async def test_token_lifecycle():
 
     try:
         # Clear any existing test tokens
-        await redis.delete("ogws:auth:token")
-        await redis.delete("ogws:auth:token:metadata")
+        await redis.delete("OGx:auth:token")
+        await redis.delete("OGx:auth:token:metadata")
 
-        auth_manager = OGWSAuthManager(settings, redis)
+        auth_manager = OGxAuthManager(settings, redis)
 
         print("\n=== Initial Token Acquisition ===")
         # Get initial token
@@ -118,8 +117,8 @@ async def test_token_lifecycle():
         await auth_manager.invalidate_token()
 
         # Verify token was removed from local storage
-        metadata_exists = await redis.exists("ogws:auth:token:metadata")
-        token_exists = await redis.exists("ogws:auth:token")
+        metadata_exists = await redis.exists("OGx:auth:token:metadata")
+        token_exists = await redis.exists("OGx:auth:token")
         print(f"Token metadata removed: {not metadata_exists}")
         print(f"Token removed: {not token_exists}")
         assert not metadata_exists, "Token metadata not removed"
@@ -134,8 +133,8 @@ async def test_token_lifecycle():
 
     finally:
         # Clean up
-        await redis.delete("ogws:auth:token")
-        await redis.delete("ogws:auth:token:metadata")
+        await redis.delete("OGx:auth:token")
+        await redis.delete("OGx:auth:token:metadata")
         await redis.aclose()  # Using aclose() as recommended by Redis client
 
 

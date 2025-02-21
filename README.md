@@ -25,13 +25,13 @@ Access the services:
 
 ## Project Overview
 
-Smart Gateway provides a robust, production-ready interface for ORBCOMM's OGWS (OGx Gateway Web Service), featuring:
+Smart Gateway provides a robust, production-ready interface for ORBCOMM's OGx (OGx Gateway Web Service), featuring:
 
 - **High Availability**: Containerized microservices architecture
 - **Security**: Token-based authentication with automatic rotation
 - **Scalability**: Redis-backed caching and DynamoDB support
 - **Monitoring**: Prometheus metrics and Grafana dashboards
-- **Compliance**: Full OGWS-1.txt specification compliance
+- **Compliance**: Full OGx-1.txt specification compliance
 
 ## Architecture
 

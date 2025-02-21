@@ -1,7 +1,6 @@
 """Tests for protocol-level validators."""
 
 import pytest
-
 from protocols.ogx.constants import MessageType, NetworkType
 from protocols.ogx.constants.limits import MAX_OGX_PAYLOAD_BYTES
 from protocols.ogx.validation.common.types import ValidationContext
@@ -11,7 +10,7 @@ from protocols.ogx.validation.common.validation_exceptions import (
 )
 from protocols.ogx.validation.protocol.network_validator import NetworkValidator
 from protocols.ogx.validation.protocol.size_validator import SizeValidator
-from protocols.ogx.validation.protocol.transport_validator import TransportValidator
+from protocols.ogx.validation.protocol.transport_validator import OGxTransportValidator
 
 
 class TestNetworkValidator:
@@ -117,7 +116,7 @@ class TestNetworkValidator:
 
 
 class TestSizeValidator:
-    """Test size validation according to OGWS-1.txt."""
+    """Test size validation according to OGx-1.txt."""
 
     @pytest.fixture
     def validator(self) -> SizeValidator:
@@ -220,13 +219,13 @@ class TestSizeValidator:
         assert "RawPayload must be a string" in str(exc.value)
 
 
-class TestTransportValidator:
-    """Test transport validation according to OGWS-1.txt."""
+class TestOGxTransportValidator:
+    """Test transport validation according to OGx-1.txt."""
 
     @pytest.fixture
-    def validator(self) -> TransportValidator:
+    def validator(self) -> OGxTransportValidator:
         """Return a transport validator instance."""
-        return TransportValidator()
+        return OGxTransportValidator()
 
     @pytest.fixture
     def context(self) -> ValidationContext:
@@ -305,7 +304,7 @@ class TestTransportValidator:
         assert not result.is_valid
         assert "Missing message direction" in result.errors[0]
 
-    def test_validate_with_none_context_direction(self, validator: TransportValidator):
+    def test_validate_with_none_context_direction(self, validator: OGxTransportValidator):
         """Test validation with None context direction."""
         # Create context with valid direction first, then modify for test
         context = ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
@@ -314,7 +313,7 @@ class TestTransportValidator:
         assert not result.is_valid
         assert "Missing message direction" in result.errors[0]
 
-    def test_validate_with_none_context_network_type(self, validator: TransportValidator):
+    def test_validate_with_none_context_network_type(self, validator: OGxTransportValidator):
         """Test validation with None context network type."""
         # Create context with valid network_type first, then modify for test
         context = ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
@@ -357,7 +356,7 @@ class TestTransportValidator:
         assert not result.is_valid
         assert "Invalid data type: expected dictionary" in result.errors[0]
 
-    def test_validate_with_invalid_direction(self, validator: TransportValidator):
+    def test_validate_with_invalid_direction(self, validator: OGxTransportValidator):
         """Test validation with invalid message direction."""
         # Create context with valid direction first, then modify for test
         context = ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)

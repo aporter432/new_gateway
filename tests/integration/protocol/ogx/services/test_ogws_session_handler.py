@@ -1,7 +1,7 @@
-"""Unit tests for OGWS SessionHandler implementation.
+"""Unit tests for OGx SessionHandler implementation.
 
-This module provides comprehensive testing of the OGWS session handler
-according to OGWS-1.txt specifications. Each test class corresponds to a
+This module provides comprehensive testing of the OGx session handler
+according to OGx-1.txt specifications. Each test class corresponds to a
 specific method in the SessionHandler class, following Single
 Responsibility Principle.
 
@@ -24,21 +24,20 @@ from unittest import mock
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
-from redis.asyncio import Redis
-
-from protocols.ogx.auth.manager import OGWSAuthManager
-from protocols.ogx.services.ogws_session_handler import SessionHandler
+from protocols.ogx.auth.manager import OGxAuthManager
+from protocols.ogx.services.OGx_session_handler import SessionHandler
 from protocols.ogx.validation.common.validation_exceptions import (
     AuthenticationError,
     OGxProtocolError,
     ValidationError,
 )
+from redis.asyncio import Redis
 
 
 @pytest.fixture(autouse=True)
 def mock_logger():
     """Mock logger for all tests."""
-    with patch("protocols.ogx.services.ogws_session_handler.get_protocol_logger") as mock:
+    with patch("protocols.ogx.services.OGx_session_handler.get_protocol_logger") as mock:
         logger = MagicMock()
         mock.return_value = logger
         yield logger
@@ -63,8 +62,8 @@ def mock_redis():
 
 @pytest.fixture
 def mock_auth_manager():
-    """Create mock OGWSAuthManager."""
-    auth_manager = AsyncMock(spec=OGWSAuthManager)
+    """Create mock OGxAuthManager."""
+    auth_manager = AsyncMock(spec=OGxAuthManager)
     auth_manager.get_valid_token = AsyncMock(return_value="test_token")
     auth_manager.validate_token = AsyncMock(return_value=True)
     return auth_manager
@@ -74,10 +73,10 @@ def mock_auth_manager():
 async def session_handler(mock_redis, mock_auth_manager):
     """Create initialized SessionHandler with mocked dependencies."""
     with patch(
-        "protocols.ogx.services.ogws_session_handler.get_redis_client", return_value=mock_redis
+        "protocols.ogx.services.OGx_session_handler.get_redis_client", return_value=mock_redis
     ):
         with patch(
-            "protocols.ogx.services.ogws_session_handler.OGWSAuthManager",
+            "protocols.ogx.services.OGx_session_handler.OGxAuthManager",
             return_value=mock_auth_manager,
         ):
             handler = SessionHandler()
@@ -92,7 +91,7 @@ class TestSessionHandlerInitialize:
     async def test_successful_initialization(self, mock_redis):
         """Test successful initialization."""
         with patch(
-            "protocols.ogx.services.ogws_session_handler.get_redis_client", return_value=mock_redis
+            "protocols.ogx.services.OGx_session_handler.get_redis_client", return_value=mock_redis
         ):
             handler = SessionHandler()
             await handler.initialize()
@@ -102,7 +101,7 @@ class TestSessionHandlerInitialize:
     async def test_failed_initialization(self):
         """Test initialization with Redis connection failure."""
         with patch(
-            "protocols.ogx.services.ogws_session_handler.get_redis_client", return_value=None
+            "protocols.ogx.services.OGx_session_handler.get_redis_client", return_value=None
         ):
             handler = SessionHandler()
             with pytest.raises(RuntimeError) as exc:

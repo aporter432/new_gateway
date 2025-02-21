@@ -1,26 +1,29 @@
-"""Unit tests for BaseValidator edge cases.
+"""Unit tests for OGxBaseValidator edge cases.
 
-Tests edge cases and error conditions for the BaseValidator class implementation
-according to OGWS-1.txt Section 5 specifications.
+Tests edge cases and error conditions for the OGxBaseValidator class implementation
+according to OGx-1.txt Section 5 specifications.
 """
 
 from typing import Any
 
 import pytest
 
-from src.protocols.ogx.constants import NetworkType
-from src.protocols.ogx.constants.field_types import FieldType
-from src.protocols.ogx.constants.message_types import MessageType
-from src.protocols.ogx.validation.common.base_validator import BaseValidator
-from src.protocols.ogx.validation.common.types import ValidationContext, ValidationResult
-from src.protocols.ogx.validation.common.validation_exceptions import ValidationError
+from Protexis_Command.api_ogx.constants import NetworkType
+from Protexis_Command.api_ogx.constants.ogx_field_types import FieldType
+from Protexis_Command.api_ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.api_ogx.protocol.ogx_base_validator import OGxBaseValidator
+from Protexis_Command.api_ogx.validation.message.ogx_type_validator import (
+    ValidationContext,
+    ValidationResult,
+)
+from Protexis_Command.api_ogx.validation.ogx_validation_exceptions import ValidationError
 
 # pylint: disable=protected-access
 # Accessing protected members is expected in unit tests
 
 
-class MockBaseValidator(BaseValidator):
-    """Mock implementation of abstract BaseValidator for testing."""
+class MockOGxBaseValidator(OGxBaseValidator):
+    """Mock implementation of abstract OGxBaseValidator for testing."""
 
     def __init__(self) -> None:
         """Initialize mock validator."""
@@ -33,9 +36,9 @@ class MockBaseValidator(BaseValidator):
 
 
 @pytest.fixture
-def validator() -> MockBaseValidator:
-    """Fixture providing MockBaseValidator instance."""
-    return MockBaseValidator()
+def validator() -> MockOGxBaseValidator:
+    """Fixture providing MockOGxBaseValidator instance."""
+    return MockOGxBaseValidator()
 
 
 @pytest.fixture
@@ -44,22 +47,22 @@ def context():
     return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
 
-class TestBaseValidatorEdgeCases:
-    """Test edge cases for BaseValidator implementation."""
+class TestOGxBaseValidatorEdgeCases:
+    """Test edge cases for OGxBaseValidator implementation."""
 
-    def test_validate_required_fields_empty_data(self, validator: MockBaseValidator):
+    def test_validate_required_fields_empty_data(self, validator: MockOGxBaseValidator):
         """Test validation of required fields with empty data."""
         with pytest.raises(ValidationError) as exc:
             validator._validate_required_fields({}, {"required_field"}, "test")
         assert "Missing required test fields: required_field" in str(exc.value)
 
-    def test_validate_required_fields_none_data(self, validator: MockBaseValidator):
+    def test_validate_required_fields_none_data(self, validator: MockOGxBaseValidator):
         """Test validation of required fields with None values."""
         data = {"required_field": None}
         # Should not raise - None is a valid value, just must be present
         validator._validate_required_fields(data, {"required_field"}, "test")
 
-    def test_validate_required_fields_extra_fields(self, validator: MockBaseValidator):
+    def test_validate_required_fields_extra_fields(self, validator: MockOGxBaseValidator):
         """Test validation with extra unrequired fields."""
         data = {"required_field": "value", "extra_field": "extra"}
         # Should not raise - extra fields are allowed
@@ -78,7 +81,7 @@ class TestBaseValidatorEdgeCases:
     )
     def test_validate_field_type_edge_cases(
         self,
-        validator: MockBaseValidator,
+        validator: MockOGxBaseValidator,
         field_type: FieldType,
         valid_value: Any,
         invalid_value: Any,
@@ -91,18 +94,18 @@ class TestBaseValidatorEdgeCases:
         with pytest.raises(ValidationError):
             validator._validate_field_type(field_type, invalid_value)
 
-    def test_validate_dynamic_field_type_missing_attribute(self, validator: MockBaseValidator):
+    def test_validate_dynamic_field_type_missing_attribute(self, validator: MockOGxBaseValidator):
         """Test dynamic field validation without type attribute."""
         with pytest.raises(ValidationError) as exc:
             validator._validate_field_type(FieldType.DYNAMIC, "value")
         assert "Type attribute required" in str(exc.value)
 
-    def test_validate_dynamic_field_type_invalid_attribute(self, validator: MockBaseValidator):
+    def test_validate_dynamic_field_type_invalid_attribute(self, validator: MockOGxBaseValidator):
         """Test dynamic field validation with invalid type attribute."""
         with pytest.raises(ValidationError):
             validator._validate_field_type(FieldType.DYNAMIC, "value", "invalid_type")
 
-    def test_validate_property_field_edge_cases(self, validator: MockBaseValidator):
+    def test_validate_property_field_edge_cases(self, validator: MockOGxBaseValidator):
         """Test property field validation edge cases."""
         # Valid property field
         validator._validate_field_type(FieldType.PROPERTY, "42", "signedint")
@@ -119,7 +122,7 @@ class TestBaseValidatorEdgeCases:
         with pytest.raises(ValidationError):
             validator._validate_field_type(FieldType.PROPERTY, "not_a_number", "signedint")
 
-    def test_string_number_conversion(self, validator: MockBaseValidator):
+    def test_string_number_conversion(self, validator: MockOGxBaseValidator):
         """Test edge cases for string-to-number conversion."""
         # String representations should work for numeric types
         validator._validate_field_type(FieldType.UNSIGNED_INT, "42")
@@ -135,7 +138,7 @@ class TestBaseValidatorEdgeCases:
         with pytest.raises(ValidationError):
             validator._validate_field_type(FieldType.SIGNED_INT, "invalid")
 
-    def test_none_values(self, validator: MockBaseValidator):
+    def test_none_values(self, validator: MockOGxBaseValidator):
         """Test handling of None values for different field types."""
         # None should be valid for array and message types
         validator._validate_field_type(FieldType.ARRAY, None)
@@ -151,7 +154,7 @@ class TestBaseValidatorEdgeCases:
             with pytest.raises(ValidationError):
                 validator._validate_field_type(field_type, None)
 
-    def test_error_accumulation(self, validator: MockBaseValidator):
+    def test_error_accumulation(self, validator: MockOGxBaseValidator):
         """Test that errors accumulate properly."""
         validator._add_error("First error")
         validator._add_error("Second error")
@@ -163,20 +166,20 @@ class TestBaseValidatorEdgeCases:
         assert not result.is_valid
 
     def test_validation_context_preservation(
-        self, validator: MockBaseValidator, context: ValidationContext
+        self, validator: MockOGxBaseValidator, context: ValidationContext
     ):
         """Test that validation context is preserved."""
         result = validator.validate({}, context)
         assert result.context == context
 
-    def test_empty_validation_result(self, validator: MockBaseValidator):
+    def test_empty_validation_result(self, validator: MockOGxBaseValidator):
         """Test validation result with no errors."""
         result = validator._get_validation_result()
         assert result.is_valid
         assert not result.errors
         assert result.context is None
 
-    def test_dynamic_field_type_resolution(self, validator: MockBaseValidator):
+    def test_dynamic_field_type_resolution(self, validator: MockOGxBaseValidator):
         """Test dynamic field type resolution and validation."""
         # Test successful type resolution and validation
         validator._validate_field_type(FieldType.DYNAMIC, True, "boolean")
@@ -195,7 +198,7 @@ class TestBaseValidatorEdgeCases:
         with pytest.raises(ValidationError):
             validator._validate_field_type(FieldType.DYNAMIC, "value", "nonexistent_type")
 
-    def test_field_type_validation_edge_cases(self, validator: MockBaseValidator):
+    def test_field_type_validation_edge_cases(self, validator: MockOGxBaseValidator):
         """Test specific edge cases for field type validation."""
         # Test boolean edge cases
         with pytest.raises(ValidationError):
@@ -240,7 +243,7 @@ class TestBaseValidatorEdgeCases:
         with pytest.raises(ValidationError):
             validator._validate_field_type(FieldType.MESSAGE, "not_a_dict")  # String
 
-    def test_dynamic_field_empty_type_attribute(self, validator: MockBaseValidator):
+    def test_dynamic_field_empty_type_attribute(self, validator: MockOGxBaseValidator):
         """Test dynamic field with empty type attribute."""
         with pytest.raises(ValidationError) as exc:
             validator._validate_field_type(FieldType.DYNAMIC, "value", "")
@@ -250,12 +253,12 @@ class TestBaseValidatorEdgeCases:
             validator._validate_field_type(FieldType.PROPERTY, "value", None)
         assert "Type attribute required" in str(exc.value)
 
-    def test_dynamic_field_type_resolution_error(self, validator: MockBaseValidator):
+    def test_dynamic_field_type_resolution_error(self, validator: MockOGxBaseValidator):
         """Test dynamic field type resolution with invalid type."""
         with pytest.raises(ValidationError):
             validator._validate_field_type(FieldType.DYNAMIC, "value", "invalid_type")
 
-    def test_boolean_validation_error_paths(self, validator: MockBaseValidator):
+    def test_boolean_validation_error_paths(self, validator: MockOGxBaseValidator):
         """Test boolean validation error paths."""
         # Test various non-boolean values
         invalid_values = [1, 0, "True", "False", [], {}, None]
@@ -263,7 +266,7 @@ class TestBaseValidatorEdgeCases:
             with pytest.raises(ValidationError):
                 validator._validate_field_type(FieldType.BOOLEAN, value)
 
-    def test_signed_int_validation_error_paths(self, validator: MockBaseValidator):
+    def test_signed_int_validation_error_paths(self, validator: MockOGxBaseValidator):
         """Test signed int validation error paths."""
         # Test invalid signed int values
         invalid_values = ["abc", "12.34.56", [], {}, None, object()]
@@ -276,7 +279,7 @@ class TestBaseValidatorEdgeCases:
         for value in valid_values:
             validator._validate_field_type(FieldType.SIGNED_INT, value)
 
-    def test_string_validation_error_paths(self, validator: MockBaseValidator):
+    def test_string_validation_error_paths(self, validator: MockOGxBaseValidator):
         """Test string validation error paths."""
         # Test various non-string values
         invalid_values = [1, 1.0, True, [], {}, None, b"bytes"]
@@ -284,7 +287,7 @@ class TestBaseValidatorEdgeCases:
             with pytest.raises(ValidationError):
                 validator._validate_field_type(FieldType.STRING, value)
 
-    def test_array_validation_error_paths(self, validator: MockBaseValidator):
+    def test_array_validation_error_paths(self, validator: MockOGxBaseValidator):
         """Test array validation error paths."""
         # Test various non-array values
         invalid_values = [1, "string", True, {}, set(), tuple(), frozenset(), (1, 2, 3), range(5)]
@@ -297,7 +300,7 @@ class TestBaseValidatorEdgeCases:
         for value in valid_values:
             validator._validate_field_type(FieldType.ARRAY, value)
 
-    def test_message_validation_error_paths(self, validator: MockBaseValidator):
+    def test_message_validation_error_paths(self, validator: MockOGxBaseValidator):
         """Test message validation error paths."""
         # Test various non-dict values
         invalid_values = [1, "string", True, [], set(), tuple(), frozenset(), (1, 2, 3), range(5)]
@@ -310,7 +313,7 @@ class TestBaseValidatorEdgeCases:
         for value in valid_values:
             validator._validate_field_type(FieldType.MESSAGE, value)
 
-    def test_field_type_validation_with_type_error(self, validator: MockBaseValidator):
+    def test_field_type_validation_with_type_error(self, validator: MockOGxBaseValidator):
         """Test field type validation when TypeError is raised."""
 
         # Create a custom object that raises TypeError on comparison
@@ -321,7 +324,7 @@ class TestBaseValidatorEdgeCases:
         with pytest.raises(ValidationError):
             validator._validate_field_type(FieldType.UNSIGNED_INT, BadComparison())
 
-    def test_field_type_validation_with_value_error(self, validator: MockBaseValidator):
+    def test_field_type_validation_with_value_error(self, validator: MockOGxBaseValidator):
         """Test field type validation when ValueError is raised."""
         # Test with a value that will cause int() to raise ValueError
         with pytest.raises(ValidationError):
@@ -329,7 +332,7 @@ class TestBaseValidatorEdgeCases:
                 FieldType.UNSIGNED_INT, "123.45.67"
             )  # Malformed number string
 
-    def test_field_validation_with_recursive_error(self, validator: MockBaseValidator):
+    def test_field_validation_with_recursive_error(self, validator: MockOGxBaseValidator):
         """Test field validation with recursive error propagation."""
         # Test dynamic field with invalid nested type validation
         with pytest.raises(ValidationError):

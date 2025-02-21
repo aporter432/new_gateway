@@ -61,10 +61,11 @@ Documentation = "https://github.com/aaronporter12/new_gateway/wiki"
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry]  # Retained for settings that don't belong in [project]
-packages = [{include = "src"}]
-
-
+[tool.poetry]
+name = "protexis-command"
+packages = [
+    { include = "Protexis_Command" }
+]
 
 [tool.poetry.group.dev]
 optional = true
@@ -78,10 +79,11 @@ pre-commit = ">=3.3.0"
 autoflake = ">=2.3.1"
 bandit = ">=1.7.5"
 lizard = "^1.17.19"
+autopep8 = ">=2.0.0"
 
 
 [project.scripts]
-gateway = "src.main:app"
+gateway = "Protexis_Command.api_ogx.main:app"
 
 [tool.black]
 line-length = 120

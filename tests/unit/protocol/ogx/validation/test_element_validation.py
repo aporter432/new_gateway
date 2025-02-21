@@ -1,4 +1,4 @@
-"""Unit tests for element validation according to OGWS-1.txt.
+"""Unit tests for element validation according to OGx-1.txt.
 
 Tests focus on array element validation:
 - Element structure validation
@@ -7,7 +7,6 @@ Tests focus on array element validation:
 """
 
 import pytest
-
 from protocols.ogx.constants.message_types import MessageType
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.message.element_validator import OGxElementValidator

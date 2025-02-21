@@ -15,8 +15,8 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp
 
-from api.middleware.ogws_auth import AuthMiddleware, add_auth_middleware
-from protocols.ogx.auth.manager import OGWSAuthManager
+from Protexis_Command.api_ogx.auth.manager import OGxAuthManager
+from Protexis_Command.api_ogx.middleware.ogx_auth import OGxAuthMiddleware, add_ogx_auth_middleware
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def mock_request():
 @pytest.fixture
 def mock_auth_manager():
     """Fixture for mocked auth manager."""
-    manager = AsyncMock(spec=OGWSAuthManager)
+    manager = AsyncMock(spec=OGxAuthManager)
     manager.get_valid_token = AsyncMock()
     return manager
 
@@ -56,7 +56,7 @@ async def test_successful_request(mock_app, mock_request, mock_response):
     - No token refresh is attempted
     - Original response is returned
     """
-    middleware = AuthMiddleware(mock_app)
+    middleware = OGxAuthMiddleware(mock_app)
     call_next = AsyncMock(return_value=mock_response)
 
     response = await middleware.dispatch(mock_request, call_next)
@@ -77,7 +77,7 @@ async def test_auth_failure_with_successful_refresh(
     - Request is retried
     - New response is returned
     """
-    middleware = AuthMiddleware(mock_app)
+    middleware = OGxAuthMiddleware(mock_app)
 
     # Configure responses for first and second attempts
     failed_response = MagicMock(spec=Response)
@@ -87,7 +87,7 @@ async def test_auth_failure_with_successful_refresh(
 
     # Mock auth manager
     with patch(
-        "api.middleware.ogws_auth.get_auth_manager",
+        "api.middleware.OGx_auth.get_auth_manager",
         AsyncMock(return_value=mock_auth_manager),
     ):
         response = await middleware.dispatch(mock_request, call_next)
@@ -108,7 +108,7 @@ async def test_auth_failure_with_refresh_error(mock_app, mock_request, mock_auth
     - Error response is returned
     - No retry is attempted
     """
-    middleware = AuthMiddleware(mock_app)
+    middleware = OGxAuthMiddleware(mock_app)
 
     # Configure initial 401 response
     failed_response = MagicMock(spec=Response)
@@ -120,7 +120,7 @@ async def test_auth_failure_with_refresh_error(mock_app, mock_request, mock_auth
     mock_auth_manager.get_valid_token.side_effect = httpx.HTTPError("Token refresh failed")
 
     with patch(
-        "api.middleware.ogws_auth.get_auth_manager",
+        "api.middleware.OGx_auth.get_auth_manager",
         AsyncMock(return_value=mock_auth_manager),
     ):
         response = await middleware.dispatch(mock_request, call_next)
@@ -141,7 +141,7 @@ async def test_http_error_handling(mock_app, mock_request):
     - Appropriate error response is returned
     - Error details are included
     """
-    middleware = AuthMiddleware(mock_app)
+    middleware = OGxAuthMiddleware(mock_app)
 
     # Configure call_next to raise HTTP error
     error_msg = "HTTP connection failed"
@@ -165,7 +165,7 @@ async def test_network_error_handling(mock_app, mock_request):
     - Appropriate error response is returned
     - Error details are included
     """
-    middleware = AuthMiddleware(mock_app)
+    middleware = OGxAuthMiddleware(mock_app)
 
     # Configure call_next to raise network error
     error_msg = "Connection failed"
@@ -189,7 +189,7 @@ async def test_timeout_error_handling(mock_app, mock_request):
     - Appropriate error response is returned
     - Error details are included
     """
-    middleware = AuthMiddleware(mock_app)
+    middleware = OGxAuthMiddleware(mock_app)
 
     # Configure call_next to raise timeout error
     error_msg = "Request timed out"
@@ -212,16 +212,16 @@ def test_add_auth_middleware():
     - Correct middleware class is used
     """
     app = FastAPI()
-    add_auth_middleware(app)
+    add_ogx_auth_middleware(app)
 
     # Verify middleware was added
     middleware_added = False
     for middleware in app.user_middleware:
-        if middleware.cls == AuthMiddleware:
+        if middleware.cls == OGxAuthMiddleware:
             middleware_added = True
             break
 
-    assert middleware_added, "AuthMiddleware was not added to the FastAPI application"
+    assert middleware_added, "OGx AuthMiddleware was not added to the FastAPI application"
 
 
 @pytest.mark.asyncio
@@ -234,7 +234,7 @@ async def test_auth_failure_with_subsequent_failure(mock_app, mock_request, mock
     - Retry request also fails with 401
     - Original 401 response is returned
     """
-    middleware = AuthMiddleware(mock_app)
+    middleware = OGxAuthMiddleware(mock_app)
 
     # Configure both attempts to return 401
     failed_response = MagicMock(spec=Response)
@@ -243,7 +243,7 @@ async def test_auth_failure_with_subsequent_failure(mock_app, mock_request, mock
     call_next = AsyncMock(return_value=failed_response)
 
     with patch(
-        "api.middleware.ogws_auth.get_auth_manager",
+        "Protexis_Command.api_ogx.middleware.ogx_auth.get_auth_manager",
         AsyncMock(return_value=mock_auth_manager),
     ):
         response = await middleware.dispatch(mock_request, call_next)

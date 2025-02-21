@@ -1,10 +1,10 @@
 ---
-description: Implementation Standards and OGWS-1 Compliance
+description: Implementation Standards and OGx-1 Compliance
 globs:
 ---
 ---
-name: "Implementation Standards and OGWS-1 Compliance"
-description: "Strict enforcement of implementation standards, code reuse, and OGWS-1.txt compliance"
+name: "Implementation Standards and OGx-1 Compliance"
+description: "Strict enforcement of implementation standards, code reuse, and OGx-1.txt compliance"
 priority: "REQUIRED"
 globs: ["*.py"]
 validation:
@@ -178,7 +178,7 @@ enforcement:
     - Coverage impact verified
 
 source_of_truth:
-  - "src/DOCS/OGWS-1.txt"
+  - "src/DOCS/OGx-1.txt"
   - "src/protocols/ogx/"
   - "tests/unit/protocol/ogx/"
 
@@ -297,7 +297,7 @@ NO changes without complete documentation and review.
 3. MUST maintain test relationships:
    ```python
    @pytest.mark.dependency(depends=["test_existing"])
-   @pytest.mark.relationship("extends BaseValidator")
+   @pytest.mark.relationship("extends OGxBaseValidator")
    def test_new_feature():
        """Document test relationships"""
    ```

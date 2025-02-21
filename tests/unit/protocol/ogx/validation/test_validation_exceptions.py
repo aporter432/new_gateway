@@ -4,7 +4,7 @@ Tests focus on exception-specific behavior, inheritance, and initialization.
 Field/message/element validation tests are handled in their respective test files.
 
 Error Message Formatting:
-While OGWS-1.txt doesn't mandate prefixes for all error types, it establishes a pattern
+While OGx-1.txt doesn't mandate prefixes for all error types, it establishes a pattern
 with Authentication/Encoding/Rate limit errors having clear prefixes. We extend this pattern
 to all error types for:
 - Consistent error identification
@@ -34,7 +34,7 @@ from protocols.ogx.validation.common.validation_exceptions import (
 
 
 class TestValidationExceptions:
-    """Test validation exception behaviors per OGWS-1.txt and best practices."""
+    """Test validation exception behaviors per OGx-1.txt and best practices."""
 
     def test_base_protocol_error_initialization(self):
         """Test base protocol error initialization."""
@@ -92,7 +92,7 @@ class TestValidationExceptions:
             assert str(error).startswith("Validation error:")
 
     def test_error_code_defaults(self):
-        """Test default error codes for each exception type per OGWS-1.txt."""
+        """Test default error codes for each exception type per OGx-1.txt."""
         test_cases = [
             (ValidationError, GatewayErrorCode.VALIDATION_ERROR),  # 10000
             (MessageValidationError, GatewayErrorCode.INVALID_MESSAGE_FORMAT),  # 10001
@@ -114,7 +114,7 @@ class TestValidationExceptions:
     def test_error_message_formatting(self):
         """Test error message formatting for consistency and clarity.
 
-        While OGWS-1.txt only explicitly defines some error prefixes,
+        While OGx-1.txt only explicitly defines some error prefixes,
         we maintain a consistent prefix pattern across all error types
         to improve error handling and debugging.
         """
@@ -137,7 +137,7 @@ class TestValidationExceptions:
                 SizeValidationError("test", current_size=100, max_size=200),
                 "Validation error: test (size: 100, max: 200)",
             ),
-            # These prefixes are explicitly defined in OGWS-1.txt
+            # These prefixes are explicitly defined in OGx-1.txt
             (AuthenticationError("test"), "Authentication error: test"),
             (EncodingError("test"), "Encoding error: test"),
             (RateLimitError("test"), "Rate limit error: test"),

@@ -1,7 +1,7 @@
 """Unit tests for OGx protocol validation components.
 
 This package contains comprehensive test suites for validating OGx protocol messages
-according to OGWS-1.txt specifications. The tests are organized into focused modules:
+according to OGx-1.txt specifications. The tests are organized into focused modules:
 
 - test_field_validation_basic.py: Basic field type validation
 - test_field_validation_array.py: Array field validation
@@ -13,7 +13,6 @@ Each module uses common fixtures and utilities defined in this package.
 """
 
 import pytest
-
 from protocols.ogx.constants.message_types import MessageType
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.message.field_validator import OGxFieldValidator

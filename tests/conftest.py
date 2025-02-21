@@ -14,9 +14,8 @@ from pathlib import Path
 from typing import Any, AsyncGenerator, Dict
 
 import pytest
-from httpx import AsyncClient
-
 from core.app_settings import Settings, get_settings
+from httpx import AsyncClient
 
 os.environ["TESTING"] = "true"
 
@@ -39,8 +38,8 @@ def mock_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     Args:
         monkeypatch: Pytest fixture for modifying environment
     """
-    monkeypatch.setenv("OGWS_CLIENT_ID", "test_client")
-    monkeypatch.setenv("OGWS_CLIENT_SECRET", "test_secret")
+    monkeypatch.setenv("OGx_CLIENT_ID", "test_client")
+    monkeypatch.setenv("OGx_CLIENT_SECRET", "test_secret")
 
 
 @pytest.fixture
@@ -60,12 +59,12 @@ def settings() -> Settings:
 
     # Validate required settings
     missing = []
-    if not settings.OGWS_CLIENT_ID:
-        missing.append("OGWS_CLIENT_ID")
-    if not settings.OGWS_CLIENT_SECRET:
-        missing.append("OGWS_CLIENT_SECRET")
-    if not settings.OGWS_TEST_MOBILE_ID:
-        missing.append("OGWS_TEST_MOBILE_ID")
+    if not settings.OGx_CLIENT_ID:
+        missing.append("OGx_CLIENT_ID")
+    if not settings.OGx_CLIENT_SECRET:
+        missing.append("OGx_CLIENT_SECRET")
+    if not settings.OGx_TEST_MOBILE_ID:
+        missing.append("OGx_TEST_MOBILE_ID")
 
     if missing:
         pytest.skip(f"Missing required settings: {', '.join(missing)}")
@@ -85,9 +84,9 @@ def mock_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
     """Set up environment variables for testing."""
     test_env = {
         "ENVIRONMENT": "test",
-        "OGWS_BASE_URL": "http://localhost:8080/api/v1.0",  # Default for unit tests
-        "OGWS_CLIENT_ID": "70000934",
-        "OGWS_CLIENT_SECRET": "password",
+        "OGx_BASE_URL": "http://localhost:8080/api/v1.0",  # Default for unit tests
+        "OGx_CLIENT_ID": "70000934",
+        "OGx_CLIENT_SECRET": "password",
     }
     for key, value in test_env.items():
         monkeypatch.setenv(key, value)

@@ -7,7 +7,6 @@ This module tests:
 """
 
 import pytest
-
 from api.security.password import get_password_hash, validate_password, verify_password
 
 

@@ -11,11 +11,10 @@ from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
 
 import pytest
 import redis.asyncio as aioredis
-
 from core.app_settings import Settings, get_settings
 from protocols.ogx.constants.message_types import MessageType
 from protocols.ogx.constants.transport_types import TransportType
-from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
+from protocols.ogx.services.OGx_protocol_handler import OGxProtocolHandler
 from protocols.ogx.validation.common.types import ValidationResult
 from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
 
@@ -48,8 +47,8 @@ async def redis() -> AsyncGenerator[aioredis.Redis, None]:
     await redis.close()
 
 
-class DummyOGWSProtocolHandler(OGWSProtocolHandler):
-    """Dummy implementation of OGWSProtocolHandler for testing purposes."""
+class DummyOGxProtocolHandler(OGxProtocolHandler):
+    """Dummy implementation of OGxProtocolHandler for testing purposes."""
 
     async def authenticate(self, credentials: dict):
         """Authenticate with dummy credentials."""
@@ -88,13 +87,13 @@ class DummyOGWSProtocolHandler(OGWSProtocolHandler):
 
 # LOCATION: /tests/e2e/conftest.py
 @pytest.fixture(scope="session")
-async def protocol_handler(settings: Settings) -> AsyncGenerator[DummyOGWSProtocolHandler, None]:
+async def protocol_handler(settings: Settings) -> AsyncGenerator[DummyOGxProtocolHandler, None]:
     """Provide authenticated protocol handler."""
-    handler = DummyOGWSProtocolHandler()
+    handler = DummyOGxProtocolHandler()
 
     try:
         await handler.authenticate(
-            {"client_id": settings.OGWS_CLIENT_ID, "client_secret": settings.OGWS_CLIENT_SECRET}
+            {"client_id": settings.OGx_CLIENT_ID, "client_secret": settings.OGx_CLIENT_SECRET}
         )
     except OGxProtocolError as e:
         pytest.skip(f"Failed to authenticate: {str(e)}")

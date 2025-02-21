@@ -1,6 +1,6 @@
 # OGx Protocol Validation Tests
 
-This directory contains comprehensive unit tests for the OGx protocol validation components, ensuring robust message validation according to OGWS-1 specifications.
+This directory contains comprehensive unit tests for the OGx protocol validation components, ensuring robust message validation according to OGx-1 specifications.
 
 ## Test Coverage
 
@@ -87,7 +87,7 @@ Tests all validation exception classes:
 ## Key Test Coverage Areas
 
 1. **Field Validation**
-   - All field types from OGWS-1.txt Table 3
+   - All field types from OGx-1.txt Table 3
    - Type-specific validation rules
    - Error handling for each type
    - Nested field structures
@@ -102,7 +102,7 @@ Tests all validation exception classes:
    - Network type validation
    - Transport validation
    - Size limits
-   - Error codes per OGWS-1.txt
+   - Error codes per OGx-1.txt
 
 4. **Error Handling**
    - Exception hierarchy

@@ -23,13 +23,13 @@ import prometheus_client
 import pytest
 import redis.asyncio as redis
 from httpx import AsyncClient, HTTPError
-from prometheus_client import CollectorRegistry
-from redis.asyncio.client import Redis as AsyncRedis
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
 # Local imports
 from infrastructure.database.models.base import Base
 from infrastructure.database.session import database_url
+from prometheus_client import CollectorRegistry
+from redis.asyncio.client import Redis as AsyncRedis
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
 # Environment Configuration
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")

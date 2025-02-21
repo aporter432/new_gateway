@@ -2,10 +2,10 @@
 
 Location: tests/e2e/api/endpoints/test_fw_messages.py
 
-This module tests the forward message API endpoints according to OGWS-1.txt specifications.
+This module tests the forward message API endpoints according to OGx-1.txt specifications.
 These tests require:
 1. Valid API credentials
-2. Access to external OGWS service
+2. Access to external OGx service
 3. Test terminal availability
 
 Important:
@@ -23,13 +23,12 @@ Important:
 Test Dependencies:
     - Valid API credentials in environment
     - Running proxy service
-    - Network access to OGWS API
+    - Network access to OGx API
     - Test terminal availability
 """
 
 import pytest
 from httpx import AsyncClient
-
 from protocols.ogx.constants import FieldType, NetworkType
 
 pytestmark = pytest.mark.asyncio

@@ -1,4 +1,4 @@
-"""Unit tests for field validation according to OGWS-1.txt Section 5.1 Table 3.
+"""Unit tests for field validation according to OGx-1.txt Section 5.1 Table 3.
 
 Test organization follows the specification structure:
 1. Required Properties (Name, Type)
@@ -9,7 +9,6 @@ Test organization follows the specification structure:
 """
 
 import pytest
-
 from protocols.ogx.constants import MessageType, NetworkType
 from protocols.ogx.constants.error_codes import GatewayErrorCode
 from protocols.ogx.constants.field_types import FieldType
@@ -31,7 +30,7 @@ def context() -> ValidationContext:
 
 
 class TestFieldValidation:
-    """Unit tests for field validation per OGWS-1.txt Section 5.1 Table 3."""
+    """Unit tests for field validation per OGx-1.txt Section 5.1 Table 3."""
 
     class TestRequiredProperties:
         """Test required field properties validation."""
@@ -236,8 +235,8 @@ class TestFieldValidation:
                 "Name": "test",
                 "Type": "array",
                 "Elements": [
-                    {"Index": 0, "Fields": [{"Name": "test", "Type": "string"}]}  # Missing Value
-                ],
+                    {"Index": 0, "Fields": [{"Name": "test", "Type": "string"}]}
+                ],  # Missing Value
             }
             result = field_validator.validate(field, None)
             assert not result.is_valid
@@ -298,9 +297,9 @@ class TestFieldValidation:
 
         def test_message_validation_error_handling(self, field_validator, context, mocker):
             """Test message validation error handling."""
-            # Mock OGxMessageValidator to raise ImportError
+            # Mock OGxStructureValidator to raise ImportError
             mocker.patch(
-                "protocols.ogx.validation.message.field_validator.OGxMessageValidator",
+                "protocols.ogx.validation.message.field_validator.OGxStructureValidator",
                 side_effect=ImportError("Test import error"),
             )
 

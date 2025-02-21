@@ -1,6 +1,6 @@
-"""Unit tests for OGxMessageValidator.
+"""Unit tests for OGxStructureValidator.
 
-Tests validation of messages according to OGWS-1.txt Section 5 requirements and
+Tests validation of messages according to OGx-1.txt Section 5 requirements and
 implementation standards.
 """
 
@@ -8,17 +8,19 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.protocols.ogx.validation.common.types import ValidationContext
-from src.protocols.ogx.validation.message.message_validator import OGxMessageValidator
+from Protexis_Command.api_ogx.validation.message.ogx_structure_validator import (
+    OGxStructureValidator,
+)
+from Protexis_Command.api_ogx.validation.message.ogx_type_validator import ValidationContext
 
 
-class TestOGxMessageValidator:
-    """Test cases for OGxMessageValidator."""
+class TestOGxStructureValidator:
+    """Test cases for OGxStructureValidator."""
 
     @pytest.fixture
     def validator(self):
         """Create a fresh validator instance for each test."""
-        return OGxMessageValidator()
+        return OGxStructureValidator()
 
     @pytest.fixture
     def context(self):
@@ -145,7 +147,7 @@ class TestOGxMessageValidator:
         assert any("Field validation error" in error for error in result.errors)
 
     def test_validate_with_empty_fields(
-        self, validator: OGxMessageValidator, context: ValidationContext, valid_message
+        self, validator: OGxStructureValidator, context: ValidationContext, valid_message
     ):
         """Test validation with empty fields array."""
         valid_message["Fields"] = []
@@ -154,7 +156,7 @@ class TestOGxMessageValidator:
         assert not result.errors
 
     def test_validate_with_invalid_fields_array(
-        self, validator: OGxMessageValidator, context: ValidationContext, valid_message
+        self, validator: OGxStructureValidator, context: ValidationContext, valid_message
     ):
         """Test validation when Fields is not an array."""
         valid_message["Fields"] = "not_an_array"
@@ -163,7 +165,7 @@ class TestOGxMessageValidator:
         assert any("must be an array" in error for error in result.errors)
 
     def test_validate_with_field_validation_error_handling(
-        self, validator: OGxMessageValidator, context: ValidationContext, valid_message
+        self, validator: OGxStructureValidator, context: ValidationContext, valid_message
     ):
         """Test validation error handling when field validation fails."""
         valid_message["Fields"] = [

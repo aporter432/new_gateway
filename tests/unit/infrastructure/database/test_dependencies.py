@@ -10,10 +10,9 @@ This module tests the database dependency injection functionality:
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from infrastructure.database.dependencies import get_db
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from infrastructure.database.dependencies import get_db
 
 
 @pytest.fixture

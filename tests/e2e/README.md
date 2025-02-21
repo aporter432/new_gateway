@@ -56,7 +56,7 @@ cp tests/e2e/.env.e2e.example tests/e2e/.env.e2e
 Tests in this directory require:
 - Valid API credentials
 - Running services (Redis, PostgreSQL)
-- Network access to OGWS
+- Network access to OGx
 - Proper environment variables
 
 ### Test Database
@@ -87,7 +87,7 @@ pytest tests/e2e --slow
 pytest tests/e2e/protocol/ogx/message_flow -v
 
 # Run with real credentials
-OGWS_CLIENT_ID=xxxxx OGWS_CLIENT_SECRET=xxxxx pytest tests/e2e -v
+OGx_CLIENT_ID=xxxxx OGx_CLIENT_SECRET=xxxxx pytest tests/e2e -v
 ```
 
 ### Test Selection

@@ -1,9 +1,9 @@
-"""Tests for OGx protocol exceptions based on OGWS-1.txt error codes."""
+"""Tests for OGx protocol exceptions based on OGx-1.txt error codes."""
 
 import pytest
 
-from src.protocols.ogx.constants.error_codes import GatewayErrorCode, HTTPErrorCode
-from src.protocols.ogx.validation.common.validation_exceptions import (
+from Protexis_Command.api_ogx.constants.ogx_error_codes import GatewayErrorCode, HTTPErrorCode
+from Protexis_Command.api_ogx.validation.ogx_validation_exceptions import (
     EncodingError,
     OGxProtocolError,
     ProtocolError,
@@ -43,7 +43,7 @@ class TestProtocolError:
         assert error.error_code == GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
 
     def test_protocol_error_constants(self):
-        """Test protocol error constant values from OGWS-1.txt."""
+        """Test protocol error constant values from OGx-1.txt."""
         # Rate limiting errors (24500-24599)
         assert GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED == 24579
         assert GatewayErrorCode.RETRIEVE_STATUS_RATE_EXCEEDED == 24581
@@ -76,7 +76,7 @@ class TestValidationError:
         assert error.error_code == GatewayErrorCode.INVALID_MESSAGE_FORMAT
 
     def test_validation_error_constants(self):
-        """Test validation error constant values from OGWS-1.txt."""
+        """Test validation error constant values from OGx-1.txt."""
         # Base validation errors (10000-10099)
         assert GatewayErrorCode.VALIDATION_ERROR == 10000
         assert GatewayErrorCode.INVALID_MESSAGE_FORMAT == 10001
@@ -103,13 +103,13 @@ class TestEncodingError:
         assert error.error_code == GatewayErrorCode.ENCODE_ERROR
 
     def test_encoding_error_code_range(self):
-        """Test encoding error code is in correct range per OGWS-1.txt."""
+        """Test encoding error code is in correct range per OGx-1.txt."""
         # Processing errors (26000-26099)
         assert 26000 <= GatewayErrorCode.ENCODE_ERROR <= 26099
 
 
 class TestHTTPErrors:
-    """Test cases for HTTP error codes from OGWS-1.txt Appendix A."""
+    """Test cases for HTTP error codes from OGx-1.txt Appendix A."""
 
     def test_http_error_codes(self):
         """Test HTTP error code values."""

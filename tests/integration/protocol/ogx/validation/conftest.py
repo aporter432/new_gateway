@@ -1,12 +1,11 @@
 """Fixtures for OGx protocol validation tests."""
 
 import pytest
-
 from protocols.ogx.constants import FieldType, MessageType, NetworkType
 from protocols.ogx.models.fields import Element, Field, Message
 from protocols.ogx.validation.common.types import ValidationContext
 from protocols.ogx.validation.message.field_validator import OGxFieldValidator
-from protocols.ogx.validation.message.message_validator import OGxMessageValidator
+from protocols.ogx.validation.message.message_validator import OGxStructureValidator
 
 
 @pytest.fixture
@@ -16,9 +15,9 @@ def field_validator() -> OGxFieldValidator:
 
 
 @pytest.fixture
-def validator() -> OGxMessageValidator:
+def validator() -> OGxStructureValidator:
     """Create a message validator instance."""
-    return OGxMessageValidator()
+    return OGxStructureValidator()
 
 
 @pytest.fixture

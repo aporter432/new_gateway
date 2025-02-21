@@ -8,12 +8,11 @@ from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from infrastructure.database.models.user import User, UserRole
 from infrastructure.database.repositories.user_repository import UserRepository
 from protocols.ogx.validation.common.validation_exceptions import ValidationError
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture

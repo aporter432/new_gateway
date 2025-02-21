@@ -1,6 +1,6 @@
 """Integration tests for return message endpoints.
 
-This module tests the return message API endpoints according to OGWS-1.txt specifications.
+This module tests the return message API endpoints according to OGx-1.txt specifications.
 
 Important:
     NetworkType Usage:

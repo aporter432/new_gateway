@@ -1,7 +1,6 @@
 """Tests for service limits and size calculation functions."""
 
 import pytest
-
 from protocols.ogx.constants.limits import (
     MAX_OGX_PAYLOAD_BYTES,
     calculate_base64_size,

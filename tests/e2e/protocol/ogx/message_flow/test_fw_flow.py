@@ -1,10 +1,10 @@
 """End-to-end tests for OGx forward message flow.
 
-These tests verify the complete forward message flow using real OGWS API
+These tests verify the complete forward message flow using real OGx API
 and services. They require:
-1. Valid OGWS credentials
+1. Valid OGx credentials
 2. Running Redis instance
-3. Network access to OGWS
+3. Network access to OGx
 4. Proper environment setup
 """
 
@@ -12,11 +12,10 @@ import asyncio
 from datetime import datetime
 
 import pytest
-
 from core.app_settings import get_settings
 from protocols.ogx.constants import FieldType, TransportType
 from protocols.ogx.models.fields import Field, Message
-from protocols.ogx.services.ogws_protocol_handler import OGWSProtocolHandler
+from protocols.ogx.services.OGx_protocol_handler import OGxProtocolHandler
 from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
 
 
@@ -25,11 +24,11 @@ from protocols.ogx.validation.common.validation_exceptions import OGxProtocolErr
 @pytest.mark.requires_credentials
 @pytest.mark.slow
 async def test_forward_message_flow_e2e():
-    """Test complete forward message flow with real OGWS API.
+    """Test complete forward message flow with real OGx API.
 
     This test:
     1. Creates a real message
-    2. Submits to actual OGWS API
+    2. Submits to actual OGx API
     3. Verifies submission
     4. Tracks message state
     5. Cleans up after test
@@ -37,8 +36,8 @@ async def test_forward_message_flow_e2e():
     settings = get_settings()
 
     # Skip if no credentials
-    if not all([settings.OGWS_CLIENT_ID, settings.OGWS_CLIENT_SECRET]):
-        pytest.skip("OGWS credentials not configured")
+    if not all([settings.OGx_CLIENT_ID, settings.OGx_CLIENT_SECRET]):
+        pytest.skip("OGx credentials not configured")
 
     # Create test message
     test_message = Message(
@@ -52,18 +51,18 @@ async def test_forward_message_flow_e2e():
     )
 
     # Get real protocol handler
-    handler = OGWSProtocolHandler()  # This will be replaced with real implementation
+    handler = OGxProtocolHandler()  # This will be replaced with real implementation
 
     try:
         # Authenticate
         await handler.authenticate(
-            {"client_id": settings.OGWS_CLIENT_ID, "client_secret": settings.OGWS_CLIENT_SECRET}
+            {"client_id": settings.OGx_CLIENT_ID, "client_secret": settings.OGx_CLIENT_SECRET}
         )
 
         # Submit message
         message_id, validation_result = await handler.submit_message(
             message=test_message.model_dump(),
-            destination_id=settings.OGWS_TEST_MOBILE_ID,
+            destination_id=settings.OGx_TEST_MOBILE_ID,
             transport_type=TransportType.SATELLITE,
         )
 

@@ -12,8 +12,8 @@ from unittest.mock import patch
 
 import pytest
 from httpx import HTTPError, Request, Response
+from protocols.ogx.auth.manager import OGxAuthManager, TokenMetadata
 
-from protocols.ogx.auth.manager import OGWSAuthManager, TokenMetadata
 from tests.integration.api.auth.test_token_setup import get_test_redis, get_test_settings
 
 # Use function-scoped event loop for better isolation
@@ -23,12 +23,12 @@ pytestmark = pytest.mark.asyncio
 async def test_invalid_credentials():
     """Test token acquisition with invalid credentials."""
     settings = get_test_settings()
-    settings.OGWS_CLIENT_ID = "invalid_id"
-    settings.OGWS_CLIENT_SECRET = "invalid_secret"
+    settings.OGx_CLIENT_ID = "invalid_id"
+    settings.OGx_CLIENT_SECRET = "invalid_secret"
 
     redis = await get_test_redis()
     try:
-        auth_manager = OGWSAuthManager(settings, redis)
+        auth_manager = OGxAuthManager(settings, redis)
         mock_response = Response(
             status_code=401,
             json={"error": "invalid_credentials"},
@@ -50,7 +50,7 @@ async def test_expired_token():
     redis = await get_test_redis()
 
     try:
-        auth_manager = OGWSAuthManager(settings, redis)
+        auth_manager = OGxAuthManager(settings, redis)
 
         # Store an expired token
         now = time.time()
@@ -81,7 +81,7 @@ async def test_token_validation_failure():
     redis = await get_test_redis()
 
     try:
-        auth_manager = OGWSAuthManager(settings, redis)
+        auth_manager = OGxAuthManager(settings, redis)
 
         # Create an invalid auth header
         auth_header = {"Authorization": "Bearer invalid_token_here"}

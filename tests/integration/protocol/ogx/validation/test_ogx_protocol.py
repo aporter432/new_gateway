@@ -1,6 +1,6 @@
-"""Tests for OGx protocol message size validation according to OGWS-1.txt."""
+"""Tests for OGx protocol message size validation according to OGx-1.txt."""
 
-from src.protocols.ogx.constants.limits import MAX_OGX_PAYLOAD_BYTES
+from Protexis_Command.api_ogx.constants.ogx_limits import MAX_OGX_PAYLOAD_BYTES
 
 
 class TestSizeValidation:

@@ -1,5 +1,5 @@
 services:
-  # API Proxy for OGWS
+  # API Proxy for OGx
   proxy:
     build:
       context: .
@@ -98,9 +98,9 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
-      - OGWS_BASE_URL=http://proxy:8080/api/v1.0
-      - OGWS_CLIENT_ID=70000934
-      - OGWS_CLIENT_SECRET=password
+      - OGx_BASE_URL=http://proxy:8080/api/v1.0
+      - OGx_CLIENT_ID=70000934
+      - OGx_CLIENT_SECRET=password
       - CUSTOMER_ID=test_customer
       - HTTP_PROXY=http://proxy:8888
       - HTTPS_PROXY=http://proxy:8888
@@ -146,9 +146,9 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=15
-      - OGWS_BASE_URL=http://proxy:8080/api/v1.0
-      - OGWS_CLIENT_ID=70000934
-      - OGWS_CLIENT_SECRET=password
+      - OGx_BASE_URL=http://proxy:8080/api/v1.0
+      - OGx_CLIENT_ID=70000934
+      - OGx_CLIENT_SECRET=password
       - CUSTOMER_ID=test_customer
       - HTTP_PROXY=http://proxy:8888
       - HTTPS_PROXY=http://proxy:8888

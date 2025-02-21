@@ -10,11 +10,10 @@ This module tests:
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from fastapi import HTTPException
-from jose import JWTError, jwt
-
 from api.security.jwt import ALGORITHM, TokenData, create_access_token, verify_token
 from core.app_settings import get_settings
+from fastapi import HTTPException
+from jose import JWTError, jwt
 
 settings = get_settings()
 

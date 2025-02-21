@@ -312,6 +312,21 @@ files = [
 pyflakes = ">=3.0.0"
 
 [[package]]
+name = "autopep8"
+version = "2.3.2"
+description = "A tool that automatically formats Python code to conform to the PEP 8 style guide"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "autopep8-2.3.2-py2.py3-none-any.whl", hash = "sha256:ce8ad498672c845a0c3de2629c15b635ec2b05ef8177a6e7c91c74f3e9b51128"},
+    {file = "autopep8-2.3.2.tar.gz", hash = "sha256:89440a4f969197b69a995e4ce0661b031f455a9f776d2c5ba3dbd83466931758"},
+]
+
+[package.dependencies]
+pycodestyle = ">=2.12.0"
+
+[[package]]
 name = "bandit"
 version = "1.8.2"
 description = "Security oriented static analyser for python code."
@@ -3059,4 +3074,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11.6"
-content-hash = "32359242be625972b244101d82632eeca116596ce44303975eb1addabb3235a4"
+content-hash = "b575efa6c52dc599c982ad8f4b127b79e8b6474a1ceee43b0777918e806fab40"

@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.protocols.ogx.models.messages import OGxMessage
+from Protexis_Command.api_ogx.models.ogx_messages import OGxMessage
 
 
 class TestOGxMessage:

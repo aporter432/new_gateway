@@ -10,15 +10,14 @@ This module tests:
 from datetime import datetime, timedelta
 
 import pytest
-from fastapi import HTTPException
-from jose import jwt
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from api.security.jwt import ALGORITHM, create_access_token
 from api.security.oauth2 import get_current_active_user, get_current_admin_user, get_current_user
 from core.app_settings import get_settings
+from fastapi import HTTPException
 from infrastructure.database.models import User, UserRole
 from infrastructure.database.repositories.user_repository import UserRepository
+from jose import jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 
 settings = get_settings()
 
