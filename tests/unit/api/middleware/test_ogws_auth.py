@@ -15,8 +15,8 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp
 
-from Protexis_Command.api_ogx.auth.manager import OGxAuthManager
 from Protexis_Command.api_ogx.middleware.ogx_auth import OGxAuthMiddleware, add_ogx_auth_middleware
+from Protexis_Command.api_ogx.services.auth.manager import OGxAuthManager
 
 
 @pytest.fixture
@@ -128,7 +128,7 @@ async def test_auth_failure_with_refresh_error(mock_app, mock_request, mock_auth
     # Verify error response
     assert isinstance(response, JSONResponse)
     assert response.status_code == 401
-    assert response.body.decode().find("Token refresh failed") != -1
+    assert bytes(response.body).decode().find("Token refresh failed") != -1
     assert call_next.await_count == 1
 
 
@@ -152,8 +152,8 @@ async def test_http_error_handling(mock_app, mock_request):
     # Verify error response
     assert isinstance(response, JSONResponse)
     assert response.status_code == 500
-    assert response.body.decode().find(error_msg) != -1
-    assert response.body.decode().find("http_error") != -1
+    assert bytes(response.body).decode().find(error_msg) != -1
+    assert bytes(response.body).decode().find("http_error") != -1
 
 
 @pytest.mark.asyncio
@@ -176,8 +176,8 @@ async def test_network_error_handling(mock_app, mock_request):
     # Verify error response
     assert isinstance(response, JSONResponse)
     assert response.status_code == 500
-    assert response.body.decode().find(error_msg) != -1
-    assert response.body.decode().find("system_error") != -1
+    assert bytes(response.body).decode().find(error_msg) != -1
+    assert bytes(response.body).decode().find("system_error") != -1
 
 
 @pytest.mark.asyncio
@@ -200,8 +200,8 @@ async def test_timeout_error_handling(mock_app, mock_request):
     # Verify error response
     assert isinstance(response, JSONResponse)
     assert response.status_code == 500
-    assert response.body.decode().find(error_msg) != -1
-    assert response.body.decode().find("system_error") != -1
+    assert bytes(response.body).decode().find(error_msg) != -1
+    assert bytes(response.body).decode().find("system_error") != -1
 
 
 def test_add_auth_middleware():

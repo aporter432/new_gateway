@@ -11,12 +11,13 @@ from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
 
 import pytest
 import redis.asyncio as aioredis
-from core.app_settings import Settings, get_settings
-from protocols.ogx.constants.message_types import MessageType
-from protocols.ogx.constants.transport_types import TransportType
-from protocols.ogx.services.OGx_protocol_handler import OGxProtocolHandler
-from protocols.ogx.validation.common.types import ValidationResult
-from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
+
+from Protexis_Command.core.app_settings import Settings, get_settings
+from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType
+from Protexis_Command.protocol.ogx.ogx_protocol_handler import OGxProtocolHandler
+from Protexis_Command.protocol.ogx.validation.ogx_type_validator import ValidationResult
+from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import OGxProtocolError
 
 
 def pytest_configure(config):

@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, List, Optional
 
-from Protexis_Command.api_ogx.constants import APIEndpoint, TransportType
+from Protexis_Command.api_ogx.config import APIEndpoint, TransportType
 from Protexis_Command.api_protexis.clients.base import BaseAPIClient
 
 

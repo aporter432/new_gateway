@@ -1,11 +1,23 @@
-"""OGx protocol message and field models according to OGx-1.txt Section 5."""
+"""OGx API models."""
 
-from .ogx_fields import Element, Field, Message
-from .ogx_messages import OGxMessage
+from .fields import (
+    APIField,
+    BinaryField,
+    BooleanField,
+    EnumField,
+    FloatField,
+    IntegerField,
+    StringField,
+    TimestampField,
+)
 
 __all__ = [
-    "Element",
-    "Field",
-    "Message",
-    "OGxMessage",  # The single message type defined in OGx-1.txt Section 5
+    "APIField",
+    "StringField",
+    "IntegerField",
+    "FloatField",
+    "BooleanField",
+    "BinaryField",
+    "TimestampField",
+    "EnumField",
 ]

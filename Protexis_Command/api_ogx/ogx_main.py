@@ -1,33 +1,63 @@
+"""OGx API main application module.
+
+This module initializes and configures the FastAPI application for the OGx Gateway.
+It sets up middleware, routes, and background workers for message handling.
+"""
+
 import asyncio
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator
 
-from core.logging.loggers import get_protocol_logger
+# Third-party imports
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from Protexis_Command.api_ogx.middleware.ogx_auth import add_ogx_auth_middleware
-from Protexis_Command.api_ogx.routes import messages
-from Protexis_Command.api_ogx.services.ogx_message_worker import get_message_worker
+from Protexis_Command.api_ogx.routes import messages_router
+from Protexis_Command.api_ogx.services.messages.ogx_message_worker import get_message_worker
+
+# First-party imports
+from Protexis_Command.core.logging.loggers import get_protocol_logger
 
 logger = get_protocol_logger()
-worker_task: Optional[asyncio.Task] = None
 
 
-async def initialize_worker():
+async def initialize_worker() -> None:
+    """Initialize and start the message worker.
+
+    This function creates a new message worker instance and starts it.
+    Any startup errors are logged but not re-raised to prevent application
+    startup failure.
+    """
     try:
         worker = await get_message_worker()
         app.state.message_worker = worker
         await worker.start()
         logger.info("Message worker started successfully")
-    except Exception as e:
-        logger.error(f"Failed to start message worker: {str(e)}")
+    except (ConnectionError, TimeoutError) as e:
+        logger.error(f"Failed to connect to message worker: {str(e)}")
+        app.state.worker_error = str(e)
+    except ValueError as e:
+        logger.error(f"Invalid configuration for message worker: {str(e)}")
+        app.state.worker_error = str(e)
+    except Exception as e:  # pylint: disable=broad-except
+        # We catch all exceptions here to prevent app startup failure
+        # but log them for debugging
+        logger.error(f"Unexpected error starting message worker: {str(e)}")
         app.state.worker_error = str(e)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    global worker_task
+    """Manage application lifespan.
+
+    This context manager handles startup and shutdown tasks:
+    - On startup: Initializes the message worker
+    - On shutdown: Gracefully stops the message worker
+
+    Args:
+        app: The FastAPI application instance
+    """
     worker_task = asyncio.create_task(initialize_worker())
     logger.info("Application startup complete")
     yield
@@ -55,12 +85,17 @@ app.add_middleware(
 add_ogx_auth_middleware(app)
 
 app.include_router(
-    messages.router,
+    messages_router,
     prefix="/api/v1",
     tags=["messages"],
 )
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict:
+    """Check application health status.
+
+    Returns:
+        dict: Health check response with status
+    """
     return {"status": "healthy"}

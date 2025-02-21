@@ -67,6 +67,9 @@ packages = [
     { include = "Protexis_Command" }
 ]
 
+[tool.poetry.dependencies]
+python = ">=3.11.6"
+
 [tool.poetry.group.dev]
 optional = true
 

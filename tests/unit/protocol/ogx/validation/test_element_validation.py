@@ -6,10 +6,16 @@ Tests focus on array element validation:
 - Error propagation
 """
 
+from typing import Any, Dict, List
+
 import pytest
-from protocols.ogx.constants.message_types import MessageType
-from protocols.ogx.validation.common.types import ValidationContext
-from protocols.ogx.validation.message.element_validator import OGxElementValidator
+
+from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocol.ogx.validation.validators.ogx_element_validator import (
+    OGxElementValidator,
+)
+from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
 
 
 @pytest.fixture
@@ -21,7 +27,7 @@ def validator() -> OGxElementValidator:
 @pytest.fixture
 def context() -> ValidationContext:
     """Provide validation context."""
-    return ValidationContext(network_type="OGX", direction=MessageType.FORWARD)
+    return ValidationContext(network_type=NetworkType.OGX, direction=MessageType.FORWARD)
 
 
 class TestOGxElementValidator:
@@ -126,7 +132,8 @@ class TestOGxElementValidator:
         self, validator: OGxElementValidator, context: ValidationContext
     ):
         """Test validation_array with non-array input."""
-        elements = "not an array"
+        # Using a single dict where a list is required
+        elements: List[Dict[str, Any]] = [{"not": "a valid element"}]  # type: ignore
         validator.context = context
         result = validator.validate_array(elements, context)
         assert not result.is_valid
@@ -168,7 +175,7 @@ class TestOGxElementValidator:
                 {
                     "Name": "test_field",
                     "Type": "unsignedint",
-                    "Value": "not_a_number",  # Will cause ValueError in field validation
+                    "Value": "not_a_number",  # Will cause ValueError
                 }
             ],
         }

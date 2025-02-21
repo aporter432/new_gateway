@@ -35,8 +35,8 @@ from core.logging.loggers import get_auth_logger
 from httpx import HTTPError
 from infrastructure.redis import get_redis_client
 
-from Protexis_Command.api_ogx.auth.manager import OGxAuthManager
-from Protexis_Command.api_ogx.constants import DEFAULT_TOKEN_EXPIRY
+from Protexis_Command.api_ogx.config import DEFAULT_TOKEN_EXPIRY
+from Protexis_Command.api_ogx.services.auth.manager import OGxAuthManager
 from Protexis_Command.api_ogx.validation.common.validation_exceptions import (
     OGxProtocolError,
     ValidationError,

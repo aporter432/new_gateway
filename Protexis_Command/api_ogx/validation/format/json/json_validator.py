@@ -7,8 +7,8 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List
 
-from Protexis_Command.api_ogx.constants import MessageState
-from Protexis_Command.api_ogx.validation.common.validation_exceptions import ValidationError
+from Protexis_Command.api_ogx.config import MessageState
+from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
 
 
 class OGxJsonValidator:

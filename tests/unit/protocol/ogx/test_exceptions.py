@@ -2,8 +2,8 @@
 
 import pytest
 
-from Protexis_Command.api_ogx.constants.ogx_error_codes import GatewayErrorCode, HTTPErrorCode
-from Protexis_Command.api_ogx.validation.ogx_validation_exceptions import (
+from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode, HTTPErrorCode
+from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
     EncodingError,
     OGxProtocolError,
     ProtocolError,

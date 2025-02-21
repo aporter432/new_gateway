@@ -8,10 +8,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from Protexis_Command.api_ogx.validation.message.ogx_structure_validator import (
+from Protexis_Command.protocol.ogx.validation.validators.ogx_structure_validator import (
     OGxStructureValidator,
 )
-from Protexis_Command.api_ogx.validation.message.ogx_type_validator import ValidationContext
+from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
 
 
 class TestOGxStructureValidator:

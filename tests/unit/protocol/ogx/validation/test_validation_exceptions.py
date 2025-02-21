@@ -19,8 +19,8 @@ to all error types for:
 # pylint: disable=missing-docstring,invalid-name
 # pylint: disable=no-member
 
-from protocols.ogx.constants.error_codes import GatewayErrorCode, HTTPErrorCode
-from protocols.ogx.validation.common.validation_exceptions import (
+from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode, HTTPErrorCode
+from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
     AuthenticationError,
     ElementValidationError,
     EncodingError,

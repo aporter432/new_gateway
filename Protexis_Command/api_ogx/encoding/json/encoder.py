@@ -36,10 +36,10 @@ import json
 from datetime import datetime
 from typing import Any, Dict, Optional, Union
 
-from Protexis_Command.api_ogx.constants import MessageState
-from Protexis_Command.api_ogx.models.messages import OGxMessage
-from Protexis_Command.api_ogx.validation.common.validation_exceptions import EncodingError
+from Protexis_Command.api_ogx.config import MessageState
 from Protexis_Command.api_ogx.validation.format.json.json_validator import OGxJsonValidator
+from Protexis_Command.protocol.ogx.models.ogx_messages import OGxMessage
+from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import EncodingError
 
 
 class OGxJsonEncoder:

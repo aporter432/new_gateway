@@ -14,8 +14,9 @@ from pathlib import Path
 from typing import Any, AsyncGenerator, Dict
 
 import pytest
-from core.app_settings import Settings, get_settings
 from httpx import AsyncClient
+
+from Protexis_Command.core.app_settings import Settings, get_settings
 
 os.environ["TESTING"] = "true"
 
@@ -24,7 +25,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="passlib.handlers
 
 
 ROOT_DIR = Path(__file__).parent.parent
-SRC_PATH = str(ROOT_DIR / "src")
+SRC_PATH = str(ROOT_DIR / "Protexis_Command")
 if SRC_PATH not in sys.path:
     sys.path.insert(0, SRC_PATH)
 

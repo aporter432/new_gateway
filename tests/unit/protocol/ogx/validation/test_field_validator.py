@@ -9,12 +9,16 @@ Test organization follows the specification structure:
 """
 
 import pytest
-from protocols.ogx.constants import MessageType, NetworkType
-from protocols.ogx.constants.error_codes import GatewayErrorCode
-from protocols.ogx.constants.field_types import FieldType
-from protocols.ogx.validation.common.types import ValidationContext
-from protocols.ogx.validation.common.validation_exceptions import ValidationError
-from protocols.ogx.validation.message.field_validator import OGxFieldValidator
+
+from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
+from Protexis_Command.protocol.ogx.constants.ogx_field_types import FieldType
+from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
+from Protexis_Command.protocol.ogx.validation.validators.ogx_field_validator import (
+    OGxFieldValidator,
+)
+from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Optional
 
-from ...api_ogx.auth.manager import OGxAuthManager
+from ...api_ogx.services.auth.manager import OGxAuthManager
 from ...api_ogx.services.ogx_client import OGxClient
 from ...core.app_settings import Settings, get_settings
 from ...infrastructure.redis import get_redis_client

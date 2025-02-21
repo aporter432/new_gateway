@@ -1,7 +1,8 @@
 """Tests for service limits and size calculation functions."""
 
 import pytest
-from protocols.ogx.constants.limits import (
+
+from Protexis_Command.protocol.ogx.constants.ogx_limits import (
     MAX_OGX_PAYLOAD_BYTES,
     calculate_base64_size,
     calculate_json_overhead,
