@@ -97,7 +97,7 @@ class Settings(BaseSettings):
     # Reference: OGx-1.txt Section 4.1.1 - Authentication
     OGx_CLIENT_ID: str = "70000934"
     OGx_CLIENT_SECRET: str = "password"
-    OGx_BASE_URL: str = "https://OGx.orbcomm.com/api/v1.0"
+    OGx_BASE_URL: str = "https://OGx.swlab.ca/api/v1.0"
     OGx_TOKEN_EXPIRY: int = 31536000
 
     # Customer identification - required in production

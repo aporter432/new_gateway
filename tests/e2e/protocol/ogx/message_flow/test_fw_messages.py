@@ -38,7 +38,7 @@ async def test_forward_message_basic():
     """Test basic forward message submission."""
     async with AsyncClient() as client:
         response = await client.post(
-            "http://proxy:8080/api/v1.0/messages/forward",
+            "https://OGx.swlab.ca/api/v1.0/messages/forward",
             json={
                 "Name": "test_message",
                 "SIN": 16,
@@ -57,7 +57,7 @@ async def test_forward_message_basic():
 
         # Check message state
         status_response = await client.get(
-            f"http://proxy:8080/api/v1.0/messages/{data['message_id']}/status"
+            f"https://OGx.swlab.ca/api/v1.0/messages/{data['message_id']}/status"
         )
         assert status_response.status_code == 200
         state = status_response.json()

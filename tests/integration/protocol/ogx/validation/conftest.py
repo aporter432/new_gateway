@@ -1,11 +1,16 @@
-"""Fixtures for OGx protocol validation tests."""
+"""Test configuration and fixtures for protocol validation."""
 
 import pytest
-from protocols.ogx.constants import FieldType, MessageType, NetworkType
-from protocols.ogx.models.fields import Element, Field, Message
-from protocols.ogx.validation.common.types import ValidationContext
-from protocols.ogx.validation.message.field_validator import OGxFieldValidator
-from protocols.ogx.validation.message.message_validator import OGxStructureValidator
+
+from Protexis_Command.protocol.ogx.constants import FieldType, MessageType, NetworkType
+from Protexis_Command.protocol.ogx.models.fields import Element, Field, Message
+from Protexis_Command.protocol.ogx.validation.validators.ogx_field_validator import (
+    OGxFieldValidator,
+)
+from Protexis_Command.protocol.ogx.validation.validators.ogx_structure_validator import (
+    OGxStructureValidator,
+)
+from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
 
 
 @pytest.fixture

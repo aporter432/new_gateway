@@ -1,7 +1,10 @@
-"""Integration tests for OGx message validation chain"""
+"""Integration tests for message chain validation.
 
-from protocols.ogx.constants import FieldType
-from protocols.ogx.models.fields import Element, Field, Message
+Tests validation of message chains according to OGx-1.txt specifications.
+"""
+
+from Protexis_Command.protocol.ogx.constants import FieldType
+from Protexis_Command.protocol.ogx.models.fields import Element, Field, Message
 
 
 def test_complex_nested_structure():
@@ -53,9 +56,9 @@ def test_complex_nested_structure():
     message = Message(Name="nested_test", SIN=16, MIN=1, Fields=nested_fields)
 
     # Verify structure is preserved
-    assert len(message.fields) == 1
-    assert message.fields[0].type == FieldType.ARRAY
-    assert message.fields[0].elements is not None, "Array field should have elements"
-    assert len(message.fields[0].elements) == 1
-    assert message.fields[0].elements[0].fields is not None, "Element should have fields"
-    assert len(message.fields[0].elements[0].fields) == 2
+    assert len(message.Fields) == 1
+    assert message.Fields[0].Type == FieldType.ARRAY
+    assert message.Fields[0].Elements is not None, "Array field should have elements"
+    assert len(message.Fields[0].Elements) == 1
+    assert message.Fields[0].Elements[0].Fields is not None, "Element should have fields"
+    assert len(message.Fields[0].Elements[0].Fields) == 2

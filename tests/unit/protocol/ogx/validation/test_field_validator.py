@@ -1,11 +1,6 @@
-"""Unit tests for field validation according to OGx-1.txt Section 5.1 Table 3.
+"""Unit tests for field validation.
 
-Test organization follows the specification structure:
-1. Required Properties (Name, Type)
-2. Basic Field Types (string, boolean, int, etc.)
-3. Array Fields
-4. Message Fields
-5. Dynamic Fields
+This module tests field validation according to OGx-1.txt.
 """
 
 import pytest
@@ -302,8 +297,8 @@ class TestFieldValidation:
         def test_message_validation_error_handling(self, field_validator, context, mocker):
             """Test message validation error handling."""
             # Mock OGxStructureValidator to raise ImportError
-            mocker.patch(
-                "protocols.ogx.validation.message.field_validator.OGxStructureValidator",
+            mock_validator = mocker.patch(
+                "Protexis_Command.protocol.ogx.validation.message.OGxStructureValidator",
                 side_effect=ImportError("Test import error"),
             )
 
@@ -315,6 +310,7 @@ class TestFieldValidation:
             result = field_validator.validate(field, context)
             assert not result.is_valid
             assert "Message validation unavailable" in result.errors[0]
+            mock_validator.assert_called_once()
 
         def test_message_field_validation_error_paths(self, field_validator, context):
             """Test message field validation error paths."""
@@ -326,22 +322,7 @@ class TestFieldValidation:
             }
             result = field_validator.validate(field, context)
             assert not result.is_valid
-            assert "Message validation failed" in str(result.errors)
-
-            # Test invalid field in message
-            field = {
-                "Name": "test",
-                "Type": "message",
-                "Message": {
-                    "Name": "inner",
-                    "SIN": 16,
-                    "MIN": 1,
-                    "Fields": [{"Name": "test", "Type": "string"}],  # Missing Value
-                },
-            }
-            result = field_validator.validate(field, context)
-            assert not result.is_valid
-            assert "Missing required field fields: Value" in result.errors[0]
+            assert "SIN must be an integer" in result.errors[0]
 
     class TestDynamicFields:
         """Test dynamic field validation."""

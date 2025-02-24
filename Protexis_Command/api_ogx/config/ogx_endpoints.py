@@ -1,4 +1,4 @@
-# src/protocols/ogx/constants/endpoints.py
+# Protexis_Command/api_ogx/config/ogx_endpoints.py
 
 """OGx API endpoints as defined in OGx-1.txt.
 

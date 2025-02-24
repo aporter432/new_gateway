@@ -1,37 +1,13 @@
-"""Setup initial authentication token for the gateway application.
+"""Token setup script.
 
-This script handles the initial authentication token setup required for the gateway
-to communicate with OGx (OGx Gateway Web Service). It:
-- Retrieves settings from environment/configuration
-- Connects to Redis for token storage
-- Acquires a new token using OGx auth flow
-- Validates token with test request
-- Stores the token in Redis for reuse
-
-The token is required for all subsequent API calls to OGx. Token expiry and
-refresh is handled automatically by the auth manager.
-
-Usage:
-    python -m scripts.auth.setup_token
-
-References:
-    OGx-1.txt section 4.1.1 - Authentication Flow
-
-Raises:
-    ValidationError: If token acquisition fails due to invalid credentials
-    OGxProtocolError: If OGx protocol-level errors occur
-    ConnectionError: If connection to OGx or Redis fails
-    TimeoutError: If requests timeout
-    IOError: If Redis operations fail
+This script sets up authentication tokens for the application.
 """
 
 import asyncio
-import sys
+import os
 from typing import Optional
 
 import httpx
-from core.app_settings import get_settings
-from core.logging.loggers import get_auth_logger
 from httpx import HTTPError
 from infrastructure.redis import get_redis_client
 
@@ -41,6 +17,13 @@ from Protexis_Command.api_ogx.validation.common.validation_exceptions import (
     OGxProtocolError,
     ValidationError,
 )
+from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.core.logging.loggers import get_auth_logger
+
+# Remove unused imports:
+# - json
+# - datetime, timedelta, timezone
+# - Dict
 
 
 async def send_test_message(auth_header: dict, base_url: str, test_mobile_id: str) -> Optional[str]:
@@ -155,7 +138,7 @@ async def setup_initial_token() -> None:
                 "auth_info": {"error_type": "validation", "error_msg": str(e), "service": "OGx"},
             },
         )
-        sys.exit(1)
+        os.exit(1)
     except OGxProtocolError as e:
         logger.error(
             "Protocol error during token setup: %s",
@@ -166,7 +149,7 @@ async def setup_initial_token() -> None:
                 "auth_info": {"error_type": "protocol", "error_msg": str(e), "service": "OGx"},
             },
         )
-        sys.exit(1)
+        os.exit(1)
     except (ConnectionError, TimeoutError, IOError) as e:
         logger.error(
             "Connection/IO error during token setup: %s",
@@ -178,7 +161,7 @@ async def setup_initial_token() -> None:
                 "auth_info": {"error_type": "connection", "error_msg": str(e), "service": "OGx"},
             },
         )
-        sys.exit(1)
+        os.exit(1)
 
 
 if __name__ == "__main__":

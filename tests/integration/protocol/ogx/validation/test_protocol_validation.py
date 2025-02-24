@@ -1,16 +1,20 @@
-"""Tests for protocol-level validators."""
+"""Integration tests for OGx protocol validation.
+
+This module tests the OGx protocol validation functionality.
+"""
 
 import pytest
-from protocols.ogx.constants import MessageType, NetworkType
-from protocols.ogx.constants.limits import MAX_OGX_PAYLOAD_BYTES
-from protocols.ogx.validation.common.types import ValidationContext
-from protocols.ogx.validation.common.validation_exceptions import (
-    SizeValidationError,
-    ValidationError,
+
+from Protexis_Command.protocol.ogx.constants import MessageType, NetworkType
+from Protexis_Command.protocol.ogx.constants.ogx_limits import MAX_OGX_PAYLOAD_BYTES
+from Protexis_Command.protocol.ogx.validation.validators.ogx_network_validator import (
+    NetworkValidator,
 )
-from protocols.ogx.validation.protocol.network_validator import NetworkValidator
-from protocols.ogx.validation.protocol.size_validator import SizeValidator
-from protocols.ogx.validation.protocol.transport_validator import OGxTransportValidator
+from Protexis_Command.protocol.ogx.validation.validators.ogx_size_validator import SizeValidator
+from Protexis_Command.protocol.ogx.validation.validators.ogx_transport_validator import (
+    OGxTransportValidator,
+)
+from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
 
 
 class TestNetworkValidator:
@@ -139,11 +143,11 @@ class TestSizeValidator:
     ):
         """Test validation with oversized raw payload."""
         data = {"RawPayload": "x" * (MAX_OGX_PAYLOAD_BYTES + 1)}
-        with pytest.raises(SizeValidationError) as exc:
-            validator.validate(data, context)
-        assert "Raw payload size" in str(exc.value)
-        assert exc.value.current_size is not None and exc.value.current_size > MAX_OGX_PAYLOAD_BYTES
-        assert exc.value.max_size == MAX_OGX_PAYLOAD_BYTES
+        result = validator.validate(data, context)
+        assert not result.is_valid
+        assert "Raw payload size" in result.errors[0]
+        assert hasattr(result, "current_size") and result.current_size > MAX_OGX_PAYLOAD_BYTES
+        assert hasattr(result, "max_size") and result.max_size == MAX_OGX_PAYLOAD_BYTES
 
     def test_validate_raw_payload_edge_case(self, validator, context):
         """Test validation at raw payload size limit boundary."""
@@ -154,9 +158,9 @@ class TestSizeValidator:
 
         # Test one byte over
         data = {"RawPayload": "x" * (MAX_OGX_PAYLOAD_BYTES + 1)}
-        with pytest.raises(SizeValidationError) as exc:
-            validator.validate(data, context)
-        assert "Raw payload size" in str(exc.value)
+        result = validator.validate(data, context)
+        assert not result.is_valid
+        assert "Raw payload size" in result.errors[0]
 
     def test_validate_json_payload(self, validator, context):
         """Test validation with JSON payload."""
@@ -170,16 +174,16 @@ class TestSizeValidator:
     def test_validate_invalid_json_payload(self, validator, context):
         """Test validation with invalid JSON payload."""
         data = {"DestinationID": "test_id", "Payload": "not a json object"}  # Should be a dict
-        with pytest.raises(ValidationError) as exc:
-            validator.validate(data, context)
-        assert "Payload must be a JSON object" in str(exc.value)
+        result = validator.validate(data, context)
+        assert not result.is_valid
+        assert "Payload must be a JSON object" in result.errors[0]
 
     def test_validate_invalid_raw_payload(self, validator, context):
         """Test validation with invalid raw payload."""
         data = {"DestinationID": "test_id", "RawPayload": 123}  # Should be a string
-        with pytest.raises(ValidationError) as exc:
-            validator.validate(data, context)
-        assert "RawPayload must be a string" in str(exc.value)
+        result = validator.validate(data, context)
+        assert not result.is_valid
+        assert "RawPayload must be a string" in result.errors[0]
 
     def test_validate_missing_payload(self, validator, context):
         """Test validation with no payload."""
@@ -187,9 +191,9 @@ class TestSizeValidator:
             "DestinationID": "test_id"
             # Missing both RawPayload and Payload
         }
-        with pytest.raises(ValidationError) as exc:
-            validator.validate(data, context)
-        assert "Message must contain either RawPayload or Payload" in str(exc.value)
+        result = validator.validate(data, context)
+        assert not result.is_valid
+        assert "Message must contain either RawPayload or Payload" in result.errors[0]
 
     def test_validate_with_no_data(self, validator, context):
         """Test validation with no data."""
@@ -214,9 +218,9 @@ class TestSizeValidator:
                 raise RuntimeError("Cannot convert to string")
 
         data = {"RawPayload": BadString()}
-        with pytest.raises(ValidationError) as exc:
-            validator.validate(data, context)
-        assert "RawPayload must be a string" in str(exc.value)
+        result = validator.validate(data, context)
+        assert not result.is_valid
+        assert "Failed to validate message" in result.errors[0]
 
 
 class TestOGxTransportValidator:

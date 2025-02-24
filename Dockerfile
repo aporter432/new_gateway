@@ -1,6 +1,5 @@
 # Use Python 3.11-slim image as base
-ARG TARGETPLATFORM=linux/arm64
-FROM --platform=${TARGETPLATFORM} python:3.11-slim
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
@@ -13,7 +12,7 @@ ENV PYTHONUNBUFFERED=1 \
     POETRY_VIRTUALENVS_CREATE=true \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_NO_INTERACTION=1 \
-    PYTHONPATH="/app/src" \
+    PYTHONPATH="/app" \
     no_proxy=localhost,127.0.0.1,db,redis,localstack
 
 # Install system dependencies
@@ -45,11 +44,13 @@ COPY alembic.ini ./
 RUN poetry install --no-root --no-interaction --no-ansi --with test
 
 # Copy source code and tests
-COPY src/ ./src/
+COPY Protexis_Command/ ./Protexis_Command/
 COPY tests/ ./tests/
 
-# Install the project
-RUN poetry install --no-interaction --no-ansi --with test
+# Install the project in development mode
+RUN poetry install --no-interaction --no-ansi --with test && \
+    cd /app && \
+    poetry run pip install -e .
 
 # Create non-root user and set up logging directory
 RUN useradd -m -u 1000 gateway \
@@ -66,4 +67,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget -qO- http://localhost:8000/health || exit 1
 
 # Default command
-CMD ["poetry", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug"]
+CMD ["poetry", "run", "uvicorn", "Protexis_Command.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug"]

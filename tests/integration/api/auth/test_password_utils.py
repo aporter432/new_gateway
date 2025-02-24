@@ -1,13 +1,18 @@
-"""Test password utilities.
+"""Integration tests for password utilities.
 
 This module tests:
 - Password hashing
+- Password validation
 - Password verification
-- Password validation rules
 """
 
 import pytest
-from api.security.password import get_password_hash, validate_password, verify_password
+
+from Protexis_Command.api_protexis.security.password import (
+    get_password_hash,
+    validate_password,
+    verify_password,
+)
 
 
 def test_password_hashing():

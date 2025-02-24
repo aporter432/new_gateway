@@ -1,23 +1,28 @@
-"""Test OAuth2 authentication functionality.
+"""Integration tests for OAuth2 implementation.
 
-This module tests:
-- Current user validation
+This module tests the OAuth2 password flow implementation, including:
+- Current user extraction from token
 - Active user validation
-- Admin user validation
-- Token verification
+- Admin role verification
+- Error handling for various scenarios
 """
 
 from datetime import datetime, timedelta
 
 import pytest
-from api.security.jwt import ALGORITHM, create_access_token
-from api.security.oauth2 import get_current_active_user, get_current_admin_user, get_current_user
-from core.app_settings import get_settings
 from fastapi import HTTPException
-from infrastructure.database.models import User, UserRole
-from infrastructure.database.repositories.user_repository import UserRepository
 from jose import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from Protexis_Command.api_protexis.security.jwt import ALGORITHM, create_access_token
+from Protexis_Command.api_protexis.security.oauth2 import (
+    get_current_active_user,
+    get_current_admin_user,
+    get_current_user,
+)
+from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.infrastructure.database.models.user import User, UserRole
+from Protexis_Command.infrastructure.database.repositories.user_repository import UserRepository
 
 settings = get_settings()
 

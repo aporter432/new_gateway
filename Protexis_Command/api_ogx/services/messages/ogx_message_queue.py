@@ -1,3 +1,26 @@
+"""OGx message queue service.
+
+This module handles message queueing and processing for the OGx API.
+"""
+
+import json
+import time
+from typing import Dict, List, Optional
+
+from redis.asyncio import Redis
+from redis.exceptions import RedisError
+
+from Protexis_Command.api_ogx.config import MessageState
+from Protexis_Command.core.app_settings import Settings
+from Protexis_Command.core.logging.loggers import get_protocol_logger
+from Protexis_Command.protocol.ogx.constants.ogx_limits import (
+    DEFAULT_CALLS_PER_MINUTE,
+    DEFAULT_WINDOW_SECONDS,
+    MAX_MESSAGES_PER_RESPONSE,
+    MAX_SUBMIT_MESSAGES,
+    MESSAGE_RETENTION_DAYS,
+)
+
 """Message queue implementation for OGx message processing.
 
 This module provides a Redis-based message queue implementation that handles:
@@ -14,24 +37,6 @@ SOLID Principles:
 For message format examples and state transitions, see protocols.ogx.constants.message_states.
 For rate limits and batch sizes, see protocols.ogx.constants.limits.
 """
-
-import json
-import time
-from typing import Dict, List, Optional
-
-from redis.asyncio import Redis
-from redis.exceptions import RedisError
-
-from Protexis_Command.api_ogx.config import MessageState
-from Protexis_Command.core.app_settings import settings
-from Protexis_Command.core.logging.loggers import get_protocol_logger
-from Protexis_Command.protocol.ogx.constants.ogx_limits import (
-    DEFAULT_CALLS_PER_MINUTE,
-    DEFAULT_WINDOW_SECONDS,
-    MAX_MESSAGES_PER_RESPONSE,
-    MAX_SUBMIT_MESSAGES,
-    MESSAGE_RETENTION_DAYS,
-)
 
 
 class QueuedMessage:

@@ -4,10 +4,11 @@ Tests the complete forward message flow according to OGx-1.txt specifications.
 """
 
 import pytest
-from protocols.ogx.constants import FieldType, MessageType, NetworkType
-from protocols.ogx.services.OGx_protocol_handler import OGxProtocolHandler
-from protocols.ogx.validation.common.types import ValidationContext
-from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
+
+from Protexis_Command.protocol.ogx.constants import FieldType, MessageType, NetworkType
+from Protexis_Command.protocol.ogx.ogx_protocol_handler import OGxProtocolHandler
+from Protexis_Command.protocol.ogx.validation.common.validation_exceptions import OGxProtocolError
+from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
 
 
 class MockOGxHandler(OGxProtocolHandler):

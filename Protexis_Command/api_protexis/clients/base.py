@@ -1,10 +1,6 @@
-"""Base API client for making authenticated requests to OGx.
+"""Base client for OGx API.
 
-This module provides:
-- Automatic token management
-- Request authentication
-- Error handling
-- Rate limiting
+This module provides the base client implementation for OGx API interactions.
 """
 
 from typing import Any, Dict, Optional
@@ -14,7 +10,7 @@ from httpx import Response
 
 from ...api_ogx.services.auth.manager import OGxAuthManager
 from ...core.app_settings import Settings
-from ...protocol.ogx.constants.ogx_error_codes import HTTPErrorCode
+from ...protocol.ogx.constants.http_error_codes import HTTPErrorCode
 from ...protocol.ogx.validation.ogx_validation_exceptions import OGxProtocolError
 
 

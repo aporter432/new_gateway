@@ -1,73 +1,117 @@
 services:
-  # API Proxy for OGx
-  proxy:
+  # Main Gateway API Service
+  ogx_gateway_api:
     build:
       context: .
-      dockerfile: proxy.Dockerfile
+      dockerfile: Dockerfile
       platforms:
         - linux/arm64
-    container_name: new_gateway-proxy
+    container_name: ogx-gateway-api
     ports:
-      - "8080:8080"
+      - "8000:8000"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./logs/nginx:/var/log/nginx:rw
+      - ./Protexis_Command:/app/Protexis_Command:ro
+      - ./tests:/app/tests:ro
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@ogx_gateway_db:5432/new_gateway
+      - REDIS_HOST=ogx_gateway_redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - OGx_BASE_URL=https://OGx.swlab.ca/api/v1.0
+      - OGx_CLIENT_ID=70000934
+      - OGx_CLIENT_SECRET=password
+      - CUSTOMER_ID=test_customer
+      - LOG_LEVEL=debug
+      - ENVIRONMENT=development
+      - no_proxy=localhost,127.0.0.1,ogx_gateway_db,ogx_gateway_redis,ogx_gateway_aws_mock
+    depends_on:
+      ogx_gateway_db:
+        condition: service_healthy
+      ogx_gateway_redis:
+        condition: service_healthy
+      ogx_gateway_aws_mock:
+        condition: service_healthy
     networks:
       - gateway_net
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8080/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health || exit 1" ]
       interval: 10s
       timeout: 5s
-      retries: 20
-      start_period: 60s
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      retries: 5
+      start_period: 10s
+    command: [ "poetry", "run", "uvicorn", "Protexis_Command.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug" ]
+    dns:
+      - 127.0.0.11
+      - 8.8.8.8
+
+  # Test Runner Service
+  ogx_gateway_tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/arm64
+    container_name: ogx-gateway-tests
+    volumes:
+      - ./Protexis_Command:/app/Protexis_Command:ro
+      - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
     environment:
-      - NGINX_ENTRYPOINT_QUIET_LOGS=1
-      - NGINX_WORKER_PROCESSES=auto
-      - NGINX_WORKER_CONNECTIONS=1024
-      - NGINX_PROXY_BUFFERS=4 256k
-      - NGINX_PROXY_BUFFER_SIZE=128k
-      - NGINX_PROXY_BUSY_BUFFERS_SIZE=256k
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@ogx_gateway_db:5432/new_gateway
+      - REDIS_HOST=ogx_gateway_redis
+      - REDIS_PORT=6379
+      - REDIS_DB=15
+      - OGx_BASE_URL=https://OGx.swlab.ca/api/v1.0
+      - OGx_CLIENT_ID=70000934
+      - OGx_CLIENT_SECRET=password
+      - CUSTOMER_ID=test_customer
+      - PYTEST_ADDOPTS="--tb=short"
+    working_dir: /app
+    command: poetry run pytest tests/integration/api/auth --ignore=tests/integration/ui --ignore=tests/integration/scenarios -v
+    depends_on:
+      ogx_gateway_redis:
+        condition: service_healthy
+      ogx_gateway_db:
+        condition: service_healthy
+    networks:
+      - gateway_net
+    dns:
+      - 127.0.0.11
+      - 8.8.8.8
 
   # UI Service
-  ui:
+  ogx_gateway_ui:
     build:
-      context: ./src/ui
+      context: ./Protexis_Command/protexis_ui
       dockerfile: UI.Dockerfile
       platforms:
         - linux/arm64
-    container_name: new_gateway-ui
+    container_name: ogx-gateway-ui
     ports:
       - "3001:3001"
     volumes:
-      - ./src/ui/src:/app/src:rw
-      - ./src/ui/.next:/app/.next:rw
-      - ./src/ui/node_modules:/app/node_modules:rw
-      - ./src/ui/public:/app/public:rw
-      - ./src/ui/tsconfig.json:/app/tsconfig.json:ro
-      - ./src/ui/next.config.js:/app/next.config.js:ro
+      - ./Protexis_Command/protexis_ui/src:/app/src:rw
+      - ./Protexis_Command/protexis_ui/.next:/app/.next:rw
+      - ./Protexis_Command/protexis_ui/node_modules:/app/node_modules:rw
+      - ./Protexis_Command/protexis_ui/public:/app/public:rw
+      - ./Protexis_Command/protexis_ui/tsconfig.json:/app/tsconfig.json:ro
+      - ./Protexis_Command/protexis_ui/next.config.js:/app/next.config.js:ro
     environment:
       - NODE_ENV=development
       - UI_PORT=3001
       - UI_HOST=0.0.0.0
-      - BACKEND_URL=http://proxy:8080
-      - NEXT_PUBLIC_API_URL=http://localhost:8080
-      - NEXT_PUBLIC_WS_URL=ws://localhost:8080
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000
       - NEXT_TELEMETRY_DISABLED=1
       - UI_DEV_SERVER_PORT=3001
       - UI_METRICS_PORT=3002
       - UI_LOG_LEVEL=debug
       - UI_CORS_ORIGIN=http://localhost:3001
-      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
     depends_on:
-      proxy:
-        condition: service_healthy
-      app:
+      ogx_gateway_api:
         condition: service_healthy
     networks:
       - gateway_net
@@ -80,96 +124,11 @@ services:
       start_period: 30s
     command: npm run dev
 
-  # Main Gateway Application
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      platforms:
-        - linux/arm64
-    container_name: new_gateway-app
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./src:/app/src:ro
-      - ./tests:/app/tests:ro
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/new_gateway
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-      - OGx_BASE_URL=http://proxy:8080/api/v1.0
-      - OGx_CLIENT_ID=70000934
-      - OGx_CLIENT_SECRET=password
-      - CUSTOMER_ID=test_customer
-      - HTTP_PROXY=http://proxy:8888
-      - HTTPS_PROXY=http://proxy:8888
-      - LOG_LEVEL=debug
-      - ENVIRONMENT=development
-      - no_proxy=localhost,127.0.0.1,db,redis,localstack
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      localstack:
-        condition: service_healthy
-    networks:
-      - gateway_net
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    command: [ "poetry", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug" ]
-    dns:
-      - 127.0.0.11 # Docker's internal DNS
-      - 8.8.8.8 # Google's DNS as backup
-
-  # Test Runner Service
-  test:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      platforms:
-        - linux/arm64
-    container_name: new_gateway-test
-    volumes:
-      - ./src:/app/src:ro
-      - ./tests:/app/tests:ro
-      - ./pyproject.toml:/app/pyproject.toml:ro
-    environment:
-      - PYTHONPATH=/app/src
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/new_gateway
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=15
-      - OGx_BASE_URL=http://proxy:8080/api/v1.0
-      - OGx_CLIENT_ID=70000934
-      - OGx_CLIENT_SECRET=password
-      - CUSTOMER_ID=test_customer
-      - HTTP_PROXY=http://proxy:8888
-      - HTTPS_PROXY=http://proxy:8888
-      - PYTEST_ADDOPTS="--tb=short"
-    working_dir: /app
-    command: python -m pytest tests/integration --ignore=tests/integration/ui --ignore=tests/integration/scenarios -v --remove-orphans
-    depends_on:
-      redis:
-        condition: service_healthy
-      proxy:
-        condition: service_healthy
-      db:
-        condition: service_healthy
-    networks:
-      - gateway_net
-
-  # PostgreSQL Database
-  db:
+  # Database Service
+  ogx_gateway_db:
     image: postgres:14-alpine
     platform: linux/arm64
-    container_name: new_gateway-db
+    container_name: ogx-gateway-db
     ports:
       - "5432:5432"
     environment:
@@ -188,11 +147,11 @@ services:
     networks:
       - gateway_net
 
-  # Redis for Caching
-  redis:
+  # Cache Service
+  ogx_gateway_redis:
     image: redis:7-alpine
     platform: linux/arm64
-    container_name: new_gateway-redis
+    container_name: ogx-gateway-redis
     ports:
       - "6379:6379"
     command: redis-server --loglevel debug --notify-keyspace-events AKE --save 60 1 --appendonly yes --set-proc-title yes
@@ -209,11 +168,11 @@ services:
       retries: 5
       start_period: 10s
 
-  # LocalStack for AWS Services
-  localstack:
+  # Mock AWS Services
+  ogx_gateway_aws_mock:
     image: localstack/localstack:1.4
     platform: linux/arm64
-    container_name: new_gateway-localstack
+    container_name: ogx-gateway-aws-mock
     ports:
       - "4566:4566"
     environment:
@@ -222,7 +181,7 @@ services:
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - DOCKER_HOST=unix:///var/run/docker.sock
-      - HOSTNAME_EXTERNAL=localstack
+      - HOSTNAME_EXTERNAL=ogx_gateway_aws_mock
       - PERSISTENCE=0
       - DEBUG=1
       - LS_LOG=trace
@@ -237,57 +196,43 @@ services:
       retries: 3
       start_period: 40s
 
-  # Prometheus for Metrics
-  prometheus:
+  # Metrics Service
+  ogx_gateway_prometheus:
     image: prom/prometheus:latest
     platform: linux/arm64
-    container_name: new_gateway-prometheus
+    container_name: ogx-gateway-prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
-  # Grafana for Monitoring
-  grafana:
-    image: grafana/grafana:latest
-    platform: linux/arm64
-    container_name: new_gateway-grafana
+  # API Proxy Service
+  ogx_gateway_proxy:
+    image: nginx:alpine
+    container_name: ogx-gateway-proxy
     ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - "8080:8080"
     volumes:
-      - grafana_data:/var/lib/grafana
-    depends_on:
-      prometheus:
-        condition: service_healthy
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - gateway_net
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       start_period: 10s
-
-networks:
-  gateway_net:
-    name: gateway_net
-    driver: bridge
 
 volumes:
   postgres_data:
   redis_data:
-  prometheus_data:
-  grafana_data:
-  ui_node_modules:
-  ui_next:
-  ui_cache:
-  ui_env:
+
+
+networks:
+  gateway_net:
+    name: gateway_net

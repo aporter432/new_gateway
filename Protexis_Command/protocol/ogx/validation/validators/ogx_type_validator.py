@@ -44,3 +44,5 @@ class ValidationResult:
     errors: List[str]
     context: Optional[ValidationContext] = None
     details: Optional[Dict[str, Union[str, int]]] = None
+    current_size: Optional[int] = None
+    max_size: Optional[int] = None

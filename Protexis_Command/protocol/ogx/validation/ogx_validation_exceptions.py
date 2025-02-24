@@ -7,7 +7,8 @@
 
 from typing import Any, Dict, Optional
 
-from ..constants.ogx_error_codes import GatewayErrorCode, HTTPErrorCode
+from ..constants.http_error_codes import HTTPErrorCode
+from ..constants.ogx_error_codes import GatewayErrorCode
 
 
 class OGxProtocolError(Exception):

@@ -3,10 +3,11 @@
 import asyncio
 from typing import Optional
 
-from core.app_settings import get_settings
-from core.logging.loggers import get_infra_logger
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError
+
+from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.core.logging.loggers import get_infra_logger
 
 # Get logger
 logger = get_infra_logger()

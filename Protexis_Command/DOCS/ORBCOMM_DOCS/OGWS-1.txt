@@ -1367,10 +1367,8 @@ null, null
 "speed",
 "0", "unsignedint", null, null
 "heading", "0", ''unsignedint'', null, null
-N214, Version 0.05 OGx BETA ORBCOMM� PROPRIETARY AND CONFIDENTIAL� Dec 2023
 "Name": "times tamp",
 "Value": "1695145141", "Type": "signedint", "Elements": null, "Message": null
-N214, Version 0.05 OGx BETA ORBCOMM� PROPRIETARY AND CONFIDENTIAL� Dec 2023
 APPENDIX A HTTP ERROR CODES
 HTTP Code  Description
 200  Call success. Check ErrorlD for possible errors.

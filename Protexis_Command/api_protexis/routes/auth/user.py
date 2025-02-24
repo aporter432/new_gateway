@@ -10,11 +10,11 @@ Key Components:
     - Role Management: Basic role assignment (expandable for RBAC)
 
 Related Files:
-    - src/api/schemas/user.py: Pydantic models for request/response validation
-    - src/api/security/jwt.py: JWT token generation and validation
-    - src/api/security/password.py: Password hashing and verification
-    - src/infrastructure/database/models/user.py: SQLAlchemy User model
-    - src/infrastructure/database/repositories/user_repository.py: User database operations
+    - Protexis_Command/api_protexis/schemas/user.py: Pydantic models for request/response validation
+    - Protexis_Command/api_protexis/security/jwt.py: JWT token generation and validation
+    - Protexis_Command/api_protexis/security/password.py: Password hashing and verification
+    - Protexis_Command/infrastructure/database/models/user.py: SQLAlchemy User model
+    - Protexis_Command/infrastructure/database/repositories/user_repository.py: User database operations
 
 Future RBAC Considerations:
     - Role hierarchy implementation
@@ -34,16 +34,21 @@ Implementation Notes:
 from datetime import timedelta
 from typing import Annotated
 
-from api_protexis.schemas.user import Token, UserCreate, UserResponse
-from api_protexis.security.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, revoke_token
-from api_protexis.security.oauth2 import get_current_active_user
-from api_protexis.security.password import get_password_hash, verify_password
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
-from infrastructure.database.dependencies import get_db
-from infrastructure.database.models.user import User, UserRole
-from infrastructure.database.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from Protexis_Command.api_protexis.schemas.user import Token, UserCreate, UserResponse
+from Protexis_Command.api_protexis.security.jwt import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    create_access_token,
+    revoke_token,
+)
+from Protexis_Command.api_protexis.security.oauth2 import get_current_active_user
+from Protexis_Command.api_protexis.security.password import get_password_hash, verify_password
+from Protexis_Command.infrastructure.database.dependencies import get_db
+from Protexis_Command.infrastructure.database.models.user import User, UserRole
+from Protexis_Command.infrastructure.database.repositories.user_repository import UserRepository
 
 router = APIRouter(tags=["auth"])
 
@@ -140,8 +145,8 @@ async def login(
         5. Returns token with expiration info
 
     Related Components:
-        - JWT token generation: src/api/security/jwt.py
-        - Password verification: src/api/security/password.py
+        - JWT token generation: Protexis_Command/api_protexis/security/jwt.py
+        - Password verification: Protexis_Command/api_protexis/security/password.py
         - User repository: Database access for user verification
         - Token schema: Response formatting
 

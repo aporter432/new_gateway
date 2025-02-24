@@ -2,22 +2,30 @@
 
 from .fields import (
     APIField,
-    BinaryField,
+    ArrayField,
     BooleanField,
+    DataField,
+    DynamicField,
     EnumField,
-    FloatField,
-    IntegerField,
+    MessageField,
+    PropertyField,
+    SignedIntField,
     StringField,
     TimestampField,
+    UnsignedIntField,
 )
 
 __all__ = [
     "APIField",
     "StringField",
-    "IntegerField",
-    "FloatField",
+    "UnsignedIntField",
+    "SignedIntField",
     "BooleanField",
-    "BinaryField",
-    "TimestampField",
+    "DataField",
+    "ArrayField",
+    "MessageField",
     "EnumField",
+    "DynamicField",
+    "PropertyField",
+    "TimestampField",
 ]

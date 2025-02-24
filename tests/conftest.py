@@ -81,13 +81,22 @@ async def http_client() -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest.fixture(autouse=True)
-def mock_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
+def mock_env_vars(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> None:
     """Set up environment variables for testing."""
+    # Only set default URL for unit tests, not integration tests
+    is_integration_test = any(
+        marker.name == "integration" for marker in request.node.iter_markers()
+    )
+
     test_env = {
         "ENVIRONMENT": "test",
-        "OGx_BASE_URL": "http://localhost:8080/api/v1.0",  # Default for unit tests
         "OGx_CLIENT_ID": "70000934",
         "OGx_CLIENT_SECRET": "password",
     }
+
+    # Only set OGx_BASE_URL for unit tests
+    if not is_integration_test:
+        test_env["OGx_BASE_URL"] = "http://localhost:8080/api/v1.0"  # Default for unit tests only
+
     for key, value in test_env.items():
         monkeypatch.setenv(key, value)

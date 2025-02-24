@@ -14,69 +14,149 @@ We use client.aclose() with type ignore comments because:
 
 # Standard library imports
 import os
-import warnings
-from typing import AsyncGenerator
+import socket
+from dataclasses import dataclass
+from typing import AsyncGenerator, Optional
 
 # Third-party imports
 import boto3
 import prometheus_client
 import pytest
-import redis.asyncio as redis
-from httpx import AsyncClient, HTTPError
-
-# Local imports
-from infrastructure.database.models.base import Base
-from infrastructure.database.session import database_url
+import pytest_asyncio
+import redis.asyncio as aioredis
+from httpx import AsyncClient
 from prometheus_client import CollectorRegistry
 from redis.asyncio.client import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
-# Environment Configuration
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
-REDIS_DB = int(os.getenv("REDIS_DB", "15"))
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
-
-AWS_ENDPOINT_URL = os.getenv("AWS_ENDPOINT_URL", "http://localstack:4566")
-AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
-AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "test")
-AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "test")
+# Local imports
+from Protexis_Command.core.app_settings import Settings, get_settings
+from Protexis_Command.infrastructure.database.models.base import Base
+from Protexis_Command.infrastructure.database.session import database_url
 
 
-# Docker Environment Checks
-def is_running_in_docker() -> bool:
-    """Check if we're running inside a Docker container."""
-    # Try .dockerenv first, then cgroup
-    if os.path.exists("/.dockerenv"):
-        return True
+@dataclass
+class TestEnvironment:
+    """Test environment configuration and detection."""
 
-    try:
-        with open("/proc/1/cgroup", "r", encoding="utf-8") as f:
-            return "docker" in f.read()
-    except (OSError, IOError):
-        return False
+    docker_available: bool
+    redis_available: bool
+    postgres_available: bool
+    aws_mock_available: bool
+    redis_url: str
+    postgres_url: str
+    aws_endpoint: Optional[str]
 
+    @classmethod
+    def detect(cls) -> "TestEnvironment":
+        """Detect available testing infrastructure."""
+        docker = is_running_in_docker()
 
-@pytest.fixture(autouse=True)
-def verify_docker_environment():
-    """Verify tests are running in Docker environment."""
-    if not is_running_in_docker():
-        pytest.fail(
-            "\n"
-            "🐳 Docker Environment Required 🐳\n"
-            "These integration tests must run inside Docker containers.\n"
-            "Please run tests using:\n"
-            "  docker-compose run test pytest tests/integration\n"
-            "\n"
-            "For more information, see:\n"
-            "  src/DOCS/ENVIRONMENT/testing/test_setup.md"
+        # Check Redis availability
+        redis_host = os.getenv("REDIS_HOST", "ogx_gateway_redis")
+        redis_available = is_service_available(redis_host, 6379)
+
+        # Check Postgres availability
+        db_host = os.getenv("POSTGRES_HOST", "ogx_gateway_db")
+        postgres_available = is_service_available(db_host, 5432)
+
+        # Check AWS mock availability
+        aws_host = os.getenv("AWS_MOCK_HOST", "ogx_gateway_aws_mock")
+        aws_available = is_service_available(aws_host, 4566)
+
+        return cls(
+            docker_available=docker,
+            redis_available=redis_available,
+            postgres_available=postgres_available,
+            aws_mock_available=aws_available,
+            redis_url=f"redis://{redis_host}:6379",
+            postgres_url=f"postgresql://{db_host}:5432",
+            aws_endpoint=f"http://{aws_host}:4566" if aws_available else None,
         )
 
 
-# Database Fixtures
+def is_running_in_docker() -> bool:
+    """Check if we're running inside a Docker container."""
+    return os.path.exists("/.dockerenv") or "docker" in open("/proc/1/cgroup").read()
+
+
+def is_service_available(host: str, port: int) -> bool:
+    """Check if a service is available at host:port."""
+    try:
+        with socket.create_connection((host, port), timeout=1):
+            return True
+    except (socket.timeout, socket.error):
+        return False
+
+
+def pytest_configure(config):
+    """Configure pytest for integration testing."""
+    # Register test markers
+    markers = [
+        ("integration", "mark test as integration test"),
+        ("requires_docker", "mark test as requiring docker"),
+        ("requires_redis", "mark test as requiring Redis"),
+        ("requires_db", "mark test as requiring database"),
+        ("requires_aws", "mark test as requiring AWS services"),
+        ("live_api", "mark test as requiring live API access"),
+    ]
+    for marker, help_text in markers:
+        config.addinivalue_line("markers", f"{marker}: {help_text}")
+
+    # Ensure we're in test mode
+    os.environ["TESTING"] = "true"
+
+
+def pytest_runtest_setup(item):
+    """Skip tests based on available infrastructure."""
+    env = TestEnvironment.detect()
+
+    # Check Docker requirement
+    if "requires_docker" in item.keywords and not env.docker_available:
+        pytest.skip("Test requires Docker")
+
+    # Check Redis requirement
+    if "requires_redis" in item.keywords and not env.redis_available:
+        pytest.skip("Test requires Redis")
+
+    # Check Database requirement
+    if "requires_db" in item.keywords and not env.postgres_available:
+        pytest.skip("Test requires PostgreSQL")
+
+    # Check AWS mock requirement
+    if "requires_aws" in item.keywords and not env.aws_mock_available:
+        pytest.skip("Test requires AWS mock services")
+
+
+@pytest.fixture(scope="session")
+def test_environment() -> TestEnvironment:
+    """Provide test environment information to tests."""
+    return TestEnvironment.detect()
+
+
+@pytest.fixture(scope="session")
+def settings() -> Settings:
+    """Provide application settings."""
+    return get_settings()
+
+
+@pytest_asyncio.fixture
+async def http_client() -> AsyncGenerator[AsyncClient, None]:
+    """Provide an HTTP client configured for integration tests."""
+    async with AsyncClient(
+        verify=True,  # Enable SSL verification for HTTPS
+        timeout=30.0,  # Longer timeout for integration tests
+        follow_redirects=True,  # Follow redirects automatically
+    ) as client:
+        yield client
+
+
 @pytest.fixture(scope="function")
-async def db_engine():
+async def db_engine(test_environment: TestEnvironment):
     """Create a new engine for each test function."""
+    if not test_environment.postgres_available:
+        pytest.skip("Database not available")
+
     engine = create_async_engine(database_url)
     yield engine
     await engine.dispose()
@@ -84,10 +164,7 @@ async def db_engine():
 
 @pytest.fixture(scope="function")
 async def db_connection(db_engine) -> AsyncGenerator[AsyncConnection, None]:
-    """Create a database connection for each test.
-
-    Creates all tables before tests and drops them after.
-    """
+    """Create a database connection for each test."""
     async with db_engine.connect() as conn:
         await conn.run_sync(Base.metadata.create_all)
         yield conn
@@ -96,105 +173,101 @@ async def db_connection(db_engine) -> AsyncGenerator[AsyncConnection, None]:
 
 @pytest.fixture()
 async def db_session(db_connection: AsyncConnection) -> AsyncGenerator[AsyncSession, None]:
-    """Provide a database session for test isolation.
-
-    Args:
-        db_connection: Database connection from the function-scoped fixture
-
-    Yields:
-        AsyncSession: Database session that's cleaned up after each test
-    """
+    """Provide a database session for test isolation."""
     async with AsyncSession(bind=db_connection, expire_on_commit=False) as session:
-        # Start with a clean slate for each test
+        # Start with a clean slate
         for table in reversed(Base.metadata.sorted_tables):
             await session.execute(table.delete())
         await session.commit()
-
         yield session
-
-        # Clean up after the test
+        # Clean up
         await session.rollback()
         for table in reversed(Base.metadata.sorted_tables):
             await session.execute(table.delete())
         await session.commit()
 
 
-# Redis Fixtures
-@pytest.fixture(scope="function")
-async def redis_client() -> AsyncGenerator[AsyncRedis, None]:
-    """Create a Redis client for testing."""
-    client = redis.Redis(
-        host=REDIS_HOST,
-        port=REDIS_PORT,
-        db=REDIS_DB,
-        password=REDIS_PASSWORD,
+@pytest_asyncio.fixture(scope="function")
+async def redis_client(test_environment: TestEnvironment) -> AsyncGenerator[AsyncRedis, None]:
+    """Provide Redis client for the test session."""
+    if not test_environment.redis_available:
+        pytest.skip("Redis not available")
+
+    redis = aioredis.Redis.from_url(
+        test_environment.redis_url,
         decode_responses=True,
+        db=int(os.getenv("REDIS_DB", "15")),  # Use DB 15 for testing
     )
 
     try:
-        await client.ping()
-    except redis.ConnectionError as e:
-        pytest.fail(f"Redis connection failed: {e}")
+        await redis.ping()  # Verify connection
+        yield redis
+    finally:
+        await redis.aclose()  # type: ignore # Redis type hints don't include aclose
 
-    yield client
 
-    # Cleanup
+@pytest_asyncio.fixture(autouse=True)
+async def cleanup_redis(redis_client: AsyncRedis):
+    """Clean up Redis test database before and after each test."""
+    patterns = [
+        "OGx:auth:token*",  # Auth tokens and metadata
+        "OGx:session:*",  # Session data
+        "test:*",  # Test-specific keys
+        "mock:*",  # Mock data keys
+    ]
+
     try:
-        await client.aclose()  # type: ignore # Redis type hints don't include aclose
-    except redis.RedisError as e:
-        warnings.warn(f"Error during Redis cleanup: {e}")
-
-
-@pytest.fixture(autouse=True)
-async def clean_redis(redis_client: redis.Redis):
-    """Clean Redis test database before each test."""
-    await redis_client.flushdb()
-
-
-# AWS Service Fixtures
-@pytest.fixture(scope="session")
-def dynamodb_client():
-    """Create a DynamoDB client for testing using LocalStack."""
-    return boto3.client(
-        "dynamodb",
-        endpoint_url=AWS_ENDPOINT_URL,
-        region_name=AWS_REGION,
-        aws_access_key_id=AWS_ACCESS_KEY,
-        aws_secret_access_key=AWS_SECRET_KEY,
-    )
+        # Clean up before test
+        for pattern in patterns:
+            keys = await redis_client.keys(pattern)
+            if keys:
+                await redis_client.delete(*keys)
+        yield
+        # Clean up after test
+        for pattern in patterns:
+            keys = await redis_client.keys(pattern)
+            if keys:
+                await redis_client.delete(*keys)
+    except Exception as e:
+        pytest.fail(f"Redis cleanup failed: {str(e)}")
 
 
 @pytest.fixture(scope="session")
-def sqs_client():
-    """Create an SQS client for testing using LocalStack."""
-    return boto3.client(
-        "sqs",
-        endpoint_url=AWS_ENDPOINT_URL,
-        region_name=AWS_REGION,
-        aws_access_key_id=AWS_ACCESS_KEY,
-        aws_secret_access_key=AWS_SECRET_KEY,
-    )
+def aws_clients(test_environment: TestEnvironment):
+    """Provide AWS service clients."""
+    if not test_environment.aws_mock_available:
+        pytest.skip("AWS mock services not available")
+
+    return {
+        "dynamodb": boto3.client(
+            "dynamodb",
+            endpoint_url=test_environment.aws_endpoint,
+            region_name="us-east-1",
+            aws_access_key_id="test",
+            aws_secret_access_key="test",
+        ),
+        "sqs": boto3.client(
+            "sqs",
+            endpoint_url=test_environment.aws_endpoint,
+            region_name="us-east-1",
+            aws_access_key_id="test",
+            aws_secret_access_key="test",
+        ),
+        "cloudwatch": boto3.client(
+            "cloudwatch",
+            endpoint_url=test_environment.aws_endpoint,
+            region_name="us-east-1",
+            aws_access_key_id="test",
+            aws_secret_access_key="test",
+        ),
+    }
 
 
-@pytest.fixture(scope="session")
-def cloudwatch_client():
-    """Create a CloudWatch client for testing using LocalStack."""
-    return boto3.client(
-        "cloudwatch",
-        endpoint_url=AWS_ENDPOINT_URL,
-        region_name=AWS_REGION,
-        aws_access_key_id=AWS_ACCESS_KEY,
-        aws_secret_access_key=AWS_SECRET_KEY,
-    )
-
-
-# Metrics Fixtures
 @pytest.fixture
 def metrics_registry():
     """Create a clean metrics registry for each test."""
     registry = CollectorRegistry()
     yield registry
-    # Intentionally access protected member for test cleanup
     for collector in list(registry._collector_to_names.keys()):  # pylint: disable=protected-access
         registry.unregister(collector)
 
@@ -202,47 +275,12 @@ def metrics_registry():
 @pytest.fixture
 def mock_metrics(monkeypatch):
     """Mock the metrics registry for integration tests."""
-    # Store the original registry
-    original_registry = prometheus_client.REGISTRY
-
-    # Create a new registry for the test and patch it
     test_registry = CollectorRegistry()
+    original_registry = prometheus_client.REGISTRY
     monkeypatch.setattr(prometheus_client, "REGISTRY", test_registry)
     yield test_registry
-
-    # Restore the original registry after test
     monkeypatch.setattr(prometheus_client, "REGISTRY", original_registry)
-
-    # Intentionally access protected member for test cleanup
     for collector in list(
         test_registry._collector_to_names.keys()
     ):  # pylint: disable=protected-access
         test_registry.unregister(collector)
-
-
-# Health Check Fixtures
-@pytest.fixture(autouse=True)
-async def verify_service_health(http_client: AsyncClient, request: pytest.FixtureRequest):
-    """Verify all required services are healthy before running tests."""
-    # Check Redis - always needed
-    redis_client: AsyncRedis = redis.Redis(
-        host=REDIS_HOST,
-        port=REDIS_PORT,
-        db=REDIS_DB,
-        password=REDIS_PASSWORD,
-    )
-    try:
-        await redis_client.ping()
-    except redis.ConnectionError as e:
-        pytest.fail(f"Redis health check failed: {e}")
-    finally:
-        await redis_client.aclose()  # type: ignore # Redis type hints don't include aclose
-
-    # Only check LocalStack if test needs it
-    if "localstack" in request.keywords:
-        try:
-            response = await http_client.get(f"{AWS_ENDPOINT_URL}/_localstack/health")
-            if response.status_code != 200:
-                pytest.skip("LocalStack not available - skipping test")
-        except HTTPError as e:
-            pytest.skip(f"LocalStack not available - skipping test: {e}")

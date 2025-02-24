@@ -1,13 +1,6 @@
-"""Field validation according to OGx-1.txt Section 5.1 Table 3.
+"""Field validator for OGx protocol.
 
-This validator implements the field validation rules specified in OGx-1.txt Section 5.1.
-Key validation rules:
-- All fields must have Name and Type properties
-- Value attribute requirements vary by field type:
-  - Basic types (enum, boolean, unsignedint, signedint, string, data) require Value
-  - Array type must have Elements instead of Value
-  - Message type must have Message instead of Value
-  - Dynamic/Property types must have TypeAttribute and Value matching that type
+This module implements field validation for OGx protocol messages.
 """
 
 import base64
@@ -77,7 +70,10 @@ class OGxFieldValidator(OGxBaseValidator):
             field_type = self._validate_and_get_field_type(data)
 
             # Validate field based on its type
-            self._validate_field_by_type(field_type, data)
+            if field_type == FieldType.MESSAGE:
+                return self.validate_message_field(data, context)
+            else:
+                self._validate_field_by_type(field_type, data)
 
             return self._get_validation_result()
 
@@ -117,8 +113,6 @@ class OGxFieldValidator(OGxBaseValidator):
         """
         if field_type == FieldType.ARRAY:
             self._validate_array_field(data)
-        elif field_type == FieldType.MESSAGE:
-            self._validate_message_field(data)
         elif field_type in VALUE_REQUIRING_TYPES:
             self._validate_basic_field(field_type, data)
         elif field_type in (FieldType.DYNAMIC, FieldType.PROPERTY):
@@ -233,66 +227,43 @@ class OGxFieldValidator(OGxBaseValidator):
                             GatewayErrorCode.INVALID_FIELD_FORMAT,
                         ) from e
 
-    def _validate_message_field(self, data: Dict[str, Any]) -> None:
+    def validate_message_field(
+        self, field: Dict[str, Any], context: Optional[ValidationContext]
+    ) -> ValidationResult:
         """Validate a message field.
 
         Args:
-            data: The message field data to validate
+            field: Field data to validate
+            context: Validation context
 
-        Raises:
-            ValidationError: If validation fails with critical errors
+        Returns:
+            ValidationResult indicating if the field is valid
         """
-        if data.get("Value") is not None:
-            raise ValidationError(
-                "Invalid message field: Value attribute not allowed",
-                GatewayErrorCode.INVALID_FIELD_FORMAT,
-            )
-
-        message = data.get("Message")
-        if message is None:
-            raise ValidationError(
-                "Invalid message field: Missing required field Message",
-                GatewayErrorCode.INVALID_FIELD_FORMAT,
-            )
-
-        if not isinstance(message, dict) or not message:
-            raise ValidationError(
-                "Invalid message field: Message must be a non-empty dictionary",
-                GatewayErrorCode.INVALID_FIELD_FORMAT,
-            )
-
-        # Check for required message fields
-        required_fields = {"SIN", "MIN", "Fields"}
-        missing_fields = [field for field in required_fields if field not in message]
-        if missing_fields:
-            raise ValidationError(
-                f"Invalid message field: Missing required fields {', '.join(missing_fields)}",
-                GatewayErrorCode.INVALID_FIELD_FORMAT,
-            )
-
-        if self.context is None:
-            raise ValidationError(
-                "Invalid message field: Validation context required",
-                GatewayErrorCode.INVALID_FIELD_FORMAT,
-            )
-
-        # Validate nested message
         try:
-            message_validator = OGxStructureValidator()
-            result = message_validator.validate(message, self.context)
+            # Validate context
+            if not context:
+                raise ValidationError("Validation context required")
+
+            # Validate Message attribute
+            message = field.get("Message")
+            if not message:
+                raise ValidationError("Missing required field Message")
+            if not isinstance(message, dict):
+                raise ValidationError("Message must be a non-empty dictionary")
+
+            # Check for Value attribute
+            if field.get("Value") is not None:
+                raise ValidationError("Value attribute not allowed in message fields")
+
+            # Use imported OGxStructureValidator
+            validator = OGxStructureValidator()
+            result = validator.validate(message, context)
             if not result.is_valid:
-                # Keep errors separate instead of joining them
-                for error in result.errors:
-                    self._add_error(f"In nested message: {error}")
-                raise ValidationError(
-                    "Message validation failed",
-                    GatewayErrorCode.INVALID_FIELD_FORMAT,
-                )
-        except ImportError as e:
-            raise ValidationError(
-                "Message validation unavailable",
-                GatewayErrorCode.INVALID_FIELD_FORMAT,
-            ) from e
+                return ValidationResult(False, result.errors)
+            return result
+
+        except ValidationError as e:
+            return ValidationResult(False, [str(e)])
 
     def _validate_basic_field(self, field_type: FieldType, data: Dict[str, Any]) -> None:
         """Validate a basic field type (enum, boolean, etc.).

@@ -9,8 +9,8 @@ This module provides common utilities and helper functions for:
 
 from typing import Any, Dict, List, Optional
 
-import aioredis
 import boto3
+import redis.asyncio as aioredis
 from prometheus_client.parser import text_string_to_metric_families
 
 

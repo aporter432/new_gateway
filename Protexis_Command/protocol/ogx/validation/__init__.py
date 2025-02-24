@@ -1,6 +1,6 @@
 """OGx protocol validation utilities."""
 
-from ..ogx_validation_exceptions import (
+from .ogx_validation_exceptions import (
     AuthenticationError,
     ElementValidationError,
     EncodingError,

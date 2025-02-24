@@ -1,19 +1,26 @@
-"""Test JWT token utilities.
+"""Integration tests for JWT token handling.
 
 This module tests:
 - Token creation
 - Token validation
 - Token expiration
 - Error handling
+- Claim validation
 """
 
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from api.security.jwt import ALGORITHM, TokenData, create_access_token, verify_token
-from core.app_settings import get_settings
 from fastapi import HTTPException
 from jose import JWTError, jwt
+
+from Protexis_Command.api_protexis.security.jwt import (
+    ALGORITHM,
+    TokenData,
+    create_access_token,
+    verify_token,
+)
+from Protexis_Command.core.app_settings import get_settings
 
 settings = get_settings()
 

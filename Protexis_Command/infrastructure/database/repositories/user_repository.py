@@ -10,10 +10,10 @@ Key Components:
     - Transaction Management: Atomic operations support
 
 Related Files:
-    - src/infrastructure/database/models/user.py: User model this repository manages
-    - src/api/routes/auth/user.py: API endpoints using this repository
-    - src/api/schemas/user.py: DTOs for data transformation
-    - src/api/security/password.py: Password handling utilities
+    - Protexis_Command/infrastructure/database/models/user.py: User model this repository manages
+    - Protexis_Command/api_protexis/routes/auth/user.py: API endpoints using this repository
+    - Protexis_Command/api_protexis/schemas/user.py: DTOs for data transformation
+    - Protexis_Command/api_protexis/security/password.py: Password handling utilities
 
 Database Considerations:
     - Uses SQLAlchemy async session management
@@ -39,12 +39,12 @@ Future RBAC Considerations:
 
 from typing import List, Optional
 
-from infrastructure.database.models.user import User
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Protexis_Command.api_ogx.validation.common.validation_exceptions import ValidationError
+from Protexis_Command.infrastructure.database.models.user import User
+from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
 
 
 class UserRepository:

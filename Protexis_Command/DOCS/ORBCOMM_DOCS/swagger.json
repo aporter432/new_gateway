@@ -1,0 +1,2782 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+      "title": "OGx Gateway Web Service (OGWS) API",
+      "version": "v1.0"
+    },
+    "paths": {
+      "/api/v{version}/auth/token": {
+        "post": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "Creates authentication bearer token",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/x-www-form-urlencoded": {
+                "schema": {
+                  "required": [
+                    "client_id",
+                    "client_secret",
+                    "grant_type"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "grant_type": {
+                      "type": "string",
+                      "description": "Must be set to client_credentials",
+                      "example": "client_credentials"
+                    },
+                    "client_id": {
+                      "type": "string",
+                      "description": "User's Access ID",
+                      "example": "70000006"
+                    },
+                    "client_secret": {
+                      "type": "string",
+                      "description": "User's password",
+                      "example": "password"
+                    },
+                    "expires_in": {
+                      "type": "integer",
+                      "description": "Token expiry time in seconds. If not provided, the web service will use a default vlaue of 7 days.",
+                      "format": "int32",
+                      "example": 100
+                    }
+                  }
+                },
+                "encoding": {
+                  "grant_type": {
+                    "style": "form"
+                  },
+                  "client_id": {
+                    "style": "form"
+                  },
+                  "client_secret": {
+                    "style": "form"
+                  },
+                  "expires_in": {
+                    "style": "form"
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Bearer token",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetTokenResponse"
+                  },
+                  "example": {"token_type":"bearer","expires_in":604800,"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcwMDAwMDA2Iiwicm9sZSI6IlN1cGVyVXNlckFjY291bnQiLCJuYmYiOjE2NDk5NDgyMzYsImV4cCI6MTY1MDgxMjIzNiwiaWF0IjoxNjQ5OTQ4MjM2LCJpc3MiOiJTZWN1cmVBcGkiLCJhdWQiOiJTZWN1cmVBcGlVc2VyIn0.G5zCoueD8SFXDMm2BCBwCMXeeJYQWkIrAlfXJo6sbXg"}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            }
+          }
+        }
+      },
+      "/api/v{version}/auth/invalidate_tokens": {
+        "get": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "This method revokes all previously issued tokens. (Auth)",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call tokenInvalidateSucecss. Check returned value for errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/get/fw_messages": {
+        "get": {
+          "tags": [
+            "Get"
+          ],
+          "summary": "Retrieves to-mobile Message records defined by an array of to-mobile Message IDs (IDList). \r\nOnly messages belonging to the account calling this method (or one of its immediate subaccounts) will be retrieved. (Auth)",
+          "parameters": [
+            {
+              "name": "IDList",
+              "in": "query",
+              "description": "List of to-mobile Message IDs",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "IncludeTypes",
+              "in": "query",
+              "description": "Set this field to true if you want the Payload to include field types as well.",
+              "schema": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            {
+              "name": "IncludeRawPayload",
+              "in": "query",
+              "description": "By default, the OGWS returns already decoded messages. If it needs to get the Message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded Message is returned.",
+              "schema": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Success",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetForwardMessagesResponse"
+                  },
+                  "example": {"Messages":[{"ID":10844864715,"StatusUTC":"2022-11-25 12:00:23","CreateUTC":"2022-11-25 12:00:03","IsClosed":true,"State":1,"NetworkID":"01008988SKY5909","DestinationID":"KAAA4235100020","Payload":{"Name":"getTerminalStatus","SIN":16,"MIN":2,"IsForward":"True","Fields":[]},"ReferenceNumber":1012,"Transport":1,"RegionName":"AMERRB8"},{"ID":10844864716,"StatusUTC":"2022-11-25 12:00:15","CreateUTC":"2022-11-25 12:00:04","IsClosed":false,"State":0,"NetworkID":"01008988SKY5909","DestinationID":"KAAA4235100020","Payload":{"Name":"getTerminalStatus","SIN":16,"MIN":2,"IsForward":"True","Fields":[]},"ReferenceNumber":1012,"Transport":1},{"ID":10844864806,"ErrorID":14}]}
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
+            },
+            "429": {
+              "description": "Too Many Requests"
+            }
+          }
+        }
+      },
+      "/api/v{version}/get/fw_statuses": {
+        "get": {
+          "tags": [
+            "Get"
+          ],
+          "summary": "Retrieves statuses of submitted to-mobile messages defined by their OGWS assigned Message IDs. \r\nOnly messages belonging to the account calling this method (or one of its immediate subaccounts) will be retrieved. (Auth)",
+          "parameters": [
+            {
+              "name": "IDList",
+              "in": "query",
+              "description": "List of to-mobile Message IDs",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetForwardStatusesResponse"
+                  },
+                  "example": {"Statuses":[{"ID":10844864715,"IsClosed":true,"State":1,"CreateUTC":"2022-11-25 12:00:20","StatusUTC":"2022-11-25 12:00:23","Transport":1,"RegionName":"AMERRB8","ReferenceNumber":41},{"ID":10844864716,"IsClosed":false,"State":0,"CreateUTC":"2022-11-25 12:00:00","StatusUTC":"2022-11-25 12:00:15","Transport":1,"ReferenceNumber":20},{"ID":10844864806,"ErrorID":14}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/get/fw_status_updates": {
+        "get": {
+          "tags": [
+            "Get"
+          ],
+          "summary": "Retrieves updates in statuses of submitted to-mobile messages since the specified time (UTC). \r\nOnly messages belonging to the account calling this method will be retrieved. No subaccounts' Message statuses will be retrieved. (Auth)",
+          "parameters": [
+            {
+              "name": "FromUTC",
+              "in": "query",
+              "description": "Retrieves status records of messages updated after FromUTC. The 'FromUTC' format: 'yyyy-MM-dd HH24:mm:ss'",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetForwardStatusesResponse"
+                  },
+                  "example": {"Statuses":[{"ID":10844864715,"IsClosed":true,"State":1,"CreateUTC":"2022-11-25 12:00:20","StatusUTC":"2022-11-25 12:00:23","Transport":1,"RegionName":"AMERRB8","ReferenceNumber":41},{"ID":10844864716,"IsClosed":false,"State":0,"CreateUTC":"2022-11-25 12:00:00","StatusUTC":"2022-11-25 12:00:15","Transport":1,"ReferenceNumber":20},{"ID":10844864806,"ErrorID":14}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/get/subaccount/fw_status_updates": {
+        "get": {
+          "tags": [
+            "Get"
+          ],
+          "summary": "Retrieves updates in statuses of submitted to-mobile messages since the specified time (UTC). \r\nOnly updates of to-mobile messages belonging to the specified sub-account of the account calling this method will be retrieved. (Auth roles: SuperAccountUser,Provisioning)",
+          "parameters": [
+            {
+              "name": "SubAccountID",
+              "in": "query",
+              "description": "Sub-account ID (6.........) number",
+              "schema": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "FromUTC",
+              "in": "query",
+              "description": "Retrieves status records of subaccount's messages updated after FromUTC. The 'FromUTC' format: 'yyyy-MM-dd HH24:mm:ss'",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetForwardStatusesResponse"
+                  },
+                  "example": {"Statuses":[{"ID":10844864715,"IsClosed":true,"State":1,"CreateUTC":"2022-11-25 12:00:20","StatusUTC":"2022-11-25 12:00:23","Transport":1,"RegionName":"AMERRB8","ReferenceNumber":41},{"ID":10844864716,"IsClosed":false,"State":0,"CreateUTC":"2022-11-25 12:00:00","StatusUTC":"2022-11-25 12:00:15","Transport":1,"ReferenceNumber":20},{"ID":10844864806,"ErrorID":14}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "403": {
+              "description": "When the caller is not a super account user, the API will return a HTTP 403 “Forbidden” response code"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/get/subaccounts/fw_status_updates": {
+        "get": {
+          "tags": [
+            "Get"
+          ],
+          "summary": "Retrieves updates in statuses of submitted to-mobile messages since the specified time (UTC). \r\nUpdates of to-mobile messages belonging to the account calling this method and ALL of its subaccounts will be retrieved. (Auth roles: SuperAccountUser,Provisioning)",
+          "parameters": [
+            {
+              "name": "FromUTC",
+              "in": "query",
+              "description": "Retrieves status records of subaccount's messages updated after FromUTC. The 'FromUTC' format: 'yyyy-MM-dd HH24:mm:ss'",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetForwardStatusesResponse"
+                  },
+                  "example": {"Statuses":[{"ID":10844864715,"IsClosed":true,"State":1,"CreateUTC":"2022-11-25 12:00:20","StatusUTC":"2022-11-25 12:00:23","Transport":1,"RegionName":"AMERRB8","ReferenceNumber":41},{"ID":10844864716,"IsClosed":false,"State":0,"CreateUTC":"2022-11-25 12:00:00","StatusUTC":"2022-11-25 12:00:15","Transport":1,"ReferenceNumber":20},{"ID":10844864806,"ErrorID":14}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "403": {
+              "description": "When the caller is not a super account user, the API will return a HTTP 403 “Forbidden” response code"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/get/re_messages": {
+        "get": {
+          "tags": [
+            "Get"
+          ],
+          "summary": "Retrieves return (from-mobile) messages received by OGx Gateway after the specified time (UTC). \r\nOnly messages belonging to the account calling this method will be retrieved. No subaccounts' Message statuses will be retrieved. (Auth)",
+          "parameters": [
+            {
+              "name": "FromUTC",
+              "in": "query",
+              "description": "Retrieves Message records received after FromUTC. The 'FromUTC' format: 'yyyy-MM-dd HH24:mm:ss'",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "IncludeTypes",
+              "in": "query",
+              "description": "Set this field to true if you want the Payload to include field types as well.",
+              "schema": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            {
+              "name": "IncludeRawPayload",
+              "in": "query",
+              "description": "By default, the OGWS returns already decoded messages. If it needs to get the Message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded Message is returned.",
+              "schema": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetReturnMessagesResponse"
+                  },
+                  "example": {"Messages":[{"ID":10844864715,"MessageUTC":"2022-11-25 12:00:03","ReceiveUTC":"2022-11-25 12:00:02","SIN":128,"MobileID":"01008988SKY5909","NetworkID":"359739077429074","RawPayload":"YQECAxY=","Payload":{"Name":"message_name","SIN":128,"MIN":1,"Fields":[{"Name":"field_value","Value":"0"}]},"RegionName":"AORW","OTAMessageSize":20,"Transport":2,"MobileOwnerID":60000120}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/get/subaccount/re_messages": {
+        "get": {
+          "tags": [
+            "Get"
+          ],
+          "summary": "Retrieves return (from-mobile) messages received by OGx Gateway after the specified time (UTC). \r\nOnly messages belonging to the specified sub-account will be retrieved. (Auth roles: SuperAccountUser,Provisioning)",
+          "parameters": [
+            {
+              "name": "FromUTC",
+              "in": "query",
+              "description": "Retrieves Message records received after FromUTC. The 'FromUTC' format: 'yyyy-MM-dd HH24:mm:ss'",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "SubAccountID",
+              "in": "query",
+              "description": "Sub-account ID (6.........) number",
+              "schema": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "IncludeTypes",
+              "in": "query",
+              "description": "Set this field to true if you want the Payload to include field types as well.",
+              "schema": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            {
+              "name": "IncludeRawPayload",
+              "in": "query",
+              "description": "By default, the OGWS returns already decoded messages. If it needs to get the Message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded Message is returned.",
+              "schema": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetReturnMessagesResponse"
+                  },
+                  "example": {"Statuses":[{"ID":10844864715,"IsClosed":true,"State":1,"CreateUTC":"2022-11-25 12:00:20","StatusUTC":"2022-11-25 12:00:23","Transport":1,"RegionName":"AMERRB8","ReferenceNumber":41},{"ID":10844864716,"IsClosed":false,"State":0,"CreateUTC":"2022-11-25 12:00:00","StatusUTC":"2022-11-25 12:00:15","Transport":1,"ReferenceNumber":20},{"ID":10844864806,"ErrorID":14}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "403": {
+              "description": "When the caller is not a super account user, the API will return a HTTP 403 “Forbidden” response code"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/get/subaccounts/re_messages": {
+        "get": {
+          "tags": [
+            "Get"
+          ],
+          "summary": "Retrieves return (from-mobile) messages received by OGx Gateway after the specified time (UTC). \r\nMessages belonging to the calling (super-account) and all of its sub-accounts will be retrieved. (Auth roles: SuperAccountUser,Provisioning)",
+          "parameters": [
+            {
+              "name": "FromUTC",
+              "in": "query",
+              "description": "Retrieves Message records received after FromUTC. The 'FromUTC' format: 'yyyy-MM-dd HH24:mm:ss'",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "IncludeTypes",
+              "in": "query",
+              "description": "Set this field to true if you want the Payload to include field types as well.",
+              "schema": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            {
+              "name": "IncludeRawPayload",
+              "in": "query",
+              "description": "By default, the OGWS returns already decoded messages. If it needs to get the Message in a raw, binary form, the client needs to set this field to true, otherwise, only a decoded Message is returned.",
+              "schema": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetReturnMessagesResponse"
+                  },
+                  "example": {"Statuses":[{"ID":10844864715,"IsClosed":true,"State":1,"CreateUTC":"2022-11-25 12:00:20","StatusUTC":"2022-11-25 12:00:23","Transport":1,"RegionName":"AMERRB8","ReferenceNumber":41},{"ID":10844864716,"IsClosed":false,"State":0,"CreateUTC":"2022-11-25 12:00:00","StatusUTC":"2022-11-25 12:00:15","Transport":1,"ReferenceNumber":20},{"ID":10844864806,"ErrorID":14}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "403": {
+              "description": "When the caller is not a super account user, the API will return a HTTP 403 “Forbidden” response code"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/service": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Returns web service information (version, list of error codes, ...) (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: User account",
+          "parameters": [
+            {
+              "name": "GetErrorCodes",
+              "in": "query",
+              "description": "If 'true', the web service will also return a list of available error codes.",
+              "schema": {
+                "type": "boolean"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetServiceInfoResponse"
+                  },
+                  "example": {"Version":"1.0.0.0","ErrorCodes":[{"ID":17149,"Name":"ERR_TERMINAL_BEAM_UNKNOWN","Description":"Terminal beam unknown"},{"ID":17685,"Name":"ERR_MESSAGE_CANNOT_BE_CANCELLED_BECAUSE_ALREADY_SENT","Description":"Message cannot be cancelled because it has already been sent to its destination."},{"ID":21785,"Name":"ERR_AUTHENTICATION_ERROR","Description":"Gateway service authentication error."}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/terminals": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Retrieve a list of terminal information belonging to caller's account (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: User account\r\n\r\n\r\nThe call returns a maximum of PageSize TerminalInfo records.\r\nResult records are sorted by terminal’s prime ID.\r\nFirst call to the GetTerminalsInfo should set SinceID parameter to an empty string, and all subsequent calls to the prime ID of the terminal from the end of the previous call's result.",
+          "parameters": [
+            {
+              "name": "SinceID",
+              "in": "query",
+              "description": "Prime ID of the last retrieved terminal record.",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "PageSize",
+              "in": "query",
+              "description": "Maximum number of terminal records to return in a response. If not specified, a default page size of 1000 is implied. The parameter value cannot exceed 1000.",
+              "schema": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetTerminalsInfoResponse"
+                  },
+                  "example": {"Terminals":[{"PrimeID":"01000005SKYCD96","UnitID":"KAAA4235100020","Description":"Test terminal 002","LastRegionName":"AMERRB9","MTSN":"01000005SKYCD96","IMEI":"359739077429070","LastRegistrationUTC":"2022-01-22 20:00:24","LastRegistrationMessageID":784365876345,"LastSatelliteNetwork":1,"LastOperationMode":0,"LastCellAccessUTC":"2022-01-22 21:10:14","UpdateUTC":"2022-01-22 21:10:14"},{"PrimeID":"KAAA4235100021","Description":"OG-ISAT(Desk#2 - 01095071)","LastRegionName":"AMERRB15","MTSN":"01095071SKY7658","LastRegistrationUTC":"2015-11-10 14:59:29","LastRegistrationMessageID":784365876344,"LastSatelliteNetwork":0,"UpdateUTC":"2015-11-10 14:59:29"},{"PrimeID":"359739077429074","Description":"Dual mode test terminal","IMEI":"359739077429074","LastRegistrationUTC":"2015-11-10 14:59:29","LastRegistrationMessageID":784365876343,"LastSatelliteNetwork":0,"PairedTerminalPrimeID":"01095071SKY7658","LastCellAccessUTC":"2015-11-10 14:59:29","UpdateUTC":"2015-11-10 14:59:29"}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/terminal_updates": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Retrieve a list of terminal information belonging to caller's account. Only records updated after FromUTC will be retrieved. (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: User account\r\n\r\n\r\nResult records are sorted by terminal’s update UTC.",
+          "parameters": [
+            {
+              "name": "FromUTC",
+              "in": "query",
+              "description": "Retrieves terminal records updated after FromUTC. The 'FromUTC' format: 'yyyy-MM-dd HH24:mm:ss'",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetTerminalInfoUpdatesResponse"
+                  },
+                  "example": {"NextFromUTC":"2023-11-22 21:10:14","Terminals":[{"PrimeID":"01095071SKY7658","Description":"OG-ISAT(Desk#2 - 01095071)","LastRegionName":"AMERRB15","MTSN":"01095071SKY7658","LastRegistrationUTC":"2015-11-10 14:59:29","LastRegistrationMessageID":784365876344,"LastSatelliteNetwork":0,"UpdateUTC":"2023-10-10 14:59:29"},{"PrimeID":"359739077429074","Description":"Dual mode test terminal","IMEI":"359739077429074","LastRegistrationUTC":"2015-11-10 14:59:29","LastRegistrationMessageID":784365876343,"LastSatelliteNetwork":0,"PairedTerminalPrimeID":"01095071SKY7658","LastCellAccessUTC":"2015-11-10 14:59:29","UpdateUTC":"2023-10-10 14:59:29"},{"PrimeID":"01000005SKYCD96","Description":"Test terminal 002","LastRegionName":"AMERRB9","MTSN":"01000005SKYCD96","IMEI":"359739077429070","LastRegistrationUTC":"2022-01-22 20:00:24","LastRegistrationMessageID":784365876345,"LastSatelliteNetwork":1,"LastOperationMode":0,"LastCellAccessUTC":"2022-01-22 21:10:14","UpdateUTC":"2023-11-22 21:10:14"}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/terminal": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Retrieve a single terminal's information (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: User account\r\n\r\n\r\nThe call returns a TerminalInfo record related to a terminal specified by its prime ID.",
+          "parameters": [
+            {
+              "name": "PrimeID",
+              "in": "query",
+              "description": "Terminal's prime ID.",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetTerminalInfoResponse"
+                  },
+                  "example": {"Terminal":{"PrimeID":"01000005SKYCD96","Description":"Test terminal 002","LastRegionName":"AMERRB9","MTSN":"01000005SKYCD96","IMEI":"359739077429070","LastRegistrationUTC":"2022-01-22 20:00:24","LastRegistrationMessageID":784365876345,"LastSatelliteNetwork":1,"LastOperationMode":0,"LastCellAccessUTC":"2022-01-22 21:10:14","UpdateUTC":"2022-01-22 21:10:14"}}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/broadcast": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Retrieve a list of broadcast information belonging to caller's account (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: User account",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetBroadcastInfoResponse"
+                  },
+                  "example": {"BroadcastIDs":[{"ID":"16775830GRP2B2B","Description":"Test broadcast ID"}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/subaccount/list": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Retrieve a list of subaccounts linked to caller's account (Auth roles: SuperAccountUser,Provisioning)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: Super-account user",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetSubaccountInfoResponse"
+                  },
+                  "example": {"Subaccounts":[{"AccountID":60023006,"AccountName":"Truck fleet A"},{"AccountID":60023007,"AccountName":"Truck fleet B"}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "403": {
+              "description": "When the caller is not a super account user, the API will return a HTTP 403 “Forbidden” response code"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/subaccount/terminals": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Retrieve a list of terminal information belonging to caller's sub-account (Auth roles: SuperAccountUser,Provisioning)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: Super-account user\r\n\r\n\r\nThe call returns a maximum of PageSize TerminalInfo records.\r\nResult records are sorted by terminal’s prime ID.\r\nFirst call to the GetTerminalsInfo would set SinceID parameter to an empty string, and all subsequent calls to the prime ID of the terminal from the end of the previous call's result.",
+          "parameters": [
+            {
+              "name": "SinceID",
+              "in": "query",
+              "description": "Prime ID of the last retrieved terminal record.",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "PageSize",
+              "in": "query",
+              "description": "Maximum number of terminal records to return in a response. If not specified, a default page size of 1000 is implied. The parameter value cannot exceed 1000.",
+              "schema": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "SubAccountID",
+              "in": "query",
+              "description": "Subaccount ID for which a terminal list is requested.",
+              "schema": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetTerminalsInfoResponse"
+                  },
+                  "example": {"Terminals":[{"PrimeID":"01000005SKYCD96","UnitID":"KAAA4235100020","Description":"Test terminal 002","LastRegionName":"AMERRB9","MTSN":"01000005SKYCD96","IMEI":"359739077429070","LastRegistrationUTC":"2022-01-22 20:00:24","LastRegistrationMessageID":784365876345,"LastSatelliteNetwork":1,"LastOperationMode":0,"LastCellAccessUTC":"2022-01-22 21:10:14","UpdateUTC":"2022-01-22 21:10:14"},{"PrimeID":"KAAA4235100021","Description":"OG-ISAT(Desk#2 - 01095071)","LastRegionName":"AMERRB15","MTSN":"01095071SKY7658","LastRegistrationUTC":"2015-11-10 14:59:29","LastRegistrationMessageID":784365876344,"LastSatelliteNetwork":0,"UpdateUTC":"2015-11-10 14:59:29"},{"PrimeID":"359739077429074","Description":"Dual mode test terminal","IMEI":"359739077429074","LastRegistrationUTC":"2015-11-10 14:59:29","LastRegistrationMessageID":784365876343,"LastSatelliteNetwork":0,"PairedTerminalPrimeID":"01095071SKY7658","LastCellAccessUTC":"2015-11-10 14:59:29","UpdateUTC":"2015-11-10 14:59:29"}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "403": {
+              "description": "When the caller is not a super account user, the API will return a HTTP 403 “Forbidden” response code"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/subaccount/terminal_updates": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Retrieve a list of terminal information belonging to caller's sub-account. Only records updated after FromUTC will be retrieved. (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: User account\r\n\r\n\r\nResult records are sorted by terminal’s update UTC.",
+          "parameters": [
+            {
+              "name": "FromUTC",
+              "in": "query",
+              "description": "Retrieves terminal records updated after FromUTC. The 'FromUTC' format: 'yyyy-MM-dd HH24:mm:ss'",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "SubAccountID",
+              "in": "query",
+              "description": "Subaccount ID for which terminal information is requested.",
+              "schema": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetTerminalInfoUpdatesResponse"
+                  },
+                  "example": {"NextFromUTC":"2023-11-22 21:10:14","Terminals":[{"PrimeID":"01095071SKY7658","Description":"OG-ISAT(Desk#2 - 01095071)","LastRegionName":"AMERRB15","MTSN":"01095071SKY7658","LastRegistrationUTC":"2015-11-10 14:59:29","LastRegistrationMessageID":784365876344,"LastSatelliteNetwork":0,"UpdateUTC":"2023-10-10 14:59:29"},{"PrimeID":"359739077429074","Description":"Dual mode test terminal","IMEI":"359739077429074","LastRegistrationUTC":"2015-11-10 14:59:29","LastRegistrationMessageID":784365876343,"LastSatelliteNetwork":0,"PairedTerminalPrimeID":"01095071SKY7658","LastCellAccessUTC":"2015-11-10 14:59:29","UpdateUTC":"2023-10-10 14:59:29"},{"PrimeID":"01000005SKYCD96","Description":"Test terminal 002","LastRegionName":"AMERRB9","MTSN":"01000005SKYCD96","IMEI":"359739077429070","LastRegistrationUTC":"2022-01-22 20:00:24","LastRegistrationMessageID":784365876345,"LastSatelliteNetwork":1,"LastOperationMode":0,"LastCellAccessUTC":"2022-01-22 21:10:14","UpdateUTC":"2023-11-22 21:10:14"}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/subaccount/terminal": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Retrieve a single terminal's information belonging to caller's sub-account (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: User account\r\n\r\n\r\nThe call returns a TerminalInfo record related to a terminal specified by its prime ID.",
+          "parameters": [
+            {
+              "name": "PrimeID",
+              "in": "query",
+              "description": "Terminal's prime ID.",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "SubAccountID",
+              "in": "query",
+              "description": "Subaccount ID for which terminal information is requested.",
+              "schema": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetTerminalInfoResponse"
+                  },
+                  "example": {"Terminal":{"PrimeID":"01000005SKYCD96","Description":"Test terminal 002","LastRegionName":"AMERRB9","MTSN":"01000005SKYCD96","IMEI":"359739077429070","LastRegistrationUTC":"2022-01-22 20:00:24","LastRegistrationMessageID":784365876345,"LastSatelliteNetwork":1,"LastOperationMode":0,"LastCellAccessUTC":"2022-01-22 21:10:14","UpdateUTC":"2022-01-22 21:10:14"}}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/info/subaccount/broadcast": {
+        "get": {
+          "tags": [
+            "Info"
+          ],
+          "summary": "Retrieve a list of broadcast information belonging to caller's sub-account (Auth roles: SuperAccountUser,Provisioning)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (INFO group of methods)   \r\n\r\nAuthorization: Super-account user",
+          "parameters": [
+            {
+              "name": "SubAccountID",
+              "in": "query",
+              "description": "Subaccount ID for which a broadcast list is requested.",
+              "schema": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetBroadcastInfoResponse"
+                  },
+                  "example": {"BroadcastIDs":[{"ID":"16775830GRP2B2B","Description":"Test broadcast ID"}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail"
+            },
+            "403": {
+              "description": "When the caller is not a super account user, the API will return a HTTP 403 “Forbidden” response code"
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code"
+            }
+          }
+        }
+      },
+      "/api/v{version}/submit/messages": {
+        "post": {
+          "tags": [
+            "Submit"
+          ],
+          "summary": "Allows users to submit one or more to-mobile Messages to their terminals. (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (SEND group of methods)   \r\n\r\nAuthorization: User account",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubmitMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"RawPayload":"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F3136343034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F3136343034355F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==","TransportType":1,"DelayedSendOptions":{"DelayedSend":true,"MessageExpireUTC":"2022-11-25 12:00:23"}},{"DestinationID":"352648040000008","UserMessageID":2098,"RawPayload":"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F3136343034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F3136343034355F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==","TransportType":2},{"DestinationID":"01008988SKY5909","UserMessageID":2099,"Payload":{"Name":"getTerminalStatus","SIN":16,"MIN":2,"IsForward":"True","Fields":[]},"TransportType":2}]
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubmitMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"RawPayload":"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F3136343034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F3136343034355F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==","TransportType":1,"DelayedSendOptions":{"DelayedSend":true,"MessageExpireUTC":"2022-11-25 12:00:23"}},{"DestinationID":"352648040000008","UserMessageID":2098,"RawPayload":"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F3136343034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F3136343034355F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==","TransportType":2},{"DestinationID":"01008988SKY5909","UserMessageID":2099,"Payload":{"Name":"getTerminalStatus","SIN":16,"MIN":2,"IsForward":"True","Fields":[]},"TransportType":2}]
+              },
+              "application/*+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubmitMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"RawPayload":"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F3136343034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F3136343034355F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==","TransportType":1,"DelayedSendOptions":{"DelayedSend":true,"MessageExpireUTC":"2022-11-25 12:00:23"}},{"DestinationID":"352648040000008","UserMessageID":2098,"RawPayload":"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F3136343034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F3136343034355F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w==","TransportType":2},{"DestinationID":"01008988SKY5909","UserMessageID":2099,"Payload":{"Name":"getTerminalStatus","SIN":16,"MIN":2,"IsForward":"True","Fields":[]},"TransportType":2}]
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SubmitMessagesResponse"
+                  },
+                  "example": {"Submissions":[{"ID":10844864715,"DestinationID":"01008988SKY5909","UserMessageID":2097,"OTAMessageSize":202,"OperationMode":null},{"ID":10844864716,"DestinationID":"01008988SKY5900","UserMessageID":2098,"OTAMessageSize":202,"OperationMode":null},{"ErrorID":21827,"UserMessageID":2099,"OperationMode":null}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail."
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code."
+            }
+          }
+        }
+      },
+      "/api/v{version}/submit/to_multiple": {
+        "post": {
+          "tags": [
+            "Submit"
+          ],
+          "summary": "Allows users to submit one to-mobile Message to multiple destination terminals. (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (SEND group of methods)   \r\n\r\nAuthorization: User account",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitMessageToDestinationsRequest"
+                },
+                "example": {"Message":{"RawPayload":"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F3136343034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F3136343034355F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w=="},"Destinations":["01008988SKY5909","01008989SKY5900"]}
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitMessageToDestinationsRequest"
+                },
+                "example": {"Message":{"RawPayload":"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F3136343034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F3136343034355F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w=="},"Destinations":["01008988SKY5909","01008989SKY5900"]}
+              },
+              "application/*+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitMessageToDestinationsRequest"
+                },
+                "example": {"Message":{"RawPayload":"B401323032322D30322D31372031363A34303A34352034392D305F3136343034355F315F3136343034355F325F3136343034355F335F3136343034355F345F3136343034355F355F3136343034355F365F3136343034355F375F3136343034355F385F3136343034355F395F3136343034355F31305F3136343034355F31315F31363430342D31333w=="},"Destinations":["01008988SKY5909","01008989SKY5900"]}
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SubmitMessagesResponse"
+                  },
+                  "example": {"Submissions":[{"ID":10844864715,"DestinationID":"01008988SKY5909","UserMessageID":1003,"OTAMessageSize":202,"OperationMode":null},{"ID":10844864716,"DestinationID":"01008989SKY5900","UserMessageID":1003,"OTAMessageSize":202,"OperationMode":null}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail."
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code."
+            }
+          }
+        }
+      },
+      "/api/v{version}/submit/cancellations": {
+        "post": {
+          "tags": [
+            "Submit"
+          ],
+          "summary": "Submits cancellation requests to selected to-mobile Messages. (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (SEND group of methods)   \r\n\r\nAuthorization: User account",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "example": [10844864715,10844864716,10844864823,10844864825]
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "example": [10844864715,10844864716,10844864823,10844864825]
+              },
+              "application/*+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "example": [10844864715,10844864716,10844864823,10844864825]
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SubmitCancellationsResponse"
+                  },
+                  "example": {"Cancellations":[{"ID":10844864715,"CancellationStatus":1,"CancelRequestID":10844869023}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail."
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code."
+            }
+          }
+        }
+      },
+      "/api/v{version}/terminal/reset": {
+        "post": {
+          "tags": [
+            "Terminal"
+          ],
+          "summary": "Submit a 'reset' message to destination terminals (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (SEND group of methods)   \r\n\r\nAuthorization: User account",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResetMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"ResetModem":true}]
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResetMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"ResetModem":true}]
+              },
+              "application/*+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResetMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"ResetModem":true}]
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SubmitMessagesResponse"
+                  },
+                  "example": {"Submissions":[{"ID":10844864715,"DestinationID":"01008988SKY5909","UserMessageID":2097,"OTAMessageSize":202,"OperationMode":null},{"ID":10844864716,"DestinationID":"01008988SKY5900","UserMessageID":2098,"OTAMessageSize":202,"OperationMode":null},{"ErrorID":21827,"UserMessageID":2099,"OperationMode":null}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail."
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code."
+            }
+          }
+        }
+      },
+      "/api/v{version}/terminal/sysreset": {
+        "post": {
+          "tags": [
+            "Terminal"
+          ],
+          "summary": "Submit a system 'reset' message to destination terminals (Auth roles: Provisioning)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (SEND group of methods)   \r\n\r\nAuthorization: User account",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SysResetMessage"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SysResetMessage"
+                  }
+                }
+              },
+              "application/*+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SysResetMessage"
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SubmitMessagesResponse"
+                  },
+                  "example": {"Submissions":[{"ID":10844864715,"DestinationID":"01008988SKY5909","UserMessageID":1003,"OTAMessageSize":202,"OperationMode":null},{"ID":10844864716,"DestinationID":"01008989SKY5900","UserMessageID":1003,"OTAMessageSize":202,"OperationMode":null}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail."
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code."
+            }
+          }
+        }
+      },
+      "/api/v{version}/terminal/mode": {
+        "post": {
+          "tags": [
+            "Terminal"
+          ],
+          "summary": "Submit a 'mode' message to destination terminals (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (SEND group of methods)   \r\n\r\nAuthorization: User account",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModeMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"Mode":1,"WakeupInterval":2}]
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModeMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"Mode":1,"WakeupInterval":2}]
+              },
+              "application/*+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModeMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"Mode":1,"WakeupInterval":2}]
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SubmitMessagesResponse"
+                  },
+                  "example": {"Submissions":[{"ID":10844864715,"DestinationID":"01008988SKY5909","UserMessageID":2097,"OTAMessageSize":202,"OperationMode":null},{"ID":10844864716,"DestinationID":"01008988SKY5900","UserMessageID":2098,"OTAMessageSize":202,"OperationMode":null},{"ErrorID":21827,"UserMessageID":2099,"OperationMode":null}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail."
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code."
+            }
+          }
+        }
+      },
+      "/api/v{version}/terminal/mute": {
+        "post": {
+          "tags": [
+            "Terminal"
+          ],
+          "summary": "Submit a 'mute' message to destination terminals (Auth)",
+          "description": "Authentication: Bearer Token\r\n\r\nRate limiting: yes (SEND group of methods)   \r\n\r\nAuthorization: User account",
+          "parameters": [
+            {
+              "name": "version",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MuteMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"Mute":true}]
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MuteMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"Mute":true}]
+              },
+              "application/*+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MuteMessage"
+                  }
+                },
+                "example": [{"DestinationID":"01008988SKY5909","UserMessageID":2097,"Mute":true}]
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Call success. Check ErrroID for possible errors.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SubmitMessagesResponse"
+                  },
+                  "example": {"Submissions":[{"ID":10844864715,"DestinationID":"01008988SKY5909","UserMessageID":2097,"OTAMessageSize":202,"OperationMode":null},{"ID":10844864716,"DestinationID":"01008988SKY5900","UserMessageID":2098,"OTAMessageSize":202,"OperationMode":null},{"ErrorID":21827,"UserMessageID":2099,"OperationMode":null}]}
+                }
+              }
+            },
+            "401": {
+              "description": "When authentication and authorization fail."
+            },
+            "429": {
+              "description": "When a user exceeds provisioned rate limits for a given API endpoint, the API will return a HTTP 429 “Too Many Requests” response code."
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "BroadcastInfo": {
+          "type": "object",
+          "properties": {
+            "ID": {
+              "type": "string",
+              "description": "Broadcast ID",
+              "nullable": true,
+              "example": "16775830GRP2B2B"
+            },
+            "Description": {
+              "type": "string",
+              "description": "Description of the broadcast ID.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": "Test broadcast ID"
+            },
+            "SatelliteNetwork": {
+              "type": "integer",
+              "description": "Satellite network this broadcast group is on:\r\n0 - IDP\r\n1 - OGx\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Terminal information record"
+        },
+        "CommonMessage": {
+          "type": "object",
+          "properties": {
+            "Name": {
+              "type": "string",
+              "default": null,
+              "nullable": true
+            },
+            "SIN": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "MIN": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "IsForward": {
+              "type": "string",
+              "default": null,
+              "nullable": true
+            },
+            "Fields": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CommonMessageField"
+              },
+              "default": null,
+              "nullable": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "CommonMessageElement": {
+          "type": "object",
+          "properties": {
+            "Index": {
+              "type": "integer",
+              "format": "int32",
+              "default": -1
+            },
+            "Fields": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CommonMessageField"
+              },
+              "default": null,
+              "nullable": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "CommonMessageField": {
+          "type": "object",
+          "properties": {
+            "Name": {
+              "type": "string",
+              "default": null,
+              "nullable": true
+            },
+            "Value": {
+              "type": "string",
+              "default": null,
+              "nullable": true
+            },
+            "Type": {
+              "type": "string",
+              "default": null,
+              "nullable": true
+            },
+            "Elements": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CommonMessageElement"
+              },
+              "default": null,
+              "nullable": true
+            },
+            "Message": {
+              "$ref": "#/components/schemas/CommonMessage"
+            }
+          },
+          "additionalProperties": false
+        },
+        "ErrorInfo": {
+          "type": "object",
+          "properties": {
+            "ID": {
+              "type": "integer",
+              "description": "Error code",
+              "format": "int32",
+              "example": 12308
+            },
+            "Name": {
+              "type": "string",
+              "description": "Error code's Name",
+              "nullable": true,
+              "example": "ERR_NDN_INVALID_BEAM"
+            },
+            "Description": {
+              "type": "string",
+              "description": "Error code's description",
+              "nullable": true,
+              "example": "Non delivery notification reason: invalid beam number"
+            }
+          },
+          "additionalProperties": false,
+          "description": "API error information"
+        },
+        "ForwardMessage": {
+          "type": "object",
+          "properties": {
+            "ID": {
+              "type": "integer",
+              "description": "ID of the Message. This is the Message ID assigned by the Gateway when the Message was first submitted.",
+              "format": "int64",
+              "nullable": true,
+              "example": 10844864715
+            },
+            "AccountID": {
+              "type": "integer",
+              "description": "ID of the account that submitted the Message. \r\nThis field will be present only in case the account that is asking for this information is not the account that the Message belongs to.",
+              "format": "int32",
+              "nullable": true,
+              "example": 70092006
+            },
+            "StatusUTC": {
+              "type": "string",
+              "description": "Time (UTC) of the most recent Message status update.",
+              "nullable": true,
+              "example": "2022-11-25 12:00:23"
+            },
+            "CreateUTC": {
+              "type": "string",
+              "description": "Time (UTC) the Message was created on the Gateway.",
+              "nullable": true,
+              "example": "2022-11-25 12:00:03"
+            },
+            "IsClosed": {
+              "type": "boolean",
+              "description": "True if the Message has been closed, or false if it is still open.",
+              "nullable": true,
+              "example": true
+            },
+            "State": {
+              "type": "integer",
+              "description": "The latest state of the Message.\r\n- **0**: Message accepted by the OGWS but not submitted yet (queued).\r\n- **1**: Message acknowledged by its destination.\r\n- **2**: Submission error (error reported by either OGWS, NPC or the terminal). Check the error code.\r\n- **3**: Message failed to be delivered. Check the error code.\r\n- **4**: Message timed out by either the OGx Gateway or NPC.\r\n- **5**: Message canceled.\r\n- **6**: Message queued for delayed delivery (a 'Send On Receive' Message).\r\n- **7**: Broadcast Message transmitted.\r\n- **8**: Message sending in progress.",
+              "format": "int32",
+              "nullable": true,
+              "example": 1
+            },
+            "NetworkID": {
+              "type": "string",
+              "description": "The terminal or broadcast ID of the message.",
+              "nullable": true,
+              "example": "01238909SKYE7AE"
+            },
+            "DestinationID": {
+              "type": "string",
+              "description": "Identification number (Prime ID) of the terminal that sent the message.",
+              "nullable": true,
+              "example": "01008988SKY5909"
+            },
+            "ErrorID": {
+              "type": "integer",
+              "description": "An error number if the Gateway was not able to get the to-mobile Message.\r\nThis field may be omitted from a response in case there is no error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 14
+            },
+            "RawPayload": {
+              "type": "string",
+              "description": "Raw Message payload",
+              "format": "byte",
+              "nullable": true
+            },
+            "Payload": {
+              "$ref": "#/components/schemas/CommonMessage"
+            },
+            "ReferenceNumber": {
+              "type": "integer",
+              "description": "Message reference number. Some from-mobile messages can contain this number. It can be used to link to- and from-mobile messages.",
+              "format": "int32",
+              "nullable": true,
+              "example": 1012
+            },
+            "CancelationMessageID": {
+              "type": "integer",
+              "description": "Message ID of a Message being canceled",
+              "format": "int64",
+              "nullable": true,
+              "example": 1012
+            },
+            "Transport": {
+              "type": "integer",
+              "description": "Transport over which the Message was sent. Possible options include: \r\n- **1**: Message was sent over the satellite network.\r\n- **2**: Message was sent over the cellular network.",
+              "format": "int32",
+              "nullable": true
+            },
+            "RegionName": {
+              "type": "string",
+              "description": "Name of the satellite geo beam from where the last satellite terminal registration Message came from.",
+              "nullable": true
+            },
+            "Network": {
+              "type": "integer",
+              "description": "Network over which the Message was sent. Possible options include: \r\n- **0**: Message was sent over the IDP network.\r\n- **1**: Message was sent over the OGx network.",
+              "format": "int32",
+              "nullable": true
+            },
+            "MessageClass": {
+              "type": "integer",
+              "description": "Message class (OGx terminals only). Possible options include: \r\n- **1**: Premium\r\n- **2**: Normal\r\n- **3**: Background",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Information related to a single FW (to-mobile) Message."
+        },
+        "GetBroadcastInfoResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "BroadcastIDs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/BroadcastInfo"
+              },
+              "description": "Array of broadcast information records\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Broadcast information response - includes a list of user accounts' broadcast ID information records."
+        },
+        "GetForwardMessagesResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "Messages": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ForwardMessage"
+              },
+              "description": "Array of requested FW (to-mobile) Message records.",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Response to a call retrieving to-mobile (FW) messages.\r\nContains a list of requested forward (to-mobile) messages."
+        },
+        "GetForwardStatusesResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "NextFromUTC": {
+              "type": "string",
+              "description": "For 'fw_status_updates', a 'fromUTC' of a subsequent request's parameter needs to be set to this value.\r\nIf you regularly poll for to-mobile messages' status changes, you have to use a high-water mark returned here in your subsequent requests.\r\nReusing high-water mark (FromUTC) values while successfully retrieving large number of records, will result in throttling of your future requests.",
+              "nullable": true
+            },
+            "Statuses": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StatusRecord"
+              },
+              "description": "Array of requested FW (to-mobile) Message status records.",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Contains a list of requested forward (to-mobile) Message statuses."
+        },
+        "GetReturnMessagesResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "NextFromUTC": {
+              "type": "string",
+              "description": "Contains the value of the next fromUTC field that the client needs to provide with a request to receive contiguous messages.\r\nThis field may be omitted in case of an error or if no messages were returned by this response.\r\nIf you regularly poll for from-mobile messages, you have to use a high-water mark returned here in your subsequent requests.\r\nReusing high-water mark (fromUTC) values while successfully retrieving large number of records, will result in throttling of your future requests.",
+              "nullable": true,
+              "example": "2022-11-25 12:00:03"
+            },
+            "Messages": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ReturnMessage"
+              },
+              "description": "Array of requested FW (to-mobile) Message records.",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Contains a list of from-mobile Message records."
+        },
+        "GetServiceInfoResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "Version": {
+              "type": "string",
+              "description": "Web service version number (not to be confused with the API version number)",
+              "nullable": true,
+              "example": "5.1.8"
+            },
+            "ServerUTC": {
+              "type": "string",
+              "description": "Current OGWS server time",
+              "nullable": true
+            },
+            "ErrorCodes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              "description": "Array of possible API error information. The field will be provided only if ‘getErrorCodes’ was set to true.",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "'accountinfo/service' response - includes the API version number and a list of error code information"
+        },
+        "GetSubaccountInfoResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "Subaccounts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SubaccountInfo"
+              },
+              "description": "Array of account information records.\r\n[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "List of subaccounts linked to the caller's account."
+        },
+        "GetTerminalInfoResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "Terminal": {
+              "$ref": "#/components/schemas/TerminalInfo"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Terminal information response - includes a single terminal information record."
+        },
+        "GetTerminalInfoUpdatesResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "NextFromUTC": {
+              "type": "string",
+              "description": "Contains the value of the next FromUTC field that the client needs to provide with a request to receive contiguous records.\r\nThis field may be omitted in case of an error or if no records were returned by this response.\r\nIf you regularly poll for updates, you have to use a high-water mark returned here in your subsequent requests.\r\nReusing high-water mark (FromUTC) values while successfully retrieving large number of records, may result in throttling of your future requests.",
+              "nullable": true,
+              "example": "2022-11-25 12:00:03"
+            },
+            "Terminals": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/TerminalInfo"
+              },
+              "description": "Array of terminal information records.",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Terminal information updates response - includes a list of user accounts' updated terminal information records."
+        },
+        "GetTerminalsInfoResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "Terminals": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/TerminalInfo"
+              },
+              "description": "Array of terminal information records.",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Terminals information response - includes a list of user accounts' terminal information records."
+        },
+        "GetTokenResponse": {
+          "type": "object",
+          "properties": {
+            "token_type": {
+              "type": "string",
+              "description": "Indicates the token type value. The only supported type is bearer.",
+              "nullable": true,
+              "example": "bearer"
+            },
+            "expires_in": {
+              "type": "integer",
+              "description": "The amount of time that the access token is valid (in seconds).",
+              "format": "int32",
+              "nullable": true,
+              "example": 31536000
+            },
+            "access_token": {
+              "type": "string",
+              "description": "The requested access token.",
+              "nullable": true,
+              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcwMDAwMDAxIiwicm9sZSI6IlByb3Zpc2lvbmluZyIsIm5iZiI6MTY4NTAyNjU2NSwiZXhwIjoxNjg1NjMxMzY1LCJpYXQiOjE2ODUwMjY1NjUsImlzcyI6IlNlY3VyZUFwaSIsImF1ZCI6IlNlY3VyZUFwaVVzZXIifQ.n-bCYU0ooHE6vR3dsWvXRUXHNK6Rt_QR8PpNIOoX4bY"
+            },
+            "error": {
+              "type": "string",
+              "description": "An error code string",
+              "nullable": true,
+              "example": "unauthorized_client"
+            }
+          },
+          "additionalProperties": false
+        },
+        "ModeMessage": {
+          "type": "object",
+          "properties": {
+            "DestinationID": {
+              "type": "string",
+              "description": "Destination of the message (terminal’s prime ID).",
+              "nullable": true,
+              "example": "01008988SKY5909"
+            },
+            "UserMessageID": {
+              "type": "integer",
+              "description": "The UserMessageID is the client's Message identification number. The client must provide a user Message ID if they want to map it to \r\nthe Gateway's number - the ID in the FowardSubmission class. \r\nThe Gateway does not store the UserMessageID anywhere.",
+              "format": "int64",
+              "nullable": true,
+              "example": 2097
+            },
+            "Mode": {
+              "type": "integer",
+              "description": "Terminal mode. Possible options include: \r\n- **0**: ALWAYS_ON (if ALWAYS_ON is set, WakeupInterval will be ignored)\r\n- **1**: WAKE_UP [IDP and OGx] \r\n- **2**: RECEIVE_ON_SEND [OGx only] (if RECEIVE_ON_SEND is set, WakeupInterval will be ignored)  \r\n- **3**: HYBRID [OGx only]",
+              "format": "int32"
+            },
+            "WakeupInterval": {
+              "type": "integer",
+              "description": "Terminal wakeup interval. Possible options include: \r\n- **0**: IDP/OGx: Normal operation     \r\n- **1**: IDP/OGx: 30 seconds   \r\n- **2**: IDP/OGx: 60 seconds    \r\n- **3**: IDP/OGx: 2 minutes    \r\n- **4**: IDP/OGx: 3 minutes   \r\n- **5**: IDP/OGx: 5 minutes   \r\n- **6**: IDP/OGx: 10 minutes   \r\n- **7**: IDP/OGx: 15 minutes   \r\n- **8**: IDP/OGx: 20 minutes   \r\n- **9**: IDP/OGx: 30 minutes   \r\n- **10**: IDP/OGx: 60 minutes     \r\n- **11**: OGx: 2 hours    \r\n- **12**: OGx: 3 hours    \r\n- **13**: OGx: 6 hours    \r\n- **14**: OGx: 12 hours    \r\n- **15**: OGx: 24 hours",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "A class that represents a to-mobile terminal mode message."
+        },
+        "MuteMessage": {
+          "type": "object",
+          "properties": {
+            "DestinationID": {
+              "type": "string",
+              "description": "Destination of the message (terminal’s prime ID).",
+              "nullable": true,
+              "example": "01008988SKY5909"
+            },
+            "UserMessageID": {
+              "type": "integer",
+              "description": "The UserMessageID is the client's Message identification number. The client must provide a user Message ID if they want to map it to \r\nthe Gateway's number - the ID in the FowardSubmission class. \r\nThe Gateway does not store the UserMessageID anywhere.",
+              "format": "int64",
+              "nullable": true,
+              "example": 2097
+            },
+            "Mute": {
+              "type": "boolean",
+              "description": "If omitted or set to true, sends a 'mute' message, if set to false, sends an 'unmute' message",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "A class that represents a to-mobile terminal mute message."
+        },
+        "ResetMessage": {
+          "type": "object",
+          "properties": {
+            "DestinationID": {
+              "type": "string",
+              "description": "Destination of the message (terminal’s prime ID).",
+              "nullable": true,
+              "example": "01008988SKY5909"
+            },
+            "UserMessageID": {
+              "type": "integer",
+              "description": "The UserMessageID is the client's Message identification number. The client must provide a user Message ID if they want to map it to \r\nthe Gateway's number - the ID in the FowardSubmission class. \r\nThe Gateway does not store the UserMessageID anywhere.",
+              "format": "int64",
+              "nullable": true,
+              "example": 2097
+            },
+            "ResetModem": {
+              "type": "boolean",
+              "description": "ResetModem - resets a modem if true",
+              "nullable": true
+            },
+            "ResetApplication": {
+              "type": "boolean",
+              "description": "ResetApplication - resets application if true",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "A class that represents a to-mobile terminal reset message."
+        },
+        "ReturnMessage": {
+          "type": "object",
+          "properties": {
+            "ID": {
+              "type": "integer",
+              "description": "ID of the from-mobile Message. This ID is a 64-bit unsigned number used by the Gateway to reference a Message.",
+              "format": "int64",
+              "nullable": true,
+              "example": 10979489832
+            },
+            "MessageUTC": {
+              "type": "string",
+              "description": "The OGWS Message time (UTC). A time when the Message becomes available for retrieval.",
+              "nullable": true,
+              "example": "2022-11-25 12:00:03"
+            },
+            "ReceiveUTC": {
+              "type": "string",
+              "description": "For a satellite traffic Message - The time (UTC) when the Message was received by the earth station.\r\nFor a cellular traffic Message - The Epoch or empty (that is, the value of the field is ignored or not supplied by the OGWS).",
+              "nullable": true,
+              "example": "2022-11-25 12:00:03"
+            },
+            "SIN": {
+              "type": "integer",
+              "description": "Message's Service Identification Number. The SIN is also included in the payload.",
+              "format": "int32",
+              "nullable": true,
+              "example": 128
+            },
+            "MobileID": {
+              "type": "string",
+              "description": "Identification number (Prime ID) of the terminal",
+              "nullable": true,
+              "example": "01008988SKY5909"
+            },
+            "NetworkID": {
+              "type": "string",
+              "description": "ID of the terminal used over the network.",
+              "nullable": true,
+              "example": "01008988SKY5909"
+            },
+            "RawPayload": {
+              "type": "string",
+              "description": "This field contains the raw, binary payload of the Message if the 'IncludeRawPayload' query parameter was set to true, or if the Message decoding to a common Message format was not possible.",
+              "format": "byte",
+              "nullable": true
+            },
+            "Payload": {
+              "$ref": "#/components/schemas/CommonMessage"
+            },
+            "RegionName": {
+              "type": "string",
+              "description": "For satellite traffic Message - the terminal's region Name.",
+              "nullable": true,
+              "example": "AMERRB8"
+            },
+            "OTAMessageSize": {
+              "type": "integer",
+              "description": "Over-the-air Message size in bytes.",
+              "format": "int32",
+              "nullable": true,
+              "example": 20
+            },
+            "AccountID": {
+              "type": "integer",
+              "description": "ID of the customer account the Message was assigned to (used only when retrieving subaccounts’ messages).",
+              "format": "int32",
+              "nullable": true,
+              "example": 70092006
+            },
+            "Transport": {
+              "type": "integer",
+              "description": "Over-the-air transport used to deliver the Message. Possible options include: \r\n- **1**: Message was sent over the satellite network.\r\n- **2**: Message was sent over the cellular network.",
+              "format": "int32",
+              "nullable": true
+            },
+            "MobileOwnerID": {
+              "type": "integer",
+              "description": "ID of the customer account that the terminal belongs to. The field will be present only if the account is different than the account retrieving the Message.",
+              "format": "int32",
+              "nullable": true
+            },
+            "Network": {
+              "type": "integer",
+              "description": "Network over which the Message was sent. Possible options include: \r\n- **0**: Message was sent over the IDP network.\r\n- **1**: Message was sent over the OGx network.",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "A class that represents a to-mobile Message."
+        },
+        "SatelliteDelayedSendOptions": {
+          "required": [
+            "DelayedSend"
+          ],
+          "type": "object",
+          "properties": {
+            "DelayedSend": {
+              "type": "boolean",
+              "description": "If set to true, to-mobile Message will be queued for sending only when the Gateway receives a from-mobile Message from the destination terminal.",
+              "example": true
+            },
+            "MessageExpireUTC": {
+              "type": "string",
+              "description": "If no from-mobile Message arrives before the MessageExpireUTC, the Message will be closed with a 'timed out' state. \r\nIf MessageExpireUTC is not set, the Gateway will set it to 5 days from the time the Message was submitted.",
+              "nullable": true,
+              "example": "2022-11-25 12:00:23"
+            }
+          },
+          "additionalProperties": false,
+          "description": "This class controls delayed sending of to-mobile messages. This only applies to messages sent over the satellite network. \r\nThis option is ignored if the cellular network is used. \r\nDelayed sending is typically used for sending to-mobile messages to the type of terminals that are powered down most of the time \r\nbut will send from-mobile Message(s) when it powers on."
+        },
+        "StatusRecord": {
+          "type": "object",
+          "properties": {
+            "ID": {
+              "type": "integer",
+              "description": "ID of the Message. This is the Message ID assigned by the Gateway when the Message was first submitted.",
+              "format": "int64",
+              "nullable": true,
+              "example": 10844864715
+            },
+            "AccountID": {
+              "type": "integer",
+              "description": "ID of the account that submitted the Message. \r\nThis field will be present only in case the account that is asking for this information is not the account that the Message belongs to.",
+              "format": "int32",
+              "nullable": true,
+              "example": 70092006
+            },
+            "IsClosed": {
+              "type": "boolean",
+              "description": "True if the Message has been closed, or false if it is still open.",
+              "nullable": true,
+              "example": true
+            },
+            "State": {
+              "type": "integer",
+              "description": "The latest state of the Message.\r\n- **0**: Message accepted by the OGWS but not submitted yet (queued).\r\n- **1**: Message acknowledged by its destination.\r\n- **2**: Submission error (error reported by either OGWS, NPC or the terminal). Check the error code.\r\n- **3**: Message failed to be delivered. Check the error code.\r\n- **4**: Message timed out by either the OGx Gateway or NPC.\r\n- **5**: Message canceled.\r\n- **6**: Message queued for delayed delivery (a 'Send On Receive' Message).\r\n- **7**: Broadcast Message transmitted.\r\n- **8**: Sending in progress.",
+              "format": "int32",
+              "nullable": true,
+              "example": 1
+            },
+            "CreateUTC": {
+              "type": "string",
+              "description": "Time (UTC) the Message was created on the Gateway.",
+              "nullable": true,
+              "example": "2022-11-25 12:00:03"
+            },
+            "StatusUTC": {
+              "type": "string",
+              "description": "Time (UTC) of the most recent Message status update.",
+              "nullable": true,
+              "example": "2022-11-25 12:00:23"
+            },
+            "ErrorID": {
+              "type": "integer",
+              "description": "An error number if the Gateway was not able to get the to-mobile Message.\r\nThis field may be omitted from a response in case there is no error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 14
+            },
+            "Transport": {
+              "type": "integer",
+              "description": "Transport over which the Message was sent. Possible options include: \r\n- **1**: Message was sent over the satellite network.\r\n- **2**: Message was sent over the cellular network.",
+              "format": "int32",
+              "nullable": true
+            },
+            "RegionName": {
+              "type": "string",
+              "description": "Name of the satellite geo beam from where the last satellite terminal registration Message came from.",
+              "nullable": true
+            },
+            "ReferenceNumber": {
+              "type": "integer",
+              "description": "Message reference number",
+              "format": "int32",
+              "nullable": true
+            },
+            "Network": {
+              "type": "integer",
+              "description": "Network over which the Message was sent. Possible options include: \r\n- **0**: Message was sent over the IDP network.\r\n- **1**: Message was sent over the OGx network.",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "FW (to-mobile) Message status information record."
+        },
+        "SubaccountInfo": {
+          "type": "object",
+          "properties": {
+            "AccountID": {
+              "type": "integer",
+              "description": "Sub-account ID",
+              "format": "int32",
+              "example": 60023006
+            },
+            "AccountName": {
+              "type": "string",
+              "description": "Subaccount Name",
+              "nullable": true,
+              "example": "Truck fleet A"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Account information record"
+        },
+        "SubmitCancellationResult": {
+          "type": "object",
+          "properties": {
+            "ID": {
+              "type": "integer",
+              "description": "ID of a to-mobile Message being canceled.",
+              "format": "int64",
+              "nullable": true,
+              "example": 10844864715
+            },
+            "CancellationStatus": {
+              "type": "integer",
+              "description": "Status of this cancellation requests:\r\n    1 - Message immediately canceled since it it hasn't been sent yet.\r\n    2 - Message already closed and cannot be canceled\r\n    3 - Message submitted, attempting to cancel it. Cancelation request's FWID available in this response.\r\nThis field may be omitted from a response.",
+              "format": "int32",
+              "nullable": true
+            },
+            "CancelRequestID": {
+              "type": "integer",
+              "description": "To-mobile Message ID of the cancelation request. Your cancelation status will depend on a status of this Message.",
+              "format": "int64",
+              "nullable": true
+            },
+            "ErrorID": {
+              "type": "integer",
+              "description": "Contains an error number in case an error happened when trying to cancel the Message. \r\nThis field may be omitted from a response in case there is no error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            }
+          },
+          "additionalProperties": false,
+          "description": "Information about a submitted cancellation request returned by the web service .\r\nEach SubmitCancellationResult object contains information about one submitted cancellation request. \r\nIn the event of an error (that is, ErrorID > 0), the Message ID will not be set."
+        },
+        "SubmitCancellationsResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "Cancellations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SubmitCancellationResult"
+              },
+              "description": "Array of FW Message cancelation information",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "'cancel' response"
+        },
+        "SubmitMessage": {
+          "type": "object",
+          "properties": {
+            "DestinationID": {
+              "type": "string",
+              "description": "Destination of the client Message. This is either a terminal's prime ID or a broadcast ID.\r\nThis field can be omitted if 'submitToMultiple' method is used. In that case, a Message destination will be taken from the 'Destinations' list, and this property will be ignored even if specified.",
+              "nullable": true,
+              "example": "01008988SKY5909"
+            },
+            "UserMessageID": {
+              "type": "integer",
+              "description": "The UserMessageID is the client's Message identification number. The client must provide a user Message ID if they want to map it to \r\nthe Gateway's number - the ID in the FowardSubmission class. \r\nThe Gateway does not store the UserMessageID anywhere. This field is irrelevant if the SubmitMessagesToMultipleDestinations web service \r\noperation is called.",
+              "format": "int64",
+              "nullable": true,
+              "example": 2097
+            },
+            "RawPayload": {
+              "type": "string",
+              "description": "Contains a byte array of raw payload that is submitted to its destination unchanged. This payload must follow the format of terminal messages.",
+              "format": "byte",
+              "nullable": true,
+              "example": "tAEyMDIyLTAyLTE3IDE2OjQwOjQ1IDQ5LTBfMTY0MDQ1XzFfMTY0MDQ1XzJfMTY0MDQ1XzNfMTY0MDQ1XzRfMTY0MDQ1XzVfMTY0MDQ1XzZfMTY0MDQ1XzdfMTY0MDQ1XzhfMTY0MDQ1XzlfMTY0MDQ1XzEwXzE2NDA0NV8xMV8xNjQwNC0xMzU="
+            },
+            "Payload": {
+              "$ref": "#/components/schemas/CommonMessage"
+            },
+            "TransportType": {
+              "type": "integer",
+              "description": "Specifies a transport for sending of the to-mobile Message. It is an optional property and it should remain unspecified unless you want to limit your delivery options to a specific transport.\r\nPossible options include:\r\n- **0**: any transport (satellite or cellular). [Default option if TransportType not specified]\r\n- **1**: satellite transport only.If this option is set, the Message will never be sent over the cellular network.\r\n- **2**: cellular transport only.",
+              "format": "int32",
+              "nullable": true
+            },
+            "MessageLifetime": {
+              "type": "integer",
+              "description": "Maximum Message lifetime in hours. If set, this value applies only to OGx network's terminals.",
+              "format": "int32",
+              "nullable": true,
+              "example": 24
+            },
+            "DelayedSendOptions": {
+              "$ref": "#/components/schemas/SatelliteDelayedSendOptions"
+            },
+            "MessageClass": {
+              "type": "integer",
+              "description": "Message class (OGx only). Possible options include: \r\n- **1**: Premium\r\n- **2**: Normal (default if MessageClass omitted)\r\n- **3**: Background",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "A class that represents a to-mobile Message."
+        },
+        "SubmitMessageResult": {
+          "type": "object",
+          "properties": {
+            "ID": {
+              "type": "integer",
+              "description": "ID of the to-mobile Message generated by the Gateway.The client can use the ID to query for status of the to-mobile Message.\r\nID value may roll over back to 1 once it reaches a maximum value for its type.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "format": "int64",
+              "nullable": true,
+              "example": 10844864715
+            },
+            "DestinationID": {
+              "type": "string",
+              "description": "Identification number (Prime ID) of the terminal or ID submitted by the user in case of an error.",
+              "nullable": true,
+              "example": "01008988SKY5909"
+            },
+            "ErrorID": {
+              "type": "integer",
+              "description": "Contains an error number or zero if the Message was accepted by the Gateway. \r\nThis field may be omitted from a response in case there is no error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "UserMessageID": {
+              "type": "integer",
+              "description": "When it is submitted with the Message, the Gateway returns this number to allow the client application to map its local Message IDs (that is, UserMessageID) to Gateway generated IDs (that is, ID).\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "format": "int64",
+              "nullable": true,
+              "example": 2097
+            },
+            "OTAMessageSize": {
+              "type": "integer",
+              "description": "Over-the-air Message size in bytes. \r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "format": "int32",
+              "nullable": true
+            },
+            "OperationMode": {
+              "type": "integer",
+              "description": "`\r\n            Terminal operational mode:\r\n             0 - ALWAYS_ON (IDP or OGx)\r\n             1 - WAKE_UP (IDP or OGx)\r\n             2 - RECEIVE_ON_SEND (OGx-only) \r\n             3 - HYBRID (OGx-only)\r\n            This field may be omitted from a response in case the terminal's operation mode is ALWAYS_ON.",
+              "format": "int32",
+              "nullable": true
+            },
+            "ScheduledSendUTC": {
+              "type": "string",
+              "description": "If the terminal is in WAKE_UP or HYBRID mode, this field contains the estimated scheduled transmission time.\r\nThis field may be omitted from a response in case terminal's operation mode is ALWAYS_ON.",
+              "nullable": true
+            },
+            "TerminalWakeupPeriod": {
+              "type": "integer",
+              "description": "The terminal's wake-up period in seconds if it is in WAKE_UP or HYBRID mode.\r\nThis field may be omitted from a response in case terminal's operation mode is ALWAYS_ON.",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Information about a submitted Message returned by the web service .\r\nEach SubmitMessageResult object contains information about one submitted to-mobile Message. \r\nIn the event of an error (that is, ErrorID > 0), the Message ID will not be set. However, NetworkID and UserMessageID, if set, are returned in the response."
+        },
+        "SubmitMessageToDestinationsRequest": {
+          "required": [
+            "Destinations",
+            "Message"
+          ],
+          "type": "object",
+          "properties": {
+            "Message": {
+              "$ref": "#/components/schemas/SubmitMessage"
+            },
+            "Destinations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of terminal Destinations."
+            }
+          },
+          "additionalProperties": false,
+          "description": "Defines a body of the 'submit/to_multiple' request"
+        },
+        "SubmitMessagesResponse": {
+          "type": "object",
+          "properties": {
+            "ErrorID": {
+              "type": "integer",
+              "description": "Present only in the event of failure. The ErrorID value serves as a reference for understanding the cause of the error.",
+              "format": "int32",
+              "nullable": true,
+              "example": 0
+            },
+            "Submissions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SubmitMessageResult"
+              },
+              "description": "Array of FW Message submission information",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Submit messages response"
+        },
+        "SysResetMessage": {
+          "type": "object",
+          "properties": {
+            "DestinationID": {
+              "type": "string",
+              "description": "Destination of the message (terminal’s prime ID).",
+              "nullable": true,
+              "example": "01008988SKY5909"
+            },
+            "UserMessageID": {
+              "type": "integer",
+              "description": "The UserMessageID is the client's Message identification number. The client must provide a user Message ID if they want to map it to \r\nthe Gateway's number - the ID in the FowardSubmission class. \r\nThe Gateway does not store the UserMessageID anywhere.",
+              "format": "int64",
+              "nullable": true,
+              "example": 2097
+            },
+            "ResetModem": {
+              "type": "boolean",
+              "description": "ResetModem - resets a modem if true",
+              "nullable": true
+            },
+            "ResetApplication": {
+              "type": "boolean",
+              "description": "ResetApplication - resets application if true",
+              "nullable": true
+            },
+            "RegistrationTimeQualifierIdx": {
+              "type": "integer",
+              "description": "RegistrationTimeQualifierIdx - 0 if not specified",
+              "format": "int32",
+              "nullable": true
+            },
+            "LastTransmitTimeQualifierIdx": {
+              "type": "integer",
+              "description": "LastTransmitTimeQualifierIdx - 0 if not specified",
+              "format": "int32",
+              "nullable": true
+            },
+            "DeleteAllGrants": {
+              "type": "boolean",
+              "description": "DeleteAllGrants - false if not specified",
+              "nullable": true
+            },
+            "DeleteChannelConfig": {
+              "type": "boolean",
+              "description": "DeleteChannelConfig - false if not specified",
+              "nullable": true
+            },
+            "DeleteServiceConfig": {
+              "type": "boolean",
+              "description": "DeleteServiceConfig - false if not specified",
+              "nullable": true
+            },
+            "DeleteGnssFix": {
+              "type": "boolean",
+              "description": "DeleteGnssFix - false if not specified",
+              "nullable": true
+            },
+            "AbortTxMsgs": {
+              "type": "boolean",
+              "description": "AbortTxMsgs - false if not specified",
+              "nullable": true
+            },
+            "AbortRxMsgs": {
+              "type": "boolean",
+              "description": "AbortRxMsgs - false if not specified",
+              "nullable": true
+            },
+            "WakeupInterval": {
+              "type": "integer",
+              "description": "IDP terminals only - null if not specied",
+              "format": "int32",
+              "nullable": true
+            },
+            "VCID": {
+              "type": "integer",
+              "description": "IDP terminals only - null if not specied",
+              "format": "int32",
+              "nullable": true
+            },
+            "GeoBeam": {
+              "type": "integer",
+              "description": "IDP terminals only - null if not specied",
+              "format": "int32",
+              "nullable": true
+            },
+            "DelayedSendOptions": {
+              "$ref": "#/components/schemas/SatelliteDelayedSendOptions"
+            }
+          },
+          "additionalProperties": false,
+          "description": "A class that represents a to-mobile terminal system reset message."
+        },
+        "TerminalInfo": {
+          "type": "object",
+          "properties": {
+            "PrimeID": {
+              "type": "string",
+              "description": "Primary terminal identifier. Terminals can have multiple identifiers; MTSN, IMEI, MEID, MAC or UnitID. \r\nDuring provisioning, one of these identifiers is marked as a primary ID. \r\nWhen set, the primary ID cannot be changed.",
+              "nullable": true,
+              "example": "01000005SKYCD96"
+            },
+            "UnitID": {
+              "type": "string",
+              "description": "Terminal UnitID",
+              "nullable": true
+            },
+            "Description": {
+              "type": "string",
+              "description": "Description of the terminal.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": "Test terminal 002"
+            },
+            "LastRegionName": {
+              "type": "string",
+              "description": "Name of the satellite geo beam from where the last satellite terminal registration Message came from.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": "AMERRB9"
+            },
+            "MTSN": {
+              "type": "string",
+              "description": "The terminal serial number (used for satellite communication).\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": "01000005SKYCD96"
+            },
+            "IMEI": {
+              "type": "string",
+              "description": "The terminal’s IMEI.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": "359739077429074"
+            },
+            "MEID": {
+              "type": "string",
+              "description": "The terminal’s MEID.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": "99001092003340"
+            },
+            "MAC": {
+              "type": "string",
+              "description": "Terminal’s MAC address.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": "00:00:5e:00:53:af"
+            },
+            "LastRegistrationUTC": {
+              "type": "string",
+              "description": "UTC based time stamp of a last satellite terminal registration Message. This field is valid only for satellite terminals.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": "2022-01-22 20:00:24"
+            },
+            "LastRegistrationMessageID": {
+              "type": "integer",
+              "description": "ID of the most recent modem registration Message. This field is valid only for satellite terminals.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "format": "int64",
+              "nullable": true,
+              "example": 387611800032
+            },
+            "LastSatelliteNetwork": {
+              "type": "integer",
+              "description": "The most recent satellite network this terminal was on:\r\n0 - IDP\r\n1 - OGx\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "format": "int32",
+              "nullable": true
+            },
+            "LastOperationMode": {
+              "type": "integer",
+              "description": "Terminal operational mode:\r\n 0 - ALWAYS_ON (IDP or OGx)\r\n 1 - WAKE_UP (IDP or OGx)\r\n 2 - RECEIVE_ON_SEND (OGx-only) \r\n 3 - HYBRID (OGx-only)\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "format": "int32",
+              "nullable": true
+            },
+            "TerminalWakeupPeriod": {
+              "type": "integer",
+              "description": "The terminal's wake-up period in seconds if it is in low power mode.\r\nThis field may be omitted from a response in case terminal's operation mode is ALWAYS_ON.",
+              "format": "int32",
+              "nullable": true
+            },
+            "PairedTerminalPrimeID": {
+              "type": "string",
+              "description": "Prime ID of the paired terminal when a satellite modem is paired to a cellular terminal.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": ""
+            },
+            "LastCellAccessUTC": {
+              "type": "string",
+              "description": "UTC time of the most recent communication between the terminal and the OGx Gateway over a cellular network.\r\nThis field may be omitted from a response in case no valid value is available/required.",
+              "nullable": true,
+              "example": ""
+            },
+            "UpdateUTC": {
+              "type": "string",
+              "description": "UTC time of the most recent record update",
+              "nullable": true,
+              "example": ""
+            },
+            "IsRegistered": {
+              "type": "integer",
+              "description": "Terminal registration state (OGx-only):\r\n- **1**: Registered\r\n- **0**: Not Registered\r\n\r\n If the field is not present, it indicates that the registration state is either unknown to the Gateway or the terminal is operating on the IDP network.",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false,
+          "description": "Terminal information record"
+        }
+      },
+      "securitySchemes": {
+        "Bearer": {
+          "type": "http",
+          "description": "Put **_ONLY_** your JWT Bearer token on textbox below!",
+          "scheme": "Bearer",
+          "bearerFormat": "JWT"
+        }
+      }
+    },
+    "security": [
+      {
+        "Bearer": [ ]
+      }
+    ]
+  }

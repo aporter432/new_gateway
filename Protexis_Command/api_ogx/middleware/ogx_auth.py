@@ -1,10 +1,15 @@
+"""OGx authentication middleware.
+
+This module implements authentication middleware for the OGx API.
+It validates JWT tokens and enforces authentication requirements.
+"""
+
 from typing import Callable
 
 import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
 
 from Protexis_Command.api_ogx.services.auth.manager import OGxAuthManager, get_auth_manager
 

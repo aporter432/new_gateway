@@ -3,7 +3,7 @@
 import logging
 from typing import Optional
 
-from metrics.backends.base import MetricsBackend
+from Protexis_Command.metrics.backends.base import MetricsBackend
 
 from ..handlers.file import get_file_handler
 from ..handlers.metrics import get_metrics_handler

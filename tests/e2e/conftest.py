@@ -45,7 +45,7 @@ async def redis() -> AsyncGenerator[aioredis.Redis, None]:
         pytest.skip(f"Redis not available: {str(e)}")
 
     yield redis
-    await redis.close()
+    await redis.aclose()
 
 
 class DummyOGxProtocolHandler(OGxProtocolHandler):

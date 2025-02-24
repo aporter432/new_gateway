@@ -1,30 +1,12 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+"""Protexis API main application.
 
-from Protexis_Command.api_protexis.middleware.protexis_auth import add_protexis_auth_middleware
-from Protexis_Command.api_protexis.routes import auth
+This module initializes the FastAPI application and configures middleware and routes.
+"""
 
-app = FastAPI(
-    title="Protexis API",
-    description="Customer-facing API for device management and authentication",
-    version="1.0.0",
-)
+from Protexis_Command.api_protexis.app_init import create_app, init_routes
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3001"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-add_protexis_auth_middleware(app)
-
-app.include_router(
-    auth.router,
-    prefix="/api",
-    tags=["auth"],
-)
+app = create_app()
+init_routes(app)
 
 
 @app.get("/health")

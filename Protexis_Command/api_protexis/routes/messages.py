@@ -43,40 +43,58 @@ from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
 router = APIRouter()
 
 
-# Enhanced Pydantic models based on OGx spec
-class OGxMessagePayload(BaseModel):
-    """OGx message payload structure as defined in OGx-1.txt Section 5.1."""
+class OGxMessage(BaseModel):
+    """OGx message structure as defined in OGx-1.txt Section 5.1."""
 
-    Name: str
-    SIN: int
-    MIN: int
-    Fields: List[Dict[str, Any]]
+    name: str = Field(alias="Name")
+    sin: int = Field(alias="SIN")
+    min: int = Field(alias="MIN")
+    fields: List[Dict[str, Any]] = Field(alias="Fields")
+
+    class Config:
+        populate_by_name = True
 
 
 class MessageRequest(BaseModel):
     """Enhanced message request matching OGx format (OGx-1.txt Section 5.2)."""
 
-    DestinationID: str = Field(..., description="Terminal or broadcast ID")
-    UserMessageID: Optional[int] = Field(None, description="Client's message ID")
-    Payload: OGxMessagePayload
-    TransportType: Optional[int] = Field(
-        None, description="0=Any, 1=Satellite, 2=Cellular (OGx-1.txt Section 4.3.1)", ge=0, le=2
+    destination_id: str = Field(..., alias="DestinationID", description="Terminal or broadcast ID")
+    user_message_id: Optional[int] = Field(
+        None, alias="UserMessageID", description="Client's message ID"
     )
+    payload: OGxMessage = Field(alias="Payload")
+    transport_type: Optional[int] = Field(
+        None,
+        alias="TransportType",
+        description="0=Any, 1=Satellite, 2=Cellular (OGx-1.txt Section 4.3.1)",
+        ge=0,
+        le=2,
+    )
+
+    class Config:
+        populate_by_name = True
 
 
 class MessageResponse(BaseModel):
     """Enhanced response matching OGx format (OGx-1.txt Section 5.3)."""
 
-    ID: Optional[int] = None
-    ErrorID: Optional[int] = None
-    State: MessageState = Field(
-        ..., description="Message state from MessageState enum (OGx-1.txt Section 4.3)"
+    id: Optional[int] = Field(None, alias="ID")
+    error_id: Optional[int] = Field(None, alias="ErrorID")
+    state: MessageState = Field(
+        ...,
+        alias="State",
+        description="Message state from MessageState enum (OGx-1.txt Section 4.3)",
     )
-    Type: MessageType = Field(..., description="Message type (FW_ACCEPTED, FW_RECEIVED, etc.)")
-    DestinationID: str
-    UserMessageID: Optional[int] = None
-    OTAMessageSize: Optional[int] = None
-    MessageUTC: Optional[str] = None
+    type: MessageType = Field(
+        ..., alias="Type", description="Message type (FW_ACCEPTED, FW_RECEIVED, etc.)"
+    )
+    destination_id: str = Field(alias="DestinationID")
+    user_message_id: Optional[int] = Field(None, alias="UserMessageID")
+    ota_message_size: Optional[int] = Field(None, alias="OTAMessageSize")
+    message_utc: Optional[str] = Field(None, alias="MessageUTC")
+
+    class Config:
+        populate_by_name = True
 
 
 @router.post(APIEndpoint.SUBMIT_MESSAGE, response_model=MessageResponse)
@@ -90,9 +108,9 @@ async def submit_message(
         client = await get_OGx_client(settings)
 
         transport_type: Optional[TransportType] = None
-        if request.TransportType is not None:
+        if request.transport_type is not None:
             try:
-                transport_type = TransportType(request.TransportType)
+                transport_type = TransportType(request.transport_type)
             except ValueError as e:
                 raise HTTPException(
                     status_code=400, detail=f"Invalid transport type: {str(e)}"
@@ -100,15 +118,15 @@ async def submit_message(
 
         try:
             response = await client.submit_message(
-                destination_id=request.DestinationID,
-                payload=request.Payload.dict(),
-                user_message_id=request.UserMessageID,
+                destination_id=request.destination_id,
+                payload=request.payload.model_dump(by_alias=True),
+                user_message_id=request.user_message_id,
                 transport_type=transport_type,
             )
 
             return MessageResponse(
-                Type=MessageType.FORWARD,  # Initial state for forward messages
-                State=MessageState.ACCEPTED,
+                type=MessageType.FORWARD,  # Initial state for forward messages
+                state=MessageState.ACCEPTED,
                 **response,
             )
         except (HTTPError, OGxProtocolError) as e:
@@ -135,10 +153,10 @@ async def retrieve_messages(
             messages = await client.get_messages(from_utc=from_utc)
             return [
                 MessageResponse(
-                    Type=MessageType.RETURN,  # Return messages are always RECEIVED
-                    State=MessageState.RECEIVED,
-                    DestinationID=msg.get("SourceID", ""),
-                    MessageUTC=msg.get("MessageUTC"),
+                    type=MessageType.RETURN,  # Return messages are always RECEIVED
+                    state=MessageState.RECEIVED,
+                    destination_id=msg.get("SourceID", ""),
+                    message_utc=msg.get("MessageUTC"),
                     **msg,
                 )
                 for msg in messages.get("Messages", [])

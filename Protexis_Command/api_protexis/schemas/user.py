@@ -11,10 +11,10 @@ Key Components:
     - Token Schema: Authentication token structure
 
 Related Files:
-    - src/api/routes/auth/user.py: Authentication endpoints using these schemas
-    - src/infrastructure/database/models/user.py: SQLAlchemy models these schemas map to
-    - src/api/security/jwt.py: JWT token handling using Token schema
-    - src/api/security/password.py: Password handling for UserCreate/Update schemas
+    - Protexis_Command/api_protexis/routes/auth/user.py: Authentication endpoints using these schemas
+    - Protexis_Command/infrastructure/database/models/user.py: SQLAlchemy models these schemas map to
+    - Protexis_Command/api_protexis/security/jwt.py: JWT token handling using Token schema
+    - Protexis_Command/api_protexis/security/password.py: Password handling for UserCreate/Update schemas
 
 Implementation Notes:
     - Uses Pydantic for validation and serialization

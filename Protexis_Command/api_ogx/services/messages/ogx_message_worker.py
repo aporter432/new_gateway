@@ -18,12 +18,12 @@ import asyncio
 import time
 from typing import Dict, Optional
 
-from Protexis_Command.api_ogx.config import GatewayErrorCode
 from Protexis_Command.api_ogx.services.messages.ogx_message_queue import OGxMessageQueue
 from Protexis_Command.api_ogx.services.messages.ogx_message_submission import submit_OGx_message
 from Protexis_Command.core.app_settings import Settings, get_settings
 from Protexis_Command.core.logging.loggers import get_infra_logger
 from Protexis_Command.infrastructure.redis import get_redis_client
+from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
 from Protexis_Command.protocol.ogx.constants.ogx_limits import DEFAULT_WINDOW_SECONDS
 from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import OGxProtocolError
 

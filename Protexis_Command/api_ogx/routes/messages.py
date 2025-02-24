@@ -5,13 +5,14 @@ This module implements the API endpoints for message operations as defined in OG
 
 from fastapi import APIRouter, HTTPException
 
+from Protexis_Command.protocol.ogx.models.fields import Message
 from Protexis_Command.protocol.ogx.models.ogx_messages import OGxMessage
 
 router = APIRouter()
 
 
-@router.post("/messages")
-async def submit_message(message: OGxMessage):
+@router.post("/messages", response_model=dict)
+async def submit_message(message: Message):
     """Submit a message to the OGx network.
 
     Args:
@@ -21,13 +22,17 @@ async def submit_message(message: OGxMessage):
         dict: Submission result
     """
     try:
+        # Convert API model to protocol message using proper serialization
+        protocol_message = OGxMessage.from_dict(message.model_dump(by_alias=True))
+
         # TODO: Implement message submission logic
-        return {"status": "submitted", "message_id": "placeholder"}
+        # Use protocol_message in submission logic
+        return {"status": "submitted", "message_id": protocol_message.id}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/messages/{message_id}")
+@router.get("/messages/{message_id}", response_model=Message)
 async def get_message(message_id: str):
     """Retrieve a message by ID.
 
@@ -35,10 +40,16 @@ async def get_message(message_id: str):
         message_id: ID of the message to retrieve
 
     Returns:
-        OGxMessage: The retrieved message
+        Message: The retrieved message
     """
     try:
         # TODO: Implement message retrieval logic
-        return {"status": "retrieved", "message_id": message_id}
+        # For now, return dummy data that matches the protocol format
+        protocol_message = OGxMessage.from_dict(
+            {"Name": "dummy_message", "SIN": 16, "MIN": 1, "IsForward": True, "Fields": []}
+        )
+
+        # Convert back to API model using snake_case internally
+        return Message.model_validate(protocol_message.to_dict())
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

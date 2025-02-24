@@ -1,8 +1,13 @@
-"""Tests for OGx protocol exceptions based on OGx-1.txt error codes."""
+"""Test OGx protocol exceptions and error handling.
+
+Tests the error codes and exception handling for the OGx protocol
+as defined in OGx-1.txt.
+"""
 
 import pytest
 
-from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode, HTTPErrorCode
+from Protexis_Command.api_ogx.config.http_error_codes import HTTPErrorCode
+from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
 from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
     EncodingError,
     OGxProtocolError,
@@ -69,10 +74,8 @@ class TestValidationError:
             GatewayErrorCode.INVALID_MESSAGE_FORMAT,
             details={"field": "temperature", "value": "invalid"},
         )
-        assert (
-            str(error)
-            == "Validation error: Invalid message format (field=temperature, value=invalid)"
-        )
+        expected_msg = "Validation error: Invalid message format (field=temperature, value=invalid)"
+        assert str(error) == expected_msg
         assert error.error_code == GatewayErrorCode.INVALID_MESSAGE_FORMAT
 
     def test_validation_error_constants(self):
@@ -109,12 +112,69 @@ class TestEncodingError:
 
 
 class TestHTTPErrors:
-    """Test cases for HTTP error codes from OGx-1.txt Appendix A."""
+    """Test HTTP error codes as defined in OGx-1.txt Appendix A."""
 
     def test_http_error_codes(self):
-        """Test HTTP error code values."""
-        assert HTTPErrorCode.SUCCESS == 200  # Check ErrorID for possible errors
-        assert HTTPErrorCode.UNAUTHORIZED == 401  # Authentication/authorization failure
-        assert HTTPErrorCode.FORBIDDEN == 403  # Not a super account user
-        assert HTTPErrorCode.TOO_MANY_REQUESTS == 429  # Rate limits exceeded
-        assert HTTPErrorCode.SERVICE_UNAVAILABLE == 503  # Global limiter triggered
+        """Verify HTTP error codes match OGx-1.txt Appendix A."""
+        assert HTTPErrorCode.SUCCESS == 200
+        assert HTTPErrorCode.UNAUTHORIZED == 401
+        assert HTTPErrorCode.FORBIDDEN == 403
+        assert HTTPErrorCode.TOO_MANY_REQUESTS == 429
+        assert HTTPErrorCode.SERVICE_UNAVAILABLE == 503
+
+
+class TestGatewayErrors:
+    """Test gateway error codes as defined in OGx-1.txt."""
+
+    def test_validation_errors(self):
+        """Test validation error codes (10000-10099)."""
+        assert GatewayErrorCode.VALIDATION_ERROR == 10000
+        assert GatewayErrorCode.INVALID_MESSAGE_FORMAT == 10001
+        assert GatewayErrorCode.INVALID_ELEMENT_FORMAT == 10002
+        assert GatewayErrorCode.INVALID_FIELD_FORMAT == 10003
+        assert GatewayErrorCode.INVALID_MESSAGE_FILTER == 10004
+        assert GatewayErrorCode.MESSAGE_SIZE_EXCEEDED == 10005
+        assert GatewayErrorCode.INVALID_FIELD_TYPE == 10006
+
+    def test_rate_limit_errors(self):
+        """Test rate limiting error codes (24500-24599)."""
+        assert GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED == 24579
+        assert GatewayErrorCode.RETRIEVE_STATUS_RATE_EXCEEDED == 24581
+        assert GatewayErrorCode.INVALID_TOKEN == 24582
+        assert GatewayErrorCode.TOKEN_EXPIRED == 24583
+        assert GatewayErrorCode.TOKEN_REVOKED == 24584
+        assert GatewayErrorCode.TOKEN_INVALID_FORMAT == 24585
+
+    def test_processing_errors(self):
+        """Test processing error codes (26000-26099)."""
+        assert GatewayErrorCode.ENCODE_ERROR == 26000
+        assert GatewayErrorCode.DECODE_ERROR == 26001
+        assert GatewayErrorCode.PROCESSING_ERROR == 26002
+        assert GatewayErrorCode.INTERNAL_ERROR == 26003
+
+    def test_success_code(self):
+        """Test success code is 0."""
+        assert GatewayErrorCode.SUCCESS == 0
+
+
+class TestExceptions:
+    """Test OGx protocol exceptions."""
+
+    def test_validation_error(self):
+        """Test ValidationError exception."""
+        with pytest.raises(ValidationError) as exc:
+            raise ValidationError("Test validation error")
+        assert exc.value.error_code == GatewayErrorCode.VALIDATION_ERROR
+        assert str(exc.value).startswith("Validation error:")
+
+    def test_protocol_error(self):
+        """Test ProtocolError exception."""
+        with pytest.raises(ProtocolError) as exc:
+            raise ProtocolError("Test protocol error", GatewayErrorCode.PROCESSING_ERROR)
+        assert exc.value.error_code == GatewayErrorCode.PROCESSING_ERROR
+
+    def test_ogx_protocol_error(self):
+        """Test OGxProtocolError exception."""
+        with pytest.raises(OGxProtocolError) as exc:
+            raise OGxProtocolError("Test OGx error", GatewayErrorCode.ENCODE_ERROR)
+        assert exc.value.error_code == GatewayErrorCode.ENCODE_ERROR

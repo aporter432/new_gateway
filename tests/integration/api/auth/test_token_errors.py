@@ -1,102 +1,116 @@
-"""Test token error handling.
+"""Integration tests for token error handling.
 
-Note on Redis cleanup:
-We use redis.aclose() with type ignore comments to match the recommended cleanup
-method from the Redis async client. The type hints don't yet include aclose(),
-but it's preferred over the deprecated close() method.
+This module tests error handling in token management:
+- Network errors
+- Invalid tokens
+- Expired tokens
+- Rate limiting
 """
 
-import asyncio
 import time
+from typing import AsyncGenerator
 from unittest.mock import patch
 
 import pytest
-from httpx import HTTPError, Request, Response
-from protocols.ogx.auth.manager import OGxAuthManager, TokenMetadata
+from httpx import HTTPStatusError
+from redis.asyncio import Redis
 
-from tests.integration.api.auth.test_token_setup import get_test_redis, get_test_settings
+from Protexis_Command.core.app_settings import Settings
+from Protexis_Command.protocol.ogx.auth.manager import OGxAuthManager, TokenMetadata
+from tests.integration.fixtures.mock_responses import OGxMockResponses
+from tests.integration.helpers import RedisHelper
 
 # Use function-scoped event loop for better isolation
-pytestmark = pytest.mark.asyncio
+pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.requires_redis]
 
 
-async def test_invalid_credentials():
-    """Test token acquisition with invalid credentials."""
-    settings = get_test_settings()
+@pytest.fixture
+async def redis_helper(redis_client: Redis) -> AsyncGenerator[RedisHelper, None]:
+    """Create and clean up RedisHelper for tests."""
+    helper = RedisHelper(redis_client)
+    yield helper
+    # Redis cleanup is handled by conftest.py fixtures
+
+
+@pytest.fixture
+async def invalid_settings(settings: Settings) -> Settings:
+    """Create settings with invalid credentials."""
     settings.OGx_CLIENT_ID = "invalid_id"
     settings.OGx_CLIENT_SECRET = "invalid_secret"
-
-    redis = await get_test_redis()
-    try:
-        auth_manager = OGxAuthManager(settings, redis)
-        mock_response = Response(
-            status_code=401,
-            json={"error": "invalid_credentials"},
-            request=Request("POST", "http://proxy:8080/api/v1.0/token"),
-        )
-
-        with patch("httpx.AsyncClient.post", return_value=mock_response):
-            with pytest.raises(HTTPError) as exc_info:
-                await auth_manager.get_valid_token()
-            assert exc_info.value.response is not None  # Type check
-            assert exc_info.value.response.status_code == 401
-    finally:
-        await redis.aclose()  # type: ignore # Redis type hints don't include aclose
+    return settings
 
 
-async def test_expired_token():
+async def test_invalid_credentials(invalid_settings: Settings, redis_helper: RedisHelper):
+    """Test token acquisition with invalid credentials."""
+    auth_manager = OGxAuthManager(invalid_settings, redis_helper.client)
+
+    with patch("httpx.AsyncClient.post", return_value=OGxMockResponses.token_invalid_credentials()):
+        with pytest.raises(HTTPStatusError) as exc_info:
+            await auth_manager.get_valid_token()
+        assert isinstance(exc_info.value, HTTPStatusError)
+        assert exc_info.value.response.status_code == 401
+
+
+async def test_expired_token(settings: Settings, redis_helper: RedisHelper):
     """Test handling of expired tokens."""
-    settings = get_test_settings()
-    redis = await get_test_redis()
+    auth_manager = OGxAuthManager(settings, redis_helper.client)
 
-    try:
-        auth_manager = OGxAuthManager(settings, redis)
+    # Store an expired token
+    now = time.time()
+    expired_metadata = TokenMetadata(
+        token="expired_token",
+        created_at=now - 7200,  # 2 hours ago
+        expires_at=now - 3600,  # 1 hour ago
+        last_used=now - 3600,
+        validation_count=0,
+    )
+    await auth_manager._store_token_metadata(expired_metadata)
 
-        # Store an expired token
-        now = time.time()
-        expired_metadata = TokenMetadata(
-            token="expired_token",
-            created_at=now - 7200,
-            expires_at=now - 3600,
-            last_used=now - 3600,
-        )
-        await auth_manager._store_token_metadata(expired_metadata)
+    # Mock response for new token request
+    with patch("httpx.AsyncClient.post", return_value=OGxMockResponses.token_success("new_token")):
+        token = await auth_manager.get_valid_token()
+        assert token == "new_token"
 
-        # Mock the new token response
-        mock_response = Response(200, json={"access_token": "new_token", "expires_in": 3600})
-
-        with patch("httpx.AsyncClient.post", return_value=mock_response):
-            token = await auth_manager.get_valid_token()
-            assert token != "expired_token"
-
+        # Verify old token was cleaned up
         metadata = await auth_manager._get_token_metadata()
-        assert metadata.token != "expired_token"
-    finally:
-        await redis.aclose()  # type: ignore # Redis type hints don't include aclose
+        assert metadata is not None
+        assert metadata.token == "new_token"
+        assert metadata.expires_at > now
 
 
-async def test_token_validation_failure():
-    """Test token validation failure handling."""
-    settings = get_test_settings()
-    redis = await get_test_redis()
+async def test_token_validation_failure(settings: Settings, redis_helper: RedisHelper):
+    """Test handling of token validation failures."""
+    auth_manager = OGxAuthManager(settings, redis_helper.client)
 
-    try:
-        auth_manager = OGxAuthManager(settings, redis)
+    # Store a valid token
+    now = time.time()
+    valid_metadata = TokenMetadata(
+        token="test_token",
+        created_at=now,
+        expires_at=now + 3600,
+        last_used=now,
+        validation_count=0,
+    )
+    await auth_manager._store_token_metadata(valid_metadata)
 
-        # Create an invalid auth header
-        auth_header = {"Authorization": "Bearer invalid_token_here"}
+    # Mock validation failure response
+    with patch("httpx.AsyncClient.get", return_value=OGxMockResponses.validation_failure()):
+        is_valid = await auth_manager.validate_token({"Authorization": "Bearer test_token"})
+        assert not is_valid
 
-        # Validate should return False for invalid token
-        is_valid = await auth_manager.validate_token(auth_header)
-        assert not is_valid, "Invalid token should fail validation"
-
-        # Get token info should return None for invalid token
-        token_info = await auth_manager.get_token_info()
-        assert token_info is None, "Token info should be None for invalid token"
-
-    finally:
-        await redis.aclose()  # type: ignore # Redis type hints don't include aclose
+        # Token should be automatically invalidated after validation failure
+        metadata = await auth_manager._get_token_metadata()
+        assert metadata is None
 
 
-if __name__ == "__main__":
-    asyncio.run(test_expired_token())
+async def test_rate_limit_handling(settings: Settings, redis_helper: RedisHelper):
+    """Test handling of rate limit responses."""
+    auth_manager = OGxAuthManager(settings, redis_helper.client)
+
+    with patch("httpx.AsyncClient.post", return_value=OGxMockResponses.rate_limit_exceeded()):
+        with pytest.raises(HTTPStatusError) as exc_info:
+            await auth_manager.get_valid_token()
+        assert isinstance(exc_info.value, HTTPStatusError)
+        assert exc_info.value.response.status_code == 429
+        assert "Retry-After" in exc_info.value.response.headers
+        assert exc_info.value.response.headers["Retry-After"] == "60"

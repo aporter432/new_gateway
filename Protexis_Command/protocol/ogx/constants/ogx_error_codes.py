@@ -4,54 +4,45 @@ This module defines the error codes used in the OGx protocol.
 These codes provide detailed error information for gateway operations.
 
 Implementation Notes from OGx-1.txt:
-    - Error codes are grouped by category (validation, rate limiting, etc.)
-    - Each error has a unique code and message
-    - Codes 1000-1999: Message validation errors
-    - Codes 2000-2999: Rate limiting and network errors
-    - Codes 3000-3999: Message processing errors
+    - Base validation errors (10000-10099)
+    - Rate limiting errors (24500-24599)
+    - Processing errors (26000-26099)
 """
 
 from enum import IntEnum
 
 
 class GatewayErrorCode(IntEnum):
-    """Gateway error codes from OGx-1.txt Section 4.2.
+    """Gateway error codes from OGx-1.txt.
 
     These codes indicate specific error conditions:
-    - 0: Success, no error
-    - 1xxx: Message validation errors
-    - 2xxx: Rate limiting and network errors
-    - 3xxx: Message processing errors
+    - 10000-10099: Base validation errors
+    - 24500-24599: Rate limiting errors
+    - 26000-26099: Processing errors
     """
 
     # Success (no error)
     SUCCESS = 0
 
-    # Message Validation Errors (1000-1999)
-    INVALID_MESSAGE_TYPE = 1000
-    INVALID_MESSAGE_SIZE = 1001
-    INVALID_FIELD_VALUE = 1002
-    MISSING_REQUIRED_FIELD = 1003
-    INVALID_FIELD_LENGTH = 1004
-    INVALID_FIELD_FORMAT = 1005
-    INVALID_CHECKSUM = 1006
-    DUPLICATE_MESSAGE_ID = 1007
-    INVALID_SEQUENCE = 1008
+    # Base Validation Errors (10000-10099)
+    VALIDATION_ERROR = 10000
+    INVALID_MESSAGE_FORMAT = 10001
+    INVALID_ELEMENT_FORMAT = 10002
+    INVALID_FIELD_FORMAT = 10003
+    INVALID_MESSAGE_FILTER = 10004
+    MESSAGE_SIZE_EXCEEDED = 10005
+    INVALID_FIELD_TYPE = 10006
 
-    # Rate Limiting and Network Errors (2000-2999)
-    RATE_LIMIT_EXCEEDED = 2000
-    CONNECTION_ERROR = 2001
-    TIMEOUT_ERROR = 2002
-    NETWORK_ERROR = 2003
-    GATEWAY_UNAVAILABLE = 2004
-    SESSION_EXPIRED = 2005
+    # Rate Limiting Errors (24500-24599)
+    SUBMIT_MESSAGE_RATE_EXCEEDED = 24579
+    RETRIEVE_STATUS_RATE_EXCEEDED = 24581
+    INVALID_TOKEN = 24582
+    TOKEN_EXPIRED = 24583
+    TOKEN_REVOKED = 24584
+    TOKEN_INVALID_FORMAT = 24585
 
-    # Message Processing Errors (3000-3999)
-    PROCESSING_ERROR = 3000
-    INVALID_TOKEN = 3001
-    TOKEN_EXPIRED = 3002
-    UNAUTHORIZED_ACCESS = 3003
-    DEVICE_NOT_FOUND = 3004
-    DEVICE_OFFLINE = 3005
-    MESSAGE_QUEUE_FULL = 3006
-    INTERNAL_ERROR = 3007
+    # Processing Errors (26000-26099)
+    ENCODE_ERROR = 26000
+    DECODE_ERROR = 26001
+    PROCESSING_ERROR = 26002
+    INTERNAL_ERROR = 26003

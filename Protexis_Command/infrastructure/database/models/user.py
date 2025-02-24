@@ -10,10 +10,10 @@ Key Components:
     - Indexes: Performance optimization for common queries
 
 Related Files:
-    - src/api/schemas/user.py: Pydantic schemas mapping to this model
-    - src/infrastructure/database/repositories/user_repository.py: Repository layer for this model
-    - src/api/routes/auth/user.py: API endpoints using this model
-    - src/api/security/password.py: Password hashing for this model
+    - Protexis_Command/api_protexis/schemas/user.py: Pydantic schemas mapping to this model
+    - Protexis_Command/infrastructure/database/repositories/user_repository.py: Repository layer for this model
+    - Protexis_Command/api_protexis/routes/auth/user.py: API endpoints using this model
+    - Protexis_Command/api_protexis/security/password.py: Password hashing for this model
 
 Database Considerations:
     - Uses SQLAlchemy async ORM

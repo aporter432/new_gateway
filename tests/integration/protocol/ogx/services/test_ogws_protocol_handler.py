@@ -1,34 +1,6 @@
-"""Unit tests for OGxProtocolHandler implementation.
+"""Integration tests for OGx protocol handler.
 
-This module provides comprehensive testing of the OGx protocol handler
-according to OGx-1.txt specifications. Each test class corresponds to a
-specific method in the OGxProtocolHandler class, following Single
-Responsibility Principle.
-
-Test Organization:
-    Tests are organized by method:
-    - TestOGxProtocolHandlerAuthenticate: Tests authenticate() method
-    - TestOGxProtocolHandlerSubmitMessage: Tests submit_message() method
-    - TestOGxProtocolHandlerGetMessages: Tests get_messages() method
-    - TestOGxProtocolHandlerGetMessageStatus: Tests get_message_status() method
-    - TestOGxProtocolHandlerValidateMessage: Tests _validate_message() method
-    - TestOGxProtocolHandlerRateLimit: Tests rate limiting methods
-
-Usage:
-    Run tests using pytest:
-    ```bash
-    pytest tests/unit/protocol/ogx/services/test_OGx_protocol_handler.py -v
-    ```
-
-    Run specific test class:
-    ```bash
-    pytest tests/unit/protocol/ogx/services/test_OGx_protocol_handler.py::TestOGxProtocolHandlerAuthenticate -v
-    ```
-
-Test Dependencies:
-    - pytest: Test framework
-    - pytest-asyncio: Async test support
-    - pytest-mock: Mocking support
+This module tests the OGx protocol handler service.
 """
 
 from datetime import datetime, timedelta
@@ -36,21 +8,28 @@ from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
-from protocols.ogx.constants.message_types import MessageType
-from protocols.ogx.constants.network_types import NetworkType
-from protocols.ogx.constants.transport_types import TransportType
-from protocols.ogx.services.OGx_protocol_handler import OGxProtocolHandler
-from protocols.ogx.validation.common.types import ValidationContext, ValidationResult
-from protocols.ogx.validation.common.validation_exceptions import (
+
+from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType
+from Protexis_Command.protocol.ogx.ogx_protocol_handler import OGxProtocolHandler
+from Protexis_Command.protocol.ogx.validation.common.validation_exceptions import (
     AuthenticationError,
     ProtocolError,
     RateLimitError,
-    SizeValidationError,
     ValidationError,
 )
-from protocols.ogx.validation.protocol.network_validator import NetworkValidator
-from protocols.ogx.validation.protocol.size_validator import SizeValidator
-from protocols.ogx.validation.protocol.transport_validator import OGxTransportValidator
+from Protexis_Command.protocol.ogx.validation.validators.ogx_network_validator import (
+    NetworkValidator,
+)
+from Protexis_Command.protocol.ogx.validation.validators.ogx_size_validator import SizeValidator
+from Protexis_Command.protocol.ogx.validation.validators.ogx_transport_validator import (
+    OGxTransportValidator,
+)
+from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import (
+    ValidationContext,
+    ValidationResult,
+)
 
 # Mock core dependencies to avoid circular imports
 with patch.dict(
@@ -59,8 +38,8 @@ with patch.dict(
         "core.app_settings": MagicMock(),
         "core.logging.loggers": MagicMock(),
         "infrastructure.redis": MagicMock(),
-        "protocols.ogx.validation.message.field_validator": MagicMock(),
-        "protocols.ogx.validation.message.message_validator": MagicMock(),
+        "Protexis_Command.protocol.ogx.validation.validators.ogx_field_validator": MagicMock(),
+        "Protexis_Command.protocol.ogx.validation.message.message_validator": MagicMock(),
     },
 ):
     # Class must be indented inside the with block
@@ -436,9 +415,11 @@ class TestOGxProtocolHandlerValidateMessage:
             "DestinationID": "test_destination",
             "Network": "OGX",  # Use correct key name
         }
-        with pytest.raises(SizeValidationError) as exc:
-            handler.validate_message(large_message, mock_context)
-        assert "Raw payload size 1024 bytes exceeds maximum of 1023 bytes" in str(exc.value)
+        result = handler.validate_message(large_message, mock_context)
+        assert not result.is_valid
+        assert "Raw payload size 1024 bytes exceeds maximum of 1023 bytes" in result.errors[0]
+        assert result.current_size == 1024
+        assert result.max_size == 1023
 
     def test_base64_size_validation(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test that Base64 encoding overhead doesn't affect size validation.
@@ -462,9 +443,9 @@ class TestOGxProtocolHandlerValidateMessage:
             "RawPayload": 123,  # Should be string
             "Network": "OGX",
         }
-        with pytest.raises(ValidationError) as exc:
-            handler.validate_message(invalid_message, mock_context)
-        assert "RawPayload must be a string" in str(exc.value)
+        result = handler.validate_message(invalid_message, mock_context)
+        assert not result.is_valid
+        assert "RawPayload must be a string" in result.errors[0]
 
     def test_missing_payload(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test validation with missing payload."""
@@ -473,10 +454,10 @@ class TestOGxProtocolHandlerValidateMessage:
             "Network": NetworkType.OGX,
             "DestinationID": "test_destination",
         }
-        # Should raise ValidationError with specific message
-        with pytest.raises(ValidationError) as exc:
-            handler.validate_message(invalid_message, mock_context)
-        assert "Message must contain either RawPayload or Payload" in str(exc.value)
+        # Should return invalid result with specific message
+        result = handler.validate_message(invalid_message, mock_context)
+        assert not result.is_valid
+        assert "Message must contain either RawPayload or Payload" in result.errors[0]
 
     def test_invalid_json_payload(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test validation with invalid JSON payload."""
@@ -484,9 +465,9 @@ class TestOGxProtocolHandlerValidateMessage:
             "Payload": "not a dict",  # Should be a dictionary
             "Network": "OGX",
         }
-        with pytest.raises(ValidationError) as exc:
-            handler.validate_message(invalid_message, mock_context)
-        assert "Payload must be a JSON object" in str(exc.value)
+        result = handler.validate_message(invalid_message, mock_context)
+        assert not result.is_valid
+        assert "Payload must be a JSON object" in result.errors[0]
 
     def test_transport_validation(self, handler: MockOGxHandler, mock_context: ValidationContext):
         """Test transport validation."""

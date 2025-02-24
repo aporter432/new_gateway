@@ -10,10 +10,10 @@ Key Components:
     - Expiration Handling: Manages token lifecycle
 
 Related Files:
-    - src/api/routes/auth/user.py: Uses tokens for authentication
-    - src/api/schemas/user.py: User data for token claims
-    - src/core/app_settings.py: JWT configuration settings
-    - src/api/security/password.py: Password verification for token generation
+    - Protexis_Command/api_protexis/routes/auth/user.py: Uses tokens for authentication
+    - Protexis_Command/api_protexis/schemas/user.py: User data for token claims
+    - Protexis_Command/core/app_settings.py: JWT configuration settings
+    - Protexis_Command/api_protexis/security/password.py: Password verification for token generation
 
 Security Considerations:
     - Uses industry-standard JWT implementation
@@ -40,10 +40,11 @@ Future Considerations:
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
-from core.app_settings import get_settings
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
 from pydantic import BaseModel, Field
+
+from Protexis_Command.core.app_settings import get_settings
 
 # JWT configuration from settings
 settings = get_settings()
@@ -92,7 +93,6 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     Security Features:
         - Secure signing algorithm
         - Automatic expiration
-        - Claim validation
         - Error handling
 
     Process Flow:
@@ -102,34 +102,35 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         4. Return encoded token
 
     Args:
-        data: Claims to include in token. Must contain either 'sub' or 'email'
+        data: Claims to include in token
         expires_delta: Optional custom expiration time
 
     Returns:
         Encoded JWT token string
 
     Raises:
-        ValueError: If token data is None, empty, or missing required claims
+        ValueError: If token data is None or empty
     """
-    if data is None or not data:
+    if not data:
         raise ValueError("Token data cannot be None or empty")
 
     try:
         to_encode = data.copy()
 
-        # Ensure we have both sub and email claims
-        email = to_encode.get("email") or to_encode.get("sub")
-        if not email:
-            raise ValueError("Token data must contain either 'sub' or 'email' claim")
-
-        to_encode.update({"email": email, "sub": email})  # Use email as subject if not provided
-
+        # Add expiration
         expire = datetime.now(timezone.utc) + (
             expires_delta if expires_delta else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         )
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_jwt
+
+        # Create token
+        try:
+            encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=ALGORITHM)
+            return encoded_jwt
+        except (TypeError, ValueError) as e:
+            raise ValueError("Failed to create access token: Data is not JSON serializable") from e
+    except ValueError:
+        raise
     except Exception as e:
         raise ValueError(f"Failed to create access token: {str(e)}") from e
 
@@ -154,20 +155,6 @@ def verify_token(token: str) -> TokenData:
     This function validates the token's signature, expiration,
     and structure, returning the decoded payload if valid.
 
-    Security Checks:
-        - Signature verification
-        - Expiration validation
-        - Structure validation
-        - Claim presence
-        - Algorithm verification
-
-    Process Flow:
-        1. Decode token
-        2. Verify signature
-        3. Validate expiration
-        4. Extract claims
-        5. Return token data
-
     Args:
         token: JWT token string to verify
 
@@ -184,23 +171,31 @@ def verify_token(token: str) -> TokenData:
         if token in REVOKED_TOKENS:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token has been revoked",
+                detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         # Decode and verify token
-        payload = jwt.decode(
-            token,
-            settings.JWT_SECRET_KEY,
-            algorithms=[ALGORITHM],
-            options={"verify_exp": True},  # Explicitly verify expiration
-        )
+        try:
+            payload = jwt.decode(
+                token,
+                settings.JWT_SECRET_KEY,
+                algorithms=[ALGORITHM],
+                options={"verify_exp": True},
+            )
+        except JWTError as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from e
 
         # Extract claims
         email = payload.get("email")
         sub = payload.get("sub")
         exp = payload.get("exp")
 
+        # Validate required claims
         if not exp:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -208,21 +203,48 @@ def verify_token(token: str) -> TokenData:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Create token data with optional claims
-        token_data = TokenData(
-            email=email or sub,  # Use sub as fallback for email
-            exp=datetime.fromtimestamp(float(exp), tz=timezone.utc),
-            sub=sub or email,  # Use email as fallback for sub
-        )
+        # Convert exp to datetime
+        exp_datetime = datetime.fromtimestamp(float(exp), tz=timezone.utc)
+
+        # Special case: token with only exp claim is valid
+        if email is None and sub is None:
+            return TokenData(exp=exp_datetime)
+
+        # Validate and normalize claims
+        email_val = str(email).strip() if email else None
+        sub_val = str(sub).strip() if sub else None
+
+        # If either claim is an empty string after stripping, reject the token
+        if (email is not None and not email_val) or (sub is not None and not sub_val):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Copy sub to email if email is missing
+        if not email_val and sub_val:
+            email_val = sub_val
+        # Copy email to sub if sub is missing
+        elif not sub_val and email_val:
+            sub_val = email_val
+
+        # Create token data
+        token_data = TokenData(email=email_val, sub=sub_val, exp=exp_datetime)
+
+        # Require both claims to be present and valid
+        if not (token_data.email and token_data.sub) or (email is None or sub is None):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         return token_data
 
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except JWTError as e:
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

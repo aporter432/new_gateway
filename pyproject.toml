@@ -105,7 +105,7 @@ disallow_untyped_defs = true
 check_untyped_defs = true
 namespace_packages = true
 explicit_package_bases = true
-mypy_path = "src"
+mypy_path = "Protexis_Command"
 exclude = ["tests/*"]
 plugins = ["pydantic.mypy"]
 
@@ -114,7 +114,7 @@ module = ["jwt.*", "redis.*", "pydantic.*", "fastapi.*", "sqlalchemy.*"]
 ignore_missing_imports = true
 
 [tool.pylint]
-init-hook='import sys; sys.path.append("src")'
+init-hook='import sys; sys.path.append("Protexis_Command")'
 ignore = ["CVS"]
 ignore-patterns = ["^\\.#"]
 persistent = "yes"
@@ -123,7 +123,7 @@ fail-under = 10.0
 disable = ["W0621"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["Protexis_Command"]
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
@@ -144,7 +144,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["Protexis_Command"]
 branch = true
 
 [tool.coverage.report]
@@ -157,5 +157,5 @@ exclude_lines = [
 ]
 
 [tool.bandit]
-exclude_dirs = ["src/tests", "scripts"]
+exclude_dirs = ["Protexis_Command/tests", "scripts"]
 targets = ["protocols"]

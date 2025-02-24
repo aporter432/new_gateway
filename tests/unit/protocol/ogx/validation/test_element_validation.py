@@ -6,8 +6,6 @@ Tests focus on array element validation:
 - Error propagation
 """
 
-from typing import Any, Dict, List
-
 import pytest
 
 from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
@@ -132,8 +130,8 @@ class TestOGxElementValidator:
         self, validator: OGxElementValidator, context: ValidationContext
     ):
         """Test validation_array with non-array input."""
-        # Using a single dict where a list is required
-        elements: List[Dict[str, Any]] = [{"not": "a valid element"}]  # type: ignore
+        # Using a dictionary instead of a list
+        elements = {"not": "an array"}  # type: ignore
         validator.context = context
         result = validator.validate_array(elements, context)
         assert not result.is_valid

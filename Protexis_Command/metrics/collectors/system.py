@@ -1,4 +1,7 @@
-"""System metrics collection."""
+"""System metrics collector.
+
+This module collects system-level metrics.
+"""
 
 import asyncio
 import os
@@ -30,7 +33,8 @@ class SystemMetrics:
             SystemMetricsError: If initialization fails
         """
         try:
-            from core.logging.loggers import get_system_logger
+            # Import logger here to avoid circular dependency
+            from Protexis_Command.core.logging.loggers import get_system_logger
 
             self.backend = backend
             self.collection_interval = collection_interval

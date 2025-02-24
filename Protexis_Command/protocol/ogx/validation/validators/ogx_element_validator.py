@@ -77,24 +77,45 @@ class OGxElementValidator(OGxBaseValidator):
         self.context = context
         self._errors = []
 
-        try:
-            # Implementation requirement: Must be an array
-            if not isinstance(elements, list):
-                raise ValidationError("Elements must be an array")
+        # First validate that input is a list
+        if not isinstance(elements, list):
+            return ValidationResult(False, ["Elements must be an array"])
 
-            # Validate each element's structure
-            for element in elements:
-                element_result = self._validate_element(element)
-                if not element_result.is_valid:
-                    for error in element_result.errors:
-                        self._add_error(error)
-                    return self._get_validation_result()
+        # Then validate each element's structure
+        for element in elements:
+            if not isinstance(element, dict):
+                return ValidationResult(False, ["Elements must be an array of dictionaries"])
 
-            return self._get_validation_result()
+            # Check required fields before any other validation
+            missing_fields = [
+                field for field in REQUIRED_ELEMENT_PROPERTIES if field not in element
+            ]
+            if missing_fields:
+                return ValidationResult(
+                    False, [f"Missing required element fields: {', '.join(missing_fields)}"]
+                )
 
-        except ValidationError as e:
-            self._add_error(str(e))
-            return self._get_validation_result()
+            try:
+                # OGx-1.txt requirement: Fields must be an array
+                fields = element.get("Fields")
+                if not isinstance(fields, list):
+                    raise ValidationError("Element Fields must be an array")
+
+                # Validate each field in the element
+                if self.context is not None:
+                    from .ogx_field_validator import OGxFieldValidator
+
+                    field_validator = OGxFieldValidator()
+                    field_validator.context = self.context
+                    for field in fields:
+                        result = field_validator.validate(field, self.context)
+                        if not result.is_valid:
+                            self._errors.extend(f"In field: {error}" for error in result.errors)
+
+            except ValidationError as e:
+                self._add_error(str(e))
+
+        return self._get_validation_result()
 
     def _validate_element(self, element: Dict[str, Any]) -> ValidationResult:
         """Validate an individual element.

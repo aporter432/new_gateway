@@ -1,141 +1,226 @@
-"""Test setup utilities for token tests."""
+"""Integration tests for token setup and management."""
 
 import asyncio
+import logging
+import time
+from datetime import datetime
+from unittest.mock import patch
 
-from core.app_settings import Settings
-from protocols.ogx.auth.manager import OGxAuthManager
+import pytest
 from redis.asyncio import Redis
 
+from Protexis_Command.core.app_settings import Settings
+from Protexis_Command.protocol.ogx.auth.manager import OGxAuthManager, TokenMetadata
+from tests.integration.fixtures.mock_responses import OGxMockResponses
 
-def get_test_settings() -> Settings:
-    """Get settings configured for test environment."""
-    return Settings(
-        OGx_CLIENT_ID="70000934",  # Test superuser account
-        OGx_CLIENT_SECRET="password",
-        OGx_BASE_URL="http://proxy:8080/api/v1.0",  # Use Docker service name and port
-        OGx_TEST_MODE=True,
-        CUSTOMER_ID="test_customer",  # Required for logging
-    )
-
-
-async def get_test_redis() -> Redis:
-    """Get Redis client for testing.
-
-    Uses test DB to avoid conflicts with production.
-    """
-    return Redis(
-        host="redis",  # Use Docker service name
-        port=6379,
-        db=15,  # Use test DB
-        decode_responses=True,
-    )
+# Set up basic logging for tests
+logger = logging.getLogger("test_token_setup")
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+logger.addHandler(handler)
 
 
-async def test_token_lifecycle():
-    """Test complete token lifecycle including storage and metadata.
+@pytest.mark.asyncio
+@pytest.mark.integration
+@pytest.mark.requires_redis
+class TestTokenManagement:
+    """Test token management functionality."""
 
-    This test verifies:
-    1. Token acquisition and storage
-    2. Token validation
-    3. Metadata tracking (usage, validation counts)
-    4. Token refresh conditions
-    5. Token invalidation and cleanup
+    @pytest.fixture
+    async def auth_manager(self, settings: Settings, redis_client: Redis) -> OGxAuthManager:
+        """Create auth manager for tests."""
+        manager = OGxAuthManager(settings, redis_client)
+        logger.info("Created auth manager for test", extra={"test_id": id(manager)})
+        return manager
 
-    Note on Token Behavior:
-    - In production, tokens are long-lived (up to 1 year) and reused
-    - The mock service generates new tokens for testing purposes
-    - Token invalidation clears local storage but tokens remain valid
-      on OGx until natural expiration
-    - This test verifies the token management functionality while
-      accommodating the mock service's behavior
-    """
-    settings = get_test_settings()
-    redis = await get_test_redis()
+    async def test_token_expiry_handling(self, auth_manager: OGxAuthManager):
+        """Test handling of token expiration."""
+        # Store an expired token
+        now = datetime.now().timestamp()
+        expired_metadata = TokenMetadata(
+            token="expired_token",
+            created_at=now - 7200,  # 2 hours ago
+            expires_at=now - 3600,  # 1 hour ago
+            last_used=now - 3600,
+            validation_count=0,
+        )
+        await auth_manager._store_token_metadata(expired_metadata)
+        logger.info(
+            "Stored expired token metadata",
+            extra={
+                "test_id": id(auth_manager),
+                "token": expired_metadata.token,
+                "expires_at": expired_metadata.expires_at,
+            },
+        )
 
-    try:
-        # Clear any existing test tokens
-        await redis.delete("OGx:auth:token")
-        await redis.delete("OGx:auth:token:metadata")
+        # Get new token since current is expired
+        with patch(
+            "httpx.AsyncClient.post", return_value=OGxMockResponses.token_success("new_token")
+        ):
+            token = await auth_manager.get_valid_token()
+            logger.info(
+                "Got token after expiry",
+                extra={
+                    "test_id": id(auth_manager),
+                    "token": token,
+                },
+            )
+            assert token != "expired_token"
+            assert token == "new_token"
 
-        auth_manager = OGxAuthManager(settings, redis)
+            # Verify metadata was updated
+            metadata = await auth_manager._get_token_metadata()
+            assert metadata is not None
+            assert metadata.token != "expired_token"
+            assert metadata.expires_at > now
 
-        print("\n=== Initial Token Acquisition ===")
+    async def test_token_refresh_conditions(self, auth_manager: OGxAuthManager):
+        """Test different token refresh conditions."""
         # Get initial token
+        with patch(
+            "httpx.AsyncClient.post", return_value=OGxMockResponses.token_success("initial_token")
+        ):
+            token = await auth_manager.get_valid_token()
+            assert token == "initial_token"
+
+            # Force refresh should get new token
+            with patch(
+                "httpx.AsyncClient.post",
+                return_value=OGxMockResponses.token_success("refreshed_token"),
+            ):
+                new_token = await auth_manager.get_valid_token(force_refresh=True)
+                assert new_token != token
+                assert new_token == "refreshed_token"
+
+                # Get token info and verify refresh
+                info = await auth_manager.get_token_info()
+                assert info is not None
+                assert float(info["created_at"]) > time.time() - 5  # Created within last 5 seconds
+
+    async def test_concurrent_token_access(self, auth_manager: OGxAuthManager):
+        """Test concurrent access to token."""
+        # Create multiple concurrent token requests
+        with patch(
+            "httpx.AsyncClient.post", return_value=OGxMockResponses.token_success("shared_token")
+        ):
+            token = await auth_manager.get_valid_token()
+            assert token == "shared_token"
+
+            # Create concurrent validation requests
+            with patch("httpx.AsyncClient.get", return_value=OGxMockResponses.validation_success()):
+                validation_tasks = [
+                    auth_manager.validate_token({"Authorization": f"Bearer {token}"})
+                    for _ in range(5)
+                ]
+                results = await asyncio.gather(*validation_tasks)
+
+                # All validations should succeed
+                assert all(results)
+
+                # Verify metadata shows multiple uses
+                info = await auth_manager.get_token_info()
+                assert info is not None
+                assert info["validation_count"] >= 5
+
+    async def test_token_metadata_updates(self, auth_manager: OGxAuthManager):
+        """Test token metadata is properly updated."""
+        # Get initial token
+        with patch(
+            "httpx.AsyncClient.post", return_value=OGxMockResponses.token_success("test_token")
+        ):
+            token = await auth_manager.get_valid_token()
+            initial_info = await auth_manager.get_token_info()
+            assert initial_info is not None
+
+            # Wait briefly
+            await asyncio.sleep(0.1)
+
+            # Use token multiple times
+            with patch("httpx.AsyncClient.get", return_value=OGxMockResponses.validation_success()):
+                for i in range(3):
+                    await auth_manager.validate_token({"Authorization": f"Bearer {token}"})
+                    await asyncio.sleep(0.1)
+
+                # Check metadata updates
+                final_info = await auth_manager.get_token_info()
+                assert final_info is not None
+                assert final_info["validation_count"] >= initial_info["validation_count"] + 3
+                assert float(final_info["last_used"]) > float(initial_info["last_used"])
+                assert float(final_info["last_validated"]) > float(initial_info["last_used"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+@pytest.mark.requires_redis
+async def test_token_lifecycle(settings: Settings, redis_client: Redis):
+    """Test complete token lifecycle including storage and metadata."""
+    auth_manager = OGxAuthManager(settings, redis_client)
+
+    # === Initial Token Acquisition ===
+    with patch(
+        "httpx.AsyncClient.post", return_value=OGxMockResponses.token_success("lifecycle_token")
+    ):
         token = await auth_manager.get_valid_token()
-        print(f"Token acquired: {bool(token)}")
-        assert token is not None, "Failed to acquire token"
+        assert token is not None
+        assert token == "lifecycle_token"
 
-        # Get initial metadata
+        # Get initial metadata and verify structure
         initial_info = await auth_manager.get_token_info()
-        print(f"Initial token info: {initial_info}")
-        assert initial_info is not None, "Failed to get token metadata"
-        assert initial_info["token"] == token[-8:], "Token mismatch in metadata"
+        assert initial_info is not None
+        assert "token" in initial_info
+        assert "created_at" in initial_info
+        assert "expires_at" in initial_info
+        assert "last_used" in initial_info
+        assert "validation_count" in initial_info
 
-        print("\n=== Token Validation ===")
-        # Validate token
-        auth_header = await auth_manager.get_auth_header()
-        is_valid = await auth_manager.validate_token(auth_header)
-        print(f"Token valid: {is_valid}")
-        assert is_valid, "Token validation failed"
+        # === Token Validation ===
+        with patch("httpx.AsyncClient.get", return_value=OGxMockResponses.validation_success()):
+            auth_header = await auth_manager.get_auth_header()
+            is_valid = await auth_manager.validate_token(auth_header)
+            assert is_valid
 
-        # Check metadata after validation
-        validation_info = await auth_manager.get_token_info()
-        assert validation_info is not None, "Missing validation metadata"
-        print(f"Validation count: {validation_info['validation_count']}")
-        print(f"Last validated: {validation_info['last_validated']}")
-        assert validation_info["validation_count"] > 0, "Validation count not updated"
-        assert validation_info["last_validated"] is not None, "Last validated timestamp missing"
+            # Verify validation metadata updates
+            validation_info = await auth_manager.get_token_info()
+            assert validation_info is not None
+            assert validation_info["validation_count"] > initial_info["validation_count"]
+            assert validation_info["last_validated"] is not None
+            assert float(validation_info["last_validated"]) >= float(initial_info["last_used"])
 
-        print("\n=== Token Reuse ===")
-        # Get token again (should reuse existing)
-        reused_token = await auth_manager.get_valid_token()
-        print(f"Token reused: {reused_token == token}")
-        assert reused_token == token, "Token not reused as expected"
+            # === Token Reuse ===
+            # Sleep briefly to ensure timestamp difference
+            await asyncio.sleep(0.1)
+            reused_token = await auth_manager.get_valid_token()
+            assert reused_token == token
 
-        # Check usage metadata
-        usage_info = await auth_manager.get_token_info()
-        assert usage_info is not None, "Missing usage metadata"
-        print(f"Last used: {usage_info['last_used']}")
-        assert (
-            usage_info["last_used"] > initial_info["last_used"]
-        ), "Last used timestamp not updated"
+            # Verify usage metadata updates
+            usage_info = await auth_manager.get_token_info()
+            assert usage_info is not None
+            assert float(usage_info["last_used"]) > float(initial_info["last_used"])
 
-        print("\n=== Force Token Refresh ===")
-        # Force token refresh
-        new_token = await auth_manager.get_valid_token(force_refresh=True)
-        print(f"Token still valid after force refresh: {new_token == token}")
-        assert new_token is not None, "Failed to get valid token after force refresh"
+            # === Token Refresh ===
+            with patch(
+                "httpx.AsyncClient.post",
+                return_value=OGxMockResponses.token_success("refreshed_token"),
+            ):
+                new_token = await auth_manager.get_valid_token(force_refresh=True)
+                assert new_token is not None
+                assert new_token != token
+                assert new_token == "refreshed_token"
 
-        # Verify token is still valid
-        auth_header = await auth_manager.get_auth_header()
-        is_valid = await auth_manager.validate_token(auth_header)
-        print(f"Token valid after refresh: {is_valid}")
-        assert is_valid, "Token should still be valid after refresh"
+                # Verify token remains valid
+                with patch(
+                    "httpx.AsyncClient.get", return_value=OGxMockResponses.validation_success()
+                ):
+                    auth_header = await auth_manager.get_auth_header()
+                    is_valid = await auth_manager.validate_token(auth_header)
+                    assert is_valid
 
-        print("\n=== Token Invalidation ===")
-        # Invalidate token (clears local storage only)
-        await auth_manager.invalidate_token()
-
-        # Verify token was removed from local storage
-        metadata_exists = await redis.exists("OGx:auth:token:metadata")
-        token_exists = await redis.exists("OGx:auth:token")
-        print(f"Token metadata removed: {not metadata_exists}")
-        print(f"Token removed: {not token_exists}")
-        assert not metadata_exists, "Token metadata not removed"
-        assert not token_exists, "Token not removed"
-
-        # Get new token after invalidation
-        # Note: Mock service generates new tokens for testing
-        final_token = await auth_manager.get_valid_token()
-        print(f"New token acquired after invalidation: {bool(final_token)}")
-        assert final_token is not None, "Failed to acquire token after invalidation"
-        # No assertion about token equality since mock service generates new tokens
-
-    finally:
-        # Clean up
-        await redis.delete("OGx:auth:token")
-        await redis.delete("OGx:auth:token:metadata")
-        await redis.aclose()  # Using aclose() as recommended by Redis client
+                # === Token Invalidation ===
+                await auth_manager.invalidate_token()
+                metadata = await auth_manager._get_token_metadata()
+                assert metadata is None
 
 
 if __name__ == "__main__":

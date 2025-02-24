@@ -1,102 +1,120 @@
 """API field models for OGx Gateway as defined in OGx-1.txt.
 
-This module defines the Pydantic models for field serialization in the OGx API.
-These models wrap the protocol fields with API-specific validation and serialization.
-
-Implementation Notes from OGx-1.txt:
-    - API models must validate all constraints from protocol fields
-    - Models should provide clean serialization to/from JSON
-    - Additional API-specific validation may be added
+This module implements the field types specified in OGx-1.txt Table 3,
+providing type-specific implementations for each supported field type.
 """
 
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, validator
+from Protexis_Command.protocol.ogx.constants.ogx_field_types import FieldType
+from Protexis_Command.protocol.ogx.models.fields import Field as ProtocolField
 
-from Protexis_Command.protocol.ogx.ogx_fields import FieldConstraints, FieldType, ProtocolField
 
+class APIField(ProtocolField):
+    """Base API field that extends the protocol field."""
 
-class APIField(BaseModel):
-    """Base model for all OGx API fields."""
-
-    name: str = Field(..., description="Field name")
-    type: FieldType = Field(..., description="Field type")
-    value: Any = Field(None, description="Field value")
-    description: Optional[str] = Field(None, description="Field description")
-    required: bool = Field(True, description="Whether field is required")
-    constraints: Optional[FieldConstraints] = Field(None, description="Field constraints")
-
-    @validator("value")
-    def validate_value(self, v, values):
-        """Validate field value against constraints."""
-        if "constraints" not in values or values["constraints"] is None:
-            return v
-
-        field = ProtocolField(
-            name=values["name"],
-            field_type=values["type"],
-            constraints=values["constraints"],
-            description=values.get("description", ""),
-        )
-
-        if not field.validate(v):
-            raise ValueError(f"Invalid value for field {values['name']}")
-
-        return v
+    description: Optional[str] = None
+    required: bool = True
 
 
 class StringField(APIField):
-    """String field for OGx API."""
+    """String field as defined in OGx-1.txt Table 3."""
 
-    type: FieldType = Field(default=FieldType.STRING)
+    type = FieldType.STRING
     value: Optional[str] = None
 
 
-class IntegerField(APIField):
-    """Integer field for OGx API."""
+class UnsignedIntField(APIField):
+    """Unsigned integer field as defined in OGx-1.txt Table 3."""
 
-    type: FieldType = Field(default=FieldType.INTEGER)
+    type = FieldType.UNSIGNED_INT
     value: Optional[int] = None
 
 
-class FloatField(APIField):
-    """Float field for OGx API."""
+class SignedIntField(APIField):
+    """Signed integer field as defined in OGx-1.txt Table 3."""
 
-    type: FieldType = Field(default=FieldType.FLOAT)
-    value: Optional[float] = None
+    type = FieldType.SIGNED_INT
+    value: Optional[int] = None
 
 
 class BooleanField(APIField):
-    """Boolean field for OGx API."""
+    """Boolean field as defined in OGx-1.txt Table 3."""
 
-    type: FieldType = Field(default=FieldType.BOOLEAN)
+    type = FieldType.BOOLEAN
     value: Optional[bool] = None
 
 
-class BinaryField(APIField):
-    """Binary field for OGx API."""
+class DataField(APIField):
+    """Base64 encoded data field as defined in OGx-1.txt Table 3."""
 
-    type: FieldType = Field(default=FieldType.BINARY)
-    value: Optional[bytes] = None
+    type = FieldType.DATA
+    value: Optional[str] = None  # Base64 encoded string
 
 
-class TimestampField(APIField):
-    """Timestamp field for OGx API."""
+class ArrayField(APIField):
+    """Array field as defined in OGx-1.txt Table 3."""
 
-    type: FieldType = Field(default=FieldType.TIMESTAMP)
-    value: Optional[int] = None
+    type = FieldType.ARRAY
+    elements: Optional[list] = None  # Array elements instead of value
 
-    @validator("value")
-    def validate_timestamp(self, v):
-        """Convert datetime to timestamp if needed."""
-        if isinstance(v, datetime):
-            return int(v.timestamp())
-        return v
+
+class MessageField(APIField):
+    """Message field as defined in OGx-1.txt Table 3."""
+
+    type = FieldType.MESSAGE
+    message: Optional[dict] = None  # Message content instead of value
 
 
 class EnumField(APIField):
-    """Enum field for OGx API."""
+    """Enum field as defined in OGx-1.txt Table 3."""
 
-    type: FieldType = Field(default=FieldType.ENUM)
+    type = FieldType.ENUM
+    value: Optional[str] = None
+
+
+class DynamicField(APIField):
+    """Dynamic field as defined in OGx-1.txt Table 3."""
+
+    type = FieldType.DYNAMIC
     value: Optional[Any] = None
+    type_attribute: Optional[str] = None
+
+
+class PropertyField(APIField):
+    """Property field as defined in OGx-1.txt Table 3."""
+
+    type = FieldType.PROPERTY
+    value: Optional[Any] = None
+    type_attribute: Optional[str] = None
+
+
+class TimestampField(APIField):
+    """ISO format timestamp field as defined in OGx-1.txt."""
+
+    type = FieldType.STRING
+    value: Optional[str] = None
+
+    @classmethod
+    def validate_timestamp(cls, v: Any) -> str:
+        """Convert datetime to ISO format timestamp."""
+        if isinstance(v, datetime):
+            return v.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return v
+
+
+__all__ = [
+    "APIField",
+    "StringField",
+    "UnsignedIntField",
+    "SignedIntField",
+    "BooleanField",
+    "DataField",
+    "ArrayField",
+    "MessageField",
+    "EnumField",
+    "DynamicField",
+    "PropertyField",
+    "TimestampField",
+]

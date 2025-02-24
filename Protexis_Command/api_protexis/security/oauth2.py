@@ -10,10 +10,10 @@ Key Components:
     - Active Status Check: User status validation
 
 Related Files:
-    - src/api/security/jwt.py: JWT token handling
-    - src/api/middleware/OGx_auth.py: Authentication middleware
-    - src/api/routes/auth/user.py: Authentication endpoints
-    - src/infrastructure/database/models/user.py: User model
+    - Protexis_Command/api_protexis/security/jwt.py: JWT token handling
+    - Protexis_Command/api_protexis/middleware/OGx_auth.py: Authentication middleware
+    - Protexis_Command/api_protexis/routes/auth/user.py: Authentication endpoints
+    - Protexis_Command/infrastructure/database/models/user.py: User model
 
 Security Considerations:
     - Implements OAuth2 password flow
@@ -39,13 +39,14 @@ Future RBAC Considerations:
 
 from typing import Annotated
 
-from api_protexis.security.jwt import TokenData, verify_token
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from infrastructure.database.dependencies import get_db
-from infrastructure.database.models import User
-from infrastructure.database.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from Protexis_Command.api_protexis.security.jwt import TokenData, verify_token
+from Protexis_Command.infrastructure.database.dependencies import get_db
+from Protexis_Command.infrastructure.database.models.user import User
+from Protexis_Command.infrastructure.database.repositories.user_repository import UserRepository
 
 # OAuth2 scheme configuration with token URL
 oauth2_scheme = OAuth2PasswordBearer(

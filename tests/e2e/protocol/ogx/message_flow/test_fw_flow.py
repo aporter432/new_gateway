@@ -1,22 +1,20 @@
-"""End-to-end tests for OGx forward message flow.
+"""End-to-end tests for forward message flow.
 
-These tests verify the complete forward message flow using real OGx API
-and services. They require:
-1. Valid OGx credentials
-2. Running Redis instance
-3. Network access to OGx
-4. Proper environment setup
+This module tests the complete flow of forward messages through the system.
 """
 
 import asyncio
 from datetime import datetime
 
 import pytest
-from core.app_settings import get_settings
-from protocols.ogx.constants import FieldType, TransportType
-from protocols.ogx.models.fields import Field, Message
-from protocols.ogx.services.OGx_protocol_handler import OGxProtocolHandler
-from protocols.ogx.validation.common.validation_exceptions import OGxProtocolError
+
+from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType
+from Protexis_Command.protocol.ogx.models.fields import Field
+from Protexis_Command.protocol.ogx.models.messages import Message
+from Protexis_Command.protocol.ogx.models.ogx_field_types import FieldType
+from Protexis_Command.protocol.ogx.ogx_protocol_handler import OGxProtocolHandler
+from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import OGxProtocolError
 
 
 @pytest.mark.e2e
