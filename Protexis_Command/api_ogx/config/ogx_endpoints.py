@@ -8,6 +8,7 @@ This module defines all available OGx API endpoints for:
 - Message retrieval
 - Information retrieval
 - Status updates
+- Terminal operations
 
 Usage Examples:
 
@@ -92,7 +93,9 @@ class APIEndpoint(str, Enum):
 
     # Authentication endpoints
     AUTH_TOKEN = "/auth/token"  # POST - Get bearer token
-    AUTH_INVALIDATE = "/auth/invalidate_tokens"  # POST - Revoke all tokens
+    AUTH_INVALIDATE = (
+        "/auth/invalidate_tokens"  # GET - Revoke all tokens (changed to GET to match Swagger)
+    )
 
     # Message submission endpoints
     SUBMIT_MESSAGE = "/submit/messages"  # POST - Submit to-mobile message
@@ -109,21 +112,34 @@ class APIEndpoint(str, Enum):
     GET_SERVICE_INFO = "/info/service"  # GET - Get service info and error codes
     GET_TERMINALS = "/info/terminals"  # GET - List all terminals
     GET_TERMINAL = "/info/terminal"  # GET - Get single terminal info
+    GET_TERMINAL_UPDATES = "/info/terminal_updates"  # GET - Get updated terminals info
     GET_BROADCAST = "/info/broadcast"  # GET - List broadcast IDs
 
     # Subaccount endpoints
     GET_SUBACCOUNT_LIST = "/info/subaccount/list"  # GET - List subaccounts
     GET_SUBACCOUNT_TERMINALS = "/info/subaccount/terminals"  # GET - List subaccount terminals
+    GET_SUBACCOUNT_TERMINAL = (
+        "/info/subaccount/terminal"  # GET - Get single subaccount terminal info
+    )
+    GET_SUBACCOUNT_TERMINAL_UPDATES = (
+        "/info/subaccount/terminal_updates"  # GET - Get updated subaccount terminals
+    )
     GET_SUBACCOUNT_BROADCAST = "/info/subaccount/broadcast"  # GET - List subaccount broadcasts
 
     # Subaccount status endpoints (added from OGx-1.txt section 4.4.4-4.4.5)
     GET_SUBACCOUNT_FW_STATUS = "/get/subaccount/fw_status_updates"  # GET - Single subaccount status
     GET_ALL_SUBACCOUNT_FW_STATUS = (
-        "/get/subaccount/all/fw_status_updates"  # GET - All subaccounts status
+        "/get/subaccounts/fw_status_updates"  # GET - All subaccounts status (fixed naming)
     )
 
     # Subaccount message endpoints (added from OGx-1.txt section 4.4.7-4.4.8)
     GET_SUBACCOUNT_RE_MESSAGES = "/get/subaccount/re_messages"  # GET - Single subaccount messages
     GET_ALL_SUBACCOUNT_RE_MESSAGES = (
-        "/get/subaccount/all/re_messages"  # GET - All subaccounts messages
+        "/get/subaccounts/re_messages"  # GET - All subaccounts messages (fixed naming)
     )
+
+    # Terminal operation endpoints
+    TERMINAL_RESET = "/terminal/reset"  # POST - Terminal reset
+    TERMINAL_SYSRESET = "/terminal/sysreset"  # POST - Terminal system reset
+    TERMINAL_MODE = "/terminal/mode"  # POST - Change terminal mode
+    TERMINAL_MUTE = "/terminal/mute"  # POST - Mute/unmute terminal

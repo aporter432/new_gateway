@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from Protexis_Command.api_ogx.middleware.ogx_auth import add_ogx_auth_middleware
-from Protexis_Command.api_ogx.routes import messages_router
+from Protexis_Command.api_ogx.routes import messages_router, terminal_router, updates_router
 from Protexis_Command.api_ogx.services.messages.ogx_message_worker import get_message_worker
 
 # First-party imports
@@ -88,6 +88,18 @@ app.include_router(
     messages_router,
     prefix="/api/v1",
     tags=["messages"],
+)
+
+app.include_router(
+    terminal_router,
+    prefix="/api/v1",
+    tags=["terminal-operations"],
+)
+
+app.include_router(
+    updates_router,
+    prefix="/api/v1",
+    tags=["terminal-updates"],
 )
 
 

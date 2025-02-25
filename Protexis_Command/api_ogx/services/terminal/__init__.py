@@ -1,18 +1,10 @@
-"""OGx terminal services.
+"""Terminal operations services package.
 
-This module provides services for terminal operations including:
-- Message processing
-- State management
-
-The services are designed to be used in conjunction with the OGx protocol
-and are responsible for handling the terminal's side of the communication.
+This package contains services for managing terminal operations and updates
+through the OGx API.
 """
-from .ogx_network_monitor import DefaultNetworkMonitor, NetworkMetrics, NetworkMonitor
-from .ogx_transport_optimizer import TransportOptimizer
 
-__all__ = [
-    "TransportOptimizer",
-    "NetworkMonitor",
-    "NetworkMetrics",
-    "DefaultNetworkMonitor",
-]
+from .operations import TerminalOperationService
+from .updates import TerminalUpdatesService
+
+__all__ = ["TerminalOperationService", "TerminalUpdatesService"]
