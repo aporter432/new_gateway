@@ -49,9 +49,9 @@ import httpx
 
 from Protexis_Command.api_ogx.config import TransportType
 from Protexis_Command.api_ogx.services.auth.manager import OGxAuthManager
-from Protexis_Command.core.app_settings import get_settings
 from Protexis_Command.core.logging.loggers.protocol import get_protocol_logger
-from Protexis_Command.infrastructure.redis import get_redis_client
+from Protexis_Command.core.settings.app_settings import get_settings
+from Protexis_Command.infrastructure.cache.redis import get_redis_client
 from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
 from Protexis_Command.protocol.ogx.constants.ogx_limits import (
     DEFAULT_CALLS_PER_MINUTE,

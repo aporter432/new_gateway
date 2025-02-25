@@ -14,7 +14,7 @@ from Protexis_Command.api_protexis.routes.auth import user
 from Protexis_Command.api_protexis.routes.messages import router as protexis_router
 from Protexis_Command.core.logging.log_settings import LoggingConfig
 from Protexis_Command.core.logging.loggers import get_app_logger
-from Protexis_Command.infrastructure.redis import get_redis_url
+from Protexis_Command.infrastructure.cache.redis import get_redis_url
 
 # Initialize logging
 config = LoggingConfig()

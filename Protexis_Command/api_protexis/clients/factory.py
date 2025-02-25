@@ -5,8 +5,8 @@ from typing import Optional
 
 from ...api_ogx.services.auth.manager import OGxAuthManager
 from ...api_ogx.services.ogx_client import OGxClient
-from ...core.app_settings import Settings, get_settings
-from ...infrastructure.redis import get_redis_client
+from ...core.settings.app_settings import Settings, get_settings
+from ...infrastructure.cache.redis import get_redis_client
 
 
 @lru_cache

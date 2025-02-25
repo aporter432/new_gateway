@@ -20,7 +20,7 @@ from Protexis_Command.api_protexis.security.oauth2 import (
     get_current_admin_user,
     get_current_user,
 )
-from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.core.settings.app_settings import get_settings
 from Protexis_Command.infrastructure.database.models.user import User, UserRole
 from Protexis_Command.infrastructure.database.repositories.user_repository import UserRepository
 

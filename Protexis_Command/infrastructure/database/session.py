@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
-from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.core.settings.app_settings import get_settings
 
 # Remove unused imports:
 # - asynccontextmanager

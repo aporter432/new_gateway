@@ -13,7 +13,7 @@ from redis import Redis
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from Protexis_Command.core.app_settings import Settings, get_settings
+from Protexis_Command.core.settings.app_settings import Settings, get_settings
 
 
 class RateLimitConfig:

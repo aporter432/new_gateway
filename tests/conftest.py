@@ -16,7 +16,7 @@ from typing import Any, AsyncGenerator, Dict
 import pytest
 from httpx import AsyncClient
 
-from Protexis_Command.core.app_settings import Settings, get_settings
+from Protexis_Command.core.settings.app_settings import Settings, get_settings
 
 os.environ["TESTING"] = "true"
 

@@ -17,7 +17,7 @@ from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
 from Protexis_Command.core.logging.loggers import get_protocol_logger
-from Protexis_Command.infrastructure.redis import get_redis_client
+from Protexis_Command.infrastructure.cache.redis import get_redis_client
 from Protexis_Command.protocol.ogx.ogx_protocol_handler import OGxProtocolHandler
 from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
     AuthenticationError,

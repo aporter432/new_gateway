@@ -8,7 +8,7 @@ from datetime import datetime
 
 import pytest
 
-from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.core.settings.app_settings import get_settings
 from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType
 from Protexis_Command.protocol.ogx.models.fields import Field
 from Protexis_Command.protocol.ogx.models.messages import Message

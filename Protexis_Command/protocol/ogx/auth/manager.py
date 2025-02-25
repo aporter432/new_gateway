@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 from httpx import AsyncClient, HTTPStatusError
 from redis.asyncio import Redis
 
-from Protexis_Command.core.app_settings import Settings
+from Protexis_Command.core.settings.app_settings import Settings
 
 
 @dataclass

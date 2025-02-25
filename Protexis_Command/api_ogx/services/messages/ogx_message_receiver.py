@@ -17,8 +17,8 @@ Implementation Notes:
 from datetime import datetime
 from typing import Any, Dict, List
 
-from Protexis_Command.core.app_settings import get_settings
 from Protexis_Command.core.logging.loggers.protocol import get_protocol_logger
+from Protexis_Command.core.settings.app_settings import get_settings
 from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
 from Protexis_Command.protocol.ogx.constants.ogx_limits import MAX_MESSAGES_PER_RESPONSE
 from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType

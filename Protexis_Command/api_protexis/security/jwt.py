@@ -44,7 +44,7 @@ from fastapi import HTTPException, status
 from jose import JWTError, jwt
 from pydantic import BaseModel, Field
 
-from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.core.settings.app_settings import get_settings
 
 # JWT configuration from settings
 settings = get_settings()
@@ -233,8 +233,13 @@ def verify_token(token: str) -> TokenData:
         # Create token data - allow None values for both email and sub
         token_data = TokenData(email=email_val, sub=sub_val, exp=exp_datetime)
 
-        # Remove the validation that requires at least one claim to be present
-        # to match the expected behavior in test_token_without_email
+        # Validate that at least one of email or sub is present
+        if not email_val and not sub_val:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         return token_data
 

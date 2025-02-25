@@ -15,7 +15,7 @@ import pytest
 from httpx import HTTPStatusError
 from redis.asyncio import Redis
 
-from Protexis_Command.core.app_settings import Settings
+from Protexis_Command.core.settings.app_settings import Settings
 from Protexis_Command.protocol.ogx.auth.manager import OGxAuthManager, TokenMetadata
 from tests.integration.fixtures.mock_responses import OGxMockResponses
 from tests.integration.helpers import RedisHelper

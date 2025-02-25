@@ -20,7 +20,7 @@ from Protexis_Command.api_protexis.security.jwt import (
     create_access_token,
     verify_token,
 )
-from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.core.settings.app_settings import get_settings
 
 settings = get_settings()
 

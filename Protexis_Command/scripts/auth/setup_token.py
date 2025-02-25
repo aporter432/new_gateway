@@ -17,8 +17,8 @@ from Protexis_Command.api_ogx.validation.common.validation_exceptions import (
     OGxProtocolError,
     ValidationError,
 )
-from Protexis_Command.core.app_settings import get_settings
 from Protexis_Command.core.logging.loggers import get_auth_logger
+from Protexis_Command.core.settings.app_settings import get_settings
 
 # Remove unused imports:
 # - json

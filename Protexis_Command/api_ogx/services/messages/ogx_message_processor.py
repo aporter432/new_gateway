@@ -57,9 +57,9 @@ from Protexis_Command.api_ogx.services.session.ogx_state_store import (
     MessageStateStore,
     RedisMessageStateStore,
 )
-from Protexis_Command.core.app_settings import get_settings
 from Protexis_Command.core.logging.loggers import get_protocol_logger
-from Protexis_Command.infrastructure.redis import get_redis_client
+from Protexis_Command.core.settings.app_settings import get_settings
+from Protexis_Command.infrastructure.cache.redis import get_redis_client
 from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
 from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
 from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType

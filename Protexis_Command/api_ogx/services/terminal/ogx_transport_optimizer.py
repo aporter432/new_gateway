@@ -47,9 +47,9 @@ Production:
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
-from Protexis_Command.core.app_settings import get_settings
 from Protexis_Command.core.logging.log_settings import LoggingConfig
 from Protexis_Command.core.logging.loggers import get_protocol_logger
+from Protexis_Command.core.settings.app_settings import get_settings
 from Protexis_Command.protocol.ogx.constants.ogx_limits import MAX_OGX_PAYLOAD_BYTES
 from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
 from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType

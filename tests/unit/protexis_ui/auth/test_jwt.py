@@ -17,7 +17,7 @@ from Protexis_Command.api_protexis.security.jwt import (
     revoke_token,
     verify_token,
 )
-from Protexis_Command.core.app_settings import Settings
+from Protexis_Command.core.settings.app_settings import Settings
 
 
 @pytest.fixture
@@ -182,7 +182,7 @@ def test_create_access_token_non_serializable_data(mock_jwt, settings: Settings)
     class NonSerializable:
         pass
 
-    data = {"test": NonSerializable()}
+    data = {"test": NonSerializable(), "sub": "test@example.com"}
 
     # Setup mock to raise TypeError when trying to encode
     mock_jwt.encode.side_effect = TypeError(
@@ -203,7 +203,7 @@ def test_create_access_token_encode_error(mock_jwt, settings: Settings):
 
     # Test that unexpected error is wrapped in ValueError
     with pytest.raises(ValueError, match="Failed to create access token: Unexpected error"):
-        create_access_token({"test": "data"})
+        create_access_token({"test": "data", "sub": "test@example.com"})
 
 
 def test_verify_token_revoked(mock_jwt, settings: Settings):

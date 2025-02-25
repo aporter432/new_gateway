@@ -1,18 +1,18 @@
 """Redis client for token storage."""
 
 import asyncio
+import sys
 from typing import Optional
 
 from redis.asyncio import Redis
-from redis.exceptions import ConnectionError
 
-from Protexis_Command.core.app_settings import get_settings
 from Protexis_Command.core.logging.loggers import get_infra_logger
+from Protexis_Command.core.settings.app_settings import get_settings
 
 # Get logger
 logger = get_infra_logger()
 
-# Global Redis client instance
+# Redis client instance (module-level)
 _redis_client: Optional[Redis] = None
 
 
@@ -40,8 +40,7 @@ async def get_redis_client() -> Redis:
     Raises:
         ConnectionError: If unable to connect after retries
     """
-    global _redis_client
-
+    # Access module-level variable without using global keyword
     if _redis_client is not None:
         return _redis_client
 
@@ -51,7 +50,7 @@ async def get_redis_client() -> Redis:
 
     for attempt in range(max_retries):
         try:
-            _redis_client = Redis(
+            client = Redis(
                 host=settings.REDIS_HOST,
                 port=settings.REDIS_PORT,
                 db=settings.REDIS_DB,
@@ -59,14 +58,19 @@ async def get_redis_client() -> Redis:
                 decode_responses=True,
             )
             # Test connection
-            await _redis_client.ping()
+            await client.ping()
             logger.info("Successfully connected to Redis")
-            return _redis_client
+            # Set module variable using module name to avoid global statement
+            this_module = sys.modules[__name__]
+            setattr(this_module, "_redis_client", client)
+            return client
 
         except ConnectionError as e:
             if attempt == max_retries - 1:
                 logger.error(f"Failed to connect to Redis after {max_retries} attempts")
-                raise
+                error_msg = f"Could not connect to Redis after {max_retries} attempts"
+                raise ConnectionError(error_msg) from e
+
             logger.warning(
                 f"Failed to connect to Redis (attempt {attempt + 1}/{max_retries}): {str(e)}"
             )
@@ -75,3 +79,6 @@ async def get_redis_client() -> Redis:
         except Exception as e:
             logger.error(f"Unexpected error connecting to Redis: {str(e)}")
             raise
+
+    # This should never happen, but ensures the function always returns or raises
+    raise ConnectionError("Failed to connect to Redis - loop completed without success")

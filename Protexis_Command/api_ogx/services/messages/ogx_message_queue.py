@@ -11,8 +11,8 @@ from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
 from Protexis_Command.api_ogx.config import MessageState
-from Protexis_Command.core.app_settings import Settings
 from Protexis_Command.core.logging.loggers import get_protocol_logger
+from Protexis_Command.core.settings.app_settings import Settings
 from Protexis_Command.protocol.ogx.constants.ogx_limits import (
     DEFAULT_CALLS_PER_MINUTE,
     DEFAULT_WINDOW_SECONDS,

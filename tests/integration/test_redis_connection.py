@@ -7,7 +7,7 @@ to verify our integration test environment is working correctly.
 import pytest
 import redis.asyncio as aioredis
 
-from Protexis_Command.core.app_settings import get_settings
+from Protexis_Command.core.settings.app_settings import get_settings
 
 
 @pytest.mark.asyncio

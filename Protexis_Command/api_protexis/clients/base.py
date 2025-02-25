@@ -9,7 +9,7 @@ import httpx
 from httpx import Response
 
 from ...api_ogx.services.auth.manager import OGxAuthManager
-from ...core.app_settings import Settings
+from ...core.settings.app_settings import Settings
 from ...protocol.ogx.constants.http_error_codes import HTTPErrorCode
 from ...protocol.ogx.validation.ogx_validation_exceptions import OGxProtocolError
 

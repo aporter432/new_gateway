@@ -30,7 +30,7 @@ from redis.asyncio.client import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
 # Local imports
-from Protexis_Command.core.app_settings import Settings, get_settings
+from Protexis_Command.core.settings.app_settings import Settings, get_settings
 from Protexis_Command.infrastructure.database.models.base import Base
 from Protexis_Command.infrastructure.database.session import database_url
 

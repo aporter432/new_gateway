@@ -2,7 +2,7 @@
 
 from typing import Dict, Optional
 
-from ..backends.base import MetricsBackend
+from .backends.base import MetricsBackend
 
 
 class APIMetrics:

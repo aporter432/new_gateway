@@ -20,7 +20,7 @@ from Protexis_Command.api_ogx.services.session.ogx_session_handler import (
     SessionHandler,
     format_ogx_timestamp,
 )
-from Protexis_Command.core.app_settings import Settings
+from Protexis_Command.core.settings.app_settings import Settings
 from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
     AuthenticationError,
     OGxProtocolError,

@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from ..collectors.api import APIMetrics
+from Protexis_Command.infrastructure.metrics import APIMetrics
 
 
 class MetricsMiddleware(BaseHTTPMiddleware):
