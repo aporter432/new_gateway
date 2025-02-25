@@ -43,7 +43,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Protexis_Command.api_protexis.security.jwt import TokenData, verify_token
+from Protexis_Command.api_internal.security.jwt import TokenData, verify_token
 from Protexis_Command.infrastructure.database.dependencies import get_db
 from Protexis_Command.infrastructure.database.models.user import User
 from Protexis_Command.infrastructure.database.repositories.user_repository import UserRepository

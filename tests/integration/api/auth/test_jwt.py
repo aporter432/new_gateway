@@ -14,7 +14,7 @@ import pytest
 from fastapi import HTTPException
 from jose import JWTError, jwt
 
-from Protexis_Command.api_protexis.security.jwt import (
+from Protexis_Command.api_internal.security.jwt import (
     ALGORITHM,
     TokenData,
     create_access_token,

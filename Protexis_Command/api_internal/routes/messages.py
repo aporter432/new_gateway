@@ -29,9 +29,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from httpx import HTTPError
 from pydantic import BaseModel, Field
 
+from Protexis_Command.api_internal.clients.factory import get_OGx_client
 from Protexis_Command.api_ogx.config import APIEndpoint, TransportType
 from Protexis_Command.api_ogx.services.auth.manager import OGxAuthManager, get_auth_manager
-from Protexis_Command.api_protexis.clients.factory import get_OGx_client
 from Protexis_Command.core.app_settings import Settings, get_settings
 from Protexis_Command.protocol.ogx.constants.ogx_message_states import MessageState
 from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType

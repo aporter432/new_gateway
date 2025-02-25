@@ -6,12 +6,12 @@ This module initializes and configures the FastAPI application.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from Protexis_Command.api_internal.routes.auth import user
+from Protexis_Command.api_internal.routes.messages import router as protexis_router
 from Protexis_Command.api_ogx.middleware.rate_limit import add_rate_limit_middleware
 from Protexis_Command.api_ogx.middleware.validation import add_validation_middleware
 from Protexis_Command.api_ogx.routes import auth, messages
 from Protexis_Command.api_ogx.routes.api import router as ogx_router
-from Protexis_Command.api_protexis.routes.auth import user
-from Protexis_Command.api_protexis.routes.messages import router as protexis_router
 from Protexis_Command.core.logging.log_settings import LoggingConfig
 from Protexis_Command.core.logging.loggers import get_app_logger
 from Protexis_Command.infrastructure.redis import get_redis_url

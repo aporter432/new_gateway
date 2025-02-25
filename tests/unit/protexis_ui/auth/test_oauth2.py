@@ -14,8 +14,8 @@ import pytest
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Protexis_Command.api_protexis.security.jwt import TokenData
-from Protexis_Command.api_protexis.security.oauth2 import (
+from Protexis_Command.api_internal.security.jwt import TokenData
+from Protexis_Command.api_internal.security.oauth2 import (
     get_current_active_user,
     get_current_admin_user,
     get_current_user,

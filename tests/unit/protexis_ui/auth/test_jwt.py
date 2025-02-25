@@ -10,7 +10,7 @@ import pytest
 from fastapi import HTTPException, status
 from jose import JWTError
 
-from Protexis_Command.api_protexis.security.jwt import (
+from Protexis_Command.api_internal.security.jwt import (
     ALGORITHM,
     TokenData,
     create_access_token,
@@ -208,7 +208,7 @@ def test_create_access_token_encode_error(mock_jwt, settings: Settings):
 
 def test_verify_token_revoked(mock_jwt, settings: Settings):
     """Test verification of revoked token."""
-    from Protexis_Command.api_protexis.security.jwt import REVOKED_TOKENS
+    from Protexis_Command.api_internal.security.jwt import REVOKED_TOKENS
 
     # Add token to revoked set
     test_token = "revoked.token"
@@ -307,7 +307,7 @@ def test_verify_token_missing_sub_claim(mock_jwt, settings: Settings):
 @pytest.mark.asyncio
 async def test_revoke_token():
     """Test token revocation."""
-    from Protexis_Command.api_protexis.security.jwt import REVOKED_TOKENS
+    from Protexis_Command.api_internal.security.jwt import REVOKED_TOKENS
 
     test_token = "test.token"
     initial_size = len(REVOKED_TOKENS)

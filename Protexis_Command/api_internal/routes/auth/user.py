@@ -38,14 +38,14 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Protexis_Command.api_protexis.schemas.user import Token, UserCreate, UserResponse
-from Protexis_Command.api_protexis.security.jwt import (
+from Protexis_Command.api_internal.schemas.user import Token, UserCreate, UserResponse
+from Protexis_Command.api_internal.security.jwt import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     create_access_token,
     revoke_token,
 )
-from Protexis_Command.api_protexis.security.oauth2 import get_current_active_user
-from Protexis_Command.api_protexis.security.password import get_password_hash, verify_password
+from Protexis_Command.api_internal.security.oauth2 import get_current_active_user
+from Protexis_Command.api_internal.security.password import get_password_hash, verify_password
 from Protexis_Command.infrastructure.database.dependencies import get_db
 from Protexis_Command.infrastructure.database.models.user import User, UserRole
 from Protexis_Command.infrastructure.database.repositories.user_repository import UserRepository

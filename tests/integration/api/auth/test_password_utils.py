@@ -8,7 +8,7 @@ This module tests:
 
 import pytest
 
-from Protexis_Command.api_protexis.security.password import (
+from Protexis_Command.api_internal.security.password import (
     get_password_hash,
     validate_password,
     verify_password,

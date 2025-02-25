@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from Protexis_Command.api_protexis.security.token_utils import verify_token_format
+from Protexis_Command.api_internal.security.token_utils import verify_token_format
 
 
 class ProtexisAuthMiddleware(BaseHTTPMiddleware):
