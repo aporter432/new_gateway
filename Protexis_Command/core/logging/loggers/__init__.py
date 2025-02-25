@@ -12,6 +12,7 @@ from ..handlers.stream import get_stream_handler
 from ..handlers.syslog import get_syslog_handler
 from ..log_settings import LogComponent, LoggingConfig
 from .api import get_api_logger
+from .app import get_app_logger
 from .auth import get_auth_logger
 from .factory import LoggerFactory, get_logger_factory
 from .infra import get_infra_logger
@@ -32,4 +33,5 @@ __all__ = [
     "get_syslog_handler",
     "LogComponent",
     "LoggingConfig",
+    "get_app_logger",
 ]

@@ -6,12 +6,7 @@ This module provides service-layer functionality for terminal operation endpoint
 import logging
 from typing import List
 
-from Protexis_Command.api_ogx.config.ogx_endpoints import (
-    TERMINAL_MODE,
-    TERMINAL_MUTE,
-    TERMINAL_RESET,
-    TERMINAL_SYSRESET,
-)
+from Protexis_Command.api_ogx.config.ogx_endpoints import APIEndpoint
 from Protexis_Command.api_ogx.models.terminal import (
     SystemResetRequest,
     TerminalModeRequest,
@@ -57,7 +52,7 @@ class TerminalOperationService:
                 ogx_request = request.dict(exclude_none=True)
 
                 # Send request to OGx API
-                response = await self.requester.post(TERMINAL_RESET, json=ogx_request)
+                response = await self.requester.post(APIEndpoint.TERMINAL_RESET, json=ogx_request)
 
                 # Process response
                 if response.status_code == 200:
@@ -112,7 +107,9 @@ class TerminalOperationService:
                 ogx_request = request.dict(exclude_none=True)
 
                 # Send request to OGx API
-                response = await self.requester.post(TERMINAL_SYSRESET, json=ogx_request)
+                response = await self.requester.post(
+                    APIEndpoint.TERMINAL_SYSRESET, json=ogx_request
+                )
 
                 # Process response
                 if response.status_code == 200:
@@ -167,7 +164,7 @@ class TerminalOperationService:
                 ogx_request = request.dict(exclude_none=True)
 
                 # Send request to OGx API
-                response = await self.requester.post(TERMINAL_MODE, json=ogx_request)
+                response = await self.requester.post(APIEndpoint.TERMINAL_MODE, json=ogx_request)
 
                 # Process response
                 if response.status_code == 200:
@@ -222,7 +219,7 @@ class TerminalOperationService:
                 ogx_request = request.dict(exclude_none=True)
 
                 # Send request to OGx API
-                response = await self.requester.post(TERMINAL_MUTE, json=ogx_request)
+                response = await self.requester.post(APIEndpoint.TERMINAL_MUTE, json=ogx_request)
 
                 # Process response
                 if response.status_code == 200:

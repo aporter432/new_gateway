@@ -7,10 +7,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from Protexis_Command.api_ogx.config.ogx_endpoints import (
-    GET_SUBACCOUNT_TERMINAL_UPDATES,
-    GET_TERMINAL_UPDATES,
-)
+from Protexis_Command.api_ogx.config.ogx_endpoints import APIEndpoint
 from Protexis_Command.api_ogx.models.terminal_updates import TerminalUpdate, TerminalUpdatesResponse
 from Protexis_Command.api_ogx.services.auth.manager import OGxAuthManager
 from Protexis_Command.api_ogx.services.common.ogx_requester import OGxRequester
@@ -58,12 +55,12 @@ class TerminalUpdatesService:
 
         if sub_account_id:
             params["SubAccountID"] = sub_account_id
-            endpoint = GET_SUBACCOUNT_TERMINAL_UPDATES
+            endpoint = APIEndpoint.GET_SUBACCOUNT_TERMINAL_UPDATES
             logger.info(
                 f"Retrieving terminal updates for subaccount {sub_account_id} from {from_utc}"
             )
         else:
-            endpoint = GET_TERMINAL_UPDATES
+            endpoint = APIEndpoint.GET_TERMINAL_UPDATES
             logger.info(f"Retrieving terminal updates from {from_utc}")
 
         try:

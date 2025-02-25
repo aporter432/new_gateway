@@ -16,6 +16,21 @@ logger = get_infra_logger()
 _redis_client: Optional[Redis] = None
 
 
+def get_redis_url() -> str:
+    """Get Redis URL from settings.
+
+    Returns:
+        str: Formatted Redis URL
+    """
+    settings = get_settings()
+
+    # Build the authentication part (if password is provided)
+    auth = f":{settings.REDIS_PASSWORD}@" if settings.REDIS_PASSWORD else ""
+
+    # Construct the full URL
+    return f"redis://{auth}{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
+
+
 async def get_redis_client() -> Redis:
     """Get configured Redis client with retries.
 

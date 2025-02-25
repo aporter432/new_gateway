@@ -21,63 +21,63 @@ class APIField(ProtocolField):
 class StringField(APIField):
     """String field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.STRING
+    type: FieldType = FieldType.STRING
     value: Optional[str] = None
 
 
 class UnsignedIntField(APIField):
     """Unsigned integer field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.UNSIGNED_INT
+    type: FieldType = FieldType.UNSIGNED_INT
     value: Optional[int] = None
 
 
 class SignedIntField(APIField):
     """Signed integer field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.SIGNED_INT
+    type: FieldType = FieldType.SIGNED_INT
     value: Optional[int] = None
 
 
 class BooleanField(APIField):
     """Boolean field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.BOOLEAN
+    type: FieldType = FieldType.BOOLEAN
     value: Optional[bool] = None
 
 
 class DataField(APIField):
     """Base64 encoded data field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.DATA
+    type: FieldType = FieldType.DATA
     value: Optional[str] = None  # Base64 encoded string
 
 
 class ArrayField(APIField):
     """Array field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.ARRAY
+    type: FieldType = FieldType.ARRAY
     elements: Optional[list] = None  # Array elements instead of value
 
 
 class MessageField(APIField):
     """Message field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.MESSAGE
+    type: FieldType = FieldType.MESSAGE
     message: Optional[dict] = None  # Message content instead of value
 
 
 class EnumField(APIField):
     """Enum field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.ENUM
+    type: FieldType = FieldType.ENUM
     value: Optional[str] = None
 
 
 class DynamicField(APIField):
     """Dynamic field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.DYNAMIC
+    type: FieldType = FieldType.DYNAMIC
     value: Optional[Any] = None
     type_attribute: Optional[str] = None
 
@@ -85,7 +85,7 @@ class DynamicField(APIField):
 class PropertyField(APIField):
     """Property field as defined in OGx-1.txt Table 3."""
 
-    type = FieldType.PROPERTY
+    type: FieldType = FieldType.PROPERTY
     value: Optional[Any] = None
     type_attribute: Optional[str] = None
 
@@ -93,7 +93,7 @@ class PropertyField(APIField):
 class TimestampField(APIField):
     """ISO format timestamp field as defined in OGx-1.txt."""
 
-    type = FieldType.STRING
+    type: FieldType = FieldType.STRING
     value: Optional[str] = None
 
     @classmethod
