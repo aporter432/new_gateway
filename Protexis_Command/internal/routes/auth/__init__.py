@@ -13,7 +13,7 @@ Implementation Notes:
 
 from fastapi import APIRouter
 
-from .user import router as user_router
+from ....api.internal.routes.auth.user import router as user_router
 
 # Create auth router with prefix
 router = APIRouter(prefix="/auth")

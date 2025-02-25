@@ -18,9 +18,9 @@ For error codes and handling, see OGx-1.txt section 4.
 
 from typing import Dict
 
-from Protexis_Command.api_protexis.clients.factory import get_OGx_client
 from Protexis_Command.core.logging.loggers import get_protocol_logger
 from Protexis_Command.core.settings.app_settings import get_settings
+from Protexis_Command.internal.clients.factory import get_OGx_client
 from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
     OGxProtocolError,
     ValidationError,

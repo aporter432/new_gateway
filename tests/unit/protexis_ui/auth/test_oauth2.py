@@ -14,8 +14,8 @@ import pytest
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Protexis_Command.api_protexis.security.jwt import TokenData
-from Protexis_Command.api_protexis.security.oauth2 import (
+from Protexis_Command.api.common.auth.jwt import TokenData
+from Protexis_Command.api.common.auth.oauth2 import (
     get_current_active_user,
     get_current_admin_user,
     get_current_user,
@@ -68,10 +68,10 @@ async def test_get_current_user_success(mock_session, mock_user, valid_token_dat
     """
     # Mock token verification
     with patch(
-        "Protexis_Command.api_protexis.security.oauth2.verify_token", return_value=valid_token_data
+        "Protexis_Command.api.common.auth.oauth2.verify_token", return_value=valid_token_data
     ):
         # Mock user repository
-        with patch("Protexis_Command.api_protexis.security.oauth2.UserRepository") as mock_repo:
+        with patch("Protexis_Command.api.common.auth.oauth2.UserRepository") as mock_repo:
             mock_repo_instance = mock_repo.return_value
             mock_repo_instance.get_by_email = AsyncMock(return_value=mock_user)
 
@@ -93,7 +93,7 @@ async def test_get_current_user_invalid_token(mock_session):
     """
     # Mock token verification to raise exception
     with patch(
-        "Protexis_Command.api_protexis.security.oauth2.verify_token", side_effect=HTTPException(401)
+        "Protexis_Command.api.common.auth.oauth2.verify_token", side_effect=HTTPException(401)
     ):
         with pytest.raises(HTTPException) as exc_info:
             await get_current_user("invalid_token", mock_session)
@@ -112,10 +112,10 @@ async def test_get_current_user_user_not_found(mock_session, valid_token_data):
     """
     # Mock token verification
     with patch(
-        "Protexis_Command.api_protexis.security.oauth2.verify_token", return_value=valid_token_data
+        "Protexis_Command.api.common.auth.oauth2.verify_token", return_value=valid_token_data
     ):
         # Mock user repository with no user found
-        with patch("Protexis_Command.api_protexis.security.oauth2.UserRepository") as mock_repo:
+        with patch("Protexis_Command.api.common.auth.oauth2.UserRepository") as mock_repo:
             mock_repo_instance = mock_repo.return_value
             mock_repo_instance.get_by_email.return_value = None
 
@@ -195,7 +195,7 @@ async def test_get_current_user_missing_email(mock_session):
 
     # Mock token verification
     with patch(
-        "Protexis_Command.api_protexis.security.oauth2.verify_token",
+        "Protexis_Command.api.common.auth.oauth2.verify_token",
         return_value=invalid_token_data,
     ):
         with pytest.raises(HTTPException) as exc_info:
@@ -214,9 +214,9 @@ async def test_get_current_user_database_error(mock_session, valid_token_data):
     - Error details are properly masked for security
     """
     with patch(
-        "Protexis_Command.api_protexis.security.oauth2.verify_token", return_value=valid_token_data
+        "Protexis_Command.api.common.auth.oauth2.verify_token", return_value=valid_token_data
     ):
-        with patch("Protexis_Command.api_protexis.security.oauth2.UserRepository") as mock_repo:
+        with patch("Protexis_Command.api.common.auth.oauth2.UserRepository") as mock_repo:
             mock_repo_instance = mock_repo.return_value
             mock_repo_instance.get_by_email = AsyncMock(side_effect=Exception("DB Error"))
 
@@ -307,7 +307,7 @@ async def test_get_current_user_malformed_token_data(mock_session):
     """
     # Mock verify_token to raise HTTPException for malformed data
     with patch(
-        "Protexis_Command.api_protexis.security.oauth2.verify_token",
+        "Protexis_Command.api.common.auth.oauth2.verify_token",
         side_effect=HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials"
         ),

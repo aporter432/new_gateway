@@ -15,7 +15,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp
 
-from Protexis_Command.api_protexis.middleware.protexis_auth import (
+from Protexis_Command.internal.middleware.protexis_auth import (
     ProtexisAuthMiddleware,
     add_protexis_auth_middleware,
 )
