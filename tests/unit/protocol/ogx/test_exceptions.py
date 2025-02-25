@@ -6,7 +6,7 @@ as defined in OGx-1.txt.
 
 import pytest
 
-from Protexis_Command.api_ogx.config.http_error_codes import HTTPErrorCode
+from Protexis_Command.api.config.http_error_codes import HTTPErrorCode
 from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
 from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
     EncodingError,

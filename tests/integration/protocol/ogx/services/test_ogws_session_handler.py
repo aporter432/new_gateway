@@ -14,7 +14,7 @@ Note: These tests require the full Docker environment to be running:
 import pytest
 from redis.asyncio import Redis
 
-from Protexis_Command.api_ogx.services.session.ogx_session_handler import SessionHandler
+from Protexis_Command.api.services.session.ogx_session_handler import SessionHandler
 from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
     AuthenticationError,
     OGxProtocolError,

@@ -1,6 +1,6 @@
 """Unit tests for validation utilities."""
 
-from Protexis_Command.api_ogx import __version__
+from Protexis_Command.api import __version__
 
 
 def test_version():

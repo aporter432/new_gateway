@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from Protexis_Command.api_ogx.config import NetworkType
+from Protexis_Command.api.config import NetworkType
 from Protexis_Command.protocol.ogx.constants.ogx_field_types import FieldType
 from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
 from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError

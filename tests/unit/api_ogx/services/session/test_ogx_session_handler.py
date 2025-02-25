@@ -15,7 +15,7 @@ from freezegun import freeze_time
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
-from Protexis_Command.api_ogx.services.session.ogx_session_handler import (
+from Protexis_Command.api.services.session.ogx_session_handler import (
     MAX_CONCURRENT_SESSIONS,
     SessionHandler,
     format_ogx_timestamp,
@@ -90,8 +90,8 @@ def setup_logging():
     """Configure basic logging for tests."""
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger("session_handler")
-    with patch("Protexis_Command.api_ogx.services.session.ogx_session_handler.logger", logger):
-        yield logger
+    with patch("Protexis_Command.api.services.session.ogx_session_handler.logger", logger):
+        yield
 
 
 @pytest.fixture
@@ -305,7 +305,7 @@ async def session_handler(
 ) -> AsyncGenerator[SessionHandler, None]:
     """Create a session handler instance with mocked dependencies."""
     with patch(
-        "Protexis_Command.api_ogx.services.session.ogx_session_handler.get_redis_client",
+        "Protexis_Command.api.services.session.ogx_session_handler.get_redis_client",
         return_value=mock_redis,
     ):
         handler = SessionHandler(mock_protocol_handler_cls)
