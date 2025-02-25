@@ -12,7 +12,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from Protexis_Command.api.middleware.ogx_auth import add_ogx_auth_middleware
+from Protexis_Command.api.common.middleware.ogx_auth import add_ogx_auth_middleware
 from Protexis_Command.api.routes import messages_router, terminal_router, updates_router
 from Protexis_Command.api.services.messages.ogx_message_worker import get_message_worker
 
