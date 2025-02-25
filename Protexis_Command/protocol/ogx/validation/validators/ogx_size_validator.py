@@ -6,11 +6,12 @@ This module implements size validation for OGx protocol messages.
 from typing import Any, Dict, Optional
 
 from Protexis_Command.protocol.ogx.constants.ogx_limits import MAX_OGX_PAYLOAD_BYTES
-from Protexis_Command.protocol.ogx.validation.validators.base import OGxBaseValidator
 from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import (
     ValidationContext,
     ValidationResult,
 )
+
+from .ogx_base_validator import OGxBaseValidator
 
 
 class SizeValidator(OGxBaseValidator):

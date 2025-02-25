@@ -244,26 +244,56 @@ class OGxFieldValidator(OGxBaseValidator):
             if not context:
                 raise ValidationError("Validation context required")
 
-            # Validate Message attribute
+            # Value attribute not allowed for message fields per OGWS-1.txt Table 3
+            if "Value" in field:
+                raise ValidationError("Value attribute not allowed for message fields")
+
+            # Validate Message attribute exists and is a dictionary
             message = field.get("Message")
             if not message:
                 raise ValidationError("Missing required field Message")
             if not isinstance(message, dict):
                 raise ValidationError("Message must be a non-empty dictionary")
 
-            # Check for Value attribute
-            if field.get("Value") is not None:
-                raise ValidationError("Value attribute not allowed in message fields")
+            # Validate required message fields per OGWS-1.txt Section 5.1
+            required_fields = {"SIN", "MIN", "Fields"}
+            missing_fields = required_fields - set(message.keys())
+            if missing_fields:
+                raise ValidationError(
+                    f"Missing required fields: {', '.join(sorted(missing_fields))}"
+                )
 
-            # Use imported OGxStructureValidator
-            validator = OGxStructureValidator()
-            result = validator.validate(message, context)
-            if not result.is_valid:
-                return ValidationResult(False, result.errors)
-            return result
+            # Validate SIN and MIN are integers
+            sin = message.get("SIN")
+            if not isinstance(sin, int):
+                raise ValidationError("SIN must be an integer")
+
+            min_val = message.get("MIN")
+            if not isinstance(min_val, int):
+                raise ValidationError("MIN must be an integer")
+
+            # Validate Fields is a list
+            fields = message.get("Fields")
+            if not isinstance(fields, list):
+                raise ValidationError("Fields must be a list")
+
+            # Validate message structure using OGxStructureValidator
+            try:
+                validator = OGxStructureValidator()
+                result = validator.validate(message, context)
+                if not result.is_valid:
+                    raise ValidationError(f"Message validation failed: {result.errors[0]}")
+            except ImportError as e:
+                raise ValidationError(f"Message validation unavailable: {str(e)}")
+
+            return self._get_validation_result()
 
         except ValidationError as e:
-            return ValidationResult(False, [str(e)])
+            self._add_error(str(e))
+            return self._get_validation_result()
+        except Exception as e:
+            self._add_error(f"Unexpected error validating message field: {str(e)}")
+            return self._get_validation_result()
 
     def _validate_basic_field(self, field_type: FieldType, data: Dict[str, Any]) -> None:
         """Validate a basic field type (enum, boolean, etc.).

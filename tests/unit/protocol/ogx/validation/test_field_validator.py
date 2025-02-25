@@ -281,7 +281,10 @@ class TestFieldValidation:
                 field = {"Name": "test", "Type": "message", "Message": message}
                 result = field_validator.validate(field, context)
                 assert not result.is_valid
-                assert f"Missing required fields {missing_field}" in result.errors[0]
+                assert (
+                    f"Validation error: Missing required fields: {missing_field}"
+                    in result.errors[0]
+                )
 
         def test_context_required(self, field_validator):
             """Test context is required for message validation."""
@@ -297,8 +300,8 @@ class TestFieldValidation:
         def test_message_validation_error_handling(self, field_validator, context, mocker):
             """Test message validation error handling."""
             # Mock OGxStructureValidator to raise ImportError
-            mock_validator = mocker.patch(
-                "Protexis_Command.protocol.ogx.validation.message.OGxStructureValidator",
+            mocker.patch(
+                "Protexis_Command.protocol.ogx.validation.validators.ogx_field_validator.OGxStructureValidator",
                 side_effect=ImportError("Test import error"),
             )
 
@@ -309,8 +312,7 @@ class TestFieldValidation:
             }
             result = field_validator.validate(field, context)
             assert not result.is_valid
-            assert "Message validation unavailable" in result.errors[0]
-            mock_validator.assert_called_once()
+            assert "Message validation unavailable: Test import error" in result.errors[0]
 
         def test_message_field_validation_error_paths(self, field_validator, context):
             """Test message field validation error paths."""

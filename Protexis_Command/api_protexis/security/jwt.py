@@ -117,15 +117,15 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     try:
         to_encode = data.copy()
 
-        # Add expiration
+        # Add expiration as Unix timestamp
         expire = datetime.now(timezone.utc) + (
             expires_delta if expires_delta else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         )
-        to_encode.update({"exp": expire})
+        to_encode.update({"exp": int(expire.timestamp())})
 
-        # Create token
+        # Create token with positional arguments
         try:
-            encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=ALGORITHM)
+            encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, ALGORITHM)
             return encoded_jwt
         except (TypeError, ValueError) as e:
             raise ValueError("Failed to create access token: Data is not JSON serializable") from e
@@ -206,10 +206,6 @@ def verify_token(token: str) -> TokenData:
         # Convert exp to datetime
         exp_datetime = datetime.fromtimestamp(float(exp), tz=timezone.utc)
 
-        # Special case: token with only exp claim is valid
-        if email is None and sub is None:
-            return TokenData(exp=exp_datetime)
-
         # Validate and normalize claims
         email_val = str(email).strip() if email else None
         sub_val = str(sub).strip() if sub else None
@@ -232,8 +228,8 @@ def verify_token(token: str) -> TokenData:
         # Create token data
         token_data = TokenData(email=email_val, sub=sub_val, exp=exp_datetime)
 
-        # Require both claims to be present and valid
-        if not (token_data.email and token_data.sub) or (email is None or sub is None):
+        # Require at least one claim to be present and valid
+        if not token_data.email and not token_data.sub:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",

@@ -7,9 +7,8 @@ This module provides common utilities and helper functions for:
 - Cleanup utilities
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
-import boto3
 import redis.asyncio as aioredis
 from prometheus_client.parser import text_string_to_metric_families
 
@@ -20,11 +19,13 @@ class RedisHelper:
     def __init__(self, client: aioredis.Redis):
         self.client = client
 
-    async def set_message_state(self, message_id: str, state: Dict[str, Any]):
+    async def set_message_state(self, message_id: str, state: Dict[str, Union[str, int, float]]):
         """Set message state in Redis."""
         await self.client.hset(f"message:{message_id}", mapping=state)
 
-    async def get_message_state(self, message_id: str) -> Optional[Dict[str, Any]]:
+    async def get_message_state(
+        self, message_id: str
+    ) -> Optional[Dict[str, Union[str, int, float]]]:
         """Get message state from Redis."""
         state = await self.client.hgetall(f"message:{message_id}")
         return state if state else None
@@ -39,7 +40,7 @@ class RedisHelper:
 class DynamoDBHelper:
     """Helper class for DynamoDB operations during testing."""
 
-    def __init__(self, client: boto3.client):
+    def __init__(self, client: Any):  # Using Any for boto3.client since it's a dynamic type
         self.client = client
 
     def create_test_table(self, table_name: str):
@@ -98,7 +99,7 @@ class MessageHelper:
     """Helper class for message generation and validation during testing."""
 
     @staticmethod
-    def create_test_message(message_type: str, **kwargs) -> Dict[str, Any]:
+    def create_test_message(message_type: str, **kwargs) -> Dict[str, Union[str, int, float]]:
         """Create a test message with specified parameters."""
         base_message = {
             "type": message_type,
@@ -109,13 +110,15 @@ class MessageHelper:
         return base_message
 
     @staticmethod
-    def assert_message_format(message: Dict[str, Any], expected_fields: List[str]):
+    def assert_message_format(
+        message: Dict[str, Union[str, int, float]], expected_fields: List[str]
+    ):
         """Assert that a message contains all expected fields."""
         for field in expected_fields:
             assert field in message, f"Expected field '{field}' not found in message"
 
     @staticmethod
-    def assert_message_state(message: Dict[str, Any], expected_state: str):
+    def assert_message_state(message: Dict[str, Union[str, int, float]], expected_state: str):
         """Assert that a message is in the expected state."""
         assert (
             message.get("state") == expected_state
@@ -123,7 +126,7 @@ class MessageHelper:
 
 
 async def setup_test_environment(
-    redis_client: aioredis.Redis, dynamodb_client: boto3.client, table_name: str
+    redis_client: aioredis.Redis, dynamodb_client: Any, table_name: str
 ) -> tuple[RedisHelper, DynamoDBHelper]:
     """Set up a clean test environment with required services."""
     redis_helper = RedisHelper(redis_client)
@@ -139,7 +142,7 @@ async def setup_test_environment(
 
 
 async def cleanup_test_environment(
-    redis_client: aioredis.Redis, dynamodb_client: boto3.client, table_name: str
+    redis_client: aioredis.Redis, dynamodb_client: Any, table_name: str
 ):
     """Clean up the test environment after tests."""
     # Clear Redis test database

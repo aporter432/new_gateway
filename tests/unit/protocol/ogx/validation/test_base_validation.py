@@ -25,10 +25,6 @@ from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator impo
 class MockOGxBaseValidator(OGxBaseValidator):
     """Mock implementation of abstract OGxBaseValidator for testing."""
 
-    def __init__(self) -> None:
-        """Initialize mock validator."""
-        super().__init__()
-
     def validate(self, data: Any, context: ValidationContext) -> ValidationResult:
         """Mock implementation of abstract validate method."""
         self.context = context
@@ -318,6 +314,8 @@ class TestOGxBaseValidatorEdgeCases:
 
         # Create a custom object that raises TypeError on comparison
         class BadComparison:
+            """Test class that raises TypeError when compared."""
+
             def __lt__(self, other):
                 raise TypeError("Cannot compare")
 

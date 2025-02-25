@@ -35,6 +35,7 @@ dependencies = [
     "asyncpg>=0.30.0",
     "psycopg2-binary>=2.9.9",
     "psutil>=5.9.0",
+    "freezegun (>=1.5.1,<2.0.0)",
 ]
 
 [tool.poetry.group.test]
@@ -83,6 +84,7 @@ autoflake = ">=2.3.1"
 bandit = ">=1.7.5"
 lizard = "^1.17.19"
 autopep8 = ">=2.0.0"
+freezegun = "^1.5.1"
 
 
 [project.scripts]

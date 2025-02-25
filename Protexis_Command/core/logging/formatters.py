@@ -21,7 +21,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, NotRequired, TypedDict, Union
 
-from Protexis_Command.protocol.ogx.serialization.ogx_json_encoder import OGxJsonEncoder
+from Protexis_Command.api_ogx.encoding.json.encoder import OGxJsonEncoder
 
 from .log_settings import LogComponent
 
