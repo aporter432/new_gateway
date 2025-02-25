@@ -7,8 +7,8 @@ providing type-specific implementations for each supported field type.
 from datetime import datetime
 from typing import Any, Optional
 
-from Protexis_Command.protocol.ogx.constants.ogx_field_types import FieldType
-from Protexis_Command.protocol.ogx.models.fields import Field as ProtocolField
+from Protexis_Command.protocols.ogx.constants.ogx_field_types import FieldType
+from Protexis_Command.protocols.ogx.models.fields import Field as ProtocolField
 
 
 class APIField(ProtocolField):

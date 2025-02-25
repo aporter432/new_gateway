@@ -1,8 +1,8 @@
 """Constants for OGx protocol according to OGx-1.txt specification."""
 
 # Import all module components first
-from ...protocol.ogx.constants.ogx_field_types import FieldType
-from ...protocol.ogx.constants.ogx_limits import (
+from Protexis_Command.protocols.ogx.constants.ogx_field_types import FieldType
+from Protexis_Command.protocols.ogx.constants.ogx_limits import (
     DEFAULT_CALLS_PER_MINUTE,
     DEFAULT_TOKEN_EXPIRY,
     DEFAULT_WINDOW_SECONDS,
@@ -18,16 +18,17 @@ from ...protocol.ogx.constants.ogx_limits import (
     MESSAGE_RETENTION_DAYS,
     MESSAGE_TIMEOUT_DAYS,
 )
-from ...protocol.ogx.constants.ogx_message_format import (
+from Protexis_Command.protocols.ogx.constants.ogx_message_format import (
     REQUIRED_ELEMENT_PROPERTIES,
     REQUIRED_FIELD_PROPERTIES,
     REQUIRED_MESSAGE_FIELDS,
 )
-from ...protocol.ogx.constants.ogx_message_states import MessageState
-from ...protocol.ogx.constants.ogx_message_types import MessageType
-from ...protocol.ogx.constants.ogx_network_types import NetworkType
-from ...protocol.ogx.constants.ogx_operation_modes import OperationMode
-from ...protocol.ogx.constants.ogx_transport_types import TransportType
+from Protexis_Command.protocols.ogx.constants.ogx_message_states import MessageState
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocols.ogx.constants.ogx_operation_modes import OperationMode
+from Protexis_Command.protocols.ogx.constants.ogx_transport_types import TransportType
+
 from .http_error_codes import HTTPErrorCode
 from .ogx_auth import AuthRole, GrantType, ThrottleGroup
 from .ogx_endpoints import APIEndpoint

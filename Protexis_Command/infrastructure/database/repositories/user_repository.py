@@ -44,7 +44,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Protexis_Command.infrastructure.database.models.user import User
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import ValidationError
 
 
 class UserRepository:

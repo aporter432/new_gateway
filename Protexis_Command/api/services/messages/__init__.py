@@ -7,7 +7,8 @@ This module provides services for message operations including:
 The services are designed to be used in conjunction with the OGx protocol
 and are responsible for handling the message's side of the communication.
 """
-from ....protocol.ogx.ogx_protocol_handler import OGxProtocolHandler
+from Protexis_Command.protocols.ogx.ogx_protocol_handler import OGxProtocolHandler
+
 from .ogx_message_processor import MessageProcessor
 from .ogx_message_queue import OGxMessageQueue, QueuedMessage
 from .ogx_message_receiver import MessageReceiver

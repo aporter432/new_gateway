@@ -43,7 +43,7 @@ from Protexis_Command.api.encoding.json import (
 )
 from Protexis_Command.core.logging.log_settings import LoggingConfig
 from Protexis_Command.core.logging.loggers import get_protocol_logger
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import (
     EncodingError,
     OGxProtocolError,
 )

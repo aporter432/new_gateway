@@ -40,8 +40,8 @@ from typing import Any, Dict, Union
 
 from Protexis_Command.api.config import MessageState
 from Protexis_Command.api.validation.format.json.json_validator import OGxJsonValidator
-from Protexis_Command.protocol.ogx.models.ogx_messages import OGxMessage
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import EncodingError
+from Protexis_Command.protocols.ogx.models.ogx_messages import OGxMessage
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import EncodingError
 
 
 class OGxJsonDecoder:

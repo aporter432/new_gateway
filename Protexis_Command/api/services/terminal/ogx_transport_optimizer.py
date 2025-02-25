@@ -50,10 +50,10 @@ from typing import Dict, List, Optional, Tuple
 from Protexis_Command.core.logging.log_settings import LoggingConfig
 from Protexis_Command.core.logging.loggers import get_protocol_logger
 from Protexis_Command.core.settings.app_settings import get_settings
-from Protexis_Command.protocol.ogx.constants.ogx_limits import MAX_OGX_PAYLOAD_BYTES
-from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
-from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
+from Protexis_Command.protocols.ogx.constants.ogx_limits import MAX_OGX_PAYLOAD_BYTES
+from Protexis_Command.protocols.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocols.ogx.constants.ogx_transport_types import TransportType
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import ValidationError
 
 from .ogx_network_monitor import NetworkMetrics, NetworkMonitor
 

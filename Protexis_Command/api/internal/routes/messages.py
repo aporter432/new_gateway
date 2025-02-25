@@ -33,9 +33,9 @@ from Protexis_Command.api.config import APIEndpoint, TransportType
 from Protexis_Command.api.services.auth.manager import OGxAuthManager, get_auth_manager
 from Protexis_Command.core.settings.app_settings import Settings, get_settings
 from Protexis_Command.internal.clients.factory import get_OGx_client
-from Protexis_Command.protocol.ogx.constants.ogx_message_states import MessageState
-from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
+from Protexis_Command.protocols.ogx.constants.ogx_message_states import MessageState
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import (
     OGxProtocolError,
     ValidationError,
 )

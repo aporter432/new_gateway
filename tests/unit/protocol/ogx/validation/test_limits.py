@@ -2,7 +2,7 @@
 
 import pytest
 
-from Protexis_Command.protocol.ogx.constants.ogx_limits import (
+from Protexis_Command.protocols.ogx.constants.ogx_limits import (
     MAX_OGX_PAYLOAD_BYTES,
     calculate_base64_size,
     calculate_json_overhead,

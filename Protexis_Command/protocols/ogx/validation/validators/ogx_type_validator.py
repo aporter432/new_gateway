@@ -8,10 +8,10 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Optional, Union
 
-from Protexis_Command.protocol.ogx.constants.ogx_field_types import FieldType
-from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
-from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
-from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType
+from Protexis_Command.protocols.ogx.constants.ogx_field_types import FieldType
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocols.ogx.constants.ogx_transport_types import TransportType
 
 
 class OGxTypeValidator(Enum):

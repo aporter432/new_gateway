@@ -8,12 +8,14 @@ Tests focus on array element validation:
 
 import pytest
 
-from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
-from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
-from Protexis_Command.protocol.ogx.validation.validators.ogx_element_validator import (
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocols.ogx.validation.validators.ogx_element_validator import (
     OGxElementValidator,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
+from Protexis_Command.protocols.ogx.validation.validators.ogx_type_validator import (
+    ValidationContext,
+)
 
 
 @pytest.fixture

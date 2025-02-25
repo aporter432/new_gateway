@@ -52,13 +52,13 @@ from Protexis_Command.api.services.auth.manager import OGxAuthManager
 from Protexis_Command.core.logging.loggers.protocol import get_protocol_logger
 from Protexis_Command.core.settings.app_settings import get_settings
 from Protexis_Command.infrastructure.cache.redis import get_redis_client
-from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
-from Protexis_Command.protocol.ogx.constants.ogx_limits import (
+from Protexis_Command.protocols.ogx.constants.ogx_error_codes import GatewayErrorCode
+from Protexis_Command.protocols.ogx.constants.ogx_limits import (
     DEFAULT_CALLS_PER_MINUTE,
     DEFAULT_WINDOW_SECONDS,
     MAX_SUBMIT_MESSAGES,
 )
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import (
     OGxProtocolError,
     ValidationError,
 )

@@ -23,9 +23,9 @@ from Protexis_Command.api.services.messages.ogx_message_submission import submit
 from Protexis_Command.core.logging.loggers import get_infra_logger
 from Protexis_Command.core.settings.app_settings import Settings, get_settings
 from Protexis_Command.infrastructure.cache.redis import get_redis_client
-from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
-from Protexis_Command.protocol.ogx.constants.ogx_limits import DEFAULT_WINDOW_SECONDS
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import OGxProtocolError
+from Protexis_Command.protocols.ogx.constants.ogx_error_codes import GatewayErrorCode
+from Protexis_Command.protocols.ogx.constants.ogx_limits import DEFAULT_WINDOW_SECONDS
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import OGxProtocolError
 
 
 class MessageWorker:

@@ -17,10 +17,10 @@ Child classes should use these constants through the base validator's methods:
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
-from Protexis_Command.protocol.ogx.constants.ogx_field_types import FieldType
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
-from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import (
+from Protexis_Command.protocols.ogx.constants.ogx_error_codes import GatewayErrorCode
+from Protexis_Command.protocols.ogx.constants.ogx_field_types import FieldType
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import ValidationError
+from Protexis_Command.protocols.ogx.validation.validators.ogx_type_validator import (
     ValidationContext,
     ValidationResult,
 )

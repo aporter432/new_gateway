@@ -5,8 +5,8 @@ This module implements the API endpoints for message operations as defined in OG
 
 from fastapi import APIRouter, HTTPException
 
-from Protexis_Command.protocol.ogx.models.fields import Message
-from Protexis_Command.protocol.ogx.models.ogx_messages import OGxMessage
+from Protexis_Command.protocols.ogx.models.fields import Message
+from Protexis_Command.protocols.ogx.models.ogx_messages import OGxMessage
 
 router = APIRouter()
 

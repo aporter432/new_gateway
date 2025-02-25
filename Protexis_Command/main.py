@@ -10,8 +10,8 @@ from Protexis_Command.api.common.middleware.rate_limit import add_rate_limit_mid
 from Protexis_Command.api.common.middleware.validation import add_validation_middleware
 from Protexis_Command.api.internal.routes.auth import user
 from Protexis_Command.api.internal.routes.messages import router as protexis_router
-from Protexis_Command.api.routes import auth, messages
-from Protexis_Command.api.routes.api import router as ogx_router
+from Protexis_Command.api.protocols.ogx.routes import auth, messages
+from Protexis_Command.api.protocols.ogx.routes.api import router as ogx_router
 from Protexis_Command.core.logging.log_settings import LoggingConfig
 from Protexis_Command.core.logging.loggers import get_app_logger
 from Protexis_Command.infrastructure.cache.redis import get_redis_url

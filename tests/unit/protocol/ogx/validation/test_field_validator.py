@@ -5,15 +5,17 @@ This module tests field validation according to OGx-1.txt.
 
 import pytest
 
-from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
-from Protexis_Command.protocol.ogx.constants.ogx_field_types import FieldType
-from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
-from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
-from Protexis_Command.protocol.ogx.validation.validators.ogx_field_validator import (
+from Protexis_Command.protocols.ogx.constants.ogx_error_codes import GatewayErrorCode
+from Protexis_Command.protocols.ogx.constants.ogx_field_types import FieldType
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import ValidationError
+from Protexis_Command.protocols.ogx.validation.validators.ogx_field_validator import (
     OGxFieldValidator,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
+from Protexis_Command.protocols.ogx.validation.validators.ogx_type_validator import (
+    ValidationContext,
+)
 
 
 @pytest.fixture
@@ -301,7 +303,7 @@ class TestFieldValidation:
             """Test message validation error handling."""
             # Mock OGxStructureValidator to raise ImportError
             mocker.patch(
-                "Protexis_Command.protocol.ogx.validation.validators.ogx_field_validator.OGxStructureValidator",
+                "Protexis_Command.protocols.ogx.validation.validators.ogx_field_validator.OGxStructureValidator",
                 side_effect=ImportError("Test import error"),
             )
 

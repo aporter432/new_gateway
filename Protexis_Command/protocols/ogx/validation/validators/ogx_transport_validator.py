@@ -2,12 +2,12 @@
 
 from typing import Any, Dict
 
-from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
-from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
-from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
-from Protexis_Command.protocol.ogx.validation.validators.ogx_base_validator import OGxBaseValidator
-from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import (
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocols.ogx.constants.ogx_transport_types import TransportType
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import ValidationError
+from Protexis_Command.protocols.ogx.validation.validators.ogx_base_validator import OGxBaseValidator
+from Protexis_Command.protocols.ogx.validation.validators.ogx_type_validator import (
     ValidationContext,
     ValidationResult,
 )

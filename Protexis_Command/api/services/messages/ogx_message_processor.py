@@ -60,20 +60,22 @@ from Protexis_Command.api.services.session.ogx_state_store import (
 from Protexis_Command.core.logging.loggers import get_protocol_logger
 from Protexis_Command.core.settings.app_settings import get_settings
 from Protexis_Command.infrastructure.cache.redis import get_redis_client
-from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
-from Protexis_Command.protocol.ogx.constants.ogx_network_types import NetworkType
-from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.constants.ogx_network_types import NetworkType
+from Protexis_Command.protocols.ogx.constants.ogx_transport_types import TransportType
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import (
     OGxProtocolError,
     ValidationError,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_field_validator import (
+from Protexis_Command.protocols.ogx.validation.validators.ogx_field_validator import (
     OGxFieldValidator,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_structure_validator import (
+from Protexis_Command.protocols.ogx.validation.validators.ogx_structure_validator import (
     OGxStructureValidator,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
+from Protexis_Command.protocols.ogx.validation.validators.ogx_type_validator import (
+    ValidationContext,
+)
 
 
 class MessageProcessor:

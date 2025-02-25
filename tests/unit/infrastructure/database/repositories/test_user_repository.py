@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from Protexis_Command.infrastructure.database.models.user import User, UserRole
 from Protexis_Command.infrastructure.database.repositories.user_repository import UserRepository
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import ValidationError
 
 
 @pytest.fixture

@@ -9,11 +9,11 @@ from typing import Any
 import pytest
 
 from Protexis_Command.api.config import NetworkType
-from Protexis_Command.protocol.ogx.constants.ogx_field_types import FieldType
-from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
-from Protexis_Command.protocol.ogx.validation.validators.ogx_base_validator import OGxBaseValidator
-from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import (
+from Protexis_Command.protocols.ogx.constants.ogx_field_types import FieldType
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import ValidationError
+from Protexis_Command.protocols.ogx.validation.validators.ogx_base_validator import OGxBaseValidator
+from Protexis_Command.protocols.ogx.validation.validators.ogx_type_validator import (
     ValidationContext,
     ValidationResult,
 )

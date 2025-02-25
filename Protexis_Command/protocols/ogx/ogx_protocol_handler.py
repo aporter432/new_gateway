@@ -77,25 +77,25 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
-from Protexis_Command.protocol.ogx.constants.ogx_transport_types import TransportType
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.constants.ogx_transport_types import TransportType
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import (
     AuthenticationError,
     ProtocolError,
     RateLimitError,
     ValidationError,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_network_validator import (
+from Protexis_Command.protocols.ogx.validation.validators.ogx_network_validator import (
     NetworkValidator,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_size_validator import SizeValidator
-from Protexis_Command.protocol.ogx.validation.validators.ogx_structure_validator import (
+from Protexis_Command.protocols.ogx.validation.validators.ogx_size_validator import SizeValidator
+from Protexis_Command.protocols.ogx.validation.validators.ogx_structure_validator import (
     OGxStructureValidator,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_transport_validator import (
+from Protexis_Command.protocols.ogx.validation.validators.ogx_transport_validator import (
     OGxTransportValidator,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import (
+from Protexis_Command.protocols.ogx.validation.validators.ogx_type_validator import (
     ValidationContext,
     ValidationResult,
 )

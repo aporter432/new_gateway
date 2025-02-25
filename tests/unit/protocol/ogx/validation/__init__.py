@@ -1,10 +1,12 @@
 """Test initialization for OGx validation."""
 
-from Protexis_Command.protocol.ogx.constants.ogx_message_types import MessageType
-from Protexis_Command.protocol.ogx.validation.validators.ogx_field_validator import (
+from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
+from Protexis_Command.protocols.ogx.validation.validators.ogx_field_validator import (
     OGxFieldValidator,
 )
-from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import ValidationContext
+from Protexis_Command.protocols.ogx.validation.validators.ogx_type_validator import (
+    ValidationContext,
+)
 
 __all__ = ["MessageType", "ValidationContext", "OGxFieldValidator"]
 

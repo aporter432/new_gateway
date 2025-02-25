@@ -16,8 +16,8 @@ to all error types for:
 - Easier error filtering and handling
 """
 
-from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
+from Protexis_Command.protocols.ogx.constants.ogx_error_codes import GatewayErrorCode
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import (
     ElementValidationError,
     FieldValidationError,
     MessageFilterValidationError,
