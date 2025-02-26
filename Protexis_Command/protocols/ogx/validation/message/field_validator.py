@@ -6,8 +6,8 @@ It ensures that message fields conform to the structure defined in OGx-1.txt.
 
 from typing import Any, Dict, Optional
 
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import ValidationError
-from Protexis_Command.protocol.ogx.validation.validators.ogx_type_validator import (
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import ValidationError
+from Protexis_Command.protocols.ogx.validation.validators.ogx_type_validator import (
     ValidationContext,
     ValidationResult,
 )

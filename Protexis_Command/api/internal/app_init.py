@@ -43,10 +43,10 @@ def init_routes(app: FastAPI) -> None:
     Args:
         app: FastAPI application instance
     """
-    from Protexis_Command.internal.routes import auth
+    from Protexis_Command.api.internal.routes import auth
 
     app.include_router(
-        auth.router,
+        auth.auth_router,
         prefix="/api",
         tags=["auth"],
     )

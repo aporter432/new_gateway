@@ -1,9 +1,9 @@
 """Validation exceptions for OGx protocol."""
 
-from typing import Optional
+from typing import Optional, cast
 
-from Protexis_Command.protocol.ogx.constants.http_error_codes import HTTPErrorCode
-from Protexis_Command.protocol.ogx.constants.ogx_error_codes import GatewayErrorCode
+from Protexis_Command.protocols.ogx.constants.http_error_codes import HTTPErrorCode
+from Protexis_Command.protocols.ogx.constants.ogx_error_codes import GatewayErrorCode
 
 
 class OGxProtocolError(Exception):
@@ -30,9 +30,13 @@ class ProtocolError(OGxProtocolError):
             message: Error message
             error_code: Optional error code
         """
-        error_code = error_code or GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
+        gateway_error = (
+            GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED
+            if error_code is None
+            else cast(GatewayErrorCode, error_code)
+        )
         formatted_message = f"Protocol error: {message}"
-        super().__init__(formatted_message, error_code)
+        super().__init__(formatted_message, gateway_error)
 
 
 class ValidationError(OGxProtocolError):
@@ -102,10 +106,12 @@ class AuthenticationError(OGxProtocolError):
             message: Error message
             error_code: Optional error code
         """
-        error_code = error_code or HTTPErrorCode.UNAUTHORIZED
+        http_code = HTTPErrorCode.UNAUTHORIZED if error_code is None else error_code
         formatted_message = f"Authentication error: {message}"
-        super().__init__(formatted_message, error_code)
+        # Use INVALID_TOKEN as it's the closest authentication-related error code
+        super().__init__(formatted_message, cast(GatewayErrorCode, GatewayErrorCode.INVALID_TOKEN))
         self._original_message = message  # Override the original message after super().__init__
+        self.http_code = http_code  # Store HTTP code separately
 
 
 class RateLimitError(OGxProtocolError):
@@ -118,10 +124,13 @@ class RateLimitError(OGxProtocolError):
             message: Error message
             error_code: Optional error code
         """
-        error_code = error_code or HTTPErrorCode.TOO_MANY_REQUESTS
+        http_code = HTTPErrorCode.TOO_MANY_REQUESTS if error_code is None else error_code
         formatted_message = f"Rate limit error: {message}"
-        super().__init__(formatted_message, error_code)
+        super().__init__(
+            formatted_message, cast(GatewayErrorCode, GatewayErrorCode.SUBMIT_MESSAGE_RATE_EXCEEDED)
+        )
         self._original_message = message  # Override the original message after super().__init__
+        self.http_code = http_code  # Store HTTP code separately
 
 
 __all__ = [

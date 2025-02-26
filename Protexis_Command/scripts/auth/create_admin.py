@@ -3,7 +3,7 @@
 Creates the first admin user for the system.
 
 Usage:
-    docker-compose run app poetry run python -m scripts.auth.create_admin
+    docker-compose run ogx_gateway_api poetry run python -m Protexis_Command.scripts.auth.create_admin
 """
 
 import asyncio
@@ -11,11 +11,12 @@ import getpass
 import logging
 import sys
 
-from api_protexis.security.password import get_password_hash
-from infrastructure.database.models import User, UserRole
-from infrastructure.database.session import async_session_maker
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+
+from Protexis_Command.api.common.auth.password import get_password_hash
+from Protexis_Command.infrastructure.database.models.user import User, UserRole
+from Protexis_Command.infrastructure.database.session import async_session_maker
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

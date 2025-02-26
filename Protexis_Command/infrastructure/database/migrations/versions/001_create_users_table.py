@@ -12,8 +12,9 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
-from api_protexis.security.password import get_password_hash
 from sqlalchemy import column, table
+
+from Protexis_Command.api.common.auth.password import get_password_hash
 
 # revision identifiers, used by Alembic
 revision: str = "001"
@@ -29,6 +30,10 @@ ADMIN_PASSWORD = "ThisIsRussia#225"  # Dev only
 
 def upgrade() -> None:
     """Create users table and seed admin."""
+    # Create user role enum type
+    userrole = sa.Enum("user", "admin", name="userrole")
+    userrole.create(op.get_bind())
+
     # Create users table
     op.create_table(
         "users",
@@ -36,7 +41,7 @@ def upgrade() -> None:
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("hashed_password", sa.String(), nullable=False),
-        sa.Column("role", sa.String(), nullable=False),
+        sa.Column("role", userrole, nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
@@ -50,7 +55,7 @@ def upgrade() -> None:
         column("email", sa.String),
         column("name", sa.String),
         column("hashed_password", sa.String),
-        column("role", sa.String),
+        column("role", userrole),
         column("is_active", sa.Boolean),
         column("created_at", sa.DateTime),
     )
@@ -73,3 +78,5 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Remove users table."""
     op.drop_table("users")
+    # Remove the enum type
+    sa.Enum(name="userrole").drop(op.get_bind())

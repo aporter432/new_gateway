@@ -16,10 +16,10 @@ from Protexis_Command.api.protocols.ogx.models.messages import (
     MessageRequest,
     MultiDestinationRequest,
 )
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import (
     MessageValidationError,
 )
-from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import (
     ValidationError as OGxValidationError,
 )
 
