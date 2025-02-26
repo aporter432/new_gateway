@@ -47,8 +47,8 @@ from typing import Any, Dict, List, Optional, cast
 
 import httpx
 
+from Protexis_Command.api.common.auth.manager import OGxAuthManager
 from Protexis_Command.api.config import TransportType
-from Protexis_Command.api.services.auth.manager import OGxAuthManager
 from Protexis_Command.core.logging.loggers.protocol import get_protocol_logger
 from Protexis_Command.core.settings.app_settings import get_settings
 from Protexis_Command.infrastructure.cache.redis import get_redis_client

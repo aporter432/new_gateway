@@ -13,6 +13,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 
+from Protexis_Command.api.common.auth.manager import OGxAuthManager, get_auth_manager
 from Protexis_Command.api.models.auth import TokenRequest, TokenResponse
 from Protexis_Command.api.models.info import (
     BroadcastInfo,
@@ -26,7 +27,6 @@ from Protexis_Command.api.models.messages import (
     MessageStatus,
     MultiDestinationRequest,
 )
-from Protexis_Command.api.services.auth.manager import OGxAuthManager, get_auth_manager
 
 router = APIRouter(prefix="/api/v1.0")
 

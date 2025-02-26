@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Optional
 
-from Protexis_Command.api.services.auth.manager import OGxAuthManager
+from Protexis_Command.api.common.auth.manager import OGxAuthManager
 from Protexis_Command.api.services.ogx_client import OGxClient
 from Protexis_Command.core.settings.app_settings import Settings, get_settings
 from Protexis_Command.infrastructure.cache.redis import get_redis_client

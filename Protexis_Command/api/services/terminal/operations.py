@@ -6,6 +6,7 @@ This module provides service-layer functionality for terminal operation endpoint
 import logging
 from typing import List
 
+from Protexis_Command.api.common.auth.manager import OGxAuthManager
 from Protexis_Command.api.config.ogx_endpoints import APIEndpoint
 from Protexis_Command.api.models.terminal import (
     SystemResetRequest,
@@ -14,7 +15,6 @@ from Protexis_Command.api.models.terminal import (
     TerminalOperationResponse,
     TerminalResetRequest,
 )
-from Protexis_Command.api.services.auth.manager import OGxAuthManager
 from Protexis_Command.api.services.common.ogx_requester import OGxRequester
 
 logger = logging.getLogger(__name__)

@@ -11,7 +11,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from Protexis_Command.api.services.auth.manager import OGxAuthManager, get_auth_manager
+from Protexis_Command.api.common.auth.manager import OGxAuthManager, get_auth_manager
 
 
 class OGxAuthMiddleware(BaseHTTPMiddleware):

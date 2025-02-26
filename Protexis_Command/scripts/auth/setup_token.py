@@ -11,8 +11,8 @@ import httpx
 from httpx import HTTPError
 from infrastructure.redis import get_redis_client
 
+from Protexis_Command.api.common.auth.manager import OGxAuthManager
 from Protexis_Command.api.config import DEFAULT_TOKEN_EXPIRY
-from Protexis_Command.api.services.auth.manager import OGxAuthManager
 from Protexis_Command.api.validation.common.validation_exceptions import (
     OGxProtocolError,
     ValidationError,

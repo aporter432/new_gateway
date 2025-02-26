@@ -8,8 +8,8 @@ from typing import Any, Dict, Optional
 import httpx
 from httpx import Response
 
+from Protexis_Command.api.common.auth.manager import OGxAuthManager
 from Protexis_Command.api.config.http_error_codes import HTTPErrorCode
-from Protexis_Command.api.services.auth.manager import OGxAuthManager
 from Protexis_Command.core.settings.app_settings import Settings
 from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import OGxProtocolError
 

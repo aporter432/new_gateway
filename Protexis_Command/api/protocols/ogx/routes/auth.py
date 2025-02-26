@@ -11,7 +11,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from pydantic import BaseModel
 
-from Protexis_Command.api.services.auth.manager import OGxAuthManager, get_auth_manager
+from Protexis_Command.api.common.auth.manager import OGxAuthManager, get_auth_manager
 from Protexis_Command.protocol.ogx.validation.common.validation_exceptions import (
     AuthenticationError,
     OGxProtocolError,

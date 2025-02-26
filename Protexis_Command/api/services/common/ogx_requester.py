@@ -9,8 +9,8 @@ import logging
 import httpx
 from httpx import Response
 
+from Protexis_Command.api.common.auth.manager import OGxAuthManager
 from Protexis_Command.api.config.ogx_endpoints import APIEndpoint
-from Protexis_Command.api.services.auth.manager import OGxAuthManager
 
 logger = logging.getLogger(__name__)
 

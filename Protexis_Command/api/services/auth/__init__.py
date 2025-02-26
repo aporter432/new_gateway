@@ -1,5 +1,5 @@
 """OGx authentication manager."""
 
-from .manager import OGxAuthManager
+from ...common.auth.manager import OGxAuthManager
 
 __all__ = ["OGxAuthManager"]

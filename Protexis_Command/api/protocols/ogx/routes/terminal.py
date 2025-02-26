@@ -11,6 +11,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends
 
+from Protexis_Command.api.common.auth.manager import OGxAuthManager, get_auth_manager
 from Protexis_Command.api.models.terminal import (
     SystemResetRequest,
     TerminalModeRequest,
@@ -18,7 +19,6 @@ from Protexis_Command.api.models.terminal import (
     TerminalOperationResponse,
     TerminalResetRequest,
 )
-from Protexis_Command.api.services.auth.manager import OGxAuthManager, get_auth_manager
 from Protexis_Command.api.services.terminal.operations import TerminalOperationService
 
 router = APIRouter(tags=["terminal"])

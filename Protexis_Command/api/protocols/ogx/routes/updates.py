@@ -8,8 +8,8 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
+from Protexis_Command.api.common.auth.manager import OGxAuthManager, get_auth_manager
 from Protexis_Command.api.models.terminal_updates import TerminalUpdatesResponse
-from Protexis_Command.api.services.auth.manager import OGxAuthManager, get_auth_manager
 from Protexis_Command.api.services.terminal.updates import TerminalUpdatesService
 
 router = APIRouter(tags=["terminal-updates"])
