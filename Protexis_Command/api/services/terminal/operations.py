@@ -7,15 +7,15 @@ import logging
 from typing import List
 
 from Protexis_Command.api.common.auth.manager import OGxAuthManager
+from Protexis_Command.api.common.auth.ogx_requester import OGxRequester
 from Protexis_Command.api.config.ogx_endpoints import APIEndpoint
-from Protexis_Command.api.models.terminal import (
+from Protexis_Command.api.protocols.ogx.models.terminal import (
     SystemResetRequest,
     TerminalModeRequest,
     TerminalMuteRequest,
     TerminalOperationResponse,
     TerminalResetRequest,
 )
-from Protexis_Command.api.services.common.ogx_requester import OGxRequester
 
 logger = logging.getLogger(__name__)
 

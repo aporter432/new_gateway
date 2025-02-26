@@ -8,9 +8,12 @@ from datetime import datetime
 from typing import Optional
 
 from Protexis_Command.api.common.auth.manager import OGxAuthManager
+from Protexis_Command.api.common.auth.ogx_requester import OGxRequester
 from Protexis_Command.api.config.ogx_endpoints import APIEndpoint
-from Protexis_Command.api.models.terminal_updates import TerminalUpdate, TerminalUpdatesResponse
-from Protexis_Command.api.services.common.ogx_requester import OGxRequester
+from Protexis_Command.api.protocols.ogx.models.terminal_updates import (
+    TerminalUpdate,
+    TerminalUpdatesResponse,
+)
 
 logger = logging.getLogger(__name__)
 

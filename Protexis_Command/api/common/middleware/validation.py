@@ -12,7 +12,10 @@ from pydantic import BaseModel, ValidationError
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from Protexis_Command.api.models.messages import MessageRequest, MultiDestinationRequest
+from Protexis_Command.api.protocols.ogx.models.messages import (
+    MessageRequest,
+    MultiDestinationRequest,
+)
 from Protexis_Command.protocol.ogx.validation.ogx_validation_exceptions import (
     MessageValidationError,
 )

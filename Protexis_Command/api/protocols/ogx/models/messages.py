@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
 
-from Protexis_Command.api.models.fields import MessageField
+from Protexis_Command.api.protocols.ogx.models.fields import MessageField
 
 
 class MessagePriority(str, Enum):

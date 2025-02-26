@@ -12,7 +12,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 
 from Protexis_Command.api.common.auth.manager import OGxAuthManager, get_auth_manager
-from Protexis_Command.api.models.terminal import (
+from Protexis_Command.api.protocols.ogx.models.terminal import (
     SystemResetRequest,
     TerminalModeRequest,
     TerminalMuteRequest,
