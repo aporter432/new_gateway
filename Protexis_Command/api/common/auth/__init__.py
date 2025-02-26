@@ -5,6 +5,8 @@ from .manager import OGxAuthManager, TokenMetadata, get_auth_manager
 from .oauth2 import get_current_active_user, get_current_admin_user, get_current_user
 from .ogx_requester import OGxRequester
 from .password import get_password_hash, validate_password, verify_password
+from .role_descriptions import RoleDescriptions
+from .roles import requires_roles
 from .token_utils import verify_token_format
 
 __all__ = [
@@ -23,4 +25,6 @@ __all__ = [
     "validate_password",
     "verify_token_format",
     "OGxRequester",
+    "RoleDescriptions",
+    "requires_roles",
 ]

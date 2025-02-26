@@ -9,7 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from Protexis_Command.api.common.middleware.rate_limit import add_rate_limit_middleware
 from Protexis_Command.api.common.middleware.validation import add_validation_middleware
 from Protexis_Command.api.internal.routes.auth import user
+from Protexis_Command.api.internal.routes.dashboard import router as dashboard_router
 from Protexis_Command.api.internal.routes.messages import router as protexis_router
+from Protexis_Command.api.internal.routes.test_roles import router as test_roles_router
 from Protexis_Command.api.protocols.ogx.routes import auth, messages
 from Protexis_Command.api.protocols.ogx.routes.api import router as ogx_router
 from Protexis_Command.core.logging.log_settings import LoggingConfig
@@ -46,6 +48,8 @@ add_validation_middleware(app)
 # Include routers
 app.include_router(ogx_router)
 app.include_router(protexis_router)
+app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
+app.include_router(test_roles_router, prefix="/api/v1", tags=["test"])
 
 
 @app.get("/health")

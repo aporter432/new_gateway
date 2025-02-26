@@ -10,7 +10,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./Protexis_Command:/app/Protexis_Command:ro
+      - ./Protexis_Command:/app/Protexis_Command
       - ./tests:/app/tests:ro
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@ogx_gateway_db:5432/new_gateway

@@ -62,6 +62,14 @@ class UserRole(str, Enum):
 
     USER = "user"
     ADMIN = "admin"
+    ACCOUNTING = "accounting"
+    PROTEXIS_ADMINISTRATOR = "protexis_administrator"
+    PROTEXIS_VIEW = "protexis_view"
+    PROTEXIS_REQUEST_READ = "protexis_request_read"
+    PROTEXIS_REQUEST_WRITE = "protexis_request_write"
+    PROTEXIS_SITE_ADMIN = "protexis_site_admin"
+    PROTEXIS_TECH_ADMIN = "protexis_tech_admin"
+    PROTEXIS_ADMIN = "protexis_admin"
 
     def __str__(self) -> str:
         """Return the lowercase string value of the enum."""

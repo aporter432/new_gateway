@@ -22,6 +22,9 @@
 import { checkAuth, logout } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Header } from '@/components/common/Header';
+import Logo from '@/components/common/Logo';
+import { RoleSelect } from '@/components/forms/RoleSelect';
 
 export default function DashboardPage() {
     const router = useRouter();
