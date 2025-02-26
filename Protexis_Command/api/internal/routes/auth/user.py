@@ -45,10 +45,10 @@ from Protexis_Command.api.common.auth.jwt import (
 )
 from Protexis_Command.api.common.auth.oauth2 import get_current_active_user
 from Protexis_Command.api.common.auth.password import get_password_hash, verify_password
+from Protexis_Command.api.internal.schemas.user import Token, UserCreate, UserResponse
 from Protexis_Command.infrastructure.database.dependencies import get_db
 from Protexis_Command.infrastructure.database.models.user import User, UserRole
 from Protexis_Command.infrastructure.database.repositories.user_repository import UserRepository
-from Protexis_Command.internal.schemas.user import Token, UserCreate, UserResponse
 
 router = APIRouter(tags=["auth"])
 
