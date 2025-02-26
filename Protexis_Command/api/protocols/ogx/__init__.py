@@ -1,4 +1,4 @@
-"""OGx API package."""
+"""OGx protocol module."""
 
 from .ogx_main import app
 
