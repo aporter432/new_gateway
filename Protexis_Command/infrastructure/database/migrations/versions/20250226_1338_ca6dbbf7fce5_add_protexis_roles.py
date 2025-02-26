@@ -9,6 +9,7 @@ Create Date: 2025-02-26 13:38:26.558275+00:00
 from typing import Sequence, Union
 
 from alembic import op
+from sqlalchemy.sql import text
 
 # revision identifiers, used by Alembic.
 revision: str = "ca6dbbf7fce5"
@@ -18,12 +19,25 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """
+    Upgrade the database schema to include additional Protexis roles.
+
+    This migration adds new role values to the 'userrole' enum type in PostgreSQL.
+    Since PostgreSQL doesn't allow directly modifying enums, we need to:
+    1. Create a new enum type with all values (old + new)
+    2. Update the column to use the new enum
+    3. Drop the old enum
+    4. Rename the new enum to match the original name
+    """
     # PostgreSQL doesn't allow modifying enums directly
     # We need to create a new enum, update the columns, then drop the old enum
 
     # Create new enum type with all values
-    op.execute(
-        """
+    conn = op.get_bind()  # type: ignore # pylint: disable=no-member
+
+    conn.execute(
+        text(
+            """
         CREATE TYPE userrole_new AS ENUM (
             'user',
             'admin',
@@ -37,25 +51,49 @@ def upgrade() -> None:
             'protexis_admin'
         )
     """
+        )
     )
 
     # Update the column to use the new enum
-    op.execute(
-        "ALTER TABLE users ALTER COLUMN role TYPE userrole_new USING role::text::userrole_new"
+    conn.execute(
+        text(
+            """
+        ALTER TABLE users
+        ALTER COLUMN role TYPE userrole_new
+        USING role::text::userrole_new
+    """
+        )
     )
 
     # Drop the old enum
-    op.execute("DROP TYPE userrole")
+    conn.execute(text("DROP TYPE userrole"))
 
     # Rename the new enum to the original name
-    op.execute("ALTER TYPE userrole_new RENAME TO userrole")
+    conn.execute(text("ALTER TYPE userrole_new RENAME TO userrole"))
 
 
 def downgrade() -> None:
+    """
+    Revert the schema changes by restoring the original 'userrole' enum.
+
+    This function removes the added enum values by:
+    1. Creating a new enum with only the original values
+    2. Converting existing data to fit the old enum (may lose information)
+    3. Dropping the modified enum
+    4. Renaming the old-style enum to the original name
+    """
+    conn = op.get_bind()  # type: ignore # pylint: disable=no-member
+
     # Reverse the process
-    op.execute("CREATE TYPE userrole_old AS ENUM ('user', 'admin')")
-    op.execute(
-        "ALTER TABLE users ALTER COLUMN role TYPE userrole_old USING role::text::userrole_old"
+    conn.execute(text("CREATE TYPE userrole_old AS ENUM ('user', 'admin')"))
+    conn.execute(
+        text(
+            """
+        ALTER TABLE users
+        ALTER COLUMN role TYPE userrole_old
+        USING role::text::userrole_old
+    """
+        )
     )
-    op.execute("DROP TYPE userrole")
-    op.execute("ALTER TYPE userrole_old RENAME TO userrole")
+    conn.execute(text("DROP TYPE userrole"))
+    conn.execute(text("ALTER TYPE userrole_old RENAME TO userrole"))
