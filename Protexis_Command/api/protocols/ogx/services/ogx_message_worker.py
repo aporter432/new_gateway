@@ -18,8 +18,8 @@ import asyncio
 import time
 from typing import Dict, Optional
 
-from Protexis_Command.api.services.messages.ogx_message_queue import OGxMessageQueue
-from Protexis_Command.api.services.messages.ogx_message_submission import submit_OGx_message
+from Protexis_Command.api.protocols.ogx.services.ogx_message_queue import OGxMessageQueue
+from Protexis_Command.api.protocols.ogx.services.ogx_message_submission import submit_OGx_message
 from Protexis_Command.core.logging.loggers import get_infra_logger
 from Protexis_Command.core.settings.app_settings import Settings, get_settings
 from Protexis_Command.infrastructure.cache.redis import get_redis_client

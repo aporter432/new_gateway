@@ -16,7 +16,7 @@ from Protexis_Command.api.common.middleware.ogx_auth import add_ogx_auth_middlew
 from Protexis_Command.api.protocols.ogx.routes.messages import router as messages_router
 from Protexis_Command.api.protocols.ogx.routes.terminal import router as terminal_router
 from Protexis_Command.api.protocols.ogx.routes.updates import router as updates_router
-from Protexis_Command.api.services.messages.ogx_message_worker import get_message_worker
+from Protexis_Command.api.protocols.ogx.services.ogx_message_worker import get_message_worker
 
 # First-party imports
 from Protexis_Command.core.logging.loggers import get_protocol_logger
