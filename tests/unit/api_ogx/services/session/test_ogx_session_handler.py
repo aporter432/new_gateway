@@ -47,7 +47,11 @@ def encode_dict(d: Dict[str, Any]) -> Dict[bytes, bytes]:
 def decode_dict(d: Dict[bytes, bytes]) -> Dict[str, str]:
     """Decode dictionary values from bytes for Redis mock."""
     return {
-        k.decode() if isinstance(k, bytes) else k: v.decode() if isinstance(v, bytes) else v
+        k.decode()
+        if isinstance(k, bytes)
+        else str(k): v.decode()
+        if isinstance(v, bytes)
+        else str(v)
         for k, v in d.items()
     }
 

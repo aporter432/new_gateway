@@ -29,10 +29,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from httpx import HTTPError
 from pydantic import BaseModel, Field
 
+from Protexis_Command.api.common.clients.factory import get_OGx_client
 from Protexis_Command.api.config import APIEndpoint, TransportType
 from Protexis_Command.api.services.auth.manager import OGxAuthManager, get_auth_manager
 from Protexis_Command.core.settings.app_settings import Settings, get_settings
-from Protexis_Command.internal.clients.factory import get_OGx_client
 from Protexis_Command.protocols.ogx.constants.ogx_message_states import MessageState
 from Protexis_Command.protocols.ogx.constants.ogx_message_types import MessageType
 from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import (
@@ -125,8 +125,8 @@ async def submit_message(
             )
 
             return MessageResponse(
-                type=MessageType.FORWARD,  # Initial state for forward messages
-                state=MessageState.ACCEPTED,
+                Type=MessageType.FORWARD,  # Initial state for forward messages
+                State=MessageState.ACCEPTED,
                 **response,
             )
         except (HTTPError, OGxProtocolError) as e:
@@ -153,10 +153,10 @@ async def retrieve_messages(
             messages = await client.get_messages(from_utc=from_utc)
             return [
                 MessageResponse(
-                    type=MessageType.RETURN,  # Return messages are always RECEIVED
-                    state=MessageState.RECEIVED,
-                    destination_id=msg.get("SourceID", ""),
-                    message_utc=msg.get("MessageUTC"),
+                    Type=MessageType.RETURN,  # Return messages are always RECEIVED
+                    State=MessageState.RECEIVED,
+                    DestinationID=msg.get("SourceID", ""),
+                    MessageUTC=msg.get("MessageUTC"),
                     **msg,
                 )
                 for msg in messages.get("Messages", [])

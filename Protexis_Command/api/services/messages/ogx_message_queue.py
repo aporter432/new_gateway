@@ -11,6 +11,7 @@ from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
 from Protexis_Command.api.config import MessageState
+from Protexis_Command.core.logging.log_settings import LoggingConfig
 from Protexis_Command.core.logging.loggers import get_protocol_logger
 from Protexis_Command.core.settings.app_settings import Settings
 from Protexis_Command.protocols.ogx.constants.ogx_limits import (
@@ -26,7 +27,7 @@ from Protexis_Command.protocols.ogx.constants.ogx_limits import (
 This module provides a Redis-based message queue implementation that handles:
 - Message state tracking and transitions
 - Dead letter queue (DLQ) for failed messages after max retries
-- Message retry logic and backoff
+- Message retry logic and backoff strategies
 
 SOLID Principles:
 1. Single Responsibility: Each class handles one aspect of message management
@@ -141,7 +142,7 @@ class OGxMessageQueue:
         """
         self.redis = redis
         self.settings = settings
-        self.logger = get_protocol_logger("message_queue")
+        self.logger = get_protocol_logger(config=LoggingConfig())
 
         # Redis keys
         self.pending_queue = "OGx:messages:pending"
@@ -290,7 +291,7 @@ class OGxMessageQueue:
 
             # Update state and move to in progress queue
             message = QueuedMessage.from_dict(json.loads(message_data))
-            message.state = MessageState.SENDING_IN_PROGRESS
+            message.state = MessageState.SENDING
             message.last_attempt = time.time()
             message.retry_count += 1
 

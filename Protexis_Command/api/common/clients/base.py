@@ -8,10 +8,10 @@ from typing import Any, Dict, Optional
 import httpx
 from httpx import Response
 
-from ...api.config.http_error_codes import HTTPErrorCode
-from ...api.services.auth.manager import OGxAuthManager
-from ...core.settings.app_settings import Settings
-from ...protocols.ogx.validation.ogx_validation_exceptions import OGxProtocolError
+from Protexis_Command.api.config.http_error_codes import HTTPErrorCode
+from Protexis_Command.api.services.auth.manager import OGxAuthManager
+from Protexis_Command.core.settings.app_settings import Settings
+from Protexis_Command.protocols.ogx.validation.ogx_validation_exceptions import OGxProtocolError
 
 
 class BaseAPIClient:
