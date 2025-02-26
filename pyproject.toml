@@ -123,6 +123,7 @@ persistent = "yes"
 py-version = "3.11"
 fail-under = 10.0
 disable = ["W0621"]
+ignored-modules = ["alembic.context"]
 
 [tool.pytest.ini_options]
 pythonpath = ["Protexis_Command"]

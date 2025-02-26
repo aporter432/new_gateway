@@ -21,9 +21,11 @@ Environment Handling:
 import os
 from logging.config import fileConfig
 
+# Third-party imports
 from alembic import context
 from sqlalchemy import create_engine, pool
 
+# First-party imports
 from Protexis_Command.infrastructure.database.models.base import Base
 
 # this is the Alembic Config object, which provides
