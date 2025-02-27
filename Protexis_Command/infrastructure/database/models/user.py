@@ -98,6 +98,8 @@ class User(Base):
         is_active: Account status flag
         created_at: Account creation timestamp
         updated_at: Last modification timestamp
+        password_created_at: When the password was last created/changed
+        password_is_temporary: Flag indicating if password requires changing
 
     Relationships:
         TBD based on future requirements:
@@ -157,6 +159,20 @@ class User(Base):
         default=True,
         nullable=False,
         doc="Whether the user account is active",
+    )
+
+    # Password management fields
+    password_created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        doc="Timestamp when password was created or last changed",
+    )
+    password_is_temporary: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        doc="Whether the password is temporary and needs to be changed",
     )
 
     # Timestamps

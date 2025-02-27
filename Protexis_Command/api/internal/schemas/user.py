@@ -87,6 +87,30 @@ class UserCreate(UserBase):
     )
 
 
+class UserCreateWithGeneratedPassword(UserBase):
+    """Schema for admin user creation with generated password.
+
+    This model extends UserBase but doesn't require a password field,
+    as the system will generate a secure random password and send it to the user.
+
+    Attributes:
+        email: Inherited from UserBase
+        name: Inherited from UserBase
+
+    Usage:
+        - Admin user creation
+        - System-generated secure passwords
+        - Email notification of credentials
+
+    Security Notes:
+        - Generated password follows security policy
+        - Password is emailed to user directly
+        - User prompted to change on first login
+    """
+
+    role: Optional[str] = Field(None, description="User's role in the system (if specified)")
+
+
 class UserUpdate(BaseModel):
     """Schema for user profile updates.
 
@@ -175,6 +199,27 @@ class UserResponse(UserInDB):
         - Access level indicators
         - Team/department information
     """
+
+
+class UserCreationResponse(UserResponse):
+    """Schema for user creation response with password information.
+
+    This model extends UserResponse to include the generated password.
+    It is used only when returning information about a newly created user
+    with a system-generated password.
+
+    Attributes:
+        generated_password: The plain text generated password (only returned once)
+
+    Usage:
+        - Admin user creation responses
+        - System-generated password feedback
+        - For API consumption only (not database storage)
+    """
+
+    generated_password: Optional[str] = Field(
+        None, description="Generated password (only included in creation response)"
+    )
 
 
 class Token(BaseModel):

@@ -39,6 +39,8 @@ Future Considerations:
 
 import logging
 import re
+import secrets
+import string
 from typing import Optional
 
 from passlib.context import CryptContext
@@ -111,6 +113,60 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         Uses constant-time comparison to prevent timing attacks
     """
     return pwd_context.verify(plain_password, hashed_password)
+
+
+def generate_secure_password(length: int = 12) -> str:
+    """Generate a secure random password.
+
+    This function creates a cryptographically secure random password
+    that meets all validation requirements.
+
+    Security Features:
+        - Uses cryptographically secure random generator
+        - Ensures all character types are present
+        - Follows OWASP complexity guidelines
+        - Random character arrangement
+
+    Args:
+        length: Length of password to generate (default 12)
+
+    Returns:
+        Secure random password string
+
+    Note:
+        Generated passwords will always include:
+        - At least one uppercase letter
+        - At least one lowercase letter
+        - At least one number
+        - At least one special character
+    """
+    if length < 8:
+        logger.warning("Password length too short, using minimum of 8")
+        length = 8
+
+    # Define character sets
+    uppercase = string.ascii_uppercase
+    lowercase = string.ascii_lowercase
+    digits = string.digits
+    special = '!@#$%^&*(),.?":{}|<>'
+
+    # Ensure we have at least one character from each set
+    password = [
+        secrets.choice(uppercase),
+        secrets.choice(lowercase),
+        secrets.choice(digits),
+        secrets.choice(special),
+    ]
+
+    # Fill remaining length with random characters from all sets
+    all_chars = uppercase + lowercase + digits + special
+    password.extend(secrets.choice(all_chars) for _ in range(length - 4))
+
+    # Shuffle the characters to ensure unpredictability
+    secrets.SystemRandom().shuffle(password)
+
+    # Convert list to string
+    return "".join(password)
 
 
 def validate_password(password: str) -> Optional[str]:
