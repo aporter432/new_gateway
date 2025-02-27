@@ -20,7 +20,7 @@ const defaultNavItems: NavItem[] = [
     {
         label: 'MANAGE CONTACTS',
         href: '/dashboard/contacts',
-        requiresRoles: ['admin', 'protexis_site_admin']
+        requiresRoles: ['admin', 'protexis_administrator']
     },
     {
         label: 'ADMINISTRATION',

@@ -6,6 +6,7 @@ from .oauth2 import get_current_active_user, get_current_admin_user, get_current
 from .ogx_requester import OGxRequester
 from .password import get_password_hash, validate_password, verify_password
 from .role_descriptions import RoleDescriptions
+from .role_hierarchy import RoleHierarchy
 from .roles import requires_roles
 from .token_utils import verify_token_format
 
@@ -27,4 +28,5 @@ __all__ = [
     "OGxRequester",
     "RoleDescriptions",
     "requires_roles",
+    "RoleHierarchy",
 ]

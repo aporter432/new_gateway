@@ -43,8 +43,9 @@ from Protexis_Command.api.common.auth.jwt import (
     create_access_token,
     revoke_token,
 )
-from Protexis_Command.api.common.auth.oauth2 import get_current_active_user
+from Protexis_Command.api.common.auth.oauth2 import get_current_active_user, get_current_admin_user
 from Protexis_Command.api.common.auth.password import get_password_hash, verify_password
+from Protexis_Command.api.common.auth.role_hierarchy import RoleHierarchy
 from Protexis_Command.api.internal.schemas.user import Token, UserCreate, UserResponse
 from Protexis_Command.infrastructure.database.dependencies import get_db
 from Protexis_Command.infrastructure.database.models.user import User, UserRole
@@ -264,4 +265,69 @@ async def logout(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Logout failed",
+        ) from e
+
+
+@router.post("/admin/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def create_user(
+    user_data: UserCreate,
+    role: UserRole,
+    current_user: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    """Create a new user with specified role (admin only).
+
+    This endpoint allows administrators to create users with specific roles,
+    enforcing role hierarchy constraints to prevent privilege escalation.
+
+    Args:
+        user_data: User creation data (email, name, password)
+        role: Role to assign to the new user
+        current_user: The admin making the request
+        db: Database session
+
+    Returns:
+        Created user information (excluding sensitive data)
+
+    Raises:
+        HTTPException:
+            - 400: Email already registered
+            - 403: Insufficient permissions to assign the requested role
+            - 500: Database operation failure
+    """
+    user_repo = UserRepository(db)
+
+    # Check if user already exists
+    if await user_repo.get_by_email(user_data.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered",
+        )
+
+    # Check if the admin has permission to assign this role
+    if not RoleHierarchy.can_manage_role(str(current_user.role), str(role)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot assign a role with higher permissions than your own",
+        )
+
+    # Create user instance with the specified role
+    user = User(
+        email=user_data.email,
+        name=user_data.name,
+        hashed_password=get_password_hash(user_data.password),
+        role=role,
+        is_active=True,
+    )
+
+    # Save user to database
+    try:
+        user = await user_repo.create(user)
+        await db.commit()
+        return UserResponse.model_validate(user)
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create user",
         ) from e
