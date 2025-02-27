@@ -56,7 +56,7 @@ async def main():
                     email=email,
                     name=name,
                     hashed_password=get_password_hash(password),
-                    role=UserRole.ADMIN,
+                    role=UserRole.PROTEXIS_ADMINISTRATOR,
                     is_active=True,
                 )
 

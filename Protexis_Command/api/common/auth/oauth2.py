@@ -50,7 +50,7 @@ from Protexis_Command.infrastructure.database.repositories.user_repository impor
 
 # OAuth2 scheme configuration with token URL
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="auth/login",  # URL for token acquisition
+    tokenUrl="/api/auth/login",  # Updated URL to match nginx proxy path
     scheme_name="JWT",  # Name in OpenAPI docs
     description="JWT token authentication",  # OpenAPI description
 )

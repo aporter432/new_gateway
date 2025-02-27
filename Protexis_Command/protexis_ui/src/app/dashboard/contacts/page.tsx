@@ -1,9 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import PageHeader from '@/components/common/PageHeader';
 import { FormField, PhoneFormField } from '@/components/forms/FormField';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { checkAuth } from '@/lib/api';
+import { useEffect, useState } from 'react';
+
+// Define available roles based on your user.py
+const availableRoles = [
+    { id: 'accounting', name: 'Accounting' },
+    { id: 'protexis_administrator', name: 'Protexis Administrator' },
+    { id: 'protexis_view', name: 'Protexis View' },
+    { id: 'protexis_request_read', name: 'Protexis Request Read' },
+    { id: 'protexis_request_write', name: 'Protexis Request Write' },
+    { id: 'protexis_site_admin', name: 'Protexis Site Admin' },
+    { id: 'protexis_tech_admin', name: 'Protexis Tech Admin' },
+];
 
 export default function ContactDashboardPage() {
+    const [currentUserRole, setCurrentUserRole] = useState<string>('');
+    const [loading, setLoading] = useState(true);
     const [contactData, setContactData] = useState({
         name: 'Aaron Porter',
         type: 'primary-administrator',
@@ -14,8 +30,31 @@ export default function ContactDashboardPage() {
         email: 'aaron@example.com',
         phone: '5553904744',
         extension: '',
-        loginId: 'aaron@amci-wireless.com'
+        loginId: 'aaron@amci-wireless.com',
+        // Added fields for user creation
+        password: '',
+        role: 'user',
+        isUser: false
     });
+
+    // Check current user's role for permission control
+    useEffect(() => {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) return;
+
+        const checkUserRole = async () => {
+            try {
+                const data = await checkAuth(token);
+                setCurrentUserRole(data.role || '');
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching user role:', error);
+                setLoading(false);
+            }
+        };
+
+        checkUserRole();
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -28,40 +67,22 @@ export default function ContactDashboardPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         console.log('Form submitted:', contactData);
+
         // Here you would typically call your API to save the data
+        // If isUser is true, also create a user account with the role permissions
+        if (contactData.isUser) {
+            console.log('Creating user account with role:', contactData.role);
+            // API call would go here to create user account
+        }
     };
 
+    // Determine if user has admin permissions to create users
+    const canCreateUsers = currentUserRole === 'admin' || currentUserRole === 'protexis_administrator';
+
     return (
-        <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="bg-blue-800 text-white p-4">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">Protexis Command</h1>
-                    <div>
-                        <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded">
-                            Log Off
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Navigation Bar */}
-            <div className="bg-blue-700 text-white p-2">
-                <div className="flex space-x-4">
-                    <NavItem label="HOME" active={false} />
-                    <NavItem label="SITES" active={false} />
-                    <NavItem label="REPORTS" active={false} />
-                    <NavItem label="CONTACTS" active={true} />
-                    <NavItem label="ADMINISTRATION" active={false} />
-                    <NavItem label="PREFERENCES" active={false} />
-                </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="mt-4">
-                <div className="bg-blue-700 text-white p-2">
-                    <h2 className="text-lg font-bold">EDIT Contact Detail</h2>
-                </div>
+        <DashboardLayout activeNavItem="contacts">
+            <div className="max-w-6xl mx-auto">
+                <PageHeader title="EDIT Contact Detail" />
 
                 {/* Form Content */}
                 <div className="bg-white border border-gray-300 p-4">
@@ -149,39 +170,81 @@ export default function ContactDashboardPage() {
                                 value={contactData.loginId}
                                 onChange={handleInputChange}
                             />
-                        </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex justify-center space-x-2 mt-8">
-                            <button
-                                type="submit"
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2"
-                            >
-                                UPDATE
-                            </button>
-                            <button
-                                type="button"
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2"
-                            >
-                                UPDATE & COPY
-                            </button>
-                            <button
-                                type="button"
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2"
-                            >
-                                RESET & SEND PASSWORD
-                            </button>
-                            <button
-                                type="button"
-                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2"
-                            >
-                                CANCEL
-                            </button>
+                            {/* User Account Creation Fields - Only visible to admins */}
+                            {canCreateUsers && (
+                                <>
+                                    <div className="col-span-2 mt-4 mb-2 border-t border-gray-300 pt-4">
+                                        <h3 className="font-semibold text-lg">User Account Details</h3>
+                                        <p className="text-sm text-gray-600">Configure this contact as a system user</p>
+                                    </div>
+
+                                    <FormField
+                                        label="Create User Account"
+                                        name="isUser"
+                                        value={contactData.isUser ? "Yes" : "No"}
+                                        onChange={(e) => {
+                                            const isUser = e.target.value === "Yes";
+                                            setContactData({
+                                                ...contactData,
+                                                isUser
+                                            });
+                                        }}
+                                        type="select"
+                                        options={[
+                                            { value: "No", label: "No" },
+                                            { value: "Yes", label: "Yes" }
+                                        ]}
+                                    />
+
+                                    {contactData.isUser && (
+                                        <>
+                                            <FormField
+                                                label="Password"
+                                                name="password"
+                                                value={contactData.password}
+                                                onChange={handleInputChange}
+                                                type="password"
+                                                required={contactData.isUser}
+                                            />
+
+                                            <FormField
+                                                label="User Role"
+                                                name="role"
+                                                value={contactData.role}
+                                                onChange={handleInputChange}
+                                                type="select"
+                                                required={contactData.isUser}
+                                                options={availableRoles.map(role => ({
+                                                    value: role.id,
+                                                    label: role.name
+                                                }))}
+                                            />
+                                        </>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Buttons */}
+                            <div className="col-span-2 mt-6 flex justify-end space-x-4">
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    type="button"
+                                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
+        </DashboardLayout>
     );
 }
 

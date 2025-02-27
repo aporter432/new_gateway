@@ -15,16 +15,26 @@
 
 'use client';
 
-import { login } from '@/lib/api';
+import { getToken, login } from '@/lib/api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
     const router = useRouter();
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+    const loginAttemptInProgress = useRef(false);
+
+    // Check if user is already logged in
+    useEffect(() => {
+        const token = getToken();
+        if (token) {
+            console.log('User already has token, redirecting to dashboard');
+            router.push('/dashboard');
+        }
+    }, [router]);
 
     /**
      * Handle login form submission
@@ -32,6 +42,11 @@ export default function Home() {
      */
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+
+        // Prevent multiple concurrent login attempts
+        if (loginAttemptInProgress.current) return;
+        loginAttemptInProgress.current = true;
+
         setError('');
         setIsLoading(true);
 
@@ -40,20 +55,36 @@ export default function Home() {
         const password = formData.get('password') as string;
 
         try {
+            console.log('Attempting login...');
             const data = await login(username, password);
-            // Store token and wait for it to be set
+            console.log('Login successful, received token');
+
+            // Clear any previous session data
+            sessionStorage.removeItem('userInfo');
+
+            // Use a synchronous approach for setting tokens to ensure they're set before navigation
             if (rememberMe) {
-                await Promise.resolve(localStorage.setItem('token', data.access_token));
+                localStorage.setItem('token', data.access_token);
+                sessionStorage.removeItem('token'); // Clear session token if it exists
             } else {
-                await Promise.resolve(sessionStorage.setItem('token', data.access_token));
+                sessionStorage.setItem('token', data.access_token);
+                localStorage.removeItem('token'); // Clear local token if it exists
             }
-            // Use replace instead of push to avoid RSC issues
-            router.replace('/dashboard');
+
+            // Add a longer delay before navigation to ensure token is set
+            // and to prevent race conditions with React Server Components
+            setTimeout(() => {
+                console.log('Navigating to dashboard...');
+                // Use push for client navigation - this avoids RSC issues that happen with replace
+                router.push('/dashboard');
+            }, 300);
+
         } catch (err) {
             console.error('Login error:', err);
             setError(err instanceof Error ? err.message : 'Invalid username or password');
         } finally {
             setIsLoading(false);
+            loginAttemptInProgress.current = false;
         }
     }
 
@@ -65,7 +96,6 @@ export default function Home() {
                 {/* Branding Section */}
                 <div className="text-center mb-6">
                     <h1 className="text-3xl font-bold text-black">Protexis Command</h1>
-                    <p className="text-sm text-gray-500 mt-2">BECAUSE WE ARENT DICK SUCKERS</p>
                     <p className="text-sm text-gray-500 mt-2">We Know the Work. That's Why We Built the Tech.</p>
                 </div>
 
@@ -83,6 +113,7 @@ export default function Home() {
                         type="email"
                         placeholder="Email"
                         required
+                        autoComplete="username"
                         className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300 focus:outline-none text-black"
                     />
                     <input
@@ -90,6 +121,7 @@ export default function Home() {
                         type="password"
                         placeholder="Password"
                         required
+                        autoComplete="current-password"
                         className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300 focus:outline-none text-black"
                     />
                     <div className="w-full flex items-center justify-start">
@@ -120,7 +152,7 @@ export default function Home() {
 
                 {/* Footer */}
                 <footer className="text-xs text-gray-400 mt-6 text-center">
-                    &copy; {new Date().getFullYear()} Protexis Command. All rights reserved.
+                    &copy; {new Date().getFullYear()} Protexis Command & Control Services. All rights reserved.
                 </footer>
             </div>
         </main>

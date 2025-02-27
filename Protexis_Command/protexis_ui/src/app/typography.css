@@ -1,0 +1,29 @@
+/* Typography styles */
+.heading-1 {
+    @apply text-4xl font-bold mb-4;
+}
+
+.heading-2 {
+    @apply text-2xl font-semibold mb-3;
+}
+
+.body-text {
+    @apply text-base leading-relaxed;
+}
+
+/* Font family utilities */
+.use-playfair {
+    font-family: var(--font-playfair);
+}
+
+.use-montserrat {
+    font-family: var(--font-montserrat);
+}
+
+.use-poppins {
+    font-family: var(--font-poppins);
+}
+
+.use-roboto {
+    font-family: var(--font-roboto);
+}

@@ -57,14 +57,14 @@ RUN echo '#!/bin/sh' > /app/setup.sh && \
     chmod +x /app/setup.sh
 
 # Expose port
-EXPOSE 3001
+EXPOSE 8081
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:3001/health || exit 1
+    CMD curl -f http://localhost:8081/health || exit 1
 
 # Environment variables
-ENV PORT=3001
+ENV PORT=8081
 ENV HOST=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 

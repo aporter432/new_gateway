@@ -1,3 +1,4 @@
-export default function Logo() {
-    return <img src="/Users/aaronporter/Desktop/Projects/new_gateway/Protexis_Command/protexis_ui/src/components/common/Screenshot 2025-02-26 at 9.03.56 AM.png" alt="Protexis Command" className="h-10 w-auto" />;
-  }
+export default function Logo({ className = "h-10 w-auto" }: { className?: string }) {
+  // Use the public folder for assets - all files in public are served at the root path
+  return <img src="/images/protexis-logo.png" alt="Protexis Command" className={className} />;
+}

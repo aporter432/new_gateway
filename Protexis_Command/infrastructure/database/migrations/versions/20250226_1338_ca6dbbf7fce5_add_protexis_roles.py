@@ -39,8 +39,6 @@ def upgrade() -> None:
         text(
             """
         CREATE TYPE userrole_new AS ENUM (
-            'user',
-            'admin',
             'accounting',
             'protexis_administrator',
             'protexis_view',
@@ -48,7 +46,6 @@ def upgrade() -> None:
             'protexis_request_write',
             'protexis_site_admin',
             'protexis_tech_admin',
-            'protexis_admin'
         )
     """
         )

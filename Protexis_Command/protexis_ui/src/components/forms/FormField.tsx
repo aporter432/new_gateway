@@ -5,7 +5,7 @@ interface FormFieldProps {
     name: string;
     value: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-    type?: 'text' | 'email' | 'tel' | 'select' | 'textarea';
+    type?: 'text' | 'email' | 'tel' | 'select' | 'textarea' | 'password';
     required?: boolean;
     width?: string;
     options?: { value: string; label: string }[];
@@ -25,8 +25,8 @@ export function FormField({
 }: FormFieldProps) {
     return (
         <>
-            <label className="text-right font-medium">
-                {required && <span className="text-red-500">* </span>}
+            <label className="text-right font-medium text-gray-700 text-sm">
+                {required && <span className="text-red-500 font-bold">* </span>}
                 {label}:
             </label>
 
@@ -35,7 +35,7 @@ export function FormField({
                     name={name}
                     value={value}
                     onChange={onChange}
-                    className={`border border-gray-300 p-1 ${width}`}
+                    className={`border border-gray-300 p-2 rounded ${width}`}
                     required={required}
                 >
                     {options.map(option => (
@@ -49,7 +49,7 @@ export function FormField({
                     name={name}
                     value={value}
                     onChange={onChange}
-                    className={`border border-gray-300 p-1 ${width}`}
+                    className={`border border-gray-300 p-2 rounded ${width}`}
                     required={required}
                     placeholder={placeholder}
                     rows={4}
@@ -60,7 +60,7 @@ export function FormField({
                     name={name}
                     value={value}
                     onChange={onChange}
-                    className={`border border-gray-300 p-1 ${width}`}
+                    className={`border border-gray-300 p-2 rounded ${width}`}
                     required={required}
                     placeholder={placeholder}
                 />
@@ -89,8 +89,8 @@ export function PhoneFormField({
 }) {
     return (
         <>
-            <label className="text-right font-medium">
-                {required && <span className="text-red-500">* </span>}
+            <label className="text-right font-medium text-gray-700 text-sm">
+                {required && <span className="text-red-500 font-bold">* </span>}
                 {label}:
             </label>
             <div className="flex">
@@ -99,16 +99,16 @@ export function PhoneFormField({
                     name={phoneName}
                     value={phoneValue}
                     onChange={onChange}
-                    className="border border-gray-300 p-1 w-32"
+                    className="border border-gray-300 p-2 rounded w-32"
                     required={required}
                 />
-                <span className="mx-2">Ext:</span>
+                <span className="mx-2 self-center">Ext:</span>
                 <input
                     type="text"
                     name={extName}
                     value={extValue}
                     onChange={onChange}
-                    className="border border-gray-300 p-1 w-16"
+                    className="border border-gray-300 p-2 rounded w-16"
                 />
             </div>
         </>
