@@ -1,184 +1,139 @@
-"""Unit tests for authentication middleware.
+"""Unit tests for OGx authentication middleware.
 
-This module tests the authentication middleware functionality:
-- Request processing
-- Token validation
-- Error handling
-- Response management
+Tests the middleware's handling of:
+- Normal requests
+- 401 responses and token refresh
+- Error scenarios
+- Middleware registration
 """
 
-from unittest.mock import AsyncMock, MagicMock
+import json
+from typing import Any
+from unittest.mock import AsyncMock, patch
 
-import httpx
 import pytest
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Response
 from fastapi.responses import JSONResponse
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Receive, Scope, Send
 
-from Protexis_Command.api.common.middleware.protexis_auth import (
-    ProtexisAuthMiddleware,
-    add_protexis_auth_middleware,
+from Protexis_Command.api.common.middleware.ogx_auth import (
+    OGxAuthMiddleware,
+    add_ogx_auth_middleware,
 )
 
 
 @pytest.fixture
-def mock_app():
-    """Fixture for mocked ASGI application."""
-    return MagicMock(spec=ASGIApp)
+def mock_auth_manager():
+    """Create a mock authentication manager."""
+    manager = AsyncMock()
+    manager.refresh_token.return_value = True
+    return manager
 
 
 @pytest.fixture
 def mock_request():
-    """Fixture for mocked HTTP request."""
-    request = MagicMock(spec=Request)
-    request.url = MagicMock()
-    request.url.path = "/api/test"  # Not health check path
-    request.headers = {}  # Initialize empty headers
-    return request
+    """Create a mock request object."""
+    return AsyncMock()
 
 
 @pytest.fixture
-def mock_response():
-    """Fixture for mocked response."""
-    response = MagicMock(spec=Response)
-    response.status_code = 200
-    return response
+def mock_asgi_app() -> ASGIApp:
+    """Create a mock ASGI application."""
+
+    async def app(_scope: Scope, _receive: Receive, _send: Send) -> None:
+        pass
+
+    return app
 
 
-@pytest.fixture
-def valid_jwt_token():
-    """Provide a valid format JWT token for testing."""
-    return "header.payload.signature"
+class TestOGxAuthMiddleware:
+    """Test suite for OGx authentication middleware."""
 
+    async def test_successful_request(
+        self, mock_request: Any, mock_auth_manager: AsyncMock, mock_asgi_app: ASGIApp
+    ):
+        """Test successful request processing."""
+        middleware = OGxAuthMiddleware(app=mock_asgi_app)
 
-@pytest.mark.asyncio
-async def test_successful_request(mock_app, mock_request, mock_response, valid_jwt_token):
-    """Test successful request processing.
+        async def mock_call_next(_request: Any) -> Response:
+            return Response(status_code=200)
 
-    Verifies:
-    - Request is processed normally
-    - Original response is returned
-    """
-    middleware = ProtexisAuthMiddleware(mock_app)
-    call_next = AsyncMock(return_value=mock_response)
+        patch_path = "Protexis_Command.api.common.middleware.ogx_auth.get_auth_manager"
+        with patch(patch_path, return_value=mock_auth_manager):
+            response = await middleware.dispatch(mock_request, mock_call_next)
 
-    # Add valid JWT token
-    mock_request.headers = {"Authorization": f"Bearer {valid_jwt_token}"}
+        assert response.status_code == 200
 
-    response = await middleware.dispatch(mock_request, call_next)
+    async def test_401_with_refresh(
+        self, mock_request: Any, mock_auth_manager: AsyncMock, mock_asgi_app: ASGIApp
+    ):
+        """Test handling of 401 response with token refresh."""
+        middleware = OGxAuthMiddleware(app=mock_asgi_app)
 
-    assert response == mock_response
-    call_next.assert_awaited_once_with(mock_request)
+        responses = [Response(status_code=401), Response(status_code=200)]
+        response_iter = iter(responses)
 
+        async def mock_call_next(_request: Any) -> Response:
+            return next(response_iter)
 
-@pytest.mark.asyncio
-async def test_http_error_handling(mock_app, mock_request, valid_jwt_token):
-    """Test handling of HTTP errors."""
-    middleware = ProtexisAuthMiddleware(mock_app)
-    mock_request.headers = {"Authorization": f"Bearer {valid_jwt_token}"}
+        patch_path = "Protexis_Command.api.common.middleware.ogx_auth.get_auth_manager"
+        with patch(patch_path, return_value=mock_auth_manager):
+            response = await middleware.dispatch(mock_request, mock_call_next)
 
-    # Create error with actual message
-    error_msg = "HTTP connection failed"
-    error = httpx.HTTPError(error_msg)
-    call_next = AsyncMock(side_effect=error)
+        assert response.status_code == 200
 
-    response = await middleware.dispatch(mock_request, call_next)
+    async def test_401_with_failed_refresh(
+        self, mock_request: Any, mock_auth_manager: AsyncMock, mock_asgi_app: ASGIApp
+    ):
+        """Test handling of 401 when token refresh fails."""
+        middleware = OGxAuthMiddleware(app=mock_asgi_app)
 
-    assert isinstance(response, JSONResponse)
-    assert response.status_code == 500
-    response_data = bytes(response.body).decode()
-    assert "error_type" in response_data
-    assert "http_error" in response_data
-    assert error_msg in response_data
+        # First response is 401, which triggers token refresh
+        responses = [Response(status_code=401), Response(status_code=401)]  # Add second response
+        response_iter = iter(responses)
 
+        async def mock_call_next(_request: Any) -> Response:
+            return next(response_iter)
 
-@pytest.mark.asyncio
-async def test_network_error_handling(mock_app, mock_request, valid_jwt_token):
-    """Test handling of network errors."""
-    middleware = ProtexisAuthMiddleware(mock_app)
-    mock_request.headers = {"Authorization": f"Bearer {valid_jwt_token}"}
+        # Mock refresh_token to fail
+        mock_auth_manager.refresh_token.return_value = (
+            False  # Change to return_value instead of side_effect
+        )
 
-    # Create error with actual message
-    error_msg = "Connection failed"
-    error = ConnectionError(error_msg)
-    call_next = AsyncMock(side_effect=error)
+        patch_path = "Protexis_Command.api.common.middleware.ogx_auth.get_auth_manager"
+        with patch(patch_path, return_value=mock_auth_manager):
+            response = await middleware.dispatch(mock_request, mock_call_next)
 
-    response = await middleware.dispatch(mock_request, call_next)
+        # When token refresh fails, middleware should pass through the 401
+        assert response.status_code == 401
 
-    assert isinstance(response, JSONResponse)
-    assert response.status_code == 500
-    response_data = bytes(response.body).decode()
-    assert "error_type" in response_data
-    assert "system_error" in response_data
-    assert error_msg in response_data
+    async def test_unexpected_error(
+        self, mock_request: Any, mock_auth_manager: AsyncMock, mock_asgi_app: ASGIApp
+    ):
+        """Test handling of unexpected errors during request processing."""
+        middleware = OGxAuthMiddleware(app=mock_asgi_app)
 
+        async def mock_call_next(_request: Any) -> Response:
+            raise RuntimeError("Unexpected error")
 
-@pytest.mark.asyncio
-async def test_timeout_error_handling(mock_app, mock_request, valid_jwt_token):
-    """Test handling of timeout errors."""
-    middleware = ProtexisAuthMiddleware(mock_app)
-    mock_request.headers = {"Authorization": f"Bearer {valid_jwt_token}"}
+        patch_path = "Protexis_Command.api.common.middleware.ogx_auth.get_auth_manager"
+        with patch(patch_path, return_value=mock_auth_manager):
+            response = await middleware.dispatch(mock_request, mock_call_next)
 
-    # Create error with actual message
-    error_msg = "Request timed out"
-    error = TimeoutError(error_msg)
-    call_next = AsyncMock(side_effect=error)
+        assert response.status_code == 500
+        assert isinstance(response, JSONResponse)
+        error_body = json.loads(bytes(response.body).decode("utf-8"))
+        assert "Unexpected error" in str(error_body)
 
-    response = await middleware.dispatch(mock_request, call_next)
+    def test_add_middleware(self):
+        """Test middleware registration with FastAPI app."""
+        app = FastAPI()
+        add_ogx_auth_middleware(app)
 
-    assert isinstance(response, JSONResponse)
-    assert response.status_code == 500
-    response_data = bytes(response.body).decode()
-    assert "error_type" in response_data
-    assert "system_error" in response_data
-    assert error_msg in response_data
+        # Get the middleware list directly from the app
+        middlewares = app.user_middleware
 
-
-@pytest.mark.asyncio
-async def test_missing_auth_header(mock_app, mock_request):
-    """Test request without auth header."""
-    middleware = ProtexisAuthMiddleware(mock_app)
-    mock_request.headers = {}  # No Authorization header
-
-    response = await middleware.dispatch(mock_request, AsyncMock())
-
-    assert isinstance(response, JSONResponse)
-    assert response.status_code == 401
-    response_data = bytes(response.body).decode()
-    assert "error_type" in response_data
-    assert "auth_error" in response_data
-
-
-@pytest.mark.asyncio
-async def test_invalid_token_format(mock_app, mock_request):
-    """Test request with invalid token format."""
-    middleware = ProtexisAuthMiddleware(mock_app)
-    mock_request.headers = {"Authorization": "Bearer invalid"}  # Invalid token format
-
-    response = await middleware.dispatch(mock_request, AsyncMock())
-
-    assert isinstance(response, JSONResponse)
-    assert response.status_code == 401
-    response_data = bytes(response.body).decode()
-    assert "error_type" in response_data
-    assert "auth_error" in response_data
-
-
-def test_add_auth_middleware():
-    """Test middleware registration.
-
-    Verifies:
-    - Middleware is properly added to FastAPI app
-    - Correct middleware class is used
-    """
-    app = FastAPI()
-    add_protexis_auth_middleware(app)
-
-    # Verify middleware was added
-    middleware_added = False
-    for middleware in app.user_middleware:
-        if middleware.cls == ProtexisAuthMiddleware:
-            middleware_added = True
-            break
-
-    assert middleware_added, "Protexis AuthMiddleware was not added to the FastAPI application"
+        # Check if our middleware is in the list using proper attribute access
+        assert any(
+            middleware.cls == OGxAuthMiddleware for middleware in middlewares
+        )  # Access cls as an attribute
