@@ -42,7 +42,15 @@ class ProtexisAuthMiddleware(BaseHTTPMiddleware):
                     },
                 )
 
-            token = auth_header.split(" ")[1]
+            # Check for Bearer token format
+            parts = auth_header.split()
+            if len(parts) != 2 or parts[0].lower() != "bearer":
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "Invalid authentication token", "error_type": "auth_error"},
+                )
+
+            token = parts[1]
             if not verify_token_format(token):
                 return JSONResponse(
                     status_code=401,
