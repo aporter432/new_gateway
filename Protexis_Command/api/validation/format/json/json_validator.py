@@ -1,6 +1,6 @@
 """JSON format validator for OGx protocol messages.
 
-Validates JSON message structure and content according to OGx-1.txt specifications.
+Validates JSON message structure and content according to OGWS-1.txt specifications.
 """
 
 import json
@@ -19,7 +19,7 @@ class OGxJsonValidator:
     MAX_ARRAY_LENGTH = 1000
     MAX_ELEMENTS = 500
 
-    # Allowed field types from OGx spec
+    # Allowed field types from OGWS spec
     VALID_FIELD_TYPES = {
         "enum",
         "boolean",
@@ -174,26 +174,26 @@ class OGxJsonValidator:
         Raises:
             ValidationError: If state format is invalid
         """
-        required_fields = {"state", "timestamp"}
+        required_fields = {"State", "Timestamp"}
         if not all(field in state_data for field in required_fields):
             raise ValidationError("State data missing required fields")
 
         # Validate state value
         try:
-            if not isinstance(state_data["state"], MessageState):
-                MessageState(int(state_data["state"]))
+            if not isinstance(state_data["State"], MessageState):
+                MessageState(int(state_data["State"]))
         except (ValueError, TypeError):
             raise ValidationError("Invalid state value")
 
         # Validate timestamp format
         try:
-            datetime.fromisoformat(state_data["timestamp"].replace("Z", "+00:00"))
+            datetime.fromisoformat(state_data["Timestamp"].replace("Z", "+00:00"))
         except (ValueError, AttributeError):
             raise ValidationError("Invalid timestamp format")
 
         # Validate metadata if present
-        if "metadata" in state_data:
-            self.validate_metadata(state_data["metadata"])
+        if "Metadata" in state_data:
+            self.validate_metadata(state_data["Metadata"])
 
     def validate_metadata(self, metadata: Dict[str, Any]) -> None:
         """Validate message metadata.

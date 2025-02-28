@@ -1,10 +1,10 @@
 """JSON encoding for OGx message state and metadata.
 
 This module provides consistent JSON encoding across the gateway implementation.
-It implements encoding rules as defined in OGx-1.txt specifications.
+It implements encoding rules as defined in OGWS-1.txt specifications.
 
 Configuration Sources:
-    - OGx-1.txt Section 5.1: Message Format and Validation
+    - OGWS-1.txt Section 5.1: Message Format and Validation
     - protocols.ogx.constants: Type definitions and constraints
     - protocols.ogx.validation: Format validation rules
 
@@ -24,9 +24,9 @@ Usage:
     from Protexis_Command.api_ogx.encoding.json import encode_state, encode_message
 
     state_json = encode_state({
-        "state": MessageState.ACCEPTED,
-        "timestamp": "2024-01-01T00:00:00Z",
-        "metadata": {"key": "value"}
+        "State": MessageState.ACCEPTED,
+        "Timestamp": "2024-01-01T00:00:00Z",
+        "Metadata": {"Key": "Value"}
     })
 
     message_json = encode_message(message_obj)
@@ -61,14 +61,14 @@ class OGxJsonEncoder:
 def encode_state(data: Dict[str, Any]) -> str:
     """Encode message state to JSON string.
 
-    Implements state encoding as defined in OGx-1.txt Section 5.1.
+    Implements state encoding as defined in OGWS-1.txt Section 5.1.
     Validates state data before encoding.
 
     Args:
         data: Dictionary containing state information:
-            - state: MessageState value
-            - timestamp: ISO format timestamp
-            - metadata: Optional metadata dictionary
+            - State: MessageState value
+            - Timestamp: ISO format timestamp
+            - Metadata: Optional metadata dictionary
 
     Returns:
         JSON encoded string
@@ -83,28 +83,28 @@ def encode_state(data: Dict[str, Any]) -> str:
         raise EncodingError("State data must be a dictionary")
 
     # Validate required fields
-    if "state" not in data:
-        raise EncodingError("Missing required field: state")
-    if "timestamp" not in data:
-        raise EncodingError("Missing required field: timestamp")
+    if "State" not in data:
+        raise EncodingError("Missing required field: State")
+    if "Timestamp" not in data:
+        raise EncodingError("Missing required field: Timestamp")
 
     # Validate state value
     try:
-        if not isinstance(data["state"], MessageState):
-            data["state"] = MessageState(int(data["state"]))
+        if not isinstance(data["State"], MessageState):
+            data["State"] = MessageState(int(data["State"]))
     except (ValueError, TypeError) as e:
         raise EncodingError("Invalid state value") from e
 
     # Validate timestamp format
     try:
-        datetime.fromisoformat(data["timestamp"].replace("Z", "+00:00"))
+        datetime.fromisoformat(data["Timestamp"].replace("Z", "+00:00"))
     except (ValueError, AttributeError) as e:
         raise EncodingError("Invalid timestamp format") from e
 
     # Validate payload if present
-    if "payload" in data:
+    if "Payload" in data:
         try:
-            validator.validate_message_payload(data["payload"])
+            validator.validate_message_payload(data["Payload"])
         except Exception as e:
             raise EncodingError("Invalid message payload format") from e
 
@@ -118,7 +118,7 @@ def encode_state(data: Dict[str, Any]) -> str:
 def encode_metadata(metadata: Optional[Dict[str, Any]] = None) -> str:
     """Encode metadata dictionary to JSON string.
 
-    Implements metadata encoding as defined in OGx-1.txt Section 5.1.
+    Implements metadata encoding as defined in OGWS-1.txt Section 5.1.
     Validates metadata before encoding.
 
     Args:
@@ -163,7 +163,7 @@ def encode_metadata(metadata: Optional[Dict[str, Any]] = None) -> str:
 def encode_message(message: Union[OGxMessage, Dict[str, Any]], validate: bool = True) -> str:
     """Encode OGxMessage object or dictionary to JSON string.
 
-    Implements message encoding as defined in OGx-1.txt Section 5.1.
+    Implements message encoding as defined in OGWS-1.txt Section 5.1.
     Validates message data before encoding if validate=True.
 
     Args:
@@ -179,20 +179,22 @@ def encode_message(message: Union[OGxMessage, Dict[str, Any]], validate: bool = 
     validator = OGxJsonValidator()
 
     # Convert OGxMessage to dict if needed
-    if isinstance(message, OGxMessage):
-        message_data = message.to_dict()
-    else:
-        message_data = message
-
-    # Validate message format if requested
-    if validate:
-        try:
-            validator.validate_message_payload(message_data)
-        except Exception as e:
-            raise EncodingError(f"Invalid message format: {str(e)}") from e
-
-    # Encode to JSON
     try:
+        if hasattr(message, "to_dict"):
+            message_data = message.to_dict()
+        elif isinstance(message, dict):
+            message_data = message
+        else:
+            raise EncodingError("Message must be either an OGxMessage object or a dictionary")
+
+        # Validate message format if requested
+        if validate:
+            try:
+                validator.validate_message_payload(message_data)
+            except Exception as e:
+                raise EncodingError(f"Invalid message format: {str(e)}") from e
+
+        # Encode to JSON
         return json.dumps(message_data, separators=(",", ":"))
     except TypeError as e:
         raise EncodingError(f"Failed to encode message: {str(e)}") from e
