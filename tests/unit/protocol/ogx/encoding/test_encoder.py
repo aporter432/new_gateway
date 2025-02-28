@@ -11,7 +11,7 @@ Implementation Notes:
 
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, cast
+from typing import Any, Dict, Union, cast
 
 import pytest
 from typing_extensions import Protocol
@@ -31,6 +31,7 @@ class OGxMessageProtocol(Protocol):
     """Protocol for OGxMessage interface."""
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert message to dictionary format."""
         ...
 
 
@@ -142,6 +143,16 @@ class TestEncodeState:
         with pytest.raises(EncodingError, match="State data must be a dictionary"):
             encode_state(cast(Dict[str, Any], "not a dict"))
 
+    def test_payload_validation_error(self):
+        """Test handling of payload validation errors."""
+        invalid_data = {
+            "State": MessageState.ACCEPTED,
+            "Timestamp": "2024-01-01T00:00:00Z",
+            "Payload": {"invalid": "format"},
+        }
+        with pytest.raises(EncodingError, match="Invalid message payload format"):
+            encode_state(invalid_data)
+
 
 @pytest.mark.dependency(depends=["test_ogx_base_encoder"])
 class TestEncodeMetadata:
@@ -186,6 +197,34 @@ class TestEncodeMetadata:
         with pytest.raises(EncodingError, match="Invalid message metadata format"):
             encode_metadata(invalid_metadata)
 
+    def test_metadata_encoding_error(self):
+        """Test handling of metadata encoding errors."""
+        # Create a string that contains invalid UTF-8 bytes
+        invalid_str = "test\udcff"  # Unpaired surrogate that will fail JSON encoding
+        invalid_metadata = {
+            "key": invalid_str
+        }  # This will pass type validation but fail JSON encoding
+        with pytest.raises(EncodingError, match="Failed to encode metadata"):
+            encode_metadata(invalid_metadata)
+
+    def test_invalid_metadata_value_type_complex(self):
+        """Test handling of complex invalid metadata value types."""
+
+        class ComplexType:
+            pass
+
+        with pytest.raises(EncodingError, match="Invalid metadata value type"):
+            encode_metadata({"key": ComplexType()})
+
+    def test_metadata_encoding_error_complex(self):
+        """Test handling of complex metadata encoding errors."""
+
+        class UnserializableObject:
+            pass
+
+        with pytest.raises(EncodingError, match="Invalid metadata value type"):
+            encode_metadata({"key": UnserializableObject()})
+
 
 @pytest.mark.dependency(depends=["test_ogx_base_encoder"])
 class TestEncodeMessage:
@@ -204,10 +243,13 @@ class TestEncodeMessage:
         """Test encoding of valid OGxMessage object."""
 
         class MockOGxMessage:
+            """Mock OGxMessage for testing."""
+
             def __init__(self, data: Dict[str, Any]):
                 self._data = data
 
             def to_dict(self) -> Dict[str, Any]:
+                """Convert mock message to dictionary."""
                 return self._data
 
         message = MockOGxMessage(valid_message_data)
@@ -228,7 +270,7 @@ class TestEncodeMessage:
         """Test handling of JSON encoding errors."""
 
         class UnserializableObject:
-            pass
+            """Object that cannot be serialized to JSON."""
 
         invalid_data = {
             "Name": "TestMessage",
@@ -264,9 +306,31 @@ class TestEncodeMessage:
             "SIN": 1,
             "MIN": 1,
             "Fields": [
-                {"Value": "missing_name"},
-                {"Name": "missing_value"},
-            ],  # Missing Name  # Missing Value
+                {"Value": "missing_name"},  # Missing Name
+                {"Name": "missing_value"},  # Missing Value
+            ],
         }
         with pytest.raises(EncodingError, match="Invalid message format"):
             encode_message(invalid_fields_data)
+
+    def test_message_encoding_error(self):
+        """Test handling of message encoding errors."""
+
+        class UnserializableObject:
+            """Object that cannot be serialized to JSON."""
+
+        invalid_data = {
+            "Name": "TestMessage",
+            "SIN": 1,
+            "MIN": 1,
+            "Fields": [{"Name": "field1", "Value": UnserializableObject()}],
+        }
+        with pytest.raises(EncodingError, match="Failed to encode message"):
+            encode_message(invalid_data)
+
+    def test_invalid_message_type(self):
+        """Test handling of invalid message type."""
+        with pytest.raises(
+            EncodingError, match="Message must be either an OGxMessage object or a dictionary"
+        ):
+            encode_message(cast(Union[OGxMessage, Dict[str, Any]], "not a message"))

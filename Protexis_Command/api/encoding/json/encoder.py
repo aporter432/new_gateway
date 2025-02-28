@@ -55,7 +55,18 @@ class OGxJsonEncoder:
         Returns:
             JSON formatted string
         """
-        return json.dumps(obj, default=str)
+        return json.dumps(obj, default=str)  # type: ignore # pylint: disable=no-member
+
+
+class OGWSJsonEncoder:
+    """Custom JSON encoder that handles OGWS-specific encoding requirements."""
+
+    def encode(self, obj: Any) -> str:
+        """Encode an object to JSON string, raising EncodingError for invalid data."""
+        try:
+            return json.dumps(obj, default=str)  # type: ignore # pylint: disable=no-member
+        except UnicodeError as e:
+            raise EncodingError("Failed to encode metadata") from e
 
 
 def encode_state(data: Dict[str, Any]) -> str:
@@ -135,28 +146,47 @@ def encode_metadata(metadata: Optional[Dict[str, Any]] = None) -> str:
     if metadata is None:
         return "{}"
 
-    # Validate metadata is a dictionary
     if not isinstance(metadata, dict):
         raise EncodingError("Metadata must be a dictionary")
 
-    # Validate metadata values
-    for key, value in metadata.items():
-        if not isinstance(key, str):
-            raise EncodingError(f"Metadata key must be string: {key}")
-        if not isinstance(value, (str, int, float, bool, type(None))):
-            raise EncodingError(f"Invalid metadata value type for key {key}")
-
-    # Validate metadata format if it contains message-related fields
-    if any(field in metadata for field in ["Name", "SIN", "MIN", "Fields"]):
+    # Validate top-level structure if it resembles a message
+    if any(key in metadata for key in ["Name", "SIN", "MIN", "Fields"]):
         try:
             validator.validate_message_payload(metadata)
         except Exception as e:
             raise EncodingError("Invalid message metadata format") from e
 
-    # Encode to JSON
+    def validate_value(value: Any, allow_nesting: bool = False) -> None:
+        """Validate a metadata value recursively."""
+        if isinstance(value, dict):
+            if not allow_nesting:
+                raise EncodingError("Invalid metadata value type")
+            if "Name" in value or "Fields" in value:
+                try:
+                    validator.validate_message_payload(value)
+                except Exception as e:
+                    raise EncodingError("Invalid message metadata format") from e
+            else:
+                raise EncodingError("Invalid metadata value type")  # Reject non-message dicts
+        elif isinstance(value, str):
+            try:
+                value.encode("utf-8").decode("utf-8")
+            except UnicodeError:
+                raise EncodingError("Failed to encode metadata")
+        elif not isinstance(value, (int, float, bool, type(None))):
+            raise EncodingError("Invalid metadata value type")  # Reject non-primitive types
+
+    # Validate keys are strings and nested values
+    for key in metadata:
+        if not isinstance(key, str):
+            raise EncodingError(f"Metadata key must be string: {key}")
+    for value in metadata.values():
+        validate_value(value, allow_nesting=True)
+
+    # Try to encode, raising a generic error for serialization failures
     try:
-        return json.dumps(metadata, separators=(",", ":"))
-    except TypeError as e:
+        return json.dumps(metadata, separators=(",", ":"), ensure_ascii=True)
+    except (TypeError, ValueError, UnicodeError) as e:
         raise EncodingError("Failed to encode metadata") from e
 
 
@@ -180,12 +210,14 @@ def encode_message(message: Union[OGxMessage, Dict[str, Any]], validate: bool = 
 
     # Convert OGxMessage to dict if needed
     try:
-        if hasattr(message, "to_dict"):
-            message_data = message.to_dict()
-        elif isinstance(message, dict):
+        if isinstance(message, dict):
             message_data = message
+        elif hasattr(message, "to_dict") and callable(message.to_dict):  # type: ignore
+            message_data = message.to_dict()  # type: ignore
         else:
-            raise EncodingError("Message must be either an OGxMessage object or a dictionary")
+            raise EncodingError(
+                f"Message must be either an OGxMessage object or a dictionary: {type(message)}"
+            )
 
         # Validate message format if requested
         if validate:
@@ -195,6 +227,6 @@ def encode_message(message: Union[OGxMessage, Dict[str, Any]], validate: bool = 
                 raise EncodingError(f"Invalid message format: {str(e)}") from e
 
         # Encode to JSON
-        return json.dumps(message_data, separators=(",", ":"))
+        return json.dumps(message_data, separators=(",", ":"))  # type: ignore # pylint: disable=no-member
     except TypeError as e:
         raise EncodingError(f"Failed to encode message: {str(e)}") from e

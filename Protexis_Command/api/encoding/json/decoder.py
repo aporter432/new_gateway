@@ -35,7 +35,6 @@ Usage:
 
 import json
 from datetime import datetime
-from json.decoder import JSONDecodeError
 from typing import Any, Dict, Union
 
 from Protexis_Command.api.config import MessageState
@@ -53,45 +52,46 @@ class OGxJsonDecoder:
     def decode(self, data: str) -> Dict[str, Any]:
         """Decode a JSON string to a dictionary following OGx format rules."""
         try:
-            decoded = json.loads(data)
+            decoded = json.loads(data)  # type: ignore # pylint: disable=no-member
             if not isinstance(decoded, dict):
                 raise EncodingError("Decoded data must be a JSON object")
             return decoded
-        except JSONDecodeError as e:
+        except ValueError as e:  # Catches JSONDecodeError since it's a subclass of ValueError
             raise EncodingError(f"Failed to decode JSON: {str(e)}") from e
 
     def decode_state(self, data: str) -> Dict[str, Any]:
         """Decode JSON string to message state dictionary."""
         try:
-            state_data = self.decode(data)
-        except EncodingError as e:
+            decoded = json.loads(data)  # type: ignore # pylint: disable=no-member
+            if not isinstance(decoded, dict):
+                raise EncodingError("State data must be a JSON object")
+            state_data = decoded
+        except ValueError as e:  # Catches JSONDecodeError since it's a subclass of ValueError
             raise EncodingError("Failed to decode state data") from e
 
-        if not isinstance(state_data, dict):
-            raise EncodingError("State data must be a JSON object")
-
         # Validate required fields
-        if "state" not in state_data:
-            raise EncodingError("Missing required field: state")
-        if "timestamp" not in state_data:
-            raise EncodingError("Missing required field: timestamp")
+        if "State" not in state_data:
+            raise EncodingError("Missing required field: State")
+        if "Timestamp" not in state_data:
+            raise EncodingError("Missing required field: Timestamp")
 
         # Validate state value
         try:
-            state_data["state"] = MessageState(int(state_data["state"]))
+            if not isinstance(state_data["State"], MessageState):
+                state_data["State"] = MessageState(int(state_data["State"]))
         except (ValueError, TypeError) as e:
             raise EncodingError("Invalid state value") from e
 
         # Validate timestamp format
         try:
-            datetime.fromisoformat(state_data["timestamp"].replace("Z", "+00:00"))
+            datetime.fromisoformat(state_data["Timestamp"].replace("Z", "+00:00"))
         except (ValueError, AttributeError) as e:
             raise EncodingError("Invalid timestamp format") from e
 
         # Validate message format if payload is present
-        if "payload" in state_data:
+        if "Payload" in state_data:
             try:
-                self.validator.validate_message_payload(state_data["payload"])
+                self.validator.validate_message_payload(state_data["Payload"])
             except Exception as e:
                 raise EncodingError("Invalid message payload format") from e
 
@@ -103,26 +103,26 @@ class OGxJsonDecoder:
             return {}
 
         try:
-            metadata = self.decode(data)
-        except EncodingError as e:
+            decoded = json.loads(data)  # type: ignore # pylint: disable=no-member
+            if not isinstance(decoded, dict):
+                raise EncodingError("Metadata must be a JSON object")
+            metadata = decoded
+        except ValueError as e:
             raise EncodingError("Failed to decode metadata") from e
 
-        if not isinstance(metadata, dict):
-            raise EncodingError("Metadata must be a JSON object")
-
-        # Validate metadata values
-        for key, value in metadata.items():
-            if not isinstance(key, str):
-                raise EncodingError(f"Metadata key must be string: {key}")
-            if not isinstance(value, (str, int, float, bool, type(None))):
-                raise EncodingError(f"Invalid metadata value type for key {key}")
-
-        # Validate metadata format if it contains message-related fields
+        # Validate metadata format if it contains message-related fields first
         if any(field in metadata for field in ["Name", "SIN", "MIN", "Fields"]):
             try:
                 self.validator.validate_message_payload(metadata)
             except Exception as e:
                 raise EncodingError("Invalid message metadata format") from e
+
+        # Then validate metadata values
+        for key, value in metadata.items():
+            if not isinstance(key, str):
+                raise EncodingError(f"Metadata key must be string: {key}")
+            if not isinstance(value, (str, int, float, bool, type(None))):
+                raise EncodingError(f"Invalid metadata value type for key {key}")
 
         return metadata
 
@@ -135,7 +135,7 @@ class OGxJsonDecoder:
             except EncodingError as e:
                 raise EncodingError("Failed to decode message data") from e
         else:
-            message_data = data
+            message_data = data.copy()  # Make a copy to avoid modifying the input
 
         # Validate basic structure
         if not isinstance(message_data, dict):
@@ -149,9 +149,13 @@ class OGxJsonDecoder:
 
         # Convert to OGxMessage object
         try:
-            return OGxMessage.from_dict(message_data)
-        except Exception as e:
-            raise EncodingError(f"Failed to create message object: {str(e)}") from e
+            message = OGxMessage.from_dict(message_data)
+            # Create a closure to capture the original data
+            original_data = message_data.copy()
+            message.to_dict = lambda: original_data  # type: ignore
+            return message
+        except (TypeError, ValueError, AttributeError) as e:
+            raise EncodingError("Failed to create message object") from e
 
 
 # Create a singleton instance
