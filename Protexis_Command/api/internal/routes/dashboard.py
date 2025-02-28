@@ -1,6 +1,14 @@
+"""
+Provides internal dashboard routes restricted by role-based access.
+
+Routes:
+- /admin: Accessible only to admins
+- /tech-configs: Accessible only to tech admins
+"""
+
 from fastapi import APIRouter, Depends
 
-from Protexis_Command.api.common.auth.roles import requires_roles
+from Protexis_Command.api.common.auth.RBA.roles import requires_roles
 from Protexis_Command.infrastructure.database.models.user import User, UserRole
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])

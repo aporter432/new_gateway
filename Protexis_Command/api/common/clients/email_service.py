@@ -76,8 +76,8 @@ class EmailService:
         self.settings = get_settings()
         self.smtp_server = os.getenv("SMTP_SERVER", "localhost")
         self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        self.smtp_username = os.getenv("SMTP_USERNAME", "")
-        self.smtp_password = os.getenv("SMTP_PASSWORD", "")
+        self.smtp_username = os.getenv("SMTP_USERNAME") or ""
+        self.smtp_password = os.getenv("SMTP_PASSWORD") or ""
         self.use_tls = os.getenv("SMTP_USE_TLS", "True").lower() in ("true", "1", "yes")
         self.sender_email = os.getenv("EMAIL_FROM", "noreply@protexis.com")
         self.sender_name = os.getenv("EMAIL_FROM_NAME", "Protexis System")
@@ -143,7 +143,7 @@ class EmailService:
                     message["Bcc"] = bcc
 
             # Set body
-            message.set_content(body)
+            message.set_content(body.rstrip())
 
             # Use asyncio to run SMTP connection in a thread pool
             return await asyncio.to_thread(self._send_smtp, message)

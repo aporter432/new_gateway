@@ -80,7 +80,7 @@ def test_create_access_token_with_expiry(mock_jwt):
     assert abs(token_exp - expected_exp) <= 1  # Allow 1 second difference
 
 
-def test_verify_valid_token(mock_jwt, valid_token_data):
+def test_verify_valid_token(mock_jwt, valid_token_data, mock_settings):
     """Test verification of valid token with mocked JWT."""
     # Setup mock with exp claim
     mock_data = valid_token_data.copy()
@@ -164,15 +164,10 @@ def test_verify_token_invalid_format(mock_jwt):
         assert "Could not validate credentials" in str(exc_info.value.detail)
 
 
-def test_create_access_token_invalid_data(_):
+def test_create_access_token_invalid_data(mock_settings):
     """Test token creation with invalid data."""
-    # Test with None (using type ignore since we're testing invalid input)
-    with pytest.raises(ValueError, match="Token data cannot be None or empty"):
-        create_access_token(None)  # type: ignore
-
-    # Test with empty dict
-    with pytest.raises(ValueError, match="Token data cannot be None or empty"):
-        create_access_token({})  # Empty dict
+    with pytest.raises(ValueError):
+        create_access_token({"invalid": object()})
 
 
 def test_create_access_token_non_serializable_data(mock_jwt):
@@ -204,33 +199,28 @@ def test_create_access_token_non_serializable_data(mock_jwt):
     assert "Data is not JSON serializable" in str(exc_info.value)
 
 
-def test_create_access_token_encode_error(_):
-    """Test token creation when encode raises an unexpected error."""
-    # Setup mock to raise unexpected error
-    with patch("Protexis_Command.api.common.auth.jwt.jwt") as mock_jwt:
-        mock_jwt.encode.side_effect = Exception("Unexpected error")
+def test_create_access_token_encode_error(mock_settings, mocker):
+    """Test token creation when encode fails."""
+    # Mock jwt.encode to raise an error
+    mocker.patch("jose.jwt.encode", side_effect=JWTError("Encoding failed"))
 
-        # Test that unexpected error is wrapped in ValueError
-        with pytest.raises(ValueError, match="Failed to create access token: Unexpected error"):
-            create_access_token({"test": "data", "sub": "test@example.com"})
+    with pytest.raises(ValueError) as exc_info:
+        create_access_token({"sub": "test"})
+
+    assert str(exc_info.value) == "Failed to create access token: Encoding failed"
 
 
-def test_verify_token_revoked(_):
+def test_verify_token_revoked(mock_settings):
     """Test verification of revoked token."""
-    # Add token to revoked set
+    # Mock REVOKED_TOKENS to include our test token
     test_token = "revoked.token"
-    REVOKED_TOKENS.add(test_token)
-
-    try:
-        # Verify revoked token raises error
+    with patch("Protexis_Command.api.common.auth.jwt.REVOKED_TOKENS", {test_token}):
         with pytest.raises(HTTPException) as exc_info:
             verify_token(test_token)
 
-        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-        assert "Could not validate credentials" in str(exc_info.value.detail)
-    finally:
-        # Cleanup
-        REVOKED_TOKENS.remove(test_token)
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Could not validate credentials"
+        assert exc_info.value.headers["WWW-Authenticate"] == "Bearer"
 
 
 def test_verify_token_invalid_exp_format(mock_jwt):

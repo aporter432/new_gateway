@@ -50,7 +50,7 @@ from Protexis_Command.api.common.auth.password import (
     validate_password,
     verify_password,
 )
-from Protexis_Command.api.common.auth.role_hierarchy import RoleHierarchy
+from Protexis_Command.api.common.auth.RBA.role_hierarchy import RoleHierarchy
 from Protexis_Command.api.common.email import get_email_service
 from Protexis_Command.api.internal.schemas.user import (
     Token,

@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Protexis_Command.api.common.auth.oauth2 import get_current_active_user, get_current_admin_user
-from Protexis_Command.api.common.auth.role_descriptions import RoleDescriptions
-from Protexis_Command.api.common.auth.role_hierarchy import RoleHierarchy
+from Protexis_Command.api.common.auth.RBA.role_descriptions import RoleDescriptions
+from Protexis_Command.api.common.auth.RBA.role_hierarchy import RoleHierarchy
 from Protexis_Command.api.internal.schemas.user import UserResponse
 from Protexis_Command.infrastructure.database.dependencies import get_db
 from Protexis_Command.infrastructure.database.models.user import User, UserRole

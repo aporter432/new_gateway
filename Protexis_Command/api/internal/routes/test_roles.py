@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from Protexis_Command.api.common.auth.roles import requires_roles
+from Protexis_Command.api.common.auth.RBA.roles import requires_roles
 from Protexis_Command.infrastructure.database.models.user import User, UserRole
 
 router = APIRouter(tags=["test"])

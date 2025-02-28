@@ -10,7 +10,7 @@ Key Components:
     - Work Factor Management: Adaptive complexity settings
 
 Related Files:
-    - Protexis_Command/api_protexis/routes/auth/user.py: Uses these utilities for authentication
+    - Protexis_Command/api/routes/auth/user.py: Uses these utilities for authentication
     - Protexis_Command/api_protexis/schemas/user.py: Password field validation
     - Protexis_Command/infrastructure/database/models/user.py: Stores hashed passwords
     - Protexis_Command/infrastructure/database/repositories/user_repository.py: User operations

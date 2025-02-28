@@ -1,10 +1,12 @@
+from types import MappingProxyType
+
 from Protexis_Command.infrastructure.database.models.user import UserRole
 
 
 class RoleDescriptions:
     """Descriptions for user roles."""
 
-    descriptions = {
+    _descriptions = {
         UserRole.USER: "Basic user permissions",
         UserRole.ADMIN: "Full system administration permissions",
         UserRole.ACCOUNTING: "Accounting only permissions",
@@ -16,6 +18,8 @@ class RoleDescriptions:
         UserRole.PROTEXIS_TECH_ADMIN: "Manage site configurations",
         UserRole.PROTEXIS_ADMIN: "Site service admin and billing admin",
     }
+
+    descriptions = MappingProxyType(_descriptions)
 
     @classmethod
     def get_description(cls, role: UserRole) -> str:
